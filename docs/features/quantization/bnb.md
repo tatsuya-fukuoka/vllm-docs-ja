@@ -1,23 +1,23 @@
-# BitsAndBytes
+# BitsAndBytes { #bitsandbytes }
 
-vLLM now supports [BitsAndBytes](https://github.com/TimDettmers/bitsandbytes) for more efficient model inference.
-BitsAndBytes quantizes models to reduce memory usage and enhance performance without significantly sacrificing accuracy.
-Compared to other quantization methods, BitsAndBytes eliminates the need for calibrating the quantized model with input data.
+vLLM は、より効率的なモデル推論のために [BitsAndBytes](https://github.com/TimDettmers/bitsandbytes) をサポートしています。
+BitsAndBytes はモデルを量子化してメモリ使用量を減らし、精度を大きく損なうことなく性能を高めます。
+他の量子化手法と比べて、入力データを使った量子化モデルのキャリブレーションが不要な点が特徴です。
 
-Below are the steps to utilize BitsAndBytes with vLLM.
+vLLM で BitsAndBytes を使う手順は次のとおりです。
 
 ```bash
 pip install bitsandbytes>=0.49.2
 ```
 
-vLLM reads the model's config file and supports both in-flight quantization and pre-quantized checkpoint.
+vLLM はモデルの設定ファイルを読み取り、読み込み時の量子化と、量子化済みチェックポイントの両方に対応します。
 
-You can find bitsandbytes quantized models on [Hugging Face](https://huggingface.co/models?search=bitsandbytes).
-And usually, these repositories have a config.json file that includes a quantization_config section.
+bitsandbytes で量子化されたモデルは [Hugging Face](https://huggingface.co/models?search=bitsandbytes) で探せます。
+これらのリポジトリには通常、quantization_config セクションを含む config.json があります。
 
-## Read quantized checkpoint
+## 量子化済みチェックポイントを読み込む { #read-quantized-checkpoint }
 
-For pre-quantized checkpoints, vLLM will try to infer the quantization method from the config file, so you don't need to explicitly specify the quantization argument.
+量子化済みのチェックポイントでは、vLLM が設定ファイルから量子化方式を推定しようとするため、quantization 引数を明示的に指定する必要はありません。
 
 ```python
 from vllm import LLM
@@ -31,9 +31,9 @@ llm = LLM(
 )
 ```
 
-## Inflight quantization: load as 4bit quantization
+## 読み込み時の量子化: 4bit で読み込む { #inflight-quantization-load-as-4bit-quantization }
 
-For inflight 4bit quantization with BitsAndBytes, you need to explicitly specify the quantization argument.
+BitsAndBytes で読み込み時に 4bit 量子化するには、quantization 引数を明示的に指定する必要があります。
 
 ```python
 from vllm import LLM
@@ -47,9 +47,9 @@ llm = LLM(
 )
 ```
 
-## OpenAI Compatible Server
+## OpenAI 互換サーバー { #openai-compatible-server }
 
-Append the following to your model arguments for 4bit inflight quantization:
+読み込み時の 4bit 量子化を行うには、モデルの引数に次を追加します。
 
 ```bash
 --quantization bitsandbytes

@@ -1,31 +1,31 @@
-# LLM Compressor
+# LLM Compressor { #llm-compressor }
 
-[LLM Compressor](https://docs.vllm.ai/projects/llm-compressor/en/latest/) is a library for optimizing models for deployment with vLLM.
-It provides a comprehensive set of quantization algorithms, including support for techniques such as FP4, FP8, INT8, and INT4 quantization.
+[LLM Compressor](https://docs.vllm.ai/projects/llm-compressor/en/latest/) は、vLLM でのデプロイに向けてモデルを最適化するライブラリです。
+FP4・FP8・INT8・INT4 など、幅広い量子化アルゴリズムをサポートしています。
 
-## Why use LLM Compressor?
+## LLM Compressor を使う理由 { #why-use-llm-compressor }
 
-Modern LLMs often contain billions of parameters stored in 16-bit or 32-bit floating point, requiring substantial GPU memory and limiting deployment options.
-Quantization lowers memory requirements while maintaining inference output quality by reducing the precision of model weights and activations to smaller data types.
+現代の LLM は数十億のパラメータを 16 ビットや 32 ビットの浮動小数点で保持することが多く、大量の GPU メモリを必要とし、デプロイの選択肢を狭めます。
+量子化はモデルの重みとアクティベーションの精度を小さなデータ型に落とすことで、推論の出力品質を保ちつつ必要なメモリを削減します。
 
-LLM Compressor provides the following benefits:
+LLM Compressor には次の利点があります。
 
-- **Reduced memory footprint**: Run larger models on smaller GPUs.
-- **Lower inference costs**: Serve more concurrent users per GPU, directly reducing the cost per query in production deployments.
-- **Faster inference**: Smaller data types mean less memory bandwidth consumed, which often translates to higher throughput, especially for memory-bound workloads.
+- **メモリ使用量の削減**: より小さな GPU でより大きなモデルを動かせます。
+- **推論コストの低減**: GPU あたりの同時ユーザー数が増え、本番環境でのクエリあたりのコストが直接下がります。
+- **推論の高速化**: データ型が小さいほどメモリ帯域の消費が減り、特にメモリ律速のワークロードでスループットが向上します。
 
-LLM Compressor handles the complexity of quantization, calibration, and format conversion, producing models ready for immediate use with vLLM.
+LLM Compressor は量子化・キャリブレーション・形式変換の複雑さを引き受け、vLLM ですぐに使えるモデルを生成します。
 
-## Key features
+## 主な機能 { #key-features }
 
-- **Multiple Quantization Algorithms**: Support for AWQ, GPTQ, AutoRound, and Round-to-Nearest.
-Also includes support for QuIP and SpinQuant-style transforms as well as KV cache and attention quantization.
-- **Multiple Quantization Methods**: Support for FP8, INT8, INT4, NVFP4, MXFP4, and mixed-precision quantization
-- **One-Shot Quantization**: Quantize models quickly with minimal calibration data
-- **vLLM Integration**: Seamlessly deploy quantized models with vLLM using the compressed-tensors format
-- **Hugging Face Compatibility**: Works with models from the Hugging Face Hub
+- **複数の量子化アルゴリズム**: AWQ、GPTQ、AutoRound、Round-to-Nearest をサポート。
+QuIP や SpinQuant 形式の変換、KV キャッシュと Attention の量子化にも対応しています。
+- **複数の量子化方式**: FP8、INT8、INT4、NVFP4、MXFP4、混合精度の量子化をサポート
+- **ワンショット量子化**: 最小限のキャリブレーションデータで素早く量子化
+- **vLLM との統合**: compressed-tensors 形式で、量子化したモデルを vLLM にシームレスにデプロイ
+- **Hugging Face との互換性**: Hugging Face Hub のモデルで動作
 
-## Resources
+## 参考資料 { #resources }
 
-- [LLM Compressor examples](https://github.com/vllm-project/llm-compressor/tree/main/examples)
-- [GitHub Repository](https://github.com/vllm-project/llm-compressor)
+- [LLM Compressor の例](https://github.com/vllm-project/llm-compressor/tree/main/examples)（英語）
+- [GitHub リポジトリ](https://github.com/vllm-project/llm-compressor)

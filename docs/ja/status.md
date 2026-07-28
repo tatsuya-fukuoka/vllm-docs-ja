@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **101 ページ**を翻訳済みです（44.7%）。
+全 226 ページ中 **110 ページ**を翻訳済みです（48.7%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -19,14 +19,14 @@
 | 開発者ガイド | 0 | 0 | 16 | 16 |
 | デプロイ | 35 | 0 | 0 | 35 |
 | 設計ドキュメント | 0 | 0 | 29 | 29 |
-| 機能 | 3 | 0 | 49 | 52 |
+| 機能 | 11 | 0 | 41 | 52 |
 | はじめに | 5 | 0 | 8 | 13 |
-| ガバナンス | 0 | 0 | 3 | 3 |
+| ガバナンス | 1 | 0 | 2 | 3 |
 | モデル | 1 | 0 | 15 | 16 |
 | 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **101** | **0** | **125** | **226** |
+| **合計** | **110** | **0** | **116** | **226** |
 
 ## 翻訳済みのページ
 
@@ -92,13 +92,22 @@
 - `deployment/k8s.md`
 - `deployment/nginx.md`
 - `features/README.md`
+- `features/automatic_prefix_caching.md`
+- `features/custom_arguments.md`
 - `features/quantization/README.md`
+- `features/quantization/bnb.md`
+- `features/quantization/llm_compressor/README.md`
+- `features/quantization/torchao.md`
+- `features/speculative_decoding/n_gram.md`
+- `features/speculative_decoding/parallel_draft_model.md`
+- `features/speculative_decoding/suffix.md`
 - `features/structured_outputs.md`
 - `getting_started/installation/README.md`
 - `getting_started/installation/gpu.cuda.inc.md`
 - `getting_started/installation/gpu.md`
 - `getting_started/installation/python_env_setup.inc.md`
 - `getting_started/quickstart.md`
+- `governance/collaboration.md`
 - `models/generative_models.md`
 - `serving/context_parallel_deployment.md`
 - `serving/data_parallel_deployment.md`
