@@ -1202,8 +1202,10 @@
       "upstream_sha": "9fdae4b7979a8d06"
     },
     "usage/security.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "becabad8ad847047",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "becabad8ad847047"
     },
     "usage/troubleshooting.md": {
