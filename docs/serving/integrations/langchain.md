@@ -1,14 +1,14 @@
-# LangChain
+# LangChain { #langchain }
 
-vLLM is also available via [LangChain](https://github.com/langchain-ai/langchain) .
+vLLM は [LangChain](https://github.com/langchain-ai/langchain) からも利用できます。
 
-To install LangChain, run
+LangChain をインストールするには次を実行します。
 
 ```bash
 pip install langchain langchain_community -q
 ```
 
-To run inference on a single or multiple GPUs, use `VLLM` class from `langchain`.
+単一または複数の GPU で推論するには、`langchain` の `VLLM` クラスを使います。
 
 ??? code
 
@@ -29,4 +29,4 @@ To run inference on a single or multiple GPUs, use `VLLM` class from `langchain`
     print(llm("What is the capital of France ?"))
     ```
 
-Please refer to this [Tutorial](https://python.langchain.com/docs/integrations/llms/vllm) for more details.
+詳細は[チュートリアル](https://python.langchain.com/docs/integrations/llms/vllm)（英語）を参照してください。

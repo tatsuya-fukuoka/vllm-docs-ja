@@ -1,41 +1,41 @@
-# Codex
+# Codex { #codex }
 
-[Codex](https://github.com/openai/codex) is OpenAI's official agentic coding tool that lives in your terminal. It can understand your codebase, edit files, run commands, and help you write code more efficiently.
+[Codex](https://github.com/openai/codex) は、ターミナル上で動作する OpenAI 公式のエージェント型コーディングツールです。コードベースを理解し、ファイルを編集し、コマンドを実行して、効率的なコーディングを支援します。
 
-By pointing Codex at a vLLM server, you can use your own models as the backend instead of the OpenAI API. This is useful for:
+Codex の向き先を vLLM サーバーにすると、OpenAI API の代わりに自分のモデルをバックエンドとして使えます。次のような用途に便利です。
 
-- Running fully local/private coding assistance
-- Using open-weight models with tool calling capabilities
-- Testing and developing with custom models
+- 完全にローカル・プライベートなコーディング支援を動かす
+- ツール呼び出しに対応したオープンウェイトのモデルを使う
+- 独自モデルのテストと開発
 
-## How It Works
+## 仕組み { #how-it-works }
 
-vLLM implements the OpenAI-Responses API, which is the same API that Codex uses to communicate with OpenAI's servers. By configuring Codex to point at your vLLM server, Codex sends its requests to vLLM instead of OpenAI. vLLM then translates these requests to work with your local model and returns responses in the format Codex expects.
+vLLM は OpenAI Responses API を実装しています。これは Codex が OpenAI のサーバーと通信するのと同じ API です。Codex の向き先を vLLM サーバーに設定すると、Codex は OpenAI ではなく vLLM にリクエストを送ります。vLLM はそのリクエストをローカルのモデルで動くように変換し、Codex が期待する形式でレスポンスを返します。
 
-This means any model served by vLLM with proper tool calling support can act as a drop-in replacement for OpenAI models in Codex.
+つまり、ツール呼び出しに適切に対応したモデルであれば、vLLM でサービングするだけで Codex の OpenAI モデルの代替として利用できます。
 
-## Requirements
+## 要件 { #requirements }
 
-Codex requires a model with strong tool calling capabilities. The model must support the OpenAI-Responses tool calling API. See [Tool Calling](../../features/tool_calling.md) for details on enabling tool calling for your model.
+Codex は、ツール呼び出しの能力が高いモデルを必要とします。モデルは OpenAI Responses のツール呼び出し API をサポートしている必要があります。モデルでツール呼び出しを有効にする方法は[ツール呼び出し](../../features/tool_calling.md)を参照してください。
 
-## Installation
+## インストール { #installation }
 
-First, install Codex by following the [official installation guide](https://github.com/openai/codex).
+まず、[公式のインストールガイド](https://github.com/openai/codex)に従って Codex をインストールします。
 
-## Starting the vLLM Server
+## vLLM サーバーの起動 { #starting-the-vllm-server }
 
-Start vLLM with a tool-calling capable model - here's an example using `Qwen/Qwen3-27B`:
+ツール呼び出しに対応したモデルで vLLM を起動します。以下は `Qwen/Qwen3-27B` を使う例です。
 
 ```bash
 vllm serve Qwen/Qwen3.6-27B --port 8000 --tensor-parallel-size 8 --max-model-len 262144 --reasoning-parser qwen3 --enable-auto-tool-choice --tool-call-parser qwen3_coder
 
 ```
 
-For other models, you'll need to enable tool calling explicitly with `--enable-auto-tool-choice` and the right `--tool-call-parser`. Refer to the [Tool Calling documentation](../../features/tool_calling.md) for the correct flags for your model.
+他のモデルでは、`--enable-auto-tool-choice` と適切な `--tool-call-parser` でツール呼び出しを明示的に有効にする必要があります。モデルごとの正しいフラグは[ツール呼び出しのドキュメント](../../features/tool_calling.md)を参照してください。
 
-## Configuring Codex
+## Codex の設定 { #configuring-codex }
 
-Codex is configured via a TOML file located at `~/.codex/config.toml`. Create or edit this file to point Codex at your vLLM server:
+Codex は `~/.codex/config.toml` にある TOML ファイルで設定します。このファイルを作成または編集して、Codex の向き先を vLLM サーバーにします。
 
 ```toml
 model = "my-model"
@@ -48,41 +48,41 @@ base_url = "http://localhost:8000/v1"
 wire_api = "responses"
 ```
 
-The configuration fields:
+各設定項目の意味:
 
-| Field | Description |
+| 項目 | 説明 |
 | ----- | ----------- |
-| `model` | The model name to use. Must match the `--served-model-name` you passed to vLLM. |
-| `model_provider` | Set to `"vllm"` to use your local vLLM server. |
-| `[model_providers.vllm]` | Configuration section for the vLLM provider. |
-| `name` | A display name for your vLLM provider. |
-| `env_key` | The name of an environment variable that Codex will read for the API key. vLLM does not require authentication by default, so this can be any value. |
-| `base_url` | The URL of your vLLM server's OpenAI-compatible API endpoint (default is `http://localhost:8000/v1`). |
-| `wire_api` | The API style to use. Set to `"responses"` for the OpenAI Responses API |
+| `model` | 使用するモデル名。vLLM に渡した `--served-model-name` と一致させる必要があります。 |
+| `model_provider` | ローカルの vLLM サーバーを使うには `"vllm"` を指定します。 |
+| `[model_providers.vllm]` | vLLM プロバイダの設定セクション。 |
+| `name` | vLLM プロバイダの表示名。 |
+| `env_key` | Codex が API キーとして読み取る環境変数の名前。vLLM は既定で認証を必要としないため、任意の値で構いません。 |
+| `base_url` | vLLM サーバーの OpenAI 互換 API エンドポイントの URL（既定は `http://localhost:8000/v1`）。 |
+| `wire_api` | 使用する API の形式。OpenAI Responses API を使うには `"responses"` を指定します。 |
 
 !!! tip
-    You can set the `env_key` to any dummy environment variable since vLLM doesn't require authentication by default:
+    vLLM は既定で認証を必要としないため、`env_key` には任意のダミーの環境変数を指定できます。
     ```bash
     export VLLM_API_KEY=dummy
     ```
 
 !!! warning
-    When using the `responses` API, ensure your vLLM version supports the OpenAI Responses API.
+    `responses` API を使う場合は、お使いの vLLM のバージョンが OpenAI Responses API に対応していることを確認してください。
 
-## Testing the Setup
+## 動作確認 { #testing-the-setup }
 
-Once Codex is configured, launch it in your project directory:
+Codex を設定したら、プロジェクトのディレクトリで起動します。
 
 ```bash
 codex
 ```
 
-Try a simple prompt to verify the connection, such as asking it to explain a file in your project. If the model responds correctly, your setup is working. You can now use Codex with your vLLM-served model for coding tasks.
+プロジェクト内のファイルの説明を求めるなど、簡単なプロンプトで接続を確認します。モデルが正しく応答すれば設定は成功です。vLLM でサービングしたモデルを使って Codex でコーディングできます。
 
-## Troubleshooting
+## トラブルシューティング { #troubleshooting }
 
-**Connection refused**: Ensure vLLM is running and accessible at the specified URL. Check that the port matches and that `base_url` includes the `/v1` path suffix.
+**接続が拒否される**: vLLM が起動していて、指定した URL でアクセスできることを確認してください。ポートが一致していること、`base_url` に `/v1` のパスが含まれていることも確認します。
 
-**Tool calls not working**: Verify that your model supports tool calling and that you've enabled it with the correct `--tool-call-parser` flag. See [Tool Calling](../../features/tool_calling.md).
+**ツール呼び出しが動かない**: モデルがツール呼び出しに対応していること、正しい `--tool-call-parser` フラグで有効化されていることを確認してください。[ツール呼び出し](../../features/tool_calling.md)を参照してください。
 
-**Model not found**: Ensure the `model` field in `~/.codex/config.toml` matches the `--served-model-name` you passed to vLLM.
+**モデルが見つからない**: `~/.codex/config.toml` の `model` が、vLLM に渡した `--served-model-name` と一致していることを確認してください。

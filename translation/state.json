@@ -1058,8 +1058,10 @@
       "upstream_sha": "bb4f301d950b3f19"
     },
     "serving/distributed_troubleshooting.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "256bdc415e859481",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "256bdc415e859481"
     },
     "serving/expert_parallel_deployment.md": {
@@ -1068,23 +1070,31 @@
       "upstream_sha": "35421111c5074d9c"
     },
     "serving/integrations/claude_code.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4d588123f97a3474",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "4d588123f97a3474"
     },
     "serving/integrations/codex.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "fdeb82b044577279",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "fdeb82b044577279"
     },
     "serving/integrations/langchain.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "440f1449e5928255",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "440f1449e5928255"
     },
     "serving/integrations/llamaindex.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "632469927696f101",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "632469927696f101"
     },
     "serving/offline_inference.md": {
@@ -1107,8 +1117,10 @@
       "upstream_sha": "3c365f93ccbc99d6"
     },
     "serving/online_serving/generative_scoring.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "7f90d859b0a5b2b7",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "7f90d859b0a5b2b7"
     },
     "serving/online_serving/openai_compatible_server.md": {
@@ -1119,8 +1131,10 @@
       "upstream_sha": "8d261897ca52455f"
     },
     "serving/online_serving/renderer.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "24eb57e3ea4de134",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "24eb57e3ea4de134"
     },
     "serving/online_serving/speech_to_text.md": {

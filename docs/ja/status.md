@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **47 ページ**を翻訳済みです（20.8%）。
+全 226 ページ中 **54 ページ**を翻訳済みです（23.9%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -23,10 +23,10 @@
 | はじめに | 4 | 0 | 9 | 13 |
 | ガバナンス | 0 | 0 | 3 | 3 |
 | モデル | 1 | 0 | 15 | 16 |
-| 推論とサービング | 3 | 0 | 13 | 16 |
+| 推論とサービング | 10 | 0 | 6 | 16 |
 | 学習 | 0 | 0 | 8 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **47** | **0** | **179** | **226** |
+| **合計** | **54** | **0** | **172** | **226** |
 
 ## 翻訳済みのページ
 
@@ -66,9 +66,16 @@
 - `getting_started/installation/python_env_setup.inc.md`
 - `getting_started/quickstart.md`
 - `models/generative_models.md`
+- `serving/distributed_troubleshooting.md`
+- `serving/integrations/claude_code.md`
+- `serving/integrations/codex.md`
+- `serving/integrations/langchain.md`
+- `serving/integrations/llamaindex.md`
 - `serving/offline_inference.md`
 - `serving/online_serving/README.md`
+- `serving/online_serving/generative_scoring.md`
 - `serving/online_serving/openai_compatible_server.md`
+- `serving/online_serving/renderer.md`
 - `usage/README.md`
 - `usage/faq.md`
 - `usage/metrics.md`

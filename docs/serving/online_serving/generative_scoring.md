@@ -1,26 +1,26 @@
-# Generative Scoring
+# Generative Scoring { #generative-scoring }
 
-The `/generative_scoring` endpoint uses a CausalLM model (e.g., Llama, Qwen, Mistral) to compute the probability of specified token IDs appearing as the next token. Each item (document) is concatenated with the query to form a prompt, and the model predicts how likely each label token is as the next token after that prompt. This lets you score items against a query — for example, asking "Is this the capital of France?" and scoring each city by how likely the model is to answer "Yes".
+`/generative_scoring` エンドポイントは、CausalLM のモデル（Llama、Qwen、Mistral など）を使って、指定したトークン ID が次のトークンとして現れる確率を計算します。各アイテム（ドキュメント）をクエリと連結してプロンプトを作り、そのプロンプトの次のトークンとして各ラベルのトークンがどれくらい現れやすいかをモデルが予測します。これにより、クエリに対してアイテムをスコアリングできます。たとえば「これはフランスの首都ですか？」と尋ね、モデルが「Yes」と答える確率で各都市をスコアリングする、といった使い方ができます。
 
-This endpoint is automatically available when the server is started with a generative model (task `"generate"`). It is separate from the pooling-based [Score API](../../models/pooling_models/scoring.md#score-api), which uses cross-encoder, bi-encoder, or late-interaction models.
+このエンドポイントは、生成モデル（タスク `"generate"`）でサーバーを起動すると自動的に利用できます。cross-encoder、bi-encoder、late-interaction のモデルを使うプーリングベースの [Score API](../../models/pooling_models/scoring.md#score-api) とは別のものです。
 
-**Requirements:**
+**要件:**
 
-- The `label_token_ids` parameter is **required** and must contain **at least 1 token ID**.
-- When 2 label tokens are provided, the score equals `P(label_token_ids[0]) / (P(label_token_ids[0]) + P(label_token_ids[1]))` (softmax over the two labels).
-- When more labels are provided, the score is the softmax-normalized probability of the first label token across all label tokens.
+- `label_token_ids` パラメータは**必須**で、**最低 1 つ**のトークン ID を含む必要があります。
+- ラベルのトークンを 2 つ指定した場合、スコアは `P(label_token_ids[0]) / (P(label_token_ids[0]) + P(label_token_ids[1]))` になります（2 つのラベルに対する softmax）。
+- 3 つ以上のラベルを指定した場合、スコアはすべてのラベルトークンにわたって softmax で正規化した、最初のラベルトークンの確率になります。
 
-## How it works
+## 仕組み { #how-it-works }
 
-1. **Prompt Construction**: For each item, builds `prompt = query + item` (or `item + query` if `item_first=true`)
-2. **Forward Pass**: Runs the model on each prompt to get next-token logits
-3. **Probability Extraction**: Extracts logprobs for the specified `label_token_ids`
-4. **Softmax Normalization**: Applies softmax over only the label tokens (when `apply_softmax=true`)
-5. **Score**: Returns the normalized probability of the first label token
+1. **プロンプトの構築**: 各アイテムについて `prompt = query + item` を作ります（`item_first=true` の場合は `item + query`）
+2. **順伝播**: 各プロンプトでモデルを実行し、次トークンの logits を得ます
+3. **確率の抽出**: 指定された `label_token_ids` の logprobs を取り出します
+4. **Softmax による正規化**: ラベルのトークンのみに対して softmax を適用します（`apply_softmax=true` の場合）
+5. **スコア**: 最初のラベルトークンの正規化後の確率を返します
 
-## Finding Token IDs
+## トークン ID の調べ方 { #finding-token-ids }
 
-To find the token IDs for your labels, use the tokenizer:
+ラベルに対応するトークン ID は、トークナイザーで調べられます。
 
 ```python
 from transformers import AutoTokenizer
@@ -31,7 +31,7 @@ no_id = tokenizer.encode("No", add_special_tokens=False)[0]
 print(f"Yes: {yes_id}, No: {no_id}")
 ```
 
-## Example
+## 例 { #example }
 
 ```bash
 curl -X POST http://localhost:8000/generative_scoring \
@@ -44,7 +44,7 @@ curl -X POST http://localhost:8000/generative_scoring \
   }'
 ```
 
-Here, each item is appended to the query to form prompts like `"Is this city the capital of France? Paris"`, `"... London"`, etc. The model then predicts the next token, and the score reflects the probability of "Yes" (token 9454) vs "No" (token 2753).
+この例では、各アイテムがクエリに連結され、`"Is this city the capital of France? Paris"`、`"... London"` のようなプロンプトになります。モデルは次のトークンを予測し、スコアは「Yes」（トークン 9454）と「No」（トークン 2753）の確率の比を表します。
 
 ??? console "Response"
 
