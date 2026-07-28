@@ -1,17 +1,16 @@
-# Derenderer APIs
+# デレンダラー API { #derenderer-apis }
 
-The derenderer API is the post processing counterpart to the [Renderer APIs](renderer.md). Where `/render` turns a request into token ID (preprocessing), `/derender` turns generated token IDs back into a fully formed OpenAI compatible response (detokenization, reasoning parsing, tool call parsing), all without a GPU.
+デレンダラー API は、[レンダラー API](renderer.md) と対になる後処理の API です。`/render` がリクエストをトークン ID に変換する（前処理）のに対し、`/derender` は生成されたトークン ID を、完全な OpenAI 互換のレスポンスへ戻します（デトークナイズ、reasoning の解析、ツール呼び出しの解析）。いずれも GPU を必要としません。
 
-This closes the loop for a token-in / token-out engine in disaggregated serving:
+これにより、分離型サービングにおけるトークン入力・トークン出力のエンジンの一巡が完成します。
 
-- **GPU less post processing**: Detokenization, reasoning parsing, and tool call parsing run on the same GPU less frontend that hosts `/render`
-- **Parser parity**: The derenderer reuses vLLM's tool and reasoning parsers, so a disaggregated deployment produces the same `content`/`reasoning`/ `tool_calls` split as a standard `vllm serve` server
-- **Non-streaming**: The endpoints expect a complete `GenerateResponse` with all token IDs present and perform one-shot parsing. Streaming derender would require a separate endpoint design and is not currently supported but is in the pipeline
+- **GPU レスの後処理**: デトークナイズ、reasoning の解析、ツール呼び出しの解析を、`/render` をホストするのと同じ GPU レスのフロントエンドで実行します
+- **パーサーの同等性**: デレンダラーは vLLM のツールパーサーと reasoning パーサーを再利用するため、分離型のデプロイでも通常の `vllm serve` と同じ `content` / `reasoning` / `tool_calls` の分割結果が得られます
+- **非ストリーミング**: これらのエンドポイントは、すべてのトークン ID が揃った完全な `GenerateResponse` を受け取り、一度に解析します。ストリーミングのデレンダリングには別のエンドポイント設計が必要で、現時点では未対応ですが計画中です
 
-Both endpoints are hosted by the GPU less rendering server started with [`vllm launch render`](../../cli/launch/render.md), alongside the `/render`
-endpoints.
+どちらのエンドポイントも、[`vllm launch render`](../../cli/launch/render.md) で起動する GPU レスのレンダリングサーバーが `/render` 系のエンドポイントとあわせてホストします。
 
-## Pipeline
+## パイプライン { #pipeline }
 
 ```text
                 render                 generate                derender
@@ -21,18 +20,18 @@ endpoints.
                         └─────────────── request + prompt_tokens ──┘
 ```
 
-The derender step needs more than the engine's `token_ids`. It also consumes the original `chat_request`/`completion_request` and `prompt_tokens` carried over from the render step (see [Request format](#request-format)) so the tool and reasoning parsers have the context they need.
+デレンダリングの工程には、エンジンが返す `token_ids` だけでは足りません。レンダリングの工程から引き継いだ元の `chat_request` / `completion_request` と `prompt_tokens` も使います（[リクエストの形式](#request-format)を参照）。これにより、ツールパーサーと reasoning パーサーが必要な文脈を得られます。
 
-## API Reference
+## API リファレンス { #api-reference }
 
 - Chat Completions Derender API (`/v1/chat/completions/derender`)
-    - Post process a single `GenerateResponse` into a `ChatCompletionResponse`
+    - 単一の `GenerateResponse` を後処理して `ChatCompletionResponse` にします
 - Completions Derender API (`/v1/completions/derender`)
-    - Post process a list of `GenerateResponse` objects (one per prompt) into a `CompletionResponse`
+    - `GenerateResponse` のリスト（プロンプトごとに 1 つ）を後処理して `CompletionResponse` にします
 
-## Request format
+## リクエストの形式 { #request-format }
 
-Each request wraps the engine's `GenerateResponse`(s) together with the caller metadata needed to reconstruct the final response without a GPU.
+各リクエストは、エンジンの `GenerateResponse` と、GPU なしで最終的なレスポンスを再構成するために必要な呼び出し側のメタデータをまとめたものです。
 
 `/v1/chat/completions/derender`:
 
@@ -50,11 +49,11 @@ Each request wraps the engine's `GenerateResponse`(s) together with the caller m
     --8<-- "vllm/entrypoints/scale_out/token_in_token_out/protocol.py:derender-completion-request"
     ```
 
-Oversized payloads are rejected with a `400` before any `tokenizer.decode()` or parser runs.
+サイズが大きすぎるペイロードは、`tokenizer.decode()` やパーサーが動く前に `400` で拒否されます。
 
-## Example
+## 例 { #example }
 
-The example below drives the full `render → generate → derender` round trip for a chat request against a GPU less render server (`/render`, `/derender`) and a token-in / token-out engine (`/inference/v1/generate`).
+以下の例は、GPU レスのレンダリングサーバー（`/render`、`/derender`）とトークン入力・トークン出力のエンジン（`/inference/v1/generate`）に対して、チャットリクエストの `render → generate → derender` の一巡を実行します。
 
 ```python
 import httpx
@@ -95,4 +94,4 @@ with httpx.Client(timeout=60.0) as client:
 print(response["choices"][0]["message"]["content"])
 ```
 
-Passing `chat_request` lets the derenderer run the configured tool and reasoning parsers. This means `response["choices"][0]["message"]` carries the same `content` / `reasoning` / `tool_calls` split a `vllm serve` server would produce. Omit `chat_request` for plain detokenization only.
+`chat_request` を渡すと、デレンダラーは設定されたツールパーサーと reasoning パーサーを実行できます。そのため `response["choices"][0]["message"]` には、`vllm serve` のサーバーと同じ `content` / `reasoning` / `tool_calls` の分割結果が入ります。単純なデトークナイズだけでよい場合は `chat_request` を省略してください。

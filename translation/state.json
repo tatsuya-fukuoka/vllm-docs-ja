@@ -1048,8 +1048,10 @@
       "upstream_sha": "d98ae69e11f196b9"
     },
     "serving/context_parallel_deployment.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "f549e37f350f4f48",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "f549e37f350f4f48"
     },
     "serving/data_parallel_deployment.md": {
@@ -1112,8 +1114,10 @@
       "upstream_sha": "1e7b8db27eb2397b"
     },
     "serving/online_serving/derenderer.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "3c365f93ccbc99d6",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "3c365f93ccbc99d6"
     },
     "serving/online_serving/generative_scoring.md": {
@@ -1138,8 +1142,10 @@
       "upstream_sha": "24eb57e3ea4de134"
     },
     "serving/online_serving/speech_to_text.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "e0cabfac29ef94a2",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "e0cabfac29ef94a2"
     },
     "serving/parallelism_scaling.md": {
