@@ -200,6 +200,38 @@ def rewrite_excluded_links(text: str, src_uri: str, ref: str) -> str:
     return EXCLUDED_LINK_RE.sub(repl, text)
 
 
+API_REF_RE = re.compile(
+    r"\[(?P<text>[^\[\]]+)\]\[(?P<ident>vllm\.[A-Za-z0-9_.]+)\]"
+)
+
+
+def rewrite_api_refs(text: str, ref: str) -> str:
+    """mkdocstrings のクロスリファレンスを英語版 API リファレンスへのリンクにする。
+
+    上流は `[LLM][vllm.LLM]` のような記法で API リファレンスを参照しているが、
+    日本語版は mkdocstrings を使わないため、そのままではリンクにならない。
+    api-autonav が生成する英語版のページ URL に変換する。
+    """
+
+    def repl(match: re.Match) -> str:
+        label = match.group("text")
+        ident = match.group("ident")
+        parts = ident.split(".")
+        # 先頭が大文字の要素（クラス）より前がモジュールパス。
+        # すべて小文字なら最後の要素を関数とみなす。
+        upper = next((i for i, p in enumerate(parts) if p[:1].isupper()), None)
+        module_parts = parts[:upper] if upper else parts[:-1]
+        if not module_parts:
+            module_parts = ["vllm"]
+        module_path = "/".join(module_parts)
+        url = f"https://docs.vllm.ai/en/{ref}/api/{module_path}/#{ident}"
+        if not label.startswith("`"):
+            label = f"`{label}`"
+        return f"[{label}]({url})"
+
+    return API_REF_RE.sub(repl, text)
+
+
 def build_snippet_index() -> dict[str, set[str]]:
     """`upstream/src/` にあるファイルとそこで定義されるスニペット区間の一覧。"""
     index: dict[str, set[str]] = {}
@@ -245,6 +277,7 @@ def transform(
     """未翻訳ページとして docs/ に置くための変換。"""
     text = rewrite_assets(text, src_uri, ref)
     text = rewrite_excluded_links(text, src_uri, ref)
+    text = rewrite_api_refs(text, ref)
     return fix_missing_snippets(text, ref, index)
 
 

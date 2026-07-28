@@ -1,25 +1,25 @@
-# Quickstart
+# クイックスタート { #quickstart }
 
-This guide will help you quickly get started with vLLM to perform:
+このガイドでは、vLLM を使って次のことをすばやく始める方法を説明します。
 
-- [Offline batched inference](#offline-batched-inference)
-- [Online serving](#online-serving)
+- [オフラインバッチ推論](#offline-batched-inference)
+- [オンラインサービング](#online-serving)
 
-## Prerequisites
+## 前提条件 { #prerequisites }
 
 - OS: Linux
 - Python: 3.10 -- 3.13
 
 !!! note
-    vLLM also works on macOS with [vLLM-Metal](https://github.com/vllm-project/vllm-metal) for Apple Silicon GPU acceleration. See the [GPU installation guide](installation/gpu.md) and select the "Apple Silicon" tab.
+    vLLM は macOS でも動作します。Apple Silicon GPU による高速化には [vLLM-Metal](https://github.com/vllm-project/vllm-metal) を使用します。[GPU インストールガイド](installation/gpu.md)の「Apple Silicon」タブを参照してください。
 
-## Installation
+## インストール { #installation }
 
 === "NVIDIA CUDA"
 
-    If you are using NVIDIA GPUs, you can install vLLM using [pip](https://pypi.org/project/vllm/) directly.
+    NVIDIA GPU を使用している場合は、[pip](https://pypi.org/project/vllm/) で直接 vLLM をインストールできます。
 
-    It's recommended to use [uv](https://docs.astral.sh/uv/), a very fast Python environment manager, to create and manage Python environments. Please follow the [documentation](https://docs.astral.sh/uv/#getting-started) to install `uv`. After installing `uv`, you can create a new Python environment and install vLLM using the following commands:
+    Python 環境の作成・管理には、非常に高速な環境マネージャーである [uv](https://docs.astral.sh/uv/) の使用をおすすめします。`uv` のインストール方法は[ドキュメント](https://docs.astral.sh/uv/#getting-started)を参照してください。`uv` をインストールしたら、次のコマンドで新しい Python 環境を作成し、vLLM をインストールできます。
 
     ```bash
     uv venv --python 3.12 --seed
@@ -27,15 +27,15 @@ This guide will help you quickly get started with vLLM to perform:
     uv pip install vllm --torch-backend=auto
     ```
 
-    `uv` can [automatically select the appropriate PyTorch index at runtime](https://docs.astral.sh/uv/guides/integration/pytorch/#automatic-backend-selection) by inspecting the installed CUDA driver version via `--torch-backend=auto` (or `UV_TORCH_BACKEND=auto`). To select a specific backend (e.g., `cu126`), set `--torch-backend=cu126` (or `UV_TORCH_BACKEND=cu126`).
+    `uv` は `--torch-backend=auto`（または `UV_TORCH_BACKEND=auto`）を指定すると、インストール済みの CUDA ドライバのバージョンを調べて[実行時に適切な PyTorch のインデックスを自動選択](https://docs.astral.sh/uv/guides/integration/pytorch/#automatic-backend-selection)します。特定のバックエンド（例: `cu126`）を選びたい場合は `--torch-backend=cu126`（または `UV_TORCH_BACKEND=cu126`）を指定してください。
 
-    Another delightful way is to use `uv run` with `--with [dependency]` option, which allows you to run commands such as `vllm serve` without creating any permanent environment:
+    もう 1 つの便利な方法は `uv run` の `--with [dependency]` オプションです。永続的な環境を作らずに `vllm serve` などのコマンドを実行できます。
 
     ```bash
     uv run --with vllm vllm --help
     ```
 
-    You can also use [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html) to create and manage Python environments. You can install `uv` to the conda environment through `pip` if you want to manage it within the environment.
+    [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html) で Python 環境を作成・管理することもできます。環境内で `uv` を管理したい場合は、`pip` で conda 環境に `uv` をインストールしてください。
 
     ```bash
     conda create -n myenv python=3.12 -y
@@ -46,9 +46,9 @@ This guide will help you quickly get started with vLLM to perform:
 
 === "AMD ROCm"
 
-    If you are using AMD GPUs, you can install vLLM using `uv`.
+    AMD GPU を使用している場合は、`uv` で vLLM をインストールできます。
 
-    It's recommended to use [uv](https://docs.astral.sh/uv/), as it gives the extra index [higher priority than the default index](https://docs.astral.sh/uv/pip/compatibility/#packages-that-exist-on-multiple-indexes). `uv` is also a very fast Python environment manager, to create and manage Python environments. Please follow the [documentation](https://docs.astral.sh/uv/#getting-started) to install `uv`. After installing `uv`, you can create a new Python environment and install vLLM using the following commands:
+    [uv](https://docs.astral.sh/uv/) の使用をおすすめします。追加のインデックスを[既定のインデックスより優先](https://docs.astral.sh/uv/pip/compatibility/#packages-that-exist-on-multiple-indexes)してくれるためです。`uv` は非常に高速な Python 環境マネージャーでもあります。`uv` のインストール方法は[ドキュメント](https://docs.astral.sh/uv/#getting-started)を参照してください。`uv` をインストールしたら、次のコマンドで新しい Python 環境を作成し、vLLM をインストールできます。
 
     ```bash
     uv venv --python 3.12 --seed
@@ -57,68 +57,68 @@ This guide will help you quickly get started with vLLM to perform:
     ```
 
     !!! note
-        It currently supports Python 3.12, ROCm 7.0 and `glibc >= 2.35`.
+        現在サポートされているのは Python 3.12、ROCm 7.0、`glibc >= 2.35` です。
 
     !!! note
-        Note that, previously, docker images were published using AMD's docker release pipeline and were located `rocm/vllm-dev`. This is being deprecated by using vLLM's docker release pipeline.
+        以前は AMD の Docker リリースパイプラインで公開された `rocm/vllm-dev` イメージが使われていましたが、vLLM の Docker リリースパイプラインに移行するため非推奨になっています。
 
     !!! tip
-        A nightly Docker image is also available as [vllm/vllm-openai-rocm:nightly](https://hub.docker.com/r/vllm/vllm-openai-rocm/tags) for testing the latest development builds.
+        最新の開発版をテストするための nightly Docker イメージ [vllm/vllm-openai-rocm:nightly](https://hub.docker.com/r/vllm/vllm-openai-rocm/tags) も提供されています。
 
 === "Google TPU"
 
-    To run vLLM on Google TPUs, you need to install the `vllm-tpu` package.
+    Google TPU 上で vLLM を実行するには、`vllm-tpu` パッケージをインストールします。
     
     ```bash
     uv pip install vllm-tpu
     ```
 
     !!! note
-        For more detailed instructions, including Docker, installing from source, and troubleshooting, please refer to the [vLLM on TPU documentation](https://docs.vllm.ai/projects/tpu/en/latest/).
+        Docker の利用、ソースからのインストール、トラブルシューティングなど、より詳しい手順は [vLLM on TPU のドキュメント](https://docs.vllm.ai/projects/tpu/en/latest/)（英語）を参照してください。
 
 === "Ascend NPU"
 
-    If you are using Ascend NPUs, you can run vLLM through [vLLM Ascend](https://github.com/vllm-project/vllm-ascend), a community-maintained hardware plugin.
+    Ascend NPU を使用している場合は、コミュニティが保守するハードウェアプラグイン [vLLM Ascend](https://github.com/vllm-project/vllm-ascend) を通じて vLLM を実行できます。
 
-    Follow the installation instructions in the [vLLM Ascend quick start](https://docs.vllm.ai/projects/ascend/en/latest/quick_start.html).
+    [vLLM Ascend のクイックスタート](https://docs.vllm.ai/projects/ascend/en/latest/quick_start.html)（英語）に記載のインストール手順に従ってください。
 
     !!! note
-        Ascend setup depends on your NPU hardware and CANN version. For supported versions, Docker images, and troubleshooting, please refer to the [vLLM Ascend documentation](https://docs.vllm.ai/projects/ascend/en/latest/).
+        Ascend のセットアップ内容は NPU のハードウェアと CANN のバージョンによって異なります。対応バージョン、Docker イメージ、トラブルシューティングについては [vLLM Ascend のドキュメント](https://docs.vllm.ai/projects/ascend/en/latest/)（英語）を参照してください。
 
 === "Apple Silicon (Mac)"
 
-    If you are using Apple Silicon Macs, you can use vLLM-Metal for GPU-accelerated inference via Apple's Metal framework.
+    Apple Silicon の Mac を使用している場合は、Apple の Metal フレームワークを介した GPU 高速化推論のために vLLM-Metal を利用できます。
 
-    Follow the installation instructions in the [vLLM-Metal documentation](https://github.com/vllm-project/vllm-metal#installation).
+    [vLLM-Metal のドキュメント](https://github.com/vllm-project/vllm-metal#installation)に記載のインストール手順に従ってください。
 
     !!! note
-        vLLM-Metal uses MLX instead of PyTorch as the compute backend and requires MLX-optimized models from the [mlx-community](https://huggingface.co/mlx-community) on Hugging Face.
+        vLLM-Metal は計算バックエンドとして PyTorch ではなく MLX を使用するため、Hugging Face の [mlx-community](https://huggingface.co/mlx-community) にある MLX 向けに最適化されたモデルが必要です。
 
     !!! tip
-        For more detailed instructions, please refer to the [GPU installation guide](installation/gpu.md) and select the "Apple Silicon" tab.
+        より詳しい手順は [GPU インストールガイド](installation/gpu.md)の「Apple Silicon」タブを参照してください。
 
 !!! note
-    For more detail and non-CUDA platforms, please refer to the [installation guide](installation/README.md) for specific instructions on how to install vLLM.
+    CUDA 以外のプラットフォームやより詳しい情報については、[インストールガイド](installation/README.md)を参照してください。
 
-## Offline Batched Inference
+## オフラインバッチ推論 { #offline-batched-inference }
 
-With vLLM installed, you can start generating texts for list of input prompts (i.e. offline batch inferencing). See the example script: [examples/basic/offline_inference/basic.py](../../examples/basic/offline_inference/basic.py)
+vLLM をインストールすると、入力プロンプトのリストに対してテキスト生成を実行できます（オフラインバッチ推論）。サンプルスクリプト: [examples/basic/offline_inference/basic.py](../../examples/basic/offline_inference/basic.py)
 
-The first line of this example imports the classes [LLM][vllm.LLM] and [SamplingParams][vllm.SamplingParams]:
+この例の 1 行目では、[`LLM`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM) クラスと [`SamplingParams`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.SamplingParams) クラスをインポートしています。
 
-- [LLM][vllm.LLM] is the main class for running offline inference with vLLM engine.
-- [SamplingParams][vllm.SamplingParams] specifies the parameters for the sampling process.
+- [`LLM`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM) は、vLLM エンジンでオフライン推論を実行するための主要なクラスです。
+- [`SamplingParams`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.SamplingParams) は、サンプリング処理のパラメータを指定します。
 
 ```python
 from vllm import LLM, SamplingParams
 ```
 
-The next section defines a list of input prompts and sampling parameters for text generation. The [sampling temperature](https://arxiv.org/html/2402.05201v1) is set to `0.8` and the [nucleus sampling probability](https://en.wikipedia.org/wiki/Top-p_sampling) is set to `0.95`. You can find more information about the sampling parameters [here](https://docs.vllm.ai/en/v0.26.0/api/#inference-parameters).
+次のセクションでは、入力プロンプトのリストと、テキスト生成のためのサンプリングパラメータを定義します。[サンプリングの temperature](https://arxiv.org/html/2402.05201v1) は `0.8`、[nucleus sampling の確率](https://en.wikipedia.org/wiki/Top-p_sampling)は `0.95` に設定しています。サンプリングパラメータの詳細は[こちら](https://docs.vllm.ai/en/v0.26.0/api/#inference-parameters)（英語）を参照してください。
 
 !!! important
-    By default, vLLM will use sampling parameters recommended by model creator by applying the `generation_config.json` from the Hugging Face model repository if it exists. In most cases, this will provide you with the best results by default if [SamplingParams][vllm.SamplingParams] is not specified.
+    vLLM は既定で、Hugging Face のモデルリポジトリに `generation_config.json` があればそれを適用し、モデル作成者が推奨するサンプリングパラメータを使用します。多くの場合、[`SamplingParams`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.SamplingParams) を指定しなくてもこれが最良の結果をもたらします。
 
-    However, if vLLM's default sampling parameters are preferred, please set `generation_config="vllm"` when creating the [LLM][vllm.LLM] instance.
+    vLLM 既定のサンプリングパラメータを使いたい場合は、[`LLM`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM) インスタンスの作成時に `generation_config="vllm"` を指定してください。
 
 ```python
 prompts = [
@@ -130,20 +130,20 @@ prompts = [
 sampling_params = SamplingParams(temperature=0.8, top_p=0.95)
 ```
 
-The [LLM][vllm.LLM] class initializes vLLM's engine and the [OPT-125M model](https://arxiv.org/abs/2205.01068) for offline inference. The list of supported models can be found [here](../models/supported_models.md).
+[`LLM`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM) クラスは、vLLM のエンジンと [OPT-125M モデル](https://arxiv.org/abs/2205.01068)をオフライン推論用に初期化します。対応モデルの一覧は[こちら](../models/supported_models.md)を参照してください。
 
 ```python
 llm = LLM(model="facebook/opt-125m")
 ```
 
 !!! note
-    By default, vLLM downloads models from [Hugging Face](https://huggingface.co/). If you would like to use models from [ModelScope](https://www.modelscope.cn), set the environment variable `VLLM_USE_MODELSCOPE` before initializing the engine.
+    vLLM は既定で [Hugging Face](https://huggingface.co/) からモデルをダウンロードします。[ModelScope](https://www.modelscope.cn) のモデルを使いたい場合は、エンジンを初期化する前に環境変数 `VLLM_USE_MODELSCOPE` を設定してください。
 
     ```shell
     export VLLM_USE_MODELSCOPE=True
     ```
 
-Now, the fun part! The outputs are generated using `llm.generate`. It adds the input prompts to the vLLM engine's waiting queue and executes the vLLM engine to generate the outputs with high throughput. The outputs are returned as a list of `RequestOutput` objects, which include all of the output tokens.
+ここからが本題です。出力は `llm.generate` で生成します。このメソッドは入力プロンプトを vLLM エンジンの待機キューに追加し、エンジンを実行して高スループットで出力を生成します。出力は `RequestOutput` オブジェクトのリストとして返され、生成されたトークンがすべて含まれます。
 
 ```python
 outputs = llm.generate(prompts, sampling_params)
@@ -155,7 +155,7 @@ for output in outputs:
 ```
 
 !!! note
-    The `llm.generate` method does not automatically apply the model's chat template to the input prompt. Therefore, if you are using an Instruct model or Chat model, you should manually apply the corresponding chat template to ensure the expected behavior. Alternatively, you can use the `llm.chat` method and pass a list of messages which have the same format as those passed to OpenAI's `client.chat.completions`:
+    `llm.generate` メソッドは、入力プロンプトにモデルのチャットテンプレートを自動では適用しません。そのため、Instruct モデルや Chat モデルを使う場合は、期待どおりに動作させるために対応するチャットテンプレートを手動で適用する必要があります。あるいは、OpenAI の `client.chat.completions` に渡すのと同じ形式のメッセージのリストを `llm.chat` メソッドに渡すこともできます。
 
     ??? code
     
@@ -191,37 +191,37 @@ for output in outputs:
             print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
         ```
 
-## Online Serving
+## オンラインサービング { #online-serving }
 
-vLLM can be deployed as a server that implements the OpenAI API protocol. This allows vLLM to be used as a drop-in replacement for applications using OpenAI API.
-By default, it starts the server at `http://localhost:8000`. You can specify the address with `--host` and `--port` arguments. The server currently hosts one model at a time and implements endpoints such as [list models](https://platform.openai.com/docs/api-reference/models/list), [create chat completion](https://platform.openai.com/docs/api-reference/chat/completions/create), and [create completion](https://platform.openai.com/docs/api-reference/completions/create) endpoints.
+vLLM は、OpenAI API プロトコルを実装したサーバーとしてデプロイできます。これにより、OpenAI API を使っているアプリケーションの差し替え先として vLLM を利用できます。
+既定では `http://localhost:8000` でサーバーを起動します。アドレスは `--host` と `--port` 引数で指定できます。サーバーは現時点では一度に 1 つのモデルをホストし、[モデル一覧](https://platform.openai.com/docs/api-reference/models/list)、[chat completion の作成](https://platform.openai.com/docs/api-reference/chat/completions/create)、[completion の作成](https://platform.openai.com/docs/api-reference/completions/create)などのエンドポイントを実装しています。
 
-Run the following command to start the vLLM server with the [Qwen2.5-1.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct) model:
+次のコマンドを実行すると、[Qwen2.5-1.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct) モデルで vLLM サーバーを起動できます。
 
 ```bash
 vllm serve Qwen/Qwen2.5-1.5B-Instruct
 ```
 
 !!! note
-    By default, the server uses a predefined chat template stored in the tokenizer.
-    You can learn about overriding it [here](../serving/online_serving/README.md#chat-template).
+    既定では、サーバーはトークナイザーに保存されている定義済みのチャットテンプレートを使用します。
+    上書きする方法は[こちら](../serving/online_serving/README.md#chat-template)を参照してください。
 !!! important
-    By default, the server applies `generation_config.json` from the huggingface model repository if it exists. This means the default values of certain sampling parameters can be overridden by those recommended by the model creator.
+    既定では、Hugging Face のモデルリポジトリに `generation_config.json` があればサーバーがそれを適用します。つまり、一部のサンプリングパラメータの既定値がモデル作成者の推奨値で上書きされます。
 
-    To disable this behavior, please pass `--generation-config vllm` when launching the server.
+    この動作を無効にするには、サーバー起動時に `--generation-config vllm` を指定してください。
 
-This server can be queried in the same format as OpenAI API. For example, to list the models:
+このサーバーには OpenAI API と同じ形式でリクエストできます。たとえばモデルの一覧を取得するには次のようにします。
 
 ```bash
 curl http://localhost:8000/v1/models
 ```
 
-You can pass in the argument `--api-key` or environment variable `VLLM_API_KEY` to enable the server to check for API key in the header.
-You can pass multiple keys after `--api-key`, and the server will accept any of the keys passed, this can be useful for key rotation.
+`--api-key` 引数または環境変数 `VLLM_API_KEY` を指定すると、サーバーがヘッダー内の API キーを検証するようになります。
+`--api-key` の後には複数のキーを指定でき、サーバーはそのいずれかを受け付けます。キーのローテーションに便利です。
 
-### OpenAI Completions API with vLLM
+### vLLM で OpenAI Completions API を使う { #openai-completions-api-with-vllm }
 
-Once your server is started, you can query the model with input prompts:
+サーバーを起動したら、入力プロンプトでモデルにリクエストできます。
 
 ```bash
 curl http://localhost:8000/v1/completions \
@@ -234,7 +234,7 @@ curl http://localhost:8000/v1/completions \
     }'
 ```
 
-Since this server is compatible with OpenAI API, you can use it as a drop-in replacement for any applications using OpenAI API. For example, another way to query the server is via the `openai` Python package:
+このサーバーは OpenAI API と互換性があるため、OpenAI API を使うあらゆるアプリケーションの差し替え先として利用できます。たとえば、`openai` の Python パッケージ経由でリクエストすることもできます。
 
 ??? code
 
@@ -255,13 +255,13 @@ Since this server is compatible with OpenAI API, you can use it as a drop-in rep
     print("Completion result:", completion)
     ```
 
-A more detailed client example can be found here: [examples/basic/offline_inference/basic.py](../../examples/basic/offline_inference/basic.py)
+より詳しいクライアントの例はこちらにあります: [examples/basic/offline_inference/basic.py](../../examples/basic/offline_inference/basic.py)
 
-### OpenAI Chat Completions API with vLLM
+### vLLM で OpenAI Chat Completions API を使う { #openai-chat-completions-api-with-vllm }
 
-vLLM is designed to also support the OpenAI Chat Completions API. The chat interface is a more dynamic, interactive way to communicate with the model, allowing back-and-forth exchanges that can be stored in the chat history. This is useful for tasks that require context or more detailed explanations.
+vLLM は OpenAI Chat Completions API もサポートしています。チャットインターフェイスはモデルとやり取りするためのより動的で対話的な方法であり、チャット履歴として保存できる往復のやり取りが可能です。文脈が必要なタスクや、より詳しい説明が必要なタスクに便利です。
 
-You can use the [create chat completion](https://platform.openai.com/docs/api-reference/chat/completions/create) endpoint to interact with the model:
+[chat completion の作成](https://platform.openai.com/docs/api-reference/chat/completions/create)エンドポイントでモデルとやり取りできます。
 
 ```bash
 curl http://localhost:8000/v1/chat/completions \
@@ -275,7 +275,7 @@ curl http://localhost:8000/v1/chat/completions \
     }'
 ```
 
-Alternatively, you can use the `openai` Python package:
+`openai` の Python パッケージを使うこともできます。
 
 ??? code
 
@@ -300,11 +300,11 @@ Alternatively, you can use the `openai` Python package:
     print("Chat response:", chat_response)
     ```
 
-## On Attention Backends
+## Attention バックエンドについて { #on-attention-backends }
 
-Currently, vLLM supports multiple backends for efficient Attention computation across different platforms and accelerator architectures. It automatically selects the most performant backend compatible with your system and model specifications.
+現在の vLLM は、さまざまなプラットフォームやアクセラレータのアーキテクチャで効率的に Attention を計算するための複数のバックエンドをサポートしています。システムとモデルの条件に適合する、もっとも性能の高いバックエンドが自動的に選択されます。
 
-If desired, you can also manually set the backend of your choice using the `--attention-backend` CLI argument:
+必要に応じて、`--attention-backend` CLI 引数で任意のバックエンドを手動で指定することもできます。
 
 ```bash
 # For online serving
@@ -314,10 +314,10 @@ vllm serve Qwen/Qwen2.5-1.5B-Instruct --attention-backend FLASH_ATTN
 python script.py --attention-backend FLASHINFER
 ```
 
-Some of the available backend options include:
+指定できるバックエンドの例:
 
-- On NVIDIA CUDA: `FLASH_ATTN` or `FLASHINFER`.
-- On AMD ROCm: `TRITON_ATTN`, `ROCM_ATTN`, `ROCM_AITER_FA`, `ROCM_AITER_UNIFIED_ATTN`, `TRITON_MLA`, `ROCM_AITER_MLA` or `ROCM_AITER_TRITON_MLA`.
+- NVIDIA CUDA: `FLASH_ATTN` または `FLASHINFER`
+- AMD ROCm: `TRITON_ATTN`、`ROCM_ATTN`、`ROCM_AITER_FA`、`ROCM_AITER_UNIFIED_ATTN`、`TRITON_MLA`、`ROCM_AITER_MLA`、`ROCM_AITER_TRITON_MLA`
 
 !!! warning
-    There are no pre-built vllm wheels containing Flash Infer, so you must install it in your environment first. Refer to the [Flash Infer official docs](https://docs.flashinfer.ai/) or see [docker/Dockerfile](../../docker/Dockerfile) for instructions on how to install it.
+    Flash Infer を含む vLLM のビルド済み wheel は提供されていないため、あらかじめ自分の環境にインストールする必要があります。インストール方法は [Flash Infer の公式ドキュメント](https://docs.flashinfer.ai/)（英語）または [docker/Dockerfile](../../docker/Dockerfile) を参照してください。

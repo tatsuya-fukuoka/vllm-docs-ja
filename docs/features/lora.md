@@ -2,7 +2,7 @@
 
 This document shows you how to use [LoRA adapters](https://arxiv.org/abs/2106.09685) with vLLM on top of a base model.
 
-LoRA adapters can be used with any vLLM model that implements [SupportsLoRA][vllm.model_executor.models.interfaces.SupportsLoRA].
+LoRA adapters can be used with any vLLM model that implements [`SupportsLoRA`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsLoRA).
 
 Adapters can be efficiently served on a per-request basis with minimal overhead. First we download the adapter(s) and save
 them locally with

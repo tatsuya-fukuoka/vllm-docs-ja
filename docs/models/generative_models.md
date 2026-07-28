@@ -2,9 +2,9 @@
 
 vLLM provides first-class support for generative models, which covers most of LLMs.
 
-In vLLM, generative models implement the [VllmModelForTextGeneration][vllm.model_executor.models.VllmModelForTextGeneration] interface.
+In vLLM, generative models implement the [`VllmModelForTextGeneration`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/#vllm.model_executor.models.VllmModelForTextGeneration) interface.
 Based on the final hidden states of the input, these models output log probabilities of the tokens to generate,
-which are then passed through [Sampler][vllm.v1.sample.sampler.Sampler] to obtain the final text.
+which are then passed through [`Sampler`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/sample/sampler/#vllm.v1.sample.sampler.Sampler) to obtain the final text.
 
 ## Configuration
 
@@ -18,12 +18,12 @@ Run a model in generation mode via the option `--runner generate`.
 
 ## Offline Inference
 
-The [LLM][vllm.LLM] class provides various methods for offline inference.
+The [`LLM`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM) class provides various methods for offline inference.
 See [configuration](https://docs.vllm.ai/en/v0.26.0/api/#configuration) for a list of options when initializing the model.
 
 ### `LLM.generate`
 
-The [generate][vllm.LLM.generate] method is available to all generative models in vLLM.
+The [`generate`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM.generate) method is available to all generative models in vLLM.
 It is similar to [its counterpart in HF Transformers](https://huggingface.co/docs/transformers/main/en/main_classes/text_generation#transformers.GenerationMixin.generate),
 except that tokenization and detokenization are also performed automatically.
 
@@ -39,7 +39,7 @@ for output in outputs:
     print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
 ```
 
-You can optionally control the language generation by passing [SamplingParams][vllm.SamplingParams].
+You can optionally control the language generation by passing [`SamplingParams`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.SamplingParams).
 For example, you can use greedy sampling by setting `temperature=0`:
 
 ```python
@@ -56,14 +56,14 @@ for output in outputs:
 ```
 
 !!! important
-    By default, vLLM will use sampling parameters recommended by model creator by applying the `generation_config.json` from the huggingface model repository if it exists. In most cases, this will provide you with the best results by default if [SamplingParams][vllm.SamplingParams] is not specified.
+    By default, vLLM will use sampling parameters recommended by model creator by applying the `generation_config.json` from the huggingface model repository if it exists. In most cases, this will provide you with the best results by default if [`SamplingParams`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.SamplingParams) is not specified.
 
-    However, if vLLM's default sampling parameters are preferred, please pass `generation_config="vllm"` when creating the [LLM][vllm.LLM] instance.
+    However, if vLLM's default sampling parameters are preferred, please pass `generation_config="vllm"` when creating the [`LLM`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM) instance.
 A code example can be found here: [examples/basic/offline_inference/basic.py](../../examples/basic/offline_inference/basic.py)
 
 ### `LLM.beam_search`
 
-The [beam_search][vllm.LLM.beam_search] method implements [beam search](https://huggingface.co/docs/transformers/en/generation_strategies#beam-search) on top of [generate][vllm.LLM.generate].
+The [`beam_search`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM.beam_search) method implements [beam search](https://huggingface.co/docs/transformers/en/generation_strategies#beam-search) on top of [`generate`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM.generate).
 For example, to search using 5 beams and output at most 50 tokens:
 
 ```python
@@ -81,7 +81,7 @@ for output in outputs:
 
 ### `LLM.chat`
 
-The [chat][vllm.LLM.chat] method implements chat functionality on top of [generate][vllm.LLM.generate].
+The [`chat`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM.chat) method implements chat functionality on top of [`generate`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM.generate).
 In particular, it accepts input similar to [OpenAI Chat Completions API](https://platform.openai.com/docs/api-reference/chat)
 and automatically applies the model's [chat template](https://huggingface.co/docs/transformers/en/chat_templating) to format the prompt.
 

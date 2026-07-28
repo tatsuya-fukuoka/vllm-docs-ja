@@ -36,7 +36,7 @@ Using sequence classification models as (sequence) (outcome) reward models, the 
 <sup>C</sup> Automatically converted into a classification model via `--convert classify`. ([details](./README.md#model-conversion))  
 
 If your model is not in the above list, we will try to automatically convert the model using
-[as_seq_cls_model][vllm.model_executor.models.adapters.as_seq_cls_model]. By default, the class probabilities are extracted from the softmaxed hidden state corresponding to the last token.
+[`as_seq_cls_model`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/adapters/#vllm.model_executor.models.adapters.as_seq_cls_model). By default, the class probabilities are extracted from the softmaxed hidden state corresponding to the last token.
 
 --8<-- [end:supported-sequence-reward-models]
 
@@ -57,7 +57,7 @@ Using token classification models as token (outcome) reward models, the usage an
 <sup>C</sup> Automatically converted into a classification model via `--convert classify`. ([details](./README.md#model-conversion))  
 
 If your model is not in the above list, we will try to automatically convert the model using
-[as_seq_cls_model][vllm.model_executor.models.adapters.as_seq_cls_model].
+[`as_seq_cls_model`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/adapters/#vllm.model_executor.models.adapters.as_seq_cls_model).
 
 --8<-- [end:supported-token-reward-models]
 
@@ -78,7 +78,7 @@ The process reward models used for evaluating intermediate steps are crucial to 
 
 ### Pooling Parameters
 
-The following [pooling parameters][vllm.PoolingParams] are supported.
+The following [`pooling parameters`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.PoolingParams) are supported.
 
 ```python
 --8<-- "vllm/pooling_params.py:common-pooling-params"
@@ -87,7 +87,7 @@ The following [pooling parameters][vllm.PoolingParams] are supported.
 
 ### `LLM.encode`
 
-The [encode][vllm.entrypoints.pooling.offline.PoolingOfflineMixin.encode] method is available to all pooling models in vLLM.
+The [`encode`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.encode) method is available to all pooling models in vLLM.
 
 - Reward Models
 

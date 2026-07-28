@@ -4,7 +4,7 @@ hide:
   - toc
 ---
 
-# Welcome to vLLM
+# vLLM へようこそ { #welcome-to-vllm }
 
 <figure markdown="span">
   ![](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/logos/vllm-logo-text-light.png){ align="center" alt="vLLM Light" class="logo-light" width="60%" }
@@ -12,7 +12,7 @@ hide:
 </figure>
 
 <p style="text-align:center">
-<strong>Easy, fast, and cheap LLM serving for everyone
+<strong>誰にとっても簡単・高速・低コストな LLM サービング
 </strong>
 </p>
 
@@ -23,60 +23,60 @@ hide:
 <a class="github-button" href="https://github.com/vllm-project/vllm/fork" data-show-count="true" data-icon="octicon-repo-forked" data-size="large" aria-label="Fork">Fork</a>
 </p>
 
-vLLM is a fast and easy-to-use library for LLM inference and serving.
+vLLM は、LLM の推論とサービングのための高速で使いやすいライブラリです。
 
-Originally developed in the [Sky Computing Lab](https://sky.cs.berkeley.edu) at UC Berkeley, vLLM has grown into one of the most active open-source AI projects built and maintained by a diverse community of many dozens of academic institutions and companies from over 2000 contributors.
+vLLM はカリフォルニア大学バークレー校の [Sky Computing Lab](https://sky.cs.berkeley.edu) で開発が始まり、現在では数十の大学・企業と 2000 名を超えるコントリビューターからなる多様なコミュニティによって開発・保守される、もっとも活発なオープンソース AI プロジェクトのひとつに成長しました。
 
-Where to get started with vLLM depends on the type of user. If you are looking to:
+vLLM をどこから始めるとよいかは、目的によって異なります。
 
-- Run open-source models on vLLM, we recommend starting with the [Quickstart Guide](./getting_started/quickstart.md)
-- Build applications with vLLM, we recommend starting with the [User Guide](./usage/README.md)
-- Build vLLM, we recommend starting with [Developer Guide](./contributing/README.md)
+- vLLM でオープンソースのモデルを動かしたい場合は、[クイックスタート](./getting_started/quickstart.md)から始めることをおすすめします
+- vLLM を使ってアプリケーションを作りたい場合は、[ユーザーガイド](./usage/README.md)から始めることをおすすめします
+- vLLM 自体を開発したい場合は、[開発者ガイド](./contributing/README.md)から始めることをおすすめします
 
-For information about the development of vLLM, see:
+vLLM の開発状況については以下を参照してください。
 
-- [Roadmap](https://roadmap.vllm.ai)
-- [Releases](https://github.com/vllm-project/vllm/releases)
+- [ロードマップ](https://roadmap.vllm.ai)
+- [リリース](https://github.com/vllm-project/vllm/releases)
 
-vLLM is fast with:
+vLLM が高速である理由:
 
-- State-of-the-art serving throughput
-- Efficient management of attention key and value memory with [**PagedAttention**](https://blog.vllm.ai/2023/06/20/vllm.html)
-- Continuous batching of incoming requests, chunked prefill, prefix caching
-- Fast and flexible model execution with piecewise and full CUDA/HIP graphs
-- Quantization: FP8, MXFP8/MXFP4, NVFP4, INT8, INT4, GPTQ/AWQ, GGUF, compressed-tensors, ModelOpt, TorchAO, and [more](https://docs.vllm.ai/en/latest/features/quantization/index.html)
-- Optimized attention kernels including FlashAttention, FlashInfer, TRTLLM-GEN, FlashMLA, and Triton
-- Optimized GEMM/MoE kernels for various precisions using CUTLASS, TRTLLM-GEN, CuTeDSL
-- Speculative decoding including n-gram, suffix, EAGLE, DFlash
-- Automatic kernel generation and graph-level transformations using torch.compile
-- Disaggregated prefill, decode, and encode
+- 最高水準のサービングスループット
+- [**PagedAttention**](https://blog.vllm.ai/2023/06/20/vllm.html) による Attention の key / value メモリの効率的な管理
+- 受信リクエストの連続バッチング、チャンク化 Prefill、プレフィックスキャッシュ
+- piecewise / full CUDA・HIP グラフによる高速かつ柔軟なモデル実行
+- 量子化: FP8、MXFP8/MXFP4、NVFP4、INT8、INT4、GPTQ/AWQ、GGUF、compressed-tensors、ModelOpt、TorchAO ほか[多数](https://docs.vllm.ai/en/latest/features/quantization/index.html)
+- FlashAttention、FlashInfer、TRTLLM-GEN、FlashMLA、Triton などの最適化された Attention カーネル
+- CUTLASS、TRTLLM-GEN、CuTeDSL を用いた、各種精度向けの最適化された GEMM / MoE カーネル
+- n-gram、suffix、EAGLE、DFlash などの投機的デコーディング
+- torch.compile によるカーネルの自動生成とグラフレベルの変換
+- Prefill・Decode・Encode の分離実行
 
-vLLM is flexible and easy to use with:
+vLLM が柔軟で使いやすい理由:
 
-- Seamless integration with popular Hugging Face models
-- High-throughput serving with various decoding algorithms, including *parallel sampling*, *beam search*, and more
-- Tensor, pipeline, data, expert, and context parallelism for distributed inference
-- Streaming outputs
-- Generation of structured outputs using xgrammar or guidance
-- Tool calling and reasoning parsers
-- OpenAI-compatible API server, plus Anthropic Messages API and gRPC support
-- Efficient multi-LoRA support for dense and MoE layers
-- Support for NVIDIA GPUs, AMD GPUs, and x86/ARM/PowerPC CPUs. Additionally, diverse hardware plugins such as Google TPUs, Intel Gaudi, IBM Spyre, Huawei Ascend, Rebellions NPU, Apple Silicon, MetaX GPU, and more.
+- 主要な Hugging Face モデルとのシームレスな連携
+- *パラレルサンプリング*、*ビームサーチ*などさまざまなデコーディングアルゴリズムによる高スループットなサービング
+- 分散推論のためのテンソル並列・パイプライン並列・データ並列・エキスパート並列・コンテキスト並列
+- ストリーミング出力
+- xgrammar または guidance を用いた構造化出力の生成
+- ツール呼び出しと reasoning パーサー
+- OpenAI 互換 API サーバー、加えて Anthropic Messages API と gRPC のサポート
+- Dense 層・MoE 層に対する効率的なマルチ LoRA サポート
+- NVIDIA GPU、AMD GPU、x86/ARM/PowerPC CPU のサポート。さらに Google TPU、Intel Gaudi、IBM Spyre、Huawei Ascend、Rebellions NPU、Apple Silicon、MetaX GPU など多様なハードウェアプラグインにも対応
 
-vLLM seamlessly supports 200+ model architectures on HuggingFace, including:
+vLLM は HuggingFace 上の 200 を超えるモデルアーキテクチャをシームレスにサポートしています。例:
 
-- Decoder-only LLMs (e.g., Llama, Qwen, Gemma)
-- Mixture-of-Expert LLMs (e.g., Mixtral, DeepSeek-V3, Qwen-MoE, GPT-OSS)
-- Hybrid attention and state-space models (e.g., Mamba, Qwen3.5)
-- Multi-modal models (e.g., LLaVA, Qwen-VL, Pixtral)
-- Embedding and retrieval models (e.g., E5-Mistral, GTE, ColBERT)
-- Reward and classification models (e.g., Qwen-Math)
+- デコーダーのみの LLM（Llama、Qwen、Gemma など）
+- Mixture-of-Expert LLM（Mixtral、DeepSeek-V3、Qwen-MoE、GPT-OSS など）
+- Attention と状態空間モデルのハイブリッド（Mamba、Qwen3.5 など）
+- マルチモーダルモデル（LLaVA、Qwen-VL、Pixtral など）
+- 埋め込み・検索モデル（E5-Mistral、GTE、ColBERT など）
+- 報酬モデル・分類モデル（Qwen-Math など）
 
-Find the full list of supported models [here](./models/supported_models.md).
+対応モデルの一覧は[こちら](./models/supported_models.md)を参照してください。
 
-For more information, check out the following:
+さらに詳しい情報:
 
-- [vLLM announcing blog post](https://blog.vllm.ai/2023/06/20/vllm.html) (intro to PagedAttention)
-- [vLLM paper](https://arxiv.org/abs/2309.06180) (SOSP 2023)
-- [How continuous batching enables 23x throughput in LLM inference while reducing p50 latency](https://www.anyscale.com/blog/continuous-batching-llm-inference) by Cade Daniel et al.
+- [vLLM 公開時のブログ記事](https://blog.vllm.ai/2023/06/20/vllm.html)（PagedAttention の紹介）
+- [vLLM の論文](https://arxiv.org/abs/2309.06180)（SOSP 2023）
+- [How continuous batching enables 23x throughput in LLM inference while reducing p50 latency](https://www.anyscale.com/blog/continuous-batching-llm-inference)（Cade Daniel 他）
 - [vLLM Meetups](community/meetups.md)

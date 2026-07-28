@@ -2,7 +2,7 @@
 
 vLLM applies a set of kernel/operator fusions at compile time (via custom [`torch.compile`](torch_compile.md) Inductor passes)
 to separate optimizations from model definitions and avoid breaking layer abstractions in model code.
-These fusions are controlled by fields in [`PassConfig`][vllm.config.compilation.PassConfig] and are automatically enabled
+These fusions are controlled by fields in [`PassConfig`](https://docs.vllm.ai/en/v0.26.0/api/vllm/config/compilation/#vllm.config.compilation.PassConfig) and are automatically enabled
 at appropriate [optimization levels](optimization_levels.md).
 
 ## Quick Reference

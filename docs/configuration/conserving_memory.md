@@ -131,7 +131,7 @@ Configurable options by modality:
 - `video`: `{"count": int, "num_frames": int, "width": int, "height": int}`
 - `audio`: `{"count": int, "length": int}`
 
-Details could be found in [`ImageDummyOptions`][vllm.config.multimodal.ImageDummyOptions], [`VideoDummyOptions`][vllm.config.multimodal.VideoDummyOptions], and [`AudioDummyOptions`][vllm.config.multimodal.AudioDummyOptions].
+Details could be found in [`ImageDummyOptions`](https://docs.vllm.ai/en/v0.26.0/api/vllm/config/multimodal/#vllm.config.multimodal.ImageDummyOptions), [`VideoDummyOptions`](https://docs.vllm.ai/en/v0.26.0/api/vllm/config/multimodal/#vllm.config.multimodal.VideoDummyOptions), and [`AudioDummyOptions`](https://docs.vllm.ai/en/v0.26.0/api/vllm/config/multimodal/#vllm.config.multimodal.AudioDummyOptions).
 
 Examples:
 

@@ -49,7 +49,7 @@ The most fundamental application of classification models is to categorize input
 \* Feature support is the same as that of the original model.
 
 If your model is not in the above list, we will try to automatically convert the model using
-[as_seq_cls_model][vllm.model_executor.models.adapters.as_seq_cls_model]. By default, the class probabilities are extracted from the softmaxed hidden state corresponding to the last token.
+[`as_seq_cls_model`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/adapters/#vllm.model_executor.models.adapters.as_seq_cls_model). By default, the class probabilities are extracted from the softmaxed hidden state corresponding to the last token.
 
 ### Cross-encoder Models
 
@@ -67,7 +67,7 @@ Using (sequence) classification models as reward models. For more information, s
 
 ### Pooling Parameters
 
-The following [pooling parameters][vllm.PoolingParams] are supported.
+The following [`pooling parameters`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.PoolingParams) are supported.
 
 ```python
 --8<-- "vllm/pooling_params.py:common-pooling-params"
@@ -76,7 +76,7 @@ The following [pooling parameters][vllm.PoolingParams] are supported.
 
 ### `LLM.classify`
 
-The [classify][vllm.entrypoints.pooling.offline.PoolingOfflineMixin.classify] method outputs a probability vector for each prompt.
+The [`classify`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.classify) method outputs a probability vector for each prompt.
 
 ```python
 from vllm import LLM
@@ -92,7 +92,7 @@ A code example can be found here: [examples/basic/offline_inference/classify.py]
 
 ### `LLM.encode`
 
-The [encode][vllm.entrypoints.pooling.offline.PoolingOfflineMixin.encode] method is available to all pooling models in vLLM.
+The [`encode`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.encode) method is available to all pooling models in vLLM.
 
 Set `pooling_task="classify"` when using `LLM.encode` for classification Models:
 

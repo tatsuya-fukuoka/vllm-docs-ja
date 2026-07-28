@@ -127,7 +127,7 @@ All models that support embedding task also support using the score API to compu
 
 ### Pooling Parameters
 
-The following [pooling parameters][vllm.PoolingParams] are only supported by cross-encoder models and do not work for late-interaction and bi-encoder models.
+The following [`pooling parameters`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.PoolingParams) are only supported by cross-encoder models and do not work for late-interaction and bi-encoder models.
 
 ```python
 --8<-- "vllm/pooling_params.py:common-pooling-params"
@@ -136,7 +136,7 @@ The following [pooling parameters][vllm.PoolingParams] are only supported by cro
 
 ### `LLM.score`
 
-The [score][vllm.entrypoints.pooling.offline.PoolingOfflineMixin.score] method outputs similarity scores between sentence pairs.
+The [`score`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.score) method outputs similarity scores between sentence pairs.
 
 ```python
 from vllm import LLM

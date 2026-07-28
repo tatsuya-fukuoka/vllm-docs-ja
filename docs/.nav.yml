@@ -1,42 +1,42 @@
 nav:
-  - Home: README.md
-  - User Guide:
+  - ホーム: README.md
+  - ユーザーガイド:
     - usage/README.md
-    - Getting Started:
+    - はじめに:
       - getting_started/quickstart.md
       - getting_started/installation
       - サンプル集 (英語): https://docs.vllm.ai/en/v0.26.0/examples/
-    - General:
+    - 全般:
       - usage/v1_guide.md
       - usage/*
-    - Inference and Serving:
+    - 推論とサービング:
       - serving/offline_inference.md
-      - Online Serving: serving/online_serving
+      - オンラインサービング: serving/online_serving
       - serving/*
       - serving/integrations
-    - Deployment:
+    - デプロイ:
       - deployment/*
       - deployment/frameworks
       - deployment/integrations
-    - Training: training
-    - Configuration:
+    - 学習: training
+    - 設定:
       - configuration/*
-      - TPU: https://docs.vllm.ai/projects/tpu/en/latest/
-    - Models:
+      - TPU (英語): https://docs.vllm.ai/projects/tpu/en/latest/
+    - モデル:
       - models/supported_models.md
       - models/generative_models.md
-      - Pooling Models: models/pooling_models
+      - プーリングモデル: models/pooling_models
       - models/extensions
-      - Hardware Supported Models:
+      - ハードウェア別の対応モデル:
         - models/hardware_supported_models/*
-        - TPU: https://docs.vllm.ai/projects/tpu/en/latest/recommended_models_features/
-    - Features: features
-  - Developer Guide:
+        - TPU (英語): https://docs.vllm.ai/projects/tpu/en/latest/recommended_models_features/
+    - 機能: features
+  - 開発者ガイド:
     - contributing/README.md
-    - General:
+    - 全般:
       - glob: contributing/*
         flatten_single_child_sections: true
-    - Model Implementation:
+    - モデルの実装:
       - contributing/model/README.md
       - contributing/model/basic.md
       - contributing/model/registration.md
@@ -44,20 +44,23 @@ nav:
       - contributing/model/multimodal.md
       - contributing/model/transcription.md
     - CI: contributing/ci
-    - Design Documents:
-      - Plugins:
+    - 設計ドキュメント:
+      - プラグイン:
         - design/*plugin*.md
       - design/*
-  - Benchmarking:
+  - ベンチマーク:
       - benchmarking/README.md
       - benchmarking/cli.md
       - benchmarking/sweeps.md
       - benchmarking/dashboard.md
   - API リファレンス (英語): https://docs.vllm.ai/en/v0.26.0/api/
-  - CLI Reference: cli
-  - Community:
+  - CLI リファレンス: cli
+  - コミュニティ:
     - community/*
-    - Governance: governance
-    - Blog: https://blog.vllm.ai
-    - Forum: https://discuss.vllm.ai
+    - ガバナンス: governance
+    - ブログ (英語): https://blog.vllm.ai
+    - フォーラム (英語): https://discuss.vllm.ai
     - Slack: https://slack.vllm.ai
+  - この日本語版について:
+    - ja/index.md
+    - ja/status.md

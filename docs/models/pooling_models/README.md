@@ -120,7 +120,7 @@ For more detailed information, please refer to the link below.
 ## Offline Inference
 
 Each pooling model in vLLM supports one or more of these tasks according to
-[Pooler.get_supported_tasks][vllm.model_executor.layers.pooler.Pooler.get_supported_tasks],
+[`Pooler.get_supported_tasks`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/layers/pooler/#vllm.model_executor.layers.pooler.Pooler.get_supported_tasks),
 enabling the corresponding APIs.
 
 ### Offline APIs corresponding to pooling usages
@@ -140,24 +140,24 @@ enabling the corresponding APIs.
 
 ### `LLM.classify`
 
-The [classify][vllm.LLM.classify] method outputs a probability vector for each prompt.
+The [`classify`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM.classify) method outputs a probability vector for each prompt.
 It is primarily designed for [classification models](classify.md).
 For more information about `LLM.classify`, see [this page](classify.md#offline-inference).
 
 ### `LLM.embed`
 
-The [embed][vllm.LLM.embed] method outputs an embedding vector for each prompt.
+The [`embed`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM.embed) method outputs an embedding vector for each prompt.
 It is primarily designed for [embedding models](embed.md).
 For more information about `LLM.embed`, see [this page](embed.md#offline-inference).
 
 ### `LLM.score`
 
-The [score][vllm.LLM.score] method outputs similarity scores between sentence pairs.
+The [`score`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM.score) method outputs similarity scores between sentence pairs.
 It is primarily designed for [score models](scoring.md).
 
 ### `LLM.encode`
 
-The [encode][vllm.LLM.encode] method is available to all pooling models in vLLM.
+The [`encode`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM.encode) method is available to all pooling models in vLLM.
 
 Please use one of the more specific methods or set the task directly when using `LLM.encode`, refer to the [table above](#offline-apis-corresponding-to-pooling-usages).
 
@@ -232,8 +232,8 @@ for output in response.json()["data"]:
 
 ## Configuration
 
-In vLLM, pooling models implement the [VllmModelForPooling][vllm.model_executor.models.VllmModelForPooling] interface.
-These models use a [Pooler][vllm.model_executor.layers.pooler.Pooler] to extract the final hidden states of the input
+In vLLM, pooling models implement the [`VllmModelForPooling`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/#vllm.model_executor.models.VllmModelForPooling) interface.
+These models use a [`Pooler`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/layers/pooler/#vllm.model_executor.layers.pooler.Pooler) to extract the final hidden states of the input
 before returning them.
 
 ### Model Runner
@@ -249,7 +249,7 @@ Run a model in pooling mode via the option `--runner pooling`.
 vLLM can adapt models for various pooling tasks via the option `--convert <type>`.
 
 If `--runner pooling` has been set (manually or automatically) but the model does not implement the
-[VllmModelForPooling][vllm.model_executor.models.VllmModelForPooling] interface,
+[`VllmModelForPooling`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/#vllm.model_executor.models.VllmModelForPooling) interface,
 vLLM will attempt to automatically convert the model according to the architecture names
 shown in the table below.
 
@@ -266,7 +266,7 @@ shown in the table below.
 
 #### Predefined models
 
-If the [Pooler][vllm.model_executor.layers.pooler.Pooler] defined by the model accepts `pooler_config`,
+If the [`Pooler`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/layers/pooler/#vllm.model_executor.layers.pooler.Pooler) defined by the model accepts `pooler_config`,
 you can override some of its attributes via the `--pooler-config` option.
 
 #### Converted models

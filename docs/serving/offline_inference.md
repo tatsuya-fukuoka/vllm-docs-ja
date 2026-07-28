@@ -1,91 +1,91 @@
-# Offline Inference
+# オフライン推論 { #offline-inference }
 
-Offline inference is possible in your own code using vLLM's [`LLM`][vllm.LLM] class.
+vLLM の [`LLM`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM) クラスを使うと、自分のコードの中でオフライン推論を実行できます。
 
-## Model Types
+## モデルの種類 { #model-types }
 
-vLLM models can be categorized into two types:
+vLLM のモデルは 2 種類に分類できます。
 
-- **[Generative Models](../models/supported_models.md)** - Models that produce text completions or chat responses (e.g., LLaMA, Qwen, DeepSeek). Use `LLM.generate()` and `LLM.chat()` for these models.
+- **[生成モデル](../models/supported_models.md)** - テキストの補完やチャットの応答を生成するモデル（LLaMA、Qwen、DeepSeek など）。これらのモデルでは `LLM.generate()` と `LLM.chat()` を使います。
 
-- **[Pooling Models](../models/pooling_models/README.md)** - These models do not generate content. They are primarily used for classification and retrieval tasks, such as bge-m3 and Qwen3 Reranker.
+- **[プーリングモデル](../models/pooling_models/README.md)** - コンテンツを生成しないモデル。bge-m3 や Qwen3 Reranker のように、主に分類や検索のタスクに使われます。
 
-## Generative APIs
+## 生成系 API { #generative-apis }
 
-For further details on generative models, please refer to [this page](../models/supported_models.md).
+生成モデルの詳細は[このページ](../models/supported_models.md)を参照してください。
 
-- `LLM.generate` - Generates completions for the given input prompts.
-- `LLM.chat` - Generates responses for a chat conversation.
+- `LLM.generate` - 与えられた入力プロンプトに対する補完を生成します。
+- `LLM.chat` - チャットの会話に対する応答を生成します。
 
-## Asynchronous Queue APIs
+## 非同期キュー API { #asynchronous-queue-apis }
 
-- `LLM.enqueue` - Enqueues prompts for generation without waiting for completion.
-- `LLM.enqueue_chat` - Enqueues chat conversations for generation without waiting.
-- `LLM.wait_for_completion` - Waits for all enqueued requests to complete and returns results.
+- `LLM.enqueue` - 完了を待たずに、生成対象のプロンプトをキューに追加します。
+- `LLM.enqueue_chat` - 完了を待たずに、生成対象のチャット会話をキューに追加します。
+- `LLM.wait_for_completion` - キューに入れたすべてのリクエストの完了を待ち、結果を返します。
 
-## Pooling APIs
+## プーリング API { #pooling-apis }
 
-For further details on pooling models, please refer to [this page](../models/pooling_models/README.md).
+プーリングモデルの詳細は[このページ](../models/pooling_models/README.md)を参照してください。
 
-- `LLM.classify` - Only applicable to [classification models](../models/pooling_models/classify.md).
-- `LLM.embed` - Only applicable to [embedding models](../models/pooling_models/embed.md).
-- `LLM.score` - Applicable to [score models](../models/pooling_models/scoring.md) (cross-encoder, bi-encoder, late-interaction).
-- `LLM.encode` - Applicable to all [pooling models](../models/pooling_models/README.md).
+- `LLM.classify` - [分類モデル](../models/pooling_models/classify.md)にのみ適用できます。
+- `LLM.embed` - [埋め込みモデル](../models/pooling_models/embed.md)にのみ適用できます。
+- `LLM.score` - [スコアモデル](../models/pooling_models/scoring.md)（cross-encoder、bi-encoder、late-interaction）に適用できます。
+- `LLM.encode` - すべての[プーリングモデル](../models/pooling_models/README.md)に適用できます。
 
-## Profiling APIs
+## プロファイリング API { #profiling-apis }
 
-For further details on profiling, please refer to [this page](../contributing/profiling.md).
+プロファイリングの詳細は[このページ](../contributing/profiling.md)を参照してください。
 
-- `LLM.start_profile` - Starts profiling with an optional custom trace prefix.
-- `LLM.stop_profile` - Stops the ongoing profiling session.
+- `LLM.start_profile` - 任意のトレース接頭辞を指定してプロファイリングを開始します。
+- `LLM.stop_profile` - 実行中のプロファイリングセッションを停止します。
 
-## Sleep Mode APIs
+## スリープモード API { #sleep-mode-apis }
 
-For further details on sleep mode, please refer to [this page](../features/sleep_mode.md).
+スリープモードの詳細は[このページ](../features/sleep_mode.md)を参照してください。
 
-- `LLM.sleep` - Puts the engine into sleep mode.
-- `LLM.wake_up` - Wakes up the engine from sleep mode.
+- `LLM.sleep` - エンジンをスリープモードにします。
+- `LLM.wake_up` - スリープモードからエンジンを復帰させます。
 
-## Cache Management APIs
+## キャッシュ管理 API { #cache-management-apis }
 
-- `LLM.reset_mm_cache` - Resets the multi-modal cache.
-- `LLM.reset_prefix_cache` - Resets the prefix cache.
+- `LLM.reset_mm_cache` - マルチモーダルキャッシュをリセットします。
+- `LLM.reset_prefix_cache` - プレフィックスキャッシュをリセットします。
 
-## Metrics APIs
+## メトリクス API { #metrics-apis }
 
-For further details on metrics, please refer to [this page](../design/metrics.md).
+メトリクスの詳細は[このページ](../design/metrics.md)を参照してください。
 
-- `LLM.get_metrics` - Returns a snapshot of aggregated metrics from Prometheus.
+- `LLM.get_metrics` - Prometheus 形式で集計されたメトリクスのスナップショットを返します。
 
-## Weight Transfer APIs (RL Training)
+## 重み転送 API（RL 学習） { #weight-transfer-apis-rl-training }
 
-For further details on Weight Transfer, please refer to [this page](../training/weight_transfer/README.md).
+重み転送の詳細は[このページ](../training/weight_transfer/README.md)を参照してください。
 
-- `LLM.init_weight_transfer_engine` - Initializes the weight transfer engine for RL training.
-- `LLM.start_weight_update` - Starts a new weight update cycle.
-- `LLM.update_weights` - Updates the model weights.
-- `LLM.finish_weight_update` - Finishes the current weight update cycle.
+- `LLM.init_weight_transfer_engine` - RL 学習用の重み転送エンジンを初期化します。
+- `LLM.start_weight_update` - 新しい重み更新サイクルを開始します。
+- `LLM.update_weights` - モデルの重みを更新します。
+- `LLM.finish_weight_update` - 現在の重み更新サイクルを終了します。
 
-## Additional APIs
+## その他の API { #additional-apis }
 
-- `LLM.collective_rpc` - Executes a method or callable collectively across all workers.
-- `LLM.apply_model` - Applies a function directly to the model inside each worker.
+- `LLM.collective_rpc` - すべてのワーカーに対してメソッドや呼び出し可能オブジェクトを一斉に実行します。
+- `LLM.apply_model` - 各ワーカー内のモデルに直接関数を適用します。
 
-## API Reference
+## API リファレンス { #api-reference }
 
-[Offline Inference](https://docs.vllm.ai/en/v0.26.0/api/#offline-inference)
+[Offline Inference](https://docs.vllm.ai/en/v0.26.0/api/#offline-inference)（英語）
 
-## Ray Data LLM API
+## Ray Data LLM API { #ray-data-llm-api }
 
-Ray Data LLM is an alternative offline inference API that uses vLLM as the underlying engine.
-This API adds several batteries-included capabilities that simplify large-scale, GPU-efficient inference:
+Ray Data LLM は、vLLM を内部エンジンとして利用する、もう 1 つのオフライン推論 API です。
+この API には、大規模かつ GPU 効率の高い推論を簡単にするための機能が一通り備わっています。
 
-- Streaming execution processes datasets that exceed aggregate cluster memory.
-- Automatic sharding, load balancing, and autoscaling distribute work across a Ray cluster with built-in fault tolerance.
-- Continuous batching keeps vLLM replicas saturated and maximizes GPU utilization.
-- Transparent support for tensor and pipeline parallelism enables efficient multi-GPU inference.
-- Reading and writing to most popular file formats and cloud object storage.
-- Scaling up the workload without code changes.
+- ストリーミング実行により、クラスタ全体のメモリを超えるデータセットも処理できます。
+- 自動シャーディング・負荷分散・オートスケーリングにより、耐障害性を備えた形で Ray クラスタ全体に処理を分散します。
+- 連続バッチングにより vLLM のレプリカを飽和状態に保ち、GPU 使用率を最大化します。
+- テンソル並列・パイプライン並列を透過的にサポートし、効率的なマルチ GPU 推論を実現します。
+- 主要なファイル形式とクラウドオブジェクトストレージの読み書きに対応しています。
+- コードを変更せずにワークロードをスケールアップできます。
 
 ??? code
 
@@ -111,4 +111,4 @@ This API adds several batteries-included capabilities that simplify large-scale,
     ds.write_parquet("local:///tmp/data/")
     ```
 
-For more information about the Ray Data LLM API, see the [Ray Data LLM documentation](https://docs.ray.io/en/latest/data/working-with-llms.html).
+Ray Data LLM API の詳細は [Ray Data LLM のドキュメント](https://docs.ray.io/en/latest/data/working-with-llms.html)（英語）を参照してください。

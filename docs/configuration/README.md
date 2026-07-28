@@ -1,9 +1,9 @@
-# Configuration Options
+# 設定オプション { #configuration-options }
 
-This section lists the most common options for running vLLM.
+このセクションでは、vLLM を実行するときによく使うオプションを説明します。
 
-There are three main levels of configuration, from highest priority to lowest priority:
+設定には大きく 3 つの階層があり、優先度は次の順です（高い順）。
 
-- [Request parameters](../serving/online_serving/openai_compatible_server.md#completions-api) and [input arguments](https://docs.vllm.ai/en/v0.26.0/api/#inference-parameters)
-- [Engine arguments](./engine_args.md)
-- [Environment variables](./env_vars.md)
+- [リクエストパラメータ](../serving/online_serving/openai_compatible_server.md#completions-api)と[入力引数](https://docs.vllm.ai/en/v0.26.0/api/#inference-parameters)
+- [エンジン引数](./engine_args.md)
+- [環境変数](./env_vars.md)

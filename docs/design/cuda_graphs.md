@@ -37,7 +37,7 @@ These features allow the most flexibility for cudagraph capture and compilation 
 
 ## `CudagraphModes`
 
-[CUDAGraphMode][vllm.config.compilation.CUDAGraphMode] is the single knob you tune in `CompilationConfig.cudagraph_mode`:
+[`CUDAGraphMode`](https://docs.vllm.ai/en/v0.26.0/api/vllm/config/compilation/#vllm.config.compilation.CUDAGraphMode) is the single knob you tune in `CompilationConfig.cudagraph_mode`:
 
 * `NONE` — turn CUDA Graphs off. Good for debugging.
 * `PIECEWISE` —  a single-mode strategy (and past default). It is the most flexible: attention or other CUDA Graphs-incompatible operations stay eager, everything else goes into CUDA Graphs. Requires piecewise compilation.
@@ -63,10 +63,10 @@ While cascade attention is not cudagraph compatible, it is now compatible with a
 
 The new CUDA Graphs logic is built on top of piecewise compilation and supports dual CUDA Graphs runtime mode switching. The system contains the following core components:
 
-* [CUDAGraphWrapper][vllm.compilation.cuda_graph.CUDAGraphWrapper]: wrapper that handles CUDAGraph capture & replay on the wrapped callable
-* [CudagraphDispatcher][vllm.v1.cudagraph_dispatcher.CudagraphDispatcher]: the central controller that contains the single source of truth about CUDA Graphs and handles dispatching between them.
-* [CUDAGraphMode][vllm.config.compilation.CUDAGraphMode]: enum describing the supported and runtime modes (introduced above).
-* [BatchDescriptor][vllm.forward_context.BatchDescriptor], serving as a unique representation of the runtime batch used for dispatching.
+* [`CUDAGraphWrapper`](https://docs.vllm.ai/en/v0.26.0/api/vllm/compilation/cuda_graph/#vllm.compilation.cuda_graph.CUDAGraphWrapper): wrapper that handles CUDAGraph capture & replay on the wrapped callable
+* [`CudagraphDispatcher`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/cudagraph_dispatcher/#vllm.v1.cudagraph_dispatcher.CudagraphDispatcher): the central controller that contains the single source of truth about CUDA Graphs and handles dispatching between them.
+* [`CUDAGraphMode`](https://docs.vllm.ai/en/v0.26.0/api/vllm/config/compilation/#vllm.config.compilation.CUDAGraphMode): enum describing the supported and runtime modes (introduced above).
+* [`BatchDescriptor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/forward_context/#vllm.forward_context.BatchDescriptor), serving as a unique representation of the runtime batch used for dispatching.
 
 See the following figures for a quick comparison between the previous and current design patterns of CUDA Graphs with inductor compilation. We can see that previously the CUDA Graphs logic and compilation logic were tightly coupled into the vllm `PiecewiseBackend`, and CUDA Graphs was implicitly dispatched by `batch_size` idly. Now the CUDA Graphs logic is separated into the `CUDAGraphWrapper` class, responsible for both full and piecewise CUDA Graphs abilities, and dispatching is **explicitly** done via **runtime mode** plus the `BatchDescriptor` as the **dispatch key** via `CudagraphDispatcher`.
 
@@ -80,7 +80,7 @@ See the following figures for a quick comparison between the previous and curren
 
 ### `BatchDescriptor`
 
-[BatchDescriptor][vllm.forward_context.BatchDescriptor] is a component within `ForwardContext`, alongside the CUDA Graphs runtime modes, serving as the core structure for dispatching keys at runtime. The prototype is:
+[`BatchDescriptor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/forward_context/#vllm.forward_context.BatchDescriptor) is a component within `ForwardContext`, alongside the CUDA Graphs runtime modes, serving as the core structure for dispatching keys at runtime. The prototype is:
 
 ```python
 class BatchDescriptor(NamedTuple):
@@ -99,7 +99,7 @@ The goal of this structure is to uniquely identify a (padded) batch with minimal
 
 ### `CudagraphDispatcher`
 
-The [CudagraphDispatcher][vllm.v1.cudagraph_dispatcher.CudagraphDispatcher] takes responsibility for maintaining two sets of valid dispatching keys, one set for `FULL` runtime mode and one set for `PIECEWISE` runtime mode, and dispatches the correct runtime mode and the dispatching keys before executing the model's forwards. It will take in the initial key (a rough batch_descriptor for the padded input) and return the selected runtime mode and the final batch_descriptor, then tell the CUDAGraphWrapper instances that decision through forward contexts. Notice that `CudagraphDispatcher` is the only source of truth for available CUDA Graph keys and `CUDAGraphWrapper` instances can blindly trust the forward context on what CUDA Graphs to dispatch to. This lets us simplify the wrapper code and centralize the logic in the dispatcher.
+The [`CudagraphDispatcher`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/cudagraph_dispatcher/#vllm.v1.cudagraph_dispatcher.CudagraphDispatcher) takes responsibility for maintaining two sets of valid dispatching keys, one set for `FULL` runtime mode and one set for `PIECEWISE` runtime mode, and dispatches the correct runtime mode and the dispatching keys before executing the model's forwards. It will take in the initial key (a rough batch_descriptor for the padded input) and return the selected runtime mode and the final batch_descriptor, then tell the CUDAGraphWrapper instances that decision through forward contexts. Notice that `CudagraphDispatcher` is the only source of truth for available CUDA Graph keys and `CUDAGraphWrapper` instances can blindly trust the forward context on what CUDA Graphs to dispatch to. This lets us simplify the wrapper code and centralize the logic in the dispatcher.
 
 The dispatching keys are initialized through the dispatcher's `initialize_cudagraph_keys` method, which is called by the gpu_model_runner after all possible attention backends are initialized. This is where we can get much fancier in the future and “prepare” all kinds of CUDA Graphs combinations. For now, we just append available keys based on the valid combos of `decode_mode`/`mixed_mode` of `cudagraph_mode` and `cudagraph_capture_sizes` in the compilation config.
 
@@ -124,7 +124,7 @@ Here is a simplified illustration of the workflow at runtime in the model execut
 
 ### `CUDAGraphWrapper`
 
-A [CUDAGraphWrapper][vllm.compilation.cuda_graph.CUDAGraphWrapper] instance wraps a runnable and simply mimics the runnable with appended CUDA Graphs abilities. Each wrapper instance is bound to a specific `runtime_mode`, which is restricted to `PIECEWISE` and `FULL` mode, and takes responsibility for capturing/replaying and passing through (directly calling) the runnable.  At runtime, each wrapper would:
+A [`CUDAGraphWrapper`](https://docs.vllm.ai/en/v0.26.0/api/vllm/compilation/cuda_graph/#vllm.compilation.cuda_graph.CUDAGraphWrapper) instance wraps a runnable and simply mimics the runnable with appended CUDA Graphs abilities. Each wrapper instance is bound to a specific `runtime_mode`, which is restricted to `PIECEWISE` and `FULL` mode, and takes responsibility for capturing/replaying and passing through (directly calling) the runnable.  At runtime, each wrapper would:
 
 1. inspect the runtime_mode and batch_descriptor(dispatching key) from the global forward context.
 2. If runtime_mode is `NONE` or runtime_mode does not match the mode of the wrapper, just call the runnable directly.
@@ -150,7 +150,7 @@ The CUDA Graphs wrapper no longer manages the warm-up logic. The warm-up process
 
 ## CUDA Graphs Compatibility of Attention Backends
 
-To signal the CUDA Graphs compatibility of the attention backends, we introduce a new enum type [AttentionCGSupport][vllm.v1.attention.backend.AttentionCGSupport], which is an enum type that tracks the capability of the attention backend to support CUDA Graphs. The value is sorted in the order of the capability, i.e., `ALWAYS`> `UNIFORM_BATCH`> `UNIFORM_SINGLE_TOKEN_DECODE`> `NEVER`.
+To signal the CUDA Graphs compatibility of the attention backends, we introduce a new enum type [`AttentionCGSupport`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/attention/backend/#vllm.v1.attention.backend.AttentionCGSupport), which is an enum type that tracks the capability of the attention backend to support CUDA Graphs. The value is sorted in the order of the capability, i.e., `ALWAYS`> `UNIFORM_BATCH`> `UNIFORM_SINGLE_TOKEN_DECODE`> `NEVER`.
 
 ```python
 class AttentionCGSupport(enum.Enum):
@@ -170,7 +170,7 @@ class AttentionCGSupport(enum.Enum):
     """NO CUDA Graphs support"""
 ```
 
-Suppose we have hybrid attention backends (e.g., in mamba mixer models). In that case, we seek the minimum capability of all backends to determine the final capability of the model, and we might resolve the incompatible CUDA Graphs mode by downgrading the mode to the best fit one. For example, downgrading `FULL` mode to `FULL_AND_PIECEWISE` mode if the minimum capability is `UNIFORM_BATCH`, or `PIECEWISE` mode if the minimum capability is `NEVER` for -O3 compilation mode. For the complete fallback policy, please see the code for [this][vllm.v1.worker.gpu_model_runner.GPUModelRunner._check_and_update_cudagraph_mode].
+Suppose we have hybrid attention backends (e.g., in mamba mixer models). In that case, we seek the minimum capability of all backends to determine the final capability of the model, and we might resolve the incompatible CUDA Graphs mode by downgrading the mode to the best fit one. For example, downgrading `FULL` mode to `FULL_AND_PIECEWISE` mode if the minimum capability is `UNIFORM_BATCH`, or `PIECEWISE` mode if the minimum capability is `NEVER` for -O3 compilation mode. For the complete fallback policy, please see the code for [`this`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/worker/gpu_model_runner/#vllm.v1.worker.gpu_model_runner.GPUModelRunner._check_and_update_cudagraph_mode).
 
 The following table lists backends that support full CUDA Graphs at the time of writing.
 

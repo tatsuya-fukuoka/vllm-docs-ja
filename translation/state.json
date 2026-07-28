@@ -6,8 +6,10 @@
   },
   "pages": {
     "README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "87681113461ee554",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "87681113461ee554"
     },
     "benchmarking/README.md": {
@@ -121,8 +123,10 @@
       "upstream_sha": "d88f4f471fb8bab6"
     },
     "configuration/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "c3f61764c0300181",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "c3f61764c0300181"
     },
     "configuration/conserving_memory.md": {
@@ -816,8 +820,10 @@
       "upstream_sha": "caa6db0c295aabbf"
     },
     "getting_started/installation/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "dc7a7b0d79f1fe51",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "dc7a7b0d79f1fe51"
     },
     "getting_started/installation/cpu.apple.inc.md": {
@@ -856,8 +862,10 @@
       "upstream_sha": "25f65fcb64e10515"
     },
     "getting_started/installation/gpu.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1bcf504d2c28d4f1",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "1bcf504d2c28d4f1"
     },
     "getting_started/installation/gpu.rocm.inc.md": {
@@ -871,13 +879,17 @@
       "upstream_sha": "0d0a98a738cc9ddf"
     },
     "getting_started/installation/python_env_setup.inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "5af31b3643a72b6e",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "5af31b3643a72b6e"
     },
     "getting_started/quickstart.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "cda0714d7ac9d356",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "cda0714d7ac9d356"
     },
     "governance/collaboration.md": {
@@ -1016,8 +1028,10 @@
       "upstream_sha": "632469927696f101"
     },
     "serving/offline_inference.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "2413cf78d22c2342",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "2413cf78d22c2342"
     },
     "serving/online_serving/README.md": {
@@ -1096,13 +1110,17 @@
       "upstream_sha": "29bfa804ed3dbb23"
     },
     "usage/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "f4f6abcb8f46cf1f",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "f4f6abcb8f46cf1f"
     },
     "usage/faq.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "dc0fe41b0861fbf3",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "dc0fe41b0861fbf3"
     },
     "usage/metrics.md": {
