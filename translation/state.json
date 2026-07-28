@@ -130,8 +130,10 @@
       "upstream_sha": "c3f61764c0300181"
     },
     "configuration/conserving_memory.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "72dafb7a2e4b100e",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "72dafb7a2e4b100e"
     },
     "configuration/engine_args.md": {
@@ -240,8 +242,10 @@
       "upstream_sha": "2ee5428a235ff186"
     },
     "deployment/docker.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "8619b2fa7b181a86",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "8619b2fa7b181a86"
     },
     "deployment/frameworks/anyscale.md": {
@@ -560,8 +564,10 @@
       "upstream_sha": "18948afec175985f"
     },
     "features/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "dc7a3717f0670b52",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "dc7a3717f0670b52"
     },
     "features/automatic_prefix_caching.md": {
@@ -660,8 +666,10 @@
       "upstream_sha": "4483c6d4a906b03d"
     },
     "features/quantization/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "acc6bb7b2d1e7bda",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "acc6bb7b2d1e7bda"
     },
     "features/quantization/auto_awq.md": {
@@ -928,8 +936,10 @@
       "upstream_sha": "e7342a869acbbb02"
     },
     "models/generative_models.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "00cad3661500f4b4",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "00cad3661500f4b4"
     },
     "models/hardware_supported_models/cpu.md": {
@@ -1050,8 +1060,10 @@
       "upstream_sha": "7f90d859b0a5b2b7"
     },
     "serving/online_serving/openai_compatible_server.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "8d261897ca52455f",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "8d261897ca52455f"
     },
     "serving/online_serving/renderer.md": {

@@ -2,17 +2,16 @@
 toc_depth: 2
 ---
 
-# Using Docker
+# Docker を使う { #using-docker }
 
-## Pre-built images
+## ビルド済みイメージ { #pre-built-images }
 
 --8<-- "docs/getting_started/installation/gpu.md:pre-built-images"
 
-## Run as a non-root user
+## root 以外のユーザーで実行する { #run-as-a-non-root-user }
 
-The CUDA `vllm/vllm-openai` image runs as root by default for backward
-compatibility. It is also prepared to run as the built-in `vllm` user
-(UID 2000, GID 0):
+CUDA 版の `vllm/vllm-openai` イメージは、後方互換性のため既定では root で実行されます。
+組み込みの `vllm` ユーザー（UID 2000、GID 0）で実行することもできます。
 
 ```bash
 docker run --rm --gpus all \
@@ -22,10 +21,10 @@ docker run --rm --gpus all \
     meta-llama/Llama-3.1-8B-Instruct
 ```
 
-When mounting model or cache volumes for a non-root container, mount writable
-paths under `/home/vllm` instead of `/root`. For example, mount the Hugging
-Face cache at `/home/vllm/.cache/huggingface` and make the mounted directory
-writable by group 0.
+root 以外で動かすコンテナにモデルやキャッシュのボリュームをマウントする場合は、
+書き込み可能なパスを `/root` ではなく `/home/vllm` 以下にマウントしてください。
+たとえば Hugging Face のキャッシュは `/home/vllm/.cache/huggingface` にマウントし、
+マウントしたディレクトリをグループ 0 から書き込めるようにします。
 
 ```bash
 docker run --rm --gpus all \
@@ -36,8 +35,8 @@ docker run --rm --gpus all \
     meta-llama/Llama-3.1-8B-Instruct
 ```
 
-To build an image that defaults to the non-root `vllm` user, use the opt-in
-`vllm-openai-nonroot` target:
+既定で root 以外の `vllm` ユーザーを使うイメージをビルドするには、
+オプトインの `vllm-openai-nonroot` ターゲットを指定します。
 
 ```bash
 docker build --target vllm-openai-nonroot \
@@ -50,10 +49,10 @@ docker run --rm --gpus all \
     meta-llama/Llama-3.1-8B-Instruct
 ```
 
-The `vllm-openai-nonroot` target also supports OpenShift-style arbitrary UIDs
-when the runtime UID is a member of group 0. In Kubernetes manifests, set the
-container security context accordingly and keep mounted cache/model paths
-writable by group 0:
+`vllm-openai-nonroot` ターゲットは、実行時の UID がグループ 0 に属していれば、
+OpenShift 形式の任意の UID にも対応します。Kubernetes のマニフェストでは、
+コンテナのセキュリティコンテキストを次のように設定し、マウントしたキャッシュや
+モデルのパスをグループ 0 から書き込めるようにしてください。
 
 ```yaml
 securityContext:
@@ -63,9 +62,9 @@ securityContext:
   fsGroup: 0
 ```
 
-Runtime UIDs outside group 0 are not part of the documented support matrix
-because they may be unable to write to `/home/vllm` or `/opt/uv/cache`.
+グループ 0 に属さない実行時 UID は、`/home/vllm` や `/opt/uv/cache` に書き込めない
+可能性があるため、サポート対象には含まれていません。
 
-## Build image from source
+## ソースからイメージをビルドする { #build-image-from-source }
 
 --8<-- "docs/getting_started/installation/gpu.md:build-image-from-source"

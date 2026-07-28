@@ -1,20 +1,20 @@
-# Features
+# 機能 { #features }
 
-## Compatibility Matrix
+## 互換性マトリクス { #compatibility-matrix }
 
-The tables below show mutually exclusive features and the support on some hardware.
+以下の表は、同時に使えない機能の組み合わせと、一部ハードウェアでの対応状況を示しています。
 
-The symbols used have the following meanings:
+記号の意味は次のとおりです。
 
-- ✅ = Full compatibility
-- 🟠 = Partial compatibility
-- ❌ = No compatibility
-- ❔ = Unknown or TBD
+- ✅ = 完全に互換
+- 🟠 = 部分的に互換
+- ❌ = 非互換
+- ❔ = 不明・未定
 
 !!! note
-    Check the ❌ or 🟠 with links to see tracking issue for unsupported feature/hardware combination.
+    リンク付きの ❌ や 🟠 をたどると、その機能・ハードウェアの組み合わせに関する追跡 Issue を確認できます。
 
-### Feature x Feature
+### 機能 × 機能 { #feature-x-feature }
 
 <style>
 td:not(:first-child) {
@@ -36,7 +36,7 @@ th:not(:first-child) {
 }
 </style>
 
-| Feature | [CP](../configuration/optimization.md#chunked-prefill) | [APC](automatic_prefix_caching.md) | [LoRA](lora.md) | [SD](speculative_decoding/README.md) | CUDA graph | [pooling](../models/pooling_models/README.md) | <abbr title="Encoder-Decoder Models">enc-dec</abbr> | <abbr title="Logprobs">logP</abbr> | <abbr title="Prompt Logprobs">prmpt logP</abbr> | <abbr title="Async Output Processing">async output</abbr> | multi-step | <abbr title="Multimodal Inputs">mm</abbr> | best-of | beam-search | [prompt-embeds](prompt_embeds.md) |
+| 機能 | [CP](../configuration/optimization.md#chunked-prefill) | [APC](automatic_prefix_caching.md) | [LoRA](lora.md) | [SD](speculative_decoding/README.md) | CUDA graph | [pooling](../models/pooling_models/README.md) | <abbr title="Encoder-Decoder Models">enc-dec</abbr> | <abbr title="Logprobs">logP</abbr> | <abbr title="Prompt Logprobs">prmpt logP</abbr> | <abbr title="Async Output Processing">async output</abbr> | multi-step | <abbr title="Multimodal Inputs">mm</abbr> | best-of | beam-search | [prompt-embeds](prompt_embeds.md) |
 | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - | - |
 | [CP](../configuration/optimization.md#chunked-prefill) | ✅ | | | | | | | | | | | | | | |
 | [APC](automatic_prefix_caching.md) | ✅ | ✅ | | | | | | | | | | | | | |
@@ -54,12 +54,12 @@ th:not(:first-child) {
 | beam-search | ✅ | ✅ | ✅ | [❌](https://github.com/vllm-project/vllm/issues/6137) | ✅ | ❌ | ✅ | ✅ | ✅ | ❔ | [❌](https://github.com/vllm-project/vllm/issues/7968) | ❔ | ✅ | ✅ | |
 | [prompt-embeds](prompt_embeds.md) | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | ❔ | ❔ | ✅ | ❔ | ❔ | ✅ |
 
-\* Chunked prefill and prefix caching are only applicable to last-token or all pooling with causal attention.  
-<sup>^</sup> LoRA is only applicable to the language backbone of multimodal models.  
+\* チャンク化 Prefill とプレフィックスキャッシュは、causal attention を用いる last-token プーリングまたは all プーリングにのみ適用できます。  
+<sup>^</sup> LoRA はマルチモーダルモデルの言語バックボーンにのみ適用できます。  
 
-### Feature x Hardware
+### 機能 × ハードウェア { #feature-x-hardware }
 
-| Feature | Volta | Turing | Ampere | Ada | Hopper | CPU | AMD | Intel GPU |
+| 機能 | Volta | Turing | Ampere | Ada | Hopper | CPU | AMD | Intel GPU |
 | ------- | ----- | ------ | ------ | --- | ------ | --- | --- | --------- |
 | [CP](../configuration/optimization.md#chunked-prefill) | [❌](https://github.com/vllm-project/vllm/issues/2729) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | [APC](automatic_prefix_caching.md) | [❌](https://github.com/vllm-project/vllm/issues/3687) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -78,4 +78,4 @@ th:not(:first-child) {
 | beam-search | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 !!! note
-    For information on feature support on Google TPU, please refer to the [TPU-Inference Recommended Models and Features](https://docs.vllm.ai/projects/tpu/en/latest/recommended_models_features/) documentation.
+    Google TPU での機能の対応状況については、[TPU-Inference Recommended Models and Features](https://docs.vllm.ai/projects/tpu/en/latest/recommended_models_features/)（英語）を参照してください。

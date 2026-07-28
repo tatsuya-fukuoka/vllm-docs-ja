@@ -1,11 +1,11 @@
-# Quantization
+# 量子化 { #quantization }
 
-Quantization trades off model precision for smaller memory footprint, allowing large models to be run on a wider range of devices.
+量子化は、モデルの精度と引き換えにメモリ使用量を削減し、大きなモデルをより幅広いデバイスで実行できるようにする手法です。
 
 !!! tip
-    To get started with quantization, see [LLM Compressor](llm_compressor/README.md), a library for optimizing models for deployment with vLLM that supports FP8, INT8, INT4, and other quantization formats.
+    量子化を始めるには [LLM Compressor](llm_compressor/README.md) を参照してください。vLLM でのデプロイ向けにモデルを最適化するライブラリで、FP8・INT8・INT4 などの量子化形式に対応しています。
 
-The following are the supported quantization formats for vLLM:
+vLLM がサポートする量子化形式は次のとおりです。
 
 - [AutoAWQ](auto_awq.md)
 - [BitsAndBytes](bnb.md)
@@ -17,15 +17,15 @@ The following are the supported quantization formats for vLLM:
     - [INT8 W4A8](llm_compressor/int8_w4a8.md)
     - [INT8 W8A8](llm_compressor/int8_w8a8.md)
 - [NVIDIA Model Optimizer](modelopt.md)
-- [Online Quantization](online.md)
+- [オンライン量子化](online.md)
 - [AMD Quark](quark.md)
-- [Quantized KV Cache](quantized_kvcache.md)
+- [KV キャッシュの量子化](quantized_kvcache.md)
 - [TorchAO](torchao.md)
 - [FP8 ViT Encoder Attention](fp8_vit_attn.md)
 
-## Supported Hardware
+## サポートされているハードウェア { #supported-hardware }
 
-The table below shows the compatibility of various quantization implementations with different hardware platforms in vLLM:
+以下の表は、vLLM における各量子化実装とハードウェアプラットフォームの互換性を示しています。
 
 <style>
 td:not(:first-child) {
@@ -47,7 +47,7 @@ th:not(:first-child) {
 }
 </style>
 
-| Implementation            | Volta | Turing | Ampere | Ada | Hopper | AMD GPU | Intel GPU | x86 CPU | Arm CPU |
+| 実装                      | Volta | Turing | Ampere | Ada | Hopper | AMD GPU | Intel GPU | x86 CPU | Arm CPU |
 | ------------------------- | ----- | ------ | ------ | --- | ------ | ------- | --------- | ------- | ------- |
 | AWQ                       | ❌    | ✅︎     | ✅︎     | ✅︎  | ✅︎     | ❌      | ✅︎        | ✅︎      | ❌      |
 | GPTQ                      | ✅︎    | ✅︎     | ✅︎     | ✅︎  | ✅︎     | ❌      | ✅︎        | ✅︎      | ❌      |
@@ -59,27 +59,27 @@ th:not(:first-child) {
 | DeepSpeedFP               | ✅︎    | ✅︎     | ✅︎     | ✅︎  | ✅︎     | ❌      | ❌        | ❌      | ❌      |
 | GGUF                      | ✅︎    | ✅︎     | ✅︎     | ✅︎  | ✅︎     | ✅︎      | ❌        | ❌      | ❌      |
 
-- Volta refers to SM 7.0, Turing to SM 7.5, Ampere to SM 8.0/8.6, Ada to SM 8.9, and Hopper to SM 9.0.
-- ✅︎ indicates that the quantization method is supported on the specified hardware.
-- ❌ indicates that the quantization method is not supported on the specified hardware.
-- All Intel Gaudi quantization support has been migrated to [vLLM-Gaudi](https://github.com/vllm-project/vllm-gaudi).
-- *Turing does not support Marlin MXFP4.
+- Volta は SM 7.0、Turing は SM 7.5、Ampere は SM 8.0/8.6、Ada は SM 8.9、Hopper は SM 9.0 を指します。
+- ✅︎ は、その量子化方式が該当ハードウェアでサポートされていることを示します。
+- ❌ は、その量子化方式が該当ハードウェアでサポートされていないことを示します。
+- Intel Gaudi の量子化サポートはすべて [vLLM-Gaudi](https://github.com/vllm-project/vllm-gaudi) に移行しました。
+- \* Turing は Marlin MXFP4 をサポートしていません。
 
 !!! note
-    For information on quantization support on Google TPU, please refer to the [TPU-Inference Recommended Models and Features](https://docs.vllm.ai/projects/tpu/en/latest/recommended_models_features/) documentation.
+    Google TPU での量子化のサポート状況については、[TPU-Inference Recommended Models and Features](https://docs.vllm.ai/projects/tpu/en/latest/recommended_models_features/)（英語）を参照してください。
 
 !!! note
-    This compatibility chart is subject to change as vLLM continues to evolve and expand its support for different hardware platforms and quantization methods.
+    この互換性の表は、vLLM が対応ハードウェアや量子化方式を拡張していくのに伴って変更されることがあります。
 
-    For the most up-to-date information on hardware support and quantization methods, please refer to [vllm/model_executor/layers/quantization](../../../vllm/model_executor/layers/quantization) or consult with the vLLM development team.
+    ハードウェアのサポート状況と量子化方式の最新情報は、[vllm/model_executor/layers/quantization](../../../vllm/model_executor/layers/quantization) を参照するか、vLLM の開発チームに問い合わせてください。
 
-## Out-of-Tree Quantization Plugins
+## ツリー外の量子化プラグイン { #out-of-tree-quantization-plugins }
 
-vLLM supports registering custom, out-of-tree quantization methods using the `@register_quantization_config` decorator. This allows you to implement and use your own quantization schemes without modifying the vLLM codebase.
+vLLM は `@register_quantization_config` デコレータを使って、ツリー外の独自量子化方式を登録できます。これにより、vLLM のコードベースを変更せずに独自の量子化スキームを実装・利用できます。
 
-### Registering a Custom Quantization Method
+### 独自の量子化方式を登録する { #registering-a-custom-quantization-method }
 
-To register a custom quantization method, create a class that inherits from `QuantizationConfig` and decorate it with `@register_quantization_config`. The `get_quant_method` dispatches to the appropriate quantize method based on the layer type:
+独自の量子化方式を登録するには、`QuantizationConfig` を継承したクラスを作成し、`@register_quantization_config` を付けます。`get_quant_method` は層の種類に応じて適切な量子化メソッドへ振り分けます。
 
 ```python
 import torch
@@ -130,22 +130,22 @@ class MyQuantConfig(QuantizationConfig):
         return None
 ```
 
-### Required QuantizationConfig Methods
+### QuantizationConfig で実装が必要なメソッド { #required-quantizationconfig-methods }
 
-Your custom `QuantizationConfig` subclass must implement these abstract methods:
+独自の `QuantizationConfig` サブクラスでは、次の抽象メソッドを実装する必要があります。
 
-| Method | Description |
+| メソッド | 説明 |
 | ------ | ----------- |
-| `get_name()` | Returns the name of the quantization method |
-| `get_supported_act_dtypes()` | Returns list of supported activation dtypes (e.g., `torch.float16`) |
-| `get_min_capability()` | Returns minimum GPU compute capability (e.g., 80 for Ampere, -1 for no restriction) |
-| `get_config_filenames()` | Returns list of config filenames to search for in model directory |
-| `from_config(config)` | Class method to create config from model's quantization config dict |
-| `get_quant_method(layer, prefix)` | Returns the quantization method for a given layer, or `None` to skip |
+| `get_name()` | 量子化方式の名前を返す |
+| `get_supported_act_dtypes()` | サポートするアクティベーションの dtype の一覧を返す（例: `torch.float16`） |
+| `get_min_capability()` | 必要な GPU の最小 compute capability を返す（例: Ampere なら 80、制限なしなら -1） |
+| `get_config_filenames()` | モデルディレクトリ内で探す設定ファイル名の一覧を返す |
+| `from_config(config)` | モデルの量子化設定の辞書から設定を生成するクラスメソッド |
+| `get_quant_method(layer, prefix)` | 指定した層に対する量子化メソッドを返す。スキップする場合は `None` |
 
-### Implementing a Quantized Linear Method
+### 量子化された Linear メソッドを実装する { #implementing-a-quantized-linear-method }
 
-For linear layers, return a `QuantizeMethodBase` subclass from `get_quant_method`. You can extend `UnquantizedLinearMethod` as a starting point:
+Linear 層については、`get_quant_method` から `QuantizeMethodBase` のサブクラスを返します。出発点として `UnquantizedLinearMethod` を継承できます。
 
 ```python
 from vllm.model_executor.layers.linear import UnquantizedLinearMethod
@@ -169,9 +169,9 @@ class MyQuantLinearMethod(UnquantizedLinearMethod):
         ...
 ```
 
-### Implementing a Quantized MoE Method
+### 量子化された MoE メソッドを実装する { #implementing-a-quantized-moe-method }
 
-For Mixture of Experts (MoE) models, return a `FusedMoEMethodBase` subclass from `get_quant_method`. You can use `UnquantizedFusedMoEMethod` to skip MoE quantization:
+Mixture of Experts (MoE) モデルについては、`get_quant_method` から `FusedMoEMethodBase` のサブクラスを返します。MoE の量子化をスキップしたい場合は `UnquantizedFusedMoEMethod` を利用できます。
 
 ```python
 from vllm.model_executor.layers.fused_moe.layer import UnquantizedFusedMoEMethod
@@ -212,11 +212,11 @@ class MyQuantMoEMethod(FusedMoEMethodBase):
         ...
 ```
 
-See existing implementations like `Fp8MoEMethod` in `vllm/model_executor/layers/quantization/fp8.py` for reference.
+参考として、`vllm/model_executor/layers/quantization/fp8.py` の `Fp8MoEMethod` など既存の実装を参照してください。
 
-### Using the Plugin
+### プラグインを使う { #using-the-plugin }
 
-Once registered, you can use your custom quantization method with vLLM:
+登録すると、独自の量子化方式を vLLM で使えるようになります。
 
 ```python
 # Register your quantization method (import the module containing your config)
@@ -228,4 +228,4 @@ from vllm import LLM
 llm = LLM(model="your-model", quantization="my_quant")
 ```
 
-For more information on the plugin system, see the [Plugin System documentation](../../design/plugin_system.md).
+プラグインシステムの詳細は[プラグインシステムのドキュメント](../../design/plugin_system.md)を参照してください。
