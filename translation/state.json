@@ -411,8 +411,10 @@
       "upstream_sha": "e7cb18308f860db8"
     },
     "deployment/k8s.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "dc40f945f800f2c0",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "dc40f945f800f2c0"
     },
     "deployment/nginx.md": {
