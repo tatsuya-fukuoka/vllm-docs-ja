@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **93 ページ**を翻訳済みです（41.2%）。
+全 226 ページ中 **101 ページ**を翻訳済みです（44.7%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -24,9 +24,9 @@
 | ガバナンス | 0 | 0 | 3 | 3 |
 | モデル | 1 | 0 | 15 | 16 |
 | 推論とサービング | 15 | 0 | 1 | 16 |
-| 学習 | 0 | 0 | 8 | 8 |
+| 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **93** | **0** | **133** | **226** |
+| **合計** | **101** | **0** | **125** | **226** |
 
 ## 翻訳済みのページ
 
@@ -115,6 +115,14 @@
 - `serving/online_serving/renderer.md`
 - `serving/online_serving/speech_to_text.md`
 - `serving/parallelism_scaling.md`
+- `training/async_rl.md`
+- `training/layerwise.md`
+- `training/rlhf.md`
+- `training/trl.md`
+- `training/weight_transfer/README.md`
+- `training/weight_transfer/base.md`
+- `training/weight_transfer/ipc.md`
+- `training/weight_transfer/nccl.md`
 - `usage/README.md`
 - `usage/faq.md`
 - `usage/metrics.md`

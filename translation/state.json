@@ -1226,43 +1226,59 @@
       "upstream_sha": "edd3998246b0060e"
     },
     "training/async_rl.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "c656ec1e1760928c",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "c656ec1e1760928c"
     },
     "training/layerwise.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "2ee315bff30b5525",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "2ee315bff30b5525"
     },
     "training/rlhf.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "75b8b0fbf12f7160",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "75b8b0fbf12f7160"
     },
     "training/trl.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "c94c0e0064049842",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "c94c0e0064049842"
     },
     "training/weight_transfer/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "2d810a960a2da73d",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "2d810a960a2da73d"
     },
     "training/weight_transfer/base.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d4bddf41ca1acf6f",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "d4bddf41ca1acf6f"
     },
     "training/weight_transfer/ipc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "3cfb30f71887295d",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "3cfb30f71887295d"
     },
     "training/weight_transfer/nccl.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "29bfa804ed3dbb23",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "29bfa804ed3dbb23"
     },
     "usage/README.md": {

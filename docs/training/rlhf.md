@@ -1,8 +1,8 @@
-# Reinforcement Learning from Human Feedback
+# 人間のフィードバックによる強化学習 (RLHF) { #reinforcement-learning-from-human-feedback }
 
-Reinforcement Learning from Human Feedback (RLHF) is a technique that fine-tunes language models using human-generated preference data to align model outputs with desired behaviors. vLLM can be used to generate the completions for RLHF.
+人間のフィードバックによる強化学習 (RLHF) は、人が作成した嗜好データを使って言語モデルをファインチューニングし、モデルの出力を望ましい振る舞いに合わせる手法です。vLLM は RLHF における補完の生成に利用できます。
 
-The following open-source RL libraries use vLLM for fast rollouts (sorted alphabetically and non-exhaustive):
+次のオープンソースの RL ライブラリは、高速なロールアウトのために vLLM を利用しています（アルファベット順・網羅的ではありません）。
 
 - [Cosmos-RL](https://github.com/nvidia-cosmos/cosmos-rl)
 - [ms-swift](https://github.com/modelscope/ms-swift/tree/main)
@@ -16,11 +16,11 @@ The following open-source RL libraries use vLLM for fast rollouts (sorted alphab
 - [Unsloth](https://github.com/unslothai/unsloth)
 - [verl](https://github.com/volcengine/verl)
 
-For weight synchronization between training and inference, see the [Weight Transfer](weight_transfer/README.md) documentation, which covers the pluggable backend system with [NCCL](weight_transfer/nccl.md) (multi-GPU) and [IPC](weight_transfer/ipc.md) (same-GPU) engines.
+学習側と推論側の重みの同期については[重み転送](weight_transfer/README.md)のドキュメントを参照してください。[NCCL](weight_transfer/nccl.md)（複数 GPU）と [IPC](weight_transfer/ipc.md)（同一 GPU）のエンジンを差し替えられる仕組みを説明しています。
 
-For pipelining generation and training to improve GPU utilization and throughput, see the [Async Reinforcement Learning](async_rl.md) guide, which covers the pause/resume API for safely updating weights mid-flight.
+生成と学習をパイプライン化して GPU の使用率とスループットを高める方法は[非同期強化学習](async_rl.md)のガイドを参照してください。実行中に安全に重みを更新するための pause / resume API を説明しています。
 
-See the following notebooks showing how to use vLLM for GRPO:
+vLLM を GRPO で使う方法は、次のノートブックを参照してください。
 
-- [Efficient Online Training with GRPO and vLLM in TRL](https://huggingface.co/learn/cookbook/grpo_vllm_online_training)
-- [Qwen-3 4B GRPO using Unsloth + vLLM](https://colab.research.google.com/github/unslothai/notebooks/blob/main/nb/Qwen3_(4B)-GRPO.ipynb)
+- [Efficient Online Training with GRPO and vLLM in TRL](https://huggingface.co/learn/cookbook/grpo_vllm_online_training)（英語）
+- [Qwen-3 4B GRPO using Unsloth + vLLM](https://colab.research.google.com/github/unslothai/notebooks/blob/main/nb/Qwen3_(4B)-GRPO.ipynb)（英語）

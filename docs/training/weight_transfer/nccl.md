@@ -1,24 +1,24 @@
-# NCCL Engine
+# NCCL エンジン { #nccl-engine }
 
-The NCCL weight transfer engine uses [NCCL](https://developer.nvidia.com/nccl) broadcast operations to transfer weights from the trainer to inference workers. It supports **multi-node** and **multi-GPU** setups where the trainer and inference engine run on separate GPUs.
+NCCL の重み転送エンジンは、[NCCL](https://developer.nvidia.com/nccl) のブロードキャストを使って、トレーナーから推論ワーカーへ重みを転送します。トレーナーと推論エンジンが別々の GPU で動く、**複数ノード**・**複数 GPU** の構成をサポートします。
 
-## When to Use NCCL
+## NCCL を使う場面 { #when-to-use-nccl }
 
-- Training and inference on **separate GPUs** (possibly across nodes)
-- **Tensor-parallel** inference with multiple workers that all need the updated weights
-- You need high-bandwidth, low-latency weight transfer over NVLink or InfiniBand
+- 学習と推論が**別々の GPU**（ノードをまたぐ場合もある）で動く
+- **テンソル並列**の推論で、複数のワーカーすべてに更新後の重みが必要
+- NVLink や InfiniBand を介した高帯域・低レイテンシの重み転送が必要
 
-## How It Works
+## 仕組み { #how-it-works }
 
-1. The trainer and all inference workers join a shared NCCL process group using `StatelessProcessGroup` (vLLM's torch.distributed-independent group abstraction).
-2. The trainer broadcasts weights to all workers simultaneously. Each worker receives and loads the weights.
-3. Optionally, **packed tensor broadcasting** batches multiple small tensors into larger buffers with double/triple buffering and CUDA stream overlap for higher throughput. This implementation is based on [NeMo-RL's packed tensor](https://github.com/NVIDIA-NeMo/RL/blob/main/nemo_rl/utils/packed_tensor.py).
+1. トレーナーとすべての推論ワーカーが、`StatelessProcessGroup`（torch.distributed に依存しない vLLM のグループ抽象）を使って共通の NCCL プロセスグループに参加します。
+2. トレーナーがすべてのワーカーへ同時に重みをブロードキャストします。各ワーカーはそれを受け取って読み込みます。
+3. 任意で、**パックされたテンソルのブロードキャスト**により、複数の小さなテンソルをより大きなバッファにまとめ、ダブル / トリプルバッファリングと CUDA ストリームの重ね合わせでスループットを高められます。この実装は [NeMo-RL の packed tensor](https://github.com/NVIDIA-NeMo/RL/blob/main/nemo_rl/utils/packed_tensor.py) にもとづいています。
 
-## Initialization
+## 初期化 { #initialization }
 
-NCCL requires explicit process group setup. The trainer and inference workers must agree on a master address, port, and world size.
+NCCL では、プロセスグループを明示的に構築する必要があります。トレーナーと推論ワーカーは、マスターのアドレス・ポート・world size について合意しておく必要があります。
 
-### Inference Side
+### 推論側 { #inference-side }
 
 ```python
 from vllm.distributed.weight_transfer.base import WeightTransferInitRequest
@@ -36,7 +36,7 @@ llm.init_weight_transfer_engine(
 )
 ```
 
-### Trainer Side
+### トレーナー側 { #trainer-side }
 
 ```python
 from vllm.distributed.weight_transfer.nccl_engine import (
@@ -53,9 +53,9 @@ group = NCCLWeightTransferEngine.trainer_init(
 ```
 
 !!! note
-    `trainer_init` always assigns the trainer to rank 0. Inference workers start at `rank_offset` (typically 1).
+    `trainer_init` は常にトレーナーをランク 0 に割り当てます。推論ワーカーは `rank_offset`（通常は 1）から始まります。
 
-## Sending Weights
+## 重みの送信 { #sending-weights }
 
 ```python
 from vllm.distributed.weight_transfer.nccl_engine import (
@@ -74,20 +74,20 @@ NCCLWeightTransferEngine.trainer_send_weights(
 )
 ```
 
-See [`NCCLTrainerSendWeightsArgs`](https://github.com/vllm-project/vllm/blob/main/vllm/distributed/weight_transfer/nccl_engine.py) for the full list of configurable fields.
+設定できる項目の一覧は [`NCCLTrainerSendWeightsArgs`](https://github.com/vllm-project/vllm/blob/main/vllm/distributed/weight_transfer/nccl_engine.py) を参照してください。
 
-### Packed Tensor Broadcasting
+### パックされたテンソルのブロードキャスト { #packed-tensor-broadcasting }
 
-When `packed=True`, multiple weight tensors are packed into large contiguous buffers before broadcasting. This reduces the number of NCCL operations and uses double/triple buffering with dedicated CUDA streams for overlap between packing, broadcasting, and unpacking.
+`packed=True` にすると、ブロードキャストの前に複数の重みテンソルが大きな連続バッファにまとめられます。これにより NCCL の操作回数が減り、専用の CUDA ストリームによるダブル / トリプルバッファリングで、パック・ブロードキャスト・アンパックを重ね合わせて実行できます。
 
-Both the trainer (`NCCLTrainerSendWeightsArgs`) and inference side (`NCCLWeightTransferUpdateInfo`) must use matching `packed_buffer_size_bytes` and `packed_num_buffers` values.
+トレーナー側（`NCCLTrainerSendWeightsArgs`）と推論側（`NCCLWeightTransferUpdateInfo`）で、`packed_buffer_size_bytes` と `packed_num_buffers` の値を一致させる必要があります。
 
-## Receiving Weights (Inference Side)
+## 重みの受信（推論側） { #receiving-weights-inference-side }
 
-The inference side triggers weight reception using the four-phase protocol:
-`init_weight_transfer_engine`, `start_weight_update`, `update_weights`,
-`finish_weight_update`. The init phase is shown [above](#initialization). The
-remaining three steps are:
+推論側は、4 フェーズのプロトコルで重みの受信を進めます。
+`init_weight_transfer_engine`、`start_weight_update`、`update_weights`、
+`finish_weight_update` です。初期化フェーズは[上記](#initialization)のとおりで、
+残りの 3 ステップは次のようになります。
 
 ```python
 from vllm.distributed.weight_transfer.base import WeightTransferUpdateRequest
@@ -111,27 +111,27 @@ llm.update_weights(
 llm.finish_weight_update()
 ```
 
-The `names`, `dtype_names`, and `shapes` lists describe each parameter. These
-must match the order in which the trainer iterates over its parameters.
+`names`、`dtype_names`、`shapes` の各リストは、それぞれのパラメータを表します。
+これらは、トレーナー側がパラメータを走査する順序と一致している必要があります。
 
-`start_weight_update` must be called before `update_weights`, and
-`finish_weight_update` must be called after all weight chunks have been
-transferred. The NCCL engine receives checkpoint-format weights and applies
-layerwise reload processing automatically inside `start_weight_update` /
-`finish_weight_update`.
+`start_weight_update` は `update_weights` の前に、
+`finish_weight_update` はすべての重みのチャンクを転送し終えた後に
+呼び出す必要があります。NCCL エンジンはチェックポイント形式の重みを受け取り、
+`start_weight_update` / `finish_weight_update` の内部で層単位の再読み込み処理を
+自動的に適用します。
 
-## Sparse NCCL
+## Sparse NCCL { #sparse-nccl }
 
-Sparse, flat-index weight patches use a separate backend,
-`WeightTransferConfig(backend="sparse_nccl")`, implemented by
-`SparseNCCLWeightTransferEngine`. It shares only NCCL process-group
-initialization with the dense engine; patches are applied directly in place to
-existing parameters (no layerwise reload). The current sparse MVP requires
-`TP=1` and `PP=1`. See the example below.
+フラットインデックスの疎な重みパッチには、別のバックエンド
+`WeightTransferConfig(backend="sparse_nccl")` を使います。実装は
+`SparseNCCLWeightTransferEngine` です。dense のエンジンとは NCCL のプロセスグループの
+初期化だけを共有し、パッチは既存のパラメータへ直接 in-place で適用されます
+（層単位の再読み込みは行いません）。現在の疎版の MVP は `TP=1` と `PP=1` が
+必要です。以下の例を参照してください。
 
-## Examples
+## 例 { #examples }
 
-- [RLHF with NCCL weight syncing (offline, Ray)](../../../examples/rl/rlhf_nccl.py) - Trainer on one GPU, 2x tensor-parallel vLLM engine on two others, with packed NCCL weight broadcast
-- [RLHF with sparse NCCL weight syncing (offline, Ray)](../../../examples/rl/rlhf_sparse_nccl.py) - Dense-vs-sparse equivalence demo with a real model on a 2-GPU trainer/inference setup; sparse patches use `backend="sparse_nccl"` and currently require `TP=1` and `PP=1`
-- [RLHF with async weight syncing (offline, Ray)](../../../examples/rl/rlhf_async_new_apis.py) - Async generation with mid-flight pause, weight sync, resume, and validation against a fresh model
-- [RLHF with NCCL weight syncing (online serving, HTTP)](../../../examples/rl/rlhf_http_nccl.py) - Weight transfer with a running vLLM HTTP server using HTTP control plane and NCCL data plane
+- [NCCL による重み同期を使った RLHF（オフライン、Ray）](../../../examples/rl/rlhf_nccl.py) - トレーナーを 1 台の GPU、テンソル並列 2 の vLLM エンジンを別の 2 台で動かし、パックされた NCCL ブロードキャストで重みを転送する例
+- [Sparse NCCL による重み同期を使った RLHF（オフライン、Ray）](../../../examples/rl/rlhf_sparse_nccl.py) - 2 GPU のトレーナー / 推論構成で実モデルを使い、dense と sparse の同等性を示すデモ。疎パッチは `backend="sparse_nccl"` を使い、現時点では `TP=1` と `PP=1` が必要
+- [非同期の重み同期を使った RLHF（オフライン、Ray）](../../../examples/rl/rlhf_async_new_apis.py) - 実行中の一時停止、重み同期、再開、新しいモデルとの検証を伴う非同期生成の例
+- [NCCL による重み同期を使った RLHF（オンラインサービング、HTTP）](../../../examples/rl/rlhf_http_nccl.py) - 稼働中の vLLM HTTP サーバーに対し、制御は HTTP、データ転送は NCCL で行う重み転送の例

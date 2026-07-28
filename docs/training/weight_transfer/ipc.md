@@ -1,27 +1,27 @@
-# IPC Engine
+# IPC エンジン { #ipc-engine }
 
-The IPC weight transfer engine uses **CUDA IPC** (Inter-Process Communication) handles to share GPU memory directly between the trainer and inference workers on the **same GPU**. This avoids any data copying, making it the most efficient option when colocating training and inference. Multi-GPU setups are supported — weights are all gathered by each GPU and are extracted by the correct colocated process.
+IPC の重み転送エンジンは、**CUDA IPC**（プロセス間通信）のハンドルを使って、**同じ GPU** 上のトレーナーと推論ワーカーの間で GPU メモリを直接共有します。データのコピーが一切発生しないため、学習と推論を同居させる場合にもっとも効率的な選択肢です。複数 GPU の構成もサポートされており、各 GPU が重みを all-gather し、同居する適切なプロセスが取り出します。
 
-## When to Use IPC
+## IPC を使う場面 { #when-to-use-ipc }
 
-- Training and inference share the **same GPU(s)** (colocated)
+- 学習と推論が**同じ GPU** を共有する（同居構成）場合
 
-## How It Works
+## 仕組み { #how-it-works }
 
-1. The trainer creates CUDA tensors for each weight and generates IPC handles using `torch.multiprocessing.reductions.reduce_tensor`. In multi-GPU setups (e.g. FSDP), each trainer rank must all-gather the full tensor for each layer onto its own GPU before generating the IPC handle.
-2. IPC handles for each gpu are sent to the inference engine via **Ray**, **HTTP**, or a **custom callable**. Each rank only reads the handle corresponding to its own GPU.
-3. The inference worker reconstructs the tensors from the handles using `rebuild_cuda_tensor`, reading directly from the trainer's GPU memory.
+1. トレーナーが各重みの CUDA テンソルを作り、`torch.multiprocessing.reductions.reduce_tensor` で IPC ハンドルを生成します。複数 GPU の構成（FSDP など）では、各トレーナーランクが IPC ハンドルを生成する前に、各層の完全なテンソルを自分の GPU 上に all-gather する必要があります。
+2. 各 GPU の IPC ハンドルは、**Ray**・**HTTP**・**独自の呼び出し可能オブジェクト**のいずれかで推論エンジンへ送られます。各ランクは自分の GPU に対応するハンドルだけを読み取ります。
+3. 推論ワーカーは `rebuild_cuda_tensor` でハンドルからテンソルを再構成し、トレーナーの GPU メモリを直接参照します。
 
 !!! warning
-    IPC handles involve sending serialized Python objects. When using HTTP transport, you must set `VLLM_ALLOW_INSECURE_SERIALIZATION=1` on both the server and client. This is because IPC handles are pickled and base64-encoded for HTTP transmission.
+    IPC ハンドルのやり取りはシリアライズされた Python オブジェクトの送信を伴います。HTTP で転送する場合は、サーバーとクライアントの両方で `VLLM_ALLOW_INSECURE_SERIALIZATION=1` を設定する必要があります。HTTP 送信のために IPC ハンドルが pickle 化・base64 エンコードされるためです。
 
-## Packed (Chunked) Transfer
+## パック（チャンク）転送 { #packed-chunked-transfer }
 
-By default, all weights are sent in a single API call. For large models, this requires the full model to reside in GPU memory on both sides simultaneously. Setting `packed=True` enables **chunked transfer** with bounded GPU memory:
+既定では、すべての重みを 1 回の API 呼び出しで送ります。大きなモデルでは、両側の GPU メモリにモデル全体が同時に載っている必要があります。`packed=True` を設定すると、GPU メモリの使用量を抑えた**チャンク転送**が有効になります。
 
-- Weights are concatenated into fixed-size packed buffers (controlled by `packed_buffer_size_bytes`).
-- Each chunk is sent as a separate `update_weights` call within a single `start_weight_update` / `finish_weight_update` bracket, so the layerwise reload pass is initialized once at the start and finalized once at the end regardless of chunk count.
-- After each chunk is consumed, the GPU memory for that chunk can be reclaimed.
+- 重みは固定サイズのパックバッファに連結されます（`packed_buffer_size_bytes` で制御）。
+- 各チャンクは、1 組の `start_weight_update` / `finish_weight_update` の中で個別の `update_weights` 呼び出しとして送られます。そのため層単位の再読み込みは、チャンク数によらず最初に 1 回初期化され、最後に 1 回確定されます。
+- 各チャンクを消費した後、そのチャンクの GPU メモリを解放できます。
 
 ```python
 trainer_args = IPCTrainerSendWeightsArgs(
@@ -32,17 +32,17 @@ trainer_args = IPCTrainerSendWeightsArgs(
 )
 ```
 
-## Initialization
+## 初期化 { #initialization }
 
-The IPC backend requires no initialization on either side. The `init_transfer_engine` call is a no-op for IPC.
+IPC バックエンドでは、どちら側にも初期化は不要です。`init_transfer_engine` の呼び出しは IPC では何もしません。
 
-## Sending Weights
+## 重みの送信 { #sending-weights }
 
-IPC supports two transport modes for delivering the handles:
+IPC では、ハンドルを届けるために 2 つの転送モードをサポートしています。
 
-### Ray Mode
+### Ray モード { #ray-mode }
 
-Used when vLLM is running as a Ray actor:
+vLLM を Ray のアクターとして動かす場合に使います。
 
 ```python
 from vllm.distributed.weight_transfer.ipc_engine import (
@@ -65,11 +65,11 @@ IPCWeightTransferEngine.trainer_send_weights(
 ray.get(llm_actor_handle.finish_weight_update.remote())
 ```
 
-In Ray mode, the engine calls `llm_handle.update_weights.remote(...)` directly, passing the IPC handles via Ray's serialization.
+Ray モードでは、エンジンが `llm_handle.update_weights.remote(...)` を直接呼び出し、Ray のシリアライズ機構で IPC ハンドルを渡します。
 
-### HTTP Mode
+### HTTP モード { #http-mode }
 
-Used when vLLM is running as an HTTP server:
+vLLM を HTTP サーバーとして動かす場合に使います。
 
 ```python
 trainer_args = IPCTrainerSendWeightsArgs(
@@ -93,7 +93,7 @@ response = requests.post(url, json={}, timeout=60)
 response.raise_for_status()
 ```
 
-In HTTP mode, IPC handles are pickled, base64-encoded, and sent as JSON to the `/update_weights` endpoint. Because the worker deserializes the payload via `pickle.loads`, the vLLM server must be started with `VLLM_ALLOW_INSECURE_SERIALIZATION=1`.
+HTTP モードでは、IPC ハンドルは pickle 化・base64 エンコードされ、JSON として `/update_weights` エンドポイントへ送られます。ワーカーは `pickle.loads` でペイロードを復元するため、vLLM サーバーは `VLLM_ALLOW_INSECURE_SERIALIZATION=1` を付けて起動する必要があります。
 
 ```python
 def my_custom_sender(update_info: IPCWeightTransferUpdateInfo):
@@ -110,9 +110,9 @@ IPCWeightTransferEngine.trainer_send_weights(
 )
 ```
 
-See [`IPCTrainerSendWeightsArgs`](https://github.com/vllm-project/vllm/blob/main/vllm/distributed/weight_transfer/ipc_engine.py) for the full list of configurable fields.
+設定できる項目の一覧は [`IPCTrainerSendWeightsArgs`](https://github.com/vllm-project/vllm/blob/main/vllm/distributed/weight_transfer/ipc_engine.py) を参照してください。
 
-## Examples
+## 例 { #examples }
 
-- [RLHF with IPC weight syncing (offline, Ray)](../../../examples/rl/rlhf_ipc.py) - Colocated training and inference on a single GPU using Ray placement groups and CUDA IPC handles
-- [RLHF with IPC weight syncing (online serving, HTTP)](../../../examples/rl/rlhf_http_ipc.py) - Weight transfer with a vLLM HTTP server where both server and trainer share the same GPU
+- [IPC による重み同期を使った RLHF（オフライン、Ray）](../../../examples/rl/rlhf_ipc.py) - Ray のプレースメントグループと CUDA IPC ハンドルを使い、単一 GPU 上で学習と推論を同居させる例
+- [IPC による重み同期を使った RLHF（オンラインサービング、HTTP）](../../../examples/rl/rlhf_http_ipc.py) - サーバーとトレーナーが同じ GPU を共有する vLLM HTTP サーバーでの重み転送
