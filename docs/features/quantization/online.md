@@ -1,13 +1,10 @@
-# Online Quantization
+# オンライン量子化 { #online-quantization }
 
-Online quantization lets you take a BF16/FP16 model and quantize its Linear
-and MoE weights to lower precision (such as FP8) at load time, without needing
-a pre-quantized checkpoint or calibration data. Weights are converted during
-model loading and activations are dynamically scaled during each forward pass.
+オンライン量子化を使うと、BF16 / FP16 のモデルを読み込む時点で、Linear 層と MoE 層の重みをより低い精度（FP8 など）に量子化できます。量子化済みのチェックポイントやキャリブレーションデータは必要ありません。重みはモデルの読み込み時に変換され、活性値は各 forward パスで動的にスケーリングされます。
 
-## Quick Start
+## クイックスタート { #quick-start }
 
-Pass a scheme name to the `quantization` parameter:
+`quantization` パラメータにスキーム名を渡します。
 
 ```python
 from vllm import LLM
@@ -22,7 +19,7 @@ llm = LLM("meta-llama/Llama-3.1-8B", quantization="fp8_per_block")
 llm = LLM("meta-llama/Llama-3.1-8B", quantization="mxfp8")
 ```
 
-Or with the CLI:
+CLI では次のようにします。
 
 ```bash
 vllm serve meta-llama/Llama-3.1-8B --quantization fp8_per_tensor
@@ -30,19 +27,19 @@ vllm serve meta-llama/Llama-3.1-8B --quantization fp8_per_block
 vllm serve meta-llama/Llama-3.1-8B --quantization mxfp8
 ```
 
-## Supported Schemes
+## サポートされるスキーム { #supported-schemes }
 
-| Scheme | Weight recipe | Activation recipe | Notes |
+| スキーム | 重みのレシピ | 活性値のレシピ | 備考 |
 | ------ | ------------- | ------------------ | ----- |
-| `fp8_per_tensor` | fp8_e4m3 data, fp32 per-tensor scale | fp8_e4m3 data, fp32 per-tensor scale | On some GPUs (Ada, Hopper) linear activations use per-token scaling for better performance |
-| `fp8_per_block` | fp8_e4m3 data, fp32 per-128x128-block scale | fp8_e4m3 data, fp32 per-1x128-block scale | |
-| `mxfp8` | fp8_e4m3 data, e8m0 per-1x32-block scale | fp8_e4m3 data, e8m0 per-1x32-block scale | Requires SM 100+ (Blackwell or newer) for w8a8, other GPUs use a w8a16 fallback |
+| `fp8_per_tensor` | fp8_e4m3 のデータ、fp32 のテンソル単位スケール | fp8_e4m3 のデータ、fp32 のテンソル単位スケール | 一部の GPU（Ada、Hopper）では、性能向上のため Linear 層の活性値にトークン単位のスケーリングを使います |
+| `fp8_per_block` | fp8_e4m3 のデータ、fp32 の 128x128 ブロック単位スケール | fp8_e4m3 のデータ、fp32 の 1x128 ブロック単位スケール | |
+| `mxfp8` | fp8_e4m3 のデータ、e8m0 の 1x32 ブロック単位スケール | fp8_e4m3 のデータ、e8m0 の 1x32 ブロック単位スケール | w8a8 には SM 100 以上（Blackwell 以降）が必要です。それ以外の GPU では w8a16 にフォールバックします |
 
-## Advanced Configuration
+## 高度な設定 { #advanced-configuration }
 
-For fine-grained control, use a `quantization_config` dictionary.
+より細かく制御したい場合は、`quantization_config` の辞書を使います。
 
-### Schema
+### スキーマ { #schema }
 
 ```yaml
 quantization_config:
@@ -55,38 +52,30 @@ quantization_config:
   ignore: [<layer-name-or-regex>, ...]
 ```
 
-`linear` and `moe` accept a full `{weight, activation}` dict, or a bare
-string. A string resolves first against the `--quantization` shorthands
-(taking the matching layer-kind slot), then against `QUANT_KEY_NAMES` as a
-weight name. Unset fields fall back to the `--quantization` shorthand's
-defaults, or for already-quantized checkpoints to whatever the checkpoint
-declares.
+`linear` と `moe` には、`{weight, activation}` の完全な辞書か、単なる文字列を指定できます。文字列はまず `--quantization` の短縮名として解決され（対応する層種別のスロットが使われます）、次に `QUANT_KEY_NAMES` の重み形式名として解決されます。設定されていないフィールドは `--quantization` の短縮名の既定値にフォールバックし、量子化済みチェックポイントの場合はチェックポイントが宣言している内容にフォールバックします。
 
-On XPU, non-block FP8 scaled-mm linear layers default to W8A16; setting `--linear-backend xpu` forces W8A8. Use `--linear-backend xpu_woq` to explicitly select weight-only quantization (W8A16).
+XPU では、ブロック単位でない FP8 の scaled-mm Linear 層は既定で W8A16 になります。`--linear-backend xpu` を指定すると W8A8 が強制されます。重みのみの量子化（W8A16）を明示的に選ぶには `--linear-backend xpu_woq` を使います。
 
-The CLI accepts the same shape as JSON or as dotted keys:
+CLI では、JSON と同じ形式、またはドット区切りのキーで指定できます。
 
 ```bash
 vllm serve <model> --quantization-config '{"moe":{"activation":"mxfp8"}}'
 vllm serve <model> --quantization-config.moe.activation mxfp8
 ```
 
-### Activation overrides on already-quantized checkpoints
+### 量子化済みチェックポイントに対する活性値のオーバーライド { #activation-overrides-on-already-quantized-checkpoints }
 
-For checkpoint-quantized models, `quantization_config` lets you pick an
-activation format independently of the baked-in weights. The supported
-overrides are checkpoint-specific; today this is wired up for MXFP4 MoE
-checkpoints (gpt-oss) where you can opt into FP8 activations:
+チェックポイントの時点で量子化されているモデルでは、`quantization_config` を使うと、埋め込まれた重みとは独立に活性値の形式を選べます。サポートされるオーバーライドはチェックポイントごとに異なります。現時点では MXFP4 の MoE チェックポイント（gpt-oss）に対応しており、FP8 の活性値を選択できます。
 
 ```bash
 vllm serve openai/gpt-oss-20b --quantization-config.moe.activation mxfp8
 ```
 
-Combine with `--moe-backend` to pin a specific kernel family.
+特定のカーネル系統に固定したい場合は `--moe-backend` と組み合わせてください。
 
-### Separate Schemes for Dense and MoE Layers
+### dense 層と MoE 層で別々のスキームを使う { #separate-schemes-for-dense-and-moe-layers }
 
-You can apply different quantization schemes to dense linear layers and MoE expert layers via the `linear` and `moe` fields. Each accepts either a full spec dict, or a bare string naming an online shorthand (e.g. `"fp8_per_block"`) or weight format (e.g. `"fp8_per_block_static"`); fields not set fall back to the shorthand defaults.
+`linear` と `moe` のフィールドを使うと、dense な Linear 層と MoE のエキスパート層に別々の量子化スキームを適用できます。それぞれ、完全な指定辞書か、オンライン量子化の短縮名（例: `"fp8_per_block"`）または重み形式名（例: `"fp8_per_block_static"`）を表す文字列を受け付けます。設定されていないフィールドは短縮名の既定値にフォールバックします。
 
 ```python
 from vllm import LLM
@@ -101,7 +90,7 @@ llm = LLM(
 )
 ```
 
-Or,
+あるいは次のようにもできます。
 
 ```python
 from vllm import LLM
@@ -116,9 +105,9 @@ llm = LLM(
 )
 ```
 
-### Excluding Layers from Quantization
+### 特定の層を量子化から除外する { #excluding-layers-from-quantization }
 
-Use the `ignore` parameter to skip specific layers. It accepts exact layer names and regex patterns (prefixed with `re:`):
+特定の層をスキップするには `ignore` パラメータを使います。層名の完全一致と、`re:` を前置した正規表現パターンを受け付けます。
 
 ```python
 from vllm import LLM
@@ -138,4 +127,6 @@ llm = LLM(
 ```
 
 !!! note
-    For fused layers (e.g., `qkv_proj` which fuses `q_proj`, `k_proj`, `v_proj`), the ignore pattern must match the **unfused** shard names (`q_proj`, `k_proj`, `v_proj`), not the fused name.
+    融合された層（`q_proj`、`k_proj`、`v_proj` を融合した `qkv_proj` など）では、ignore の
+    パターンは融合後の名前ではなく、**融合前** のシャード名（`q_proj`、`k_proj`、`v_proj`）に
+    一致させる必要があります。

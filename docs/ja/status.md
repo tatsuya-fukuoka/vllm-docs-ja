@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **136 ページ**を翻訳済みです（60.2%）。
+全 226 ページ中 **140 ページ**を翻訳済みです（61.9%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -19,14 +19,14 @@
 | 開発者ガイド | 5 | 0 | 11 | 16 |
 | デプロイ | 35 | 0 | 0 | 35 |
 | 設計ドキュメント | 1 | 0 | 28 | 29 |
-| 機能 | 28 | 0 | 24 | 52 |
+| 機能 | 32 | 0 | 20 | 52 |
 | はじめに | 5 | 0 | 8 | 13 |
 | ガバナンス | 1 | 0 | 2 | 3 |
 | モデル | 3 | 0 | 13 | 16 |
 | 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **136** | **0** | **90** | **226** |
+| **合計** | **140** | **0** | **86** | **226** |
 
 ## 翻訳済みのページ
 
@@ -100,6 +100,7 @@
 - `design/optimization_levels.md`
 - `features/README.md`
 - `features/automatic_prefix_caching.md`
+- `features/batch_invariance.md`
 - `features/context_extension.md`
 - `features/custom_arguments.md`
 - `features/disagg_encoder.md`
@@ -111,12 +112,15 @@
 - `features/quantization/README.md`
 - `features/quantization/auto_awq.md`
 - `features/quantization/bnb.md`
+- `features/quantization/fp8_vit_attn.md`
 - `features/quantization/gguf.md`
 - `features/quantization/gptqmodel.md`
 - `features/quantization/inc.md`
 - `features/quantization/llm_compressor/README.md`
 - `features/quantization/modelopt.md`
+- `features/quantization/online.md`
 - `features/quantization/torchao.md`
+- `features/speculative_decoding/draft_model.md`
 - `features/speculative_decoding/dynamic_speculative_decoding.md`
 - `features/speculative_decoding/eagle.md`
 - `features/speculative_decoding/mlp.md`

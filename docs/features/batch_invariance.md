@@ -1,41 +1,41 @@
-# Batch Invariance
+# バッチ不変性 { #batch-invariance }
 
 !!! note
-    Batch invariance is currently in beta. Some features are still under active development.
-    Track progress and planned improvements at <https://github.com/vllm-project/vllm/issues/27433>
+    バッチ不変性は現在ベータ版です。一部の機能は現在も活発に開発が進められています。
+    進捗と今後の改善予定は <https://github.com/vllm-project/vllm/issues/27433> で追えます。
 
-This document shows how to enable batch invariance in vLLM. Batch invariance ensures that the output of a model is deterministic and independent of the batch size or the order of requests in a batch.
+このドキュメントでは、vLLM でバッチ不変性（batch invariance）を有効にする方法を説明します。バッチ不変性とは、モデルの出力が決定的であり、バッチサイズやバッチ内のリクエストの順序に依存しないことを保証する性質です。
 
-## Motivation
+## 動機 { #motivation }
 
-Batch invariance is crucial for several use cases:
+バッチ不変性は、いくつかのユースケースで重要になります。
 
-- **Framework debugging**: Deterministic outputs make it easier to debug issues in the inference framework, as the same input will always produce the same output regardless of batching.
-- **Model debugging**: Helps identify issues in model implementations by ensuring consistent behavior across different batch configurations.
-- **Reinforcement Learning (RL)**: RL training often requires deterministic rollouts for reproducibility and stable training.
-- **Large-scale inference systems**: Systems that use vLLM as a component benefit from deterministic behavior for testing, validation, and consistency guarantees.
+- **フレームワークのデバッグ**: 出力が決定的であれば、バッチングにかかわらず同じ入力が常に同じ出力を生むため、推論フレームワークの問題をデバッグしやすくなります。
+- **モデルのデバッグ**: バッチ構成が変わっても挙動が一貫することで、モデル実装の問題を特定しやすくなります。
+- **強化学習（RL）**: RL の学習では、再現性と安定した学習のために決定的なロールアウトが必要になることがよくあります。
+- **大規模推論システム**: vLLM をコンポーネントとして使うシステムでは、テスト・検証・一貫性の保証の面で決定的な挙動が役立ちます。
 
-## Hardware Requirements
+## ハードウェア要件 { #hardware-requirements }
 
-Batch invariance requires NVIDIA GPUs with compute capability 8.0 or higher.
+バッチ不変性には、compute capability 8.0 以上の NVIDIA GPU が必要です。
 
-## Enabling Batch Invariance
+## バッチ不変性を有効にする { #enabling-batch-invariance }
 
-Batch invariance can be enabled by setting the `VLLM_BATCH_INVARIANT` environment variable to `1`:
+バッチ不変性は、環境変数 `VLLM_BATCH_INVARIANT` を `1` に設定することで有効になります。
 
 ```bash
 export VLLM_BATCH_INVARIANT=1
 ```
 
-### Online Inference (Server Mode)
+### オンライン推論（サーバーモード） { #online-inference-server-mode }
 
-To start a vLLM server with batch invariance enabled:
+バッチ不変性を有効にして vLLM サーバーを起動するには次のようにします。
 
 ```bash
 VLLM_BATCH_INVARIANT=1 vllm serve meta-llama/Llama-3.1-8B-Instruct
 ```
 
-Then use the OpenAI-compatible client:
+そのうえで、OpenAI 互換クライアントを使います。
 
 ```python
 from openai import OpenAI
@@ -58,9 +58,9 @@ response = client.completions.create(
 print(response.choices[0].text)
 ```
 
-### Offline Inference
+### オフライン推論 { #offline-inference }
 
-For offline batch inference with batch invariance:
+バッチ不変性を有効にしたオフラインのバッチ推論は次のようになります。
 
 ```python
 import os
@@ -96,39 +96,40 @@ for output in outputs:
     print(f"Generated: {generated_text!r}\n")
 ```
 
-## Tested Models
+## 検証済みモデル { #tested-models }
 
-Batch invariance has been tested and verified on the following models:
+バッチ不変性は、次のモデルでテストおよび検証されています。
 
 - **DeepSeek series**: `deepseek-ai/DeepSeek-V3`, `deepseek-ai/DeepSeek-V3-0324`, `deepseek-ai/DeepSeek-R1`, `deepseek-ai/DeepSeek-V3.1`
 - **Qwen3 (Dense)**: `Qwen/Qwen3-1.7B`, `Qwen/Qwen3-8B`, `Qwen/Qwen3-4B-AWQ`, `Qwen/Qwen3-8B-AWQ`
 - **Qwen3 (MoE)**: `Qwen/Qwen3-30B-A3B`, `Qwen/Qwen3-Next-80B-A3B-Instruct`, `Qwen/Qwen3-30B-A3B-Thinking-2507-FP8`
 - **Qwen2.5**: `Qwen/Qwen2.5-0.5B-Instruct`, `Qwen/Qwen2.5-1.5B-Instruct`, `Qwen/Qwen2.5-3B-Instruct`, `Qwen/Qwen2.5-7B-Instruct`, `Qwen/Qwen2.5-14B-Instruct`, `Qwen/Qwen2.5-32B-Instruct`
-- **Llama 3**: Llama3.1 and 3.2 series, `meta-llama/Llama-3.2-3B-Instruct` for example
+- **Llama 3**: Llama3.1 および 3.2 シリーズ（例: `meta-llama/Llama-3.2-3B-Instruct`）
 - **GPT-OSS**: `openai/gpt-oss-20b`, `openai/gpt-oss-120b`
 - **Mistral**: `mistralai/Mistral-7B-v0.3`
-- **Phi series**: `microsoft/Phi-3.5-mini-instruct`
+- **Phi シリーズ**: `microsoft/Phi-3.5-mini-instruct`
 
-Other models may also work, but these have been explicitly validated. If you encounter issues with a specific model, please report them on the [GitHub issue tracker](https://github.com/vllm-project/vllm/issues/new/choose).
+他のモデルでも動作する可能性はありますが、明示的に検証されているのは上記のモデルです。特定のモデルで問題が発生した場合は、[GitHub の issue トラッカー](https://github.com/vllm-project/vllm/issues/new/choose)で報告してください。
 
-## Implementation Details
+## 実装の詳細 { #implementation-details }
 
-When batch invariance is enabled, vLLM:
+バッチ不変性を有効にすると、vLLM は次のように動作します。
 
-1. Uses deterministic kernel implementations for attention and other operations
-2. Ensures consistent numerical behavior across different batch sizes
-3. Disables certain optimizations that may introduce non-determinism (such as custom all-reduce operations in tensor parallel mode)
+1. Attention をはじめとする演算に、決定的なカーネル実装を使う
+2. バッチサイズが異なっても数値的な挙動が一貫するようにする
+3. 非決定性をもたらす可能性のある一部の最適化（テンソル並列時のカスタム all-reduce など）を無効にする
 
 !!! note
-    Enabling batch invariance may impact performance compared to the default non-deterministic mode. This trade-off is intentional to guarantee reproducibility.
+    バッチ不変性を有効にすると、既定の非決定的モードと比べて性能に影響が出る場合があります。
+    このトレードオフは、再現性を保証するための意図的なものです。
 
-## Future Improvements
+## 今後の改善 { #future-improvements }
 
-The batch invariance feature is under active development. Planned improvements include:
+バッチ不変性の機能は活発に開発が進められています。予定されている改善は次のとおりです。
 
-- Support for additional GPU architectures
-- Expanded model coverage
-- Performance optimizations
-- Additional testing and validation
+- 対応 GPU アーキテクチャの追加
+- 対応モデルの拡大
+- 性能の最適化
+- テストと検証の拡充
 
-For the latest status and to contribute ideas, see the [tracking issue](https://github.com/vllm-project/vllm/issues/27433).
+最新の状況の確認やアイデアの提案は、[追跡用 issue](https://github.com/vllm-project/vllm/issues/27433) を参照してください。
