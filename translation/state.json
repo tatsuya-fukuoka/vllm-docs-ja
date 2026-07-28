@@ -981,8 +981,10 @@
       "upstream_sha": "f785255f9ff6c780"
     },
     "getting_started/installation/gpu.cuda.inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "25f65fcb64e10515",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "25f65fcb64e10515"
     },
     "getting_started/installation/gpu.md": {

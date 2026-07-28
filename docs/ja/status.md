@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **92 ページ**を翻訳済みです（40.7%）。
+全 226 ページ中 **93 ページ**を翻訳済みです（41.2%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -20,13 +20,13 @@
 | デプロイ | 35 | 0 | 0 | 35 |
 | 設計ドキュメント | 0 | 0 | 29 | 29 |
 | 機能 | 3 | 0 | 49 | 52 |
-| はじめに | 4 | 0 | 9 | 13 |
+| はじめに | 5 | 0 | 8 | 13 |
 | ガバナンス | 0 | 0 | 3 | 3 |
 | モデル | 1 | 0 | 15 | 16 |
 | 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 0 | 0 | 8 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **92** | **0** | **134** | **226** |
+| **合計** | **93** | **0** | **133** | **226** |
 
 ## 翻訳済みのページ
 
@@ -95,6 +95,7 @@
 - `features/quantization/README.md`
 - `features/structured_outputs.md`
 - `getting_started/installation/README.md`
+- `getting_started/installation/gpu.cuda.inc.md`
 - `getting_started/installation/gpu.md`
 - `getting_started/installation/python_env_setup.inc.md`
 - `getting_started/quickstart.md`
