@@ -1,29 +1,29 @@
-# NVIDIA Model Optimizer
+# NVIDIA Model Optimizer { #nvidia-model-optimizer }
 
-The [NVIDIA Model Optimizer](https://github.com/NVIDIA/Model-Optimizer) is a library designed to optimize models for inference with NVIDIA GPUs. It includes tools for Post-Training Quantization (PTQ) and Quantization Aware Training (QAT) of Large Language Models (LLMs), Vision Language Models (VLMs), and diffusion models.
+[NVIDIA Model Optimizer](https://github.com/NVIDIA/Model-Optimizer) は、NVIDIA GPU での推論に向けてモデルを最適化するライブラリです。大規模言語モデル (LLM)、視覚言語モデル (VLM)、拡散モデルの学習後量子化 (PTQ) と量子化を考慮した学習 (QAT) のツールを備えています。
 
-We recommend installing the library with:
+ライブラリは次の方法でインストールすることを推奨します。
 
 ```bash
 pip install nvidia-modelopt
 ```
 
-## Supported ModelOpt checkpoint formats
+## サポートする ModelOpt のチェックポイント形式 { #supported-modelopt-checkpoint-formats }
 
-vLLM detects ModelOpt checkpoints via `hf_quant_config.json` and supports the
-following `quantization.quant_algo` values:
+vLLM は `hf_quant_config.json` によって ModelOpt のチェックポイントを検出し、
+次の `quantization.quant_algo` の値をサポートします。
 
-- `FP8`: per-tensor weight scale (+ optional static activation scale).
-- `FP8_PER_CHANNEL_PER_TOKEN`: per-channel weight scale and dynamic per-token activation quantization.
-- `FP8_PB_WO` (ModelOpt may emit `fp8_pb_wo`): block-scaled FP8 weight-only (typically 128×128 blocks).
-- `NVFP4`: ModelOpt NVFP4 checkpoints (use `quantization="modelopt_fp4"`).
-- `MXFP8`: ModelOpt MXFP8 checkpoints (use `quantization="modelopt_mxfp8"`).
+- `FP8`: テンソル単位の重みスケール（＋任意で静的なアクティベーションスケール）。
+- `FP8_PER_CHANNEL_PER_TOKEN`: チャネル単位の重みスケールと、トークン単位の動的なアクティベーション量子化。
+- `FP8_PB_WO`（ModelOpt は `fp8_pb_wo` と出力することがあります）: ブロック単位でスケールする重みのみの FP8（通常は 128×128 のブロック）。
+- `NVFP4`: ModelOpt の NVFP4 チェックポイント（`quantization="modelopt_fp4"` を指定）。
+- `MXFP8`: ModelOpt の MXFP8 チェックポイント（`quantization="modelopt_mxfp8"` を指定）。
 
-## Quantizing HuggingFace Models with PTQ
+## PTQ で HuggingFace のモデルを量子化する { #quantizing-huggingface-models-with-ptq }
 
-You can quantize HuggingFace models using the example scripts provided in the Model Optimizer repository. The primary script for LLM PTQ is typically found within the `examples/llm_ptq` directory.
+Model Optimizer のリポジトリにあるサンプルスクリプトを使って Hugging Face のモデルを量子化できます。LLM の PTQ 用の主なスクリプトは通常 `examples/llm_ptq` ディレクトリにあります。
 
-Below is an example showing how to quantize a model using modelopt's PTQ API:
+以下は、modelopt の PTQ API でモデルを量子化する例です。
 
 ??? code
 
@@ -46,7 +46,7 @@ Below is an example showing how to quantize a model using modelopt's PTQ API:
     model = mtq.quantize(model, config, forward_loop)
     ```
 
-After the model is quantized, you can export it to a quantized checkpoint using the export API:
+量子化が終わったら、エクスポート API で量子化済みのチェックポイントとして出力できます。
 
 ```python
 import torch
@@ -59,7 +59,7 @@ with torch.inference_mode():
     )
 ```
 
-The quantized checkpoint can then be deployed with vLLM. As an example, the following code shows how to deploy `nvidia/Llama-3.1-8B-Instruct-FP8`, which is the FP8 quantized checkpoint derived from `meta-llama/Llama-3.1-8B-Instruct`, using vLLM:
+量子化済みのチェックポイントは vLLM でデプロイできます。次のコードは、`meta-llama/Llama-3.1-8B-Instruct` から派生した FP8 量子化のチェックポイントである `nvidia/Llama-3.1-8B-Instruct-FP8` を vLLM でデプロイする例です。
 
 ??? code
 
@@ -92,9 +92,9 @@ The quantized checkpoint can then be deployed with vLLM. As an example, the foll
         main()
     ```
 
-## Running the OpenAI-compatible server
+## OpenAI 互換サーバーを実行する { #running-the-openai-compatible-server }
 
-To serve a local ModelOpt checkpoint via the OpenAI-compatible API:
+ローカルの ModelOpt のチェックポイントを OpenAI 互換 API でサービングするには次のようにします。
 
 ```bash
 vllm serve <path_to_exported_checkpoint> \
@@ -102,10 +102,10 @@ vllm serve <path_to_exported_checkpoint> \
   --host 0.0.0.0 --port 8000
 ```
 
-## Testing (local checkpoints)
+## テスト（ローカルのチェックポイント） { #testing-local-checkpoints }
 
-vLLM's ModelOpt unit tests are gated by local checkpoint paths and are skipped
-by default in CI. To run the tests locally:
+vLLM の ModelOpt のユニットテストはローカルのチェックポイントのパスに依存するため、
+CI では既定でスキップされます。ローカルで実行するには次のようにします。
 
 ```bash
 export VLLM_TEST_MODELOPT_FP8_PC_PT_MODEL_PATH=<path_to_fp8_pc_pt_checkpoint>

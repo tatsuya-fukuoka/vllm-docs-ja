@@ -821,8 +821,10 @@
       "upstream_sha": "d2de9c92ead49209"
     },
     "features/quantization/gptqmodel.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "692edefe3ddd27eb",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "692edefe3ddd27eb"
     },
     "features/quantization/inc.md": {
@@ -860,8 +862,10 @@
       "upstream_sha": "05f407950c06a582"
     },
     "features/quantization/modelopt.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "0dd98d206c17c81a",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "0dd98d206c17c81a"
     },
     "features/quantization/online.md": {

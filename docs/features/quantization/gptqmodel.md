@@ -1,32 +1,32 @@
-# GPTQModel
+# GPTQModel { #gptqmodel }
 
-To create a new 4-bit or 8-bit GPTQ quantized model, you can leverage [GPTQModel](https://github.com/ModelCloud/GPTQModel) from ModelCloud.AI.
+4 ビットまたは 8 ビットの GPTQ 量子化モデルを新たに作るには、ModelCloud.AI の [GPTQModel](https://github.com/ModelCloud/GPTQModel) を利用できます。
 
-Quantization reduces the model's precision from BF16/FP16 (16-bits) to INT4 (4-bits) or INT8 (8-bits) which significantly reduces the
-total model memory footprint while at-the-same-time increasing inference performance.
+量子化はモデルの精度を BF16/FP16（16 ビット）から INT4（4 ビット）または INT8（8 ビット）へ落とし、
+モデル全体のメモリ使用量を大きく削減すると同時に推論性能を高めます。
 
-Compatible GPTQModel quantized models can leverage the `Marlin` and `Machete` vLLM custom kernels to maximize batching
-transactions-per-second `tps` and token-latency performance for both Ampere (A100+) and Hopper (H100+) Nvidia GPUs.
-These two kernels are highly optimized by vLLM and NeuralMagic (now part of Redhat) to allow world-class inference performance of quantized GPTQ
-models.
+対応する GPTQModel の量子化モデルは、vLLM の独自カーネル `Marlin` と `Machete` を活用でき、
+Ampere（A100 以降）と Hopper（H100 以降）の NVIDIA GPU でバッチ処理の毎秒トランザクション数 `tps` と
+トークンのレイテンシ性能を最大化できます。この 2 つのカーネルは vLLM と NeuralMagic（現在は Red Hat の一部）に
+よって高度に最適化されており、量子化 GPTQ モデルで世界水準の推論性能を実現します。
 
-GPTQModel is one of the few quantization toolkits in the world that allows `Dynamic` per-module quantization where different layers and/or modules within a llm model can be further optimized with custom quantization parameters. `Dynamic` quantization
-is fully integrated into vLLM and backed up by support from the ModelCloud.AI team. Please refer to [GPTQModel readme](https://github.com/ModelCloud/GPTQModel?tab=readme-ov-file#dynamic-quantization-per-module-quantizeconfig-override)
-for more details on this and other advanced features.
+GPTQModel は、LLM 内の層やモジュールごとに個別の量子化パラメータでさらに最適化できる `Dynamic`（モジュール単位）量子化に対応した、
+数少ない量子化ツールキットの 1 つです。`Dynamic` 量子化は vLLM に完全に統合されており、ModelCloud.AI チームのサポートを受けています。
+この機能やその他の高度な機能の詳細は [GPTQModel の readme](https://github.com/ModelCloud/GPTQModel?tab=readme-ov-file#dynamic-quantization-per-module-quantizeconfig-override)（英語）を参照してください。
 
-## Installation
+## インストール { #installation }
 
-You can quantize your own models by installing [GPTQModel](https://github.com/ModelCloud/GPTQModel) or picking one of the [5000+ models on Huggingface](https://huggingface.co/models?search=gptq).
+[GPTQModel](https://github.com/ModelCloud/GPTQModel) をインストールして自分のモデルを量子化することも、[Hugging Face にある 5000 以上のモデル](https://huggingface.co/models?search=gptq)から選ぶこともできます。
 
 ```bash
 pip install -U gptqmodel --no-build-isolation -v
 ```
 
-## Quantizing a model
+## モデルを量子化する { #quantizing-a-model }
 
-After installing GPTQModel, you are ready to quantize a model. Please refer to the [GPTQModel readme](https://github.com/ModelCloud/GPTQModel/?tab=readme-ov-file#quantization) for further details.
+GPTQModel をインストールすると、モデルを量子化できます。詳細は [GPTQModel の readme](https://github.com/ModelCloud/GPTQModel/?tab=readme-ov-file#quantization)（英語）を参照してください。
 
-Here is an example of how to quantize `meta-llama/Llama-3.2-1B-Instruct`:
+以下は `meta-llama/Llama-3.2-1B-Instruct` を量子化する例です。
 
 ??? code
 
@@ -53,18 +53,18 @@ Here is an example of how to quantize `meta-llama/Llama-3.2-1B-Instruct`:
     model.save(quant_path)
     ```
 
-## Running a quantized model with vLLM
+## 量子化したモデルを vLLM で実行する { #running-a-quantized-model-with-vllm }
 
-To run a GPTQModel quantized model with vLLM, you can use [DeepSeek-R1-Distill-Qwen-7B-gptqmodel-4bit-vortex-v2](https://huggingface.co/ModelCloud/DeepSeek-R1-Distill-Qwen-7B-gptqmodel-4bit-vortex-v2) with the following command:
+GPTQModel で量子化したモデルを vLLM で実行するには、[DeepSeek-R1-Distill-Qwen-7B-gptqmodel-4bit-vortex-v2](https://huggingface.co/ModelCloud/DeepSeek-R1-Distill-Qwen-7B-gptqmodel-4bit-vortex-v2) を次のコマンドで使えます。
 
 ```bash
 python examples/deployment/llm_engine_example.py \
     --model ModelCloud/DeepSeek-R1-Distill-Qwen-7B-gptqmodel-4bit-vortex-v2
 ```
 
-## Using GPTQModel with vLLM's Python API
+## vLLM の Python API から GPTQModel を使う { #using-gptqmodel-with-vllms-python-api }
 
-GPTQModel quantized models are also supported directly through the LLM entrypoint:
+GPTQModel で量子化したモデルは、LLM のエントリポイントから直接利用することもできます。
 
 ??? code
 

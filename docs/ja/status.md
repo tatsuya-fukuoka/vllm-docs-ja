@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **120 ページ**を翻訳済みです（53.1%）。
+全 226 ページ中 **122 ページ**を翻訳済みです（54.0%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -19,14 +19,14 @@
 | 開発者ガイド | 0 | 0 | 16 | 16 |
 | デプロイ | 35 | 0 | 0 | 35 |
 | 設計ドキュメント | 0 | 0 | 29 | 29 |
-| 機能 | 21 | 0 | 31 | 52 |
+| 機能 | 23 | 0 | 29 | 52 |
 | はじめに | 5 | 0 | 8 | 13 |
 | ガバナンス | 1 | 0 | 2 | 3 |
 | モデル | 1 | 0 | 15 | 16 |
 | 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **120** | **0** | **106** | **226** |
+| **合計** | **122** | **0** | **104** | **226** |
 
 ## 翻訳済みのページ
 
@@ -100,8 +100,10 @@
 - `features/quantization/auto_awq.md`
 - `features/quantization/bnb.md`
 - `features/quantization/gguf.md`
+- `features/quantization/gptqmodel.md`
 - `features/quantization/inc.md`
 - `features/quantization/llm_compressor/README.md`
+- `features/quantization/modelopt.md`
 - `features/quantization/torchao.md`
 - `features/speculative_decoding/dynamic_speculative_decoding.md`
 - `features/speculative_decoding/eagle.md`
