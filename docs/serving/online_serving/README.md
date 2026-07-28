@@ -1,223 +1,223 @@
-# Online Serving
+# オンラインサービング { #online-serving }
 
-vLLM provides an HTTP server that is compatible with many interfaces!
+vLLM は、多くのインターフェイスと互換性のある HTTP サーバーを提供します。
 
-## OpenAI-Compatible Server
+## OpenAI 互換サーバー { #openai-compatible-server }
 
-We currently support the following OpenAI APIs:
+現在サポートしている OpenAI API は次のとおりです。
 
 - [Completions API](./openai_compatible_server.md#completions-api) (`/v1/completions`)
-    - Only applicable to [text generation models](../../models/generative_models.md).
-    - *Note: `suffix` parameter is not supported.*
+    - [テキスト生成モデル](../../models/generative_models.md)にのみ適用できます。
+    - *注意: `suffix` パラメータはサポートされていません。*
 - [Chat Completions API](./openai_compatible_server.md#chat-api) (`/v1/chat/completions`)
-    - Only applicable to [text generation models](../../models/generative_models.md) with a [chat template](./openai_compatible_server.md#chat-template).
-    - *Note: `user` parameter is ignored.*
-    - *Note:* Setting the `parallel_tool_calls` parameter to `false` ensures vLLM only returns zero or one tool call per request. Setting it to `true` (the default) allows returning more than one tool call per request. There is no guarantee more than one tool call will be returned if this is set to `true`, as that behavior is model dependent and not all models are designed to support parallel tool calls.
+    - [チャットテンプレート](./openai_compatible_server.md#chat-template)を持つ[テキスト生成モデル](../../models/generative_models.md)にのみ適用できます。
+    - *注意: `user` パラメータは無視されます。*
+    - *注意:* `parallel_tool_calls` パラメータを `false` にすると、vLLM は 1 リクエストにつきツール呼び出しを 0 個または 1 個しか返しません。`true`（既定値）にすると 1 リクエストで複数のツール呼び出しを返せます。ただし `true` にしても複数返ることは保証されません。この挙動はモデルに依存し、すべてのモデルが並列のツール呼び出しに対応しているわけではないためです。
 - [Chat Completions batch API](./openai_compatible_server.md#chat-api) (`/v1/chat/completions/batch`)
 - [Responses API](./openai_compatible_server.md#responses-api) (`/v1/responses`, `/v1/responses/{response_id}`, `/v1/responses/{response_id}/cancel`)
-    - Only applicable to [text generation models](../../models/generative_models.md).
+    - [テキスト生成モデル](../../models/generative_models.md)にのみ適用できます。
 - [Embeddings API](../../models/pooling_models/embed.md#openai-compatible-embeddings-api) (`/v1/embeddings`)
-    - Only applicable to [embedding models](../../models/pooling_models/embed.md).
+    - [埋め込みモデル](../../models/pooling_models/embed.md)にのみ適用できます。
 - [Transcriptions API](./speech_to_text.md#transcriptions-api) (`/v1/audio/transcriptions`)
-    - Only applicable to [Automatic Speech Recognition (ASR) models](../../models/supported_models.md#transcription).
+    - [自動音声認識 (ASR) モデル](../../models/supported_models.md#transcription)にのみ適用できます。
 - [Translation API](./speech_to_text.md#translations-api) (`/v1/audio/translations`)
-    - Only applicable to [Automatic Speech Recognition (ASR) models](../../models/supported_models.md#transcription).
+    - [自動音声認識 (ASR) モデル](../../models/supported_models.md#transcription)にのみ適用できます。
 
-## Anthropic APIs
+## Anthropic API { #anthropic-apis }
 
 - Anthropic messages API (`/v1/messages`, `/v1/messages/count_tokens`)
 
-## Cohere APIs
+## Cohere API { #cohere-apis }
 
 - [Cohere Embed API](../../models/pooling_models/embed.md#cohere-embed-api) (`/v2/embed`)
-    - Compatible with [Cohere's Embed API](https://docs.cohere.com/reference/embed)
-    - Works with any [embedding model](../../models/pooling_models/embed.md#supported-models), including multimodal models.
+    - [Cohere の Embed API](https://docs.cohere.com/reference/embed) と互換性があります
+    - マルチモーダルモデルを含む任意の[埋め込みモデル](../../models/pooling_models/embed.md#supported-models)で利用できます。
 - [Cohere Rerank API](../../models/pooling_models/scoring.md#rerank-api) (`/rerank`, `/v1/rerank`, `/v2/rerank`)
-    - Implements [Jina AI's v1 rerank API](https://jina.ai/reranker/)
-    - compatible with [Cohere's v1 & v2 rerank APIs](https://docs.cohere.com/v2/reference/rerank)
+    - [Jina AI の v1 rerank API](https://jina.ai/reranker/) を実装しています
+    - [Cohere の v1 / v2 rerank API](https://docs.cohere.com/v2/reference/rerank) と互換性があります
 
-## Pooling APIs
+## プーリング API { #pooling-apis }
 
-For further details on pooling models, please refer to [this page](../../models/pooling_models/README.md).
+プーリングモデルの詳細は[このページ](../../models/pooling_models/README.md)を参照してください。
 
-- [Classification Usages](../../models/pooling_models/classify.md)
+- [分類の使い方](../../models/pooling_models/classify.md)
     - [Classification API](../../models/pooling_models/classify.md#online-serving) (`/classify`)
-    - Only applicable to [classification models](../../models/pooling_models/classify.md).
-- [Embedding Usages](../../models/pooling_models/embed.md)
+    - [分類モデル](../../models/pooling_models/classify.md)にのみ適用できます。
+- [埋め込みの使い方](../../models/pooling_models/embed.md)
     - [Cohere Embed API](../../models/pooling_models/embed.md#cohere-embed-api) (`/v2/embed`)
     - [OpenAI-compatible Embeddings API](../../models/pooling_models/embed.md#openai-compatible-embeddings-api) (`/v1/embeddings`)
-    - Only applicable to [embedding models](../../models/pooling_models/embed.md).
-- [Scoring Usages](../../models/pooling_models/scoring.md)
+    - [埋め込みモデル](../../models/pooling_models/embed.md)にのみ適用できます。
+- [スコアリングの使い方](../../models/pooling_models/scoring.md)
     - [Score API](../../models/pooling_models/scoring.md#score-api) (`/score`, `/v1/score`)
     - [Cohere Rerank API](../../models/pooling_models/scoring.md#rerank-api) (`/rerank`, `/v1/rerank`, `/v2/rerank`)
-    - Applicable to [score models](../../models/pooling_models/scoring.md) (cross-encoder, bi-encoder, late-interaction).
+    - [スコアモデル](../../models/pooling_models/scoring.md)（cross-encoder、bi-encoder、late-interaction）に適用できます。
 - [Pooling API](../../models/pooling_models/README.md#pooling-api) (`/pooling`)
-    - Applicable to all [pooling models](../../models/pooling_models/README.md).
+    - すべての[プーリングモデル](../../models/pooling_models/README.md)に適用できます。
 
-## Speech to Text APIs
+## 音声認識 API { #speech-to-text-apis }
 
-For further details on speech to text, please refer to [this page](speech_to_text.md).
+音声認識の詳細は[このページ](speech_to_text.md)を参照してください。
 
 - [Transcriptions API](./speech_to_text.md#transcriptions-api) (`/v1/audio/transcriptions`)
-    - Only applicable to [Automatic Speech Recognition (ASR) models](../../models/supported_models.md#transcription).
+    - [自動音声認識 (ASR) モデル](../../models/supported_models.md#transcription)にのみ適用できます。
 - [Translation API](./speech_to_text.md#translations-api) (`/v1/audio/translations`)
-    - Only applicable to [Automatic Speech Recognition (ASR) models](../../models/supported_models.md#transcription).
+    - [自動音声認識 (ASR) モデル](../../models/supported_models.md#transcription)にのみ適用できます。
 - [Realtime API](./speech_to_text.md#realtime-api) (`/v1/realtime`)
-    - Only applicable to [Automatic Speech Recognition (ASR) models](../../models/supported_models.md#realtime-transcription).
+    - [自動音声認識 (ASR) モデル](../../models/supported_models.md#realtime-transcription)にのみ適用できます。
 
-## Custom APIs
+## 独自 API { #custom-apis }
 
 - [Classification API](../../models/pooling_models/classify.md#classification-api) (`/classify`)
-    - Only applicable to [classification models](../../models/pooling_models/classify.md).
+    - [分類モデル](../../models/pooling_models/classify.md)にのみ適用できます。
 - [Score API](../../models/pooling_models/scoring.md#score-api) (`/score`, `/v1/score`)
-    - Applicable to [score models](../../models/pooling_models/scoring.md) (cross-encoder, bi-encoder, late-interaction).
+    - [スコアモデル](../../models/pooling_models/scoring.md)（cross-encoder、bi-encoder、late-interaction）に適用できます。
 - [Pooling API](../../models/pooling_models/README.md#pooling-api) (`/pooling`)
-    - Applicable to all [pooling models](../../models/pooling_models/README.md).
+    - すべての[プーリングモデル](../../models/pooling_models/README.md)に適用できます。
 - [Generative Scoring API](generative_scoring.md#generative-scoring-api) (`/generative_scoring`)
-    - Applicable to [CausalLM models](../../models/generative_models.md) (task `"generate"`).
-    - Computes next-token probabilities for specified `label_token_ids`.
+    - [CausalLM モデル](../../models/generative_models.md)（タスク `"generate"`）に適用できます。
+    - 指定された `label_token_ids` に対する次トークンの確率を計算します。
 
-## Instrumentator APIs
+## 計測用 API { #instrumentator-apis }
 
-### Basic APIs
+### 基本 API { #basic-apis }
 
-- `/version` - Version information
-- `/load` - Server load metrics
-- `/v1/models` - List available models
-- `/health` - Health check
+- `/version` - バージョン情報
+- `/load` - サーバー負荷のメトリクス
+- `/v1/models` - 利用可能なモデルの一覧
+- `/health` - ヘルスチェック
 
-### Metrics APIs
+### メトリクス API { #metrics-apis }
 
-For further details on metrics, please refer to [this page](../../design/metrics.md).
+メトリクスの詳細は[このページ](../../design/metrics.md)を参照してください。
 
-- `/metrics` - Prometheus-compatible metrics HTTP endpoint
+- `/metrics` - Prometheus 互換のメトリクス HTTP エンドポイント
 
-### Offline API Documentation
+### オフラインでの API ドキュメント { #offline-api-documentation }
 
-The FastAPI `/docs` endpoint requires an internet connection by default. To enable offline access in air-gapped environments, use the `--enable-offline-docs` flag:
+FastAPI の `/docs` エンドポイントは既定でインターネット接続を必要とします。ネットワークから隔離された環境でオフラインでも利用できるようにするには、`--enable-offline-docs` フラグを指定します。
 
 ```bash
 vllm serve NousResearch/Meta-Llama-3-8B-Instruct --enable-offline-docs
 ```
 
-### LoRA dynamic loading
+### LoRA の動的ロード { #lora-dynamic-loading }
 
-LoRA dynamic loading & unloading is enabled in the API server. This should ONLY be used for local development!
+API サーバーでは LoRA の動的なロード・アンロードが有効になっています。ローカル開発でのみ使用してください。
 
-- `/v1/load_lora_adapter` - LoRA dynamic loading
-- `/v1/unload_lora_adapter` - LoRA dynamic unloading
+- `/v1/load_lora_adapter` - LoRA の動的ロード
+- `/v1/unload_lora_adapter` - LoRA の動的アンロード
 
-### Profiling APIs
+### プロファイリング API { #profiling-apis }
 
-For further details on profiling vLLM, please refer to [this page](../../contributing/profiling.md).
+vLLM のプロファイリングの詳細は[このページ](../../contributing/profiling.md)を参照してください。
 
-- `/start_profile` - Start PyTorch profiler
-- `/stop_profile` - Stop PyTorch profiler
+- `/start_profile` - PyTorch プロファイラを開始
+- `/stop_profile` - PyTorch プロファイラを停止
 
-### SageMaker APIs
+### SageMaker API { #sagemaker-apis }
 
-- `/ping` - SageMaker health check
-- `/invocations` - SageMaker-compatible endpoint (routes to the same inference functions as `/v1` endpoints)
+- `/ping` - SageMaker のヘルスチェック
+- `/invocations` - SageMaker 互換のエンドポイント（`/v1` エンドポイントと同じ推論処理へ振り分けられます）
 
-## Scale-Out APIs
+## スケールアウト API { #scale-out-apis }
 
-### Tokens IN <> Tokens OUT APIs
+### Tokens IN <> Tokens OUT API { #tokens-in-tokens-out-apis }
 
-- `/inference/v1/generate` - Generate completions
-- `/abort_requests` - Abort in-flight requests (only when `--tokens-only` is also set)
+- `/inference/v1/generate` - 補完を生成
+- `/abort_requests` - 実行中のリクエストを中断（`--tokens-only` も指定した場合のみ）
 
-### Renderer APIs
+### レンダラー API { #renderer-apis }
 
-For further details on renderer APIs, please refer to [this page](renderer.md).
+レンダラー API の詳細は[このページ](renderer.md)を参照してください。
 
 - [Completions Render API](renderer.md) (`/v1/completions/render`)
-    - Render completion requests
+    - completion リクエストをレンダリングします
 - [Chat Completions Render API](renderer.md) (`/v1/chat/completions/render`)
-    - Render chat completions
+    - chat completion をレンダリングします
 
-### Derenderer APIs
+### デレンダラー API { #derenderer-apis }
 
-For further details on derenderer APIs, please refer to [this page](derenderer.md).
+デレンダラー API の詳細は[このページ](derenderer.md)を参照してください。
 
 - [Chat Completions Derender API](derenderer.md) (`/v1/chat/completions/derender`)
-    - Derender chat completion requests
+    - chat completion リクエストをデレンダリングします
 - [Completions Derender API](derenderer.md) (`/v1/completions/derender`)
-    - Derender completion requests
+    - completion リクエストをデレンダリングします
 
-## Tokenize APIs
+## トークナイズ API { #tokenize-apis }
 
-- `/tokenize` - Tokenize text
-- `/detokenize` - Detokenize tokens
-- `/tokenizer_info` - Get comprehensive tokenizer information including chat templates and configuration
+- `/tokenize` - テキストをトークナイズ
+- `/detokenize` - トークンをデトークナイズ
+- `/tokenizer_info` - チャットテンプレートや設定を含む、トークナイザーの詳細情報を取得
 
-## Elastic Expert Parallelism (EEP)
+## Elastic Expert Parallelism (EEP) { #elastic-expert-parallelism-eep }
 
-- `/scale_elastic_ep` - Trigger scaling operations
-- `/is_scaling_elastic_ep` - Check if scaling is in progress
+- `/scale_elastic_ep` - スケーリング操作を実行
+- `/is_scaling_elastic_ep` - スケーリング中かどうかを確認
 
-## Server in development mode
+## 開発モードのサーバー { #server-in-development-mode }
 
-When using the flag VLLM_SERVER_DEV_MODE=1, you enable development endpoints.
+VLLM_SERVER_DEV_MODE=1 を指定すると、開発用エンドポイントが有効になります。
 
-**SECURITY WARNING: These endpoints should NOT be used in production!**
+**セキュリティ上の警告: これらのエンドポイントを本番環境で使用しないでください。**
 
-### Cache Management APIs
+### キャッシュ管理 API { #cache-management-apis }
 
-- `/reset_prefix_cache` - Reset prefix cache (can disrupt service)
-- `/reset_mm_cache` - Reset multimodal cache (can disrupt service)
-- `/reset_encoder_cache` - Reset encoder cache (can disrupt service)
+- `/reset_prefix_cache` - プレフィックスキャッシュをリセット（サービスに影響する可能性があります）
+- `/reset_mm_cache` - マルチモーダルキャッシュをリセット（サービスに影響する可能性があります）
+- `/reset_encoder_cache` - エンコーダーキャッシュをリセット（サービスに影響する可能性があります）
 
-### Weight Transfer APIs (RL Training)
+### 重み転送 API（RL 学習） { #weight-transfer-apis-rl-training }
 
-For further details on Weight Transfer, please refer to [this page](../../training/weight_transfer/README.md).
+重み転送の詳細は[このページ](../../training/weight_transfer/README.md)を参照してください。
 
-- `/pause` - Pause generation (causes denial of service)
-- `/resume` - Resume generation
-- `/is_paused` - Check if generation is paused
-- `/abort_requests` - Abort in-flight requests (all in-flight, or the given `request_ids`) without pausing the scheduler
-- `/init_weight_transfer_engine` - Initialize weight transfer engine for RLHF
-- `/start_weight_update` - Prepares the inference engine for a weight update.
-- `/update_weights` - Update model weights (can alter model behavior)
-- `/finish_weight_update` - Finalizes the weight update
-- `/get_world_size` - Get distributed world size
+- `/pause` - 生成を一時停止（サービス停止状態になります）
+- `/resume` - 生成を再開
+- `/is_paused` - 生成が一時停止中かどうかを確認
+- `/abort_requests` - スケジューラを停止せずに実行中のリクエスト（すべて、または指定した `request_ids`）を中断
+- `/init_weight_transfer_engine` - RLHF 用の重み転送エンジンを初期化
+- `/start_weight_update` - 重み更新に向けて推論エンジンを準備します。
+- `/update_weights` - モデルの重みを更新（モデルの挙動が変わる可能性があります）
+- `/finish_weight_update` - 重み更新を確定します
+- `/get_world_size` - 分散実行の world size を取得
 
-### Collective RPC
+### Collective RPC { #collective-rpc }
 
-- `/collective_rpc` - Execute arbitrary RPC methods on the engine (extremely dangerous)
+- `/collective_rpc` - エンジン上で任意の RPC メソッドを実行（極めて危険です）
 
-### Server info
+### サーバー情報 { #server-info }
 
-- `/server_info` - Get detailed server configuration
+- `/server_info` - サーバーの詳細な設定を取得
 
-### Sleep Mode APIs
+### スリープモード API { #sleep-mode-apis }
 
-For further details on sleep mode, please refer to [this page](../../features/sleep_mode.md).
+スリープモードの詳細は[このページ](../../features/sleep_mode.md)を参照してください。
 
-- `/sleep` - Put engine to sleep (causes denial of service)
-- `/wake_up` - Wake engine from sleep
-- `/is_sleeping` - Check if engine is sleeping
+- `/sleep` - エンジンをスリープ状態にする（サービス停止状態になります）
+- `/wake_up` - スリープ状態のエンジンを復帰させる
+- `/is_sleeping` - エンジンがスリープ中かどうかを確認
 
-## Chat Template
+## チャットテンプレート { #chat-template }
 
-In order for the language model to support chat protocol, vLLM requires the model to include
-a chat template in its tokenizer configuration. The chat template is a Jinja2 template that
-specifies how roles, messages, and other chat-specific tokens are encoded in the input.
+言語モデルがチャットプロトコルをサポートするには、モデルのトークナイザー設定にチャットテンプレートが
+含まれている必要があります。チャットテンプレートは Jinja2 テンプレートで、ロール・メッセージ・
+その他チャット固有のトークンを入力にどうエンコードするかを定義します。
 
-An example chat template for `NousResearch/Meta-Llama-3-8B-Instruct` can be found [here](https://llama.com/docs/model-cards-and-prompt-formats/meta-llama-3/#prompt-template-for-meta-llama-3)
+`NousResearch/Meta-Llama-3-8B-Instruct` のチャットテンプレートの例は[こちら](https://llama.com/docs/model-cards-and-prompt-formats/meta-llama-3/#prompt-template-for-meta-llama-3)にあります。
 
-Some models do not provide a chat template even though they are instruction/chat fine-tuned. For those models,
-you can manually specify their chat template in the `--chat-template` parameter with the file path to the chat
-template, or the template in string form. Without a chat template, the server will not be able to process chat
-and all chat requests will error.
+instruction / chat 向けにファインチューニングされていても、チャットテンプレートが提供されていないモデルがあります。
+そうしたモデルでは、`--chat-template` パラメータにチャットテンプレートのファイルパス、または文字列としての
+テンプレートを指定できます。チャットテンプレートがないとサーバーはチャットを処理できず、
+すべてのチャットリクエストがエラーになります。
 
 ```bash
 vllm serve <model> --chat-template ./path-to-chat-template.jinja
 ```
 
-vLLM community provides a set of chat templates for popular models. You can find them under the [examples](../../../examples) directory.
+vLLM コミュニティは主要なモデル向けのチャットテンプレートを提供しています。[examples](../../../examples) ディレクトリ以下にあります。
 
-With the inclusion of multi-modal chat APIs, the OpenAI spec now accepts chat messages in a new format which specifies
-both a `type` and a `text` field. An example is provided below:
+マルチモーダルのチャット API が加わったことで、OpenAI の仕様では `type` と `text` の両方を指定する新しい形式の
+チャットメッセージも受け付けるようになりました。例を示します。
 
 ```python
 completion = client.chat.completions.create(
@@ -233,30 +233,29 @@ completion = client.chat.completions.create(
 )
 ```
 
-Most chat templates for LLMs expect the `content` field to be a string, but there are some newer models like
-`meta-llama/Llama-Guard-3-1B` that expect the content to be formatted according to the OpenAI schema in the
-request. vLLM provides best-effort support to detect this automatically, which is logged as a string like
-*"Detected the chat template content format to be..."*, and internally converts incoming requests to match
-the detected format, which can be one of:
+LLM 向けのチャットテンプレートの多くは `content` フィールドが文字列であることを想定していますが、
+`meta-llama/Llama-Guard-3-1B` のような新しいモデルでは、リクエスト内の content が OpenAI のスキーマに従って
+整形されていることを想定します。vLLM はこれをベストエフォートで自動判定し、
+*"Detected the chat template content format to be..."* のようなログを出力したうえで、
+受信したリクエストを判定した形式に合わせて内部的に変換します。形式は次のいずれかです。
 
-- `"string"`: A string.
-    - Example: `"Hello world"`
-- `"openai"`: A list of dictionaries, similar to OpenAI schema.
-    - Example: `[{"type": "text", "text": "Hello world!"}]`
+- `"string"`: 文字列。
+    - 例: `"Hello world"`
+- `"openai"`: OpenAI のスキーマに似た辞書のリスト。
+    - 例: `[{"type": "text", "text": "Hello world!"}]`
 
-If the result is not what you expect, you can set the `--chat-template-content-format` CLI argument
-to override which format to use.
+判定結果が期待どおりでない場合は、CLI 引数 `--chat-template-content-format` で使用する形式を上書きできます。
 
-## Ray Serve LLM
+## Ray Serve LLM { #ray-serve-llm }
 
-Ray Serve LLM enables scalable, production-grade serving of the vLLM engine. It integrates tightly with vLLM and extends it with features such as auto-scaling, load balancing, and back-pressure.
+Ray Serve LLM を使うと、vLLM エンジンをスケーラブルかつ本番品質でサービングできます。vLLM と緊密に統合され、オートスケーリング・負荷分散・バックプレッシャーといった機能を追加します。
 
-Key capabilities:
+主な機能:
 
-- Exposes an OpenAI-compatible HTTP API as well as a Pythonic API.
-- Scales from a single GPU to a multi-node cluster without code changes.
-- Provides observability and autoscaling policies through Ray dashboards and metrics.
+- OpenAI 互換の HTTP API と Python の API の両方を提供します。
+- コードを変更せずに、単一 GPU からマルチノードのクラスタまでスケールします。
+- Ray のダッシュボードとメトリクスを通じて、可観測性とオートスケーリングのポリシーを提供します。
 
-The following example shows how to deploy a large model like DeepSeek R1 with Ray Serve LLM: [examples/ray_serving/ray_serve_deepseek.py](../../../examples/ray_serving/ray_serve_deepseek.py).
+次の例は、DeepSeek R1 のような大きなモデルを Ray Serve LLM でデプロイする方法を示しています: [examples/ray_serving/ray_serve_deepseek.py](../../../examples/ray_serving/ray_serve_deepseek.py)。
 
-Learn more about Ray Serve LLM with the official [Ray Serve LLM documentation](https://docs.ray.io/en/latest/serve/llm/index.html).
+Ray Serve LLM の詳細は公式の [Ray Serve LLM ドキュメント](https://docs.ray.io/en/latest/serve/llm/index.html)（英語）を参照してください。

@@ -1045,8 +1045,10 @@
       "upstream_sha": "2413cf78d22c2342"
     },
     "serving/online_serving/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1e7b8db27eb2397b",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "1e7b8db27eb2397b"
     },
     "serving/online_serving/derenderer.md": {
@@ -1161,8 +1163,10 @@
       "upstream_sha": "64abf26ed4a35f83"
     },
     "usage/v1_guide.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "94f548d23ff2e1b4",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "94f548d23ff2e1b4"
     }
   },
