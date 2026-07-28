@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **15 ページ**を翻訳済みです（6.6%）。
+全 226 ページ中 **18 ページ**を翻訳済みです（8.0%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -23,10 +23,10 @@
 | はじめに | 4 | 0 | 9 | 13 |
 | ガバナンス | 0 | 0 | 3 | 3 |
 | モデル | 1 | 0 | 15 | 16 |
-| 推論とサービング | 2 | 0 | 14 | 16 |
+| 推論とサービング | 3 | 0 | 13 | 16 |
 | 学習 | 0 | 0 | 8 | 8 |
-| 使い方 | 2 | 0 | 6 | 8 |
-| **合計** | **15** | **0** | **211** | **226** |
+| 使い方 | 4 | 0 | 4 | 8 |
+| **合計** | **18** | **0** | **208** | **226** |
 
 ## 翻訳済みのページ
 
@@ -42,6 +42,9 @@
 - `getting_started/quickstart.md`
 - `models/generative_models.md`
 - `serving/offline_inference.md`
+- `serving/online_serving/README.md`
 - `serving/online_serving/openai_compatible_server.md`
 - `usage/README.md`
 - `usage/faq.md`
+- `usage/troubleshooting.md`
+- `usage/v1_guide.md`

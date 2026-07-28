@@ -1153,8 +1153,10 @@
       "upstream_sha": "becabad8ad847047"
     },
     "usage/troubleshooting.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "966b8aa6fde411af",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "966b8aa6fde411af"
     },
     "usage/usage_stats.md": {

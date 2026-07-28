@@ -1,48 +1,48 @@
-# Troubleshooting
+# トラブルシューティング { #troubleshooting }
 
-This document outlines some troubleshooting strategies you can consider. If you think you've discovered a bug, please [search existing issues](https://github.com/vllm-project/vllm/issues?q=is%3Aissue) first to see if it has already been reported. If not, please [file a new issue](https://github.com/vllm-project/vllm/issues/new/choose), providing as much relevant information as possible.
-
-!!! note
-    Once you've debugged a problem, remember to turn off any debugging environment variables defined, or simply start a new shell to avoid being affected by lingering debugging settings. Otherwise, the system might be slow with debugging functionalities left activated.
-
-## Hangs downloading a model
-
-If the model isn't already downloaded to disk, vLLM will download it from the internet which can take time and depend on your internet connection.
-It's recommended to download the model first using the [huggingface-cli](https://huggingface.co/docs/huggingface_hub/en/guides/cli) and passing the local path to the model to vLLM. This way, you can isolate the issue.
-
-## Hangs loading a model from disk
-
-If the model is large, it can take a long time to load it from disk. Pay attention to where you store the model. Some clusters have shared filesystems across nodes, e.g. a distributed filesystem or a network filesystem, which can be slow.
-It'd be better to store the model in a local disk. Additionally, have a look at the CPU memory usage, when the model is too large it might take a lot of CPU memory, slowing down the operating system because it needs to frequently swap between disk and memory.
+このドキュメントでは、問題が起きたときに試せる切り分けの方法を紹介します。バグを見つけたと思われる場合は、まず[既存の Issue を検索](https://github.com/vllm-project/vllm/issues?q=is%3Aissue)して、すでに報告されていないか確認してください。見つからない場合は、関連する情報をできるだけ添えて[新しい Issue を作成](https://github.com/vllm-project/vllm/issues/new/choose)してください。
 
 !!! note
-    To isolate the model downloading and loading issue, you can use the `--load-format dummy` argument to skip loading the model weights. This way, you can check if the model downloading and loading is the bottleneck.
+    問題のデバッグが終わったら、設定したデバッグ用の環境変数を必ず解除するか、新しいシェルを開いて、残ったデバッグ設定の影響を受けないようにしてください。そうしないと、デバッグ機能が有効なままでシステムが遅くなることがあります。
 
-## Out of memory
+## モデルのダウンロードで固まる { #hangs-downloading-a-model }
 
-If the model is too large to fit in a single GPU, you will get an out-of-memory (OOM) error. Consider adopting [these options](../configuration/conserving_memory.md) to reduce the memory consumption.
+モデルがまだディスクにダウンロードされていない場合、vLLM はインターネットからダウンロードします。これには時間がかかり、回線状況にも左右されます。
+先に [huggingface-cli](https://huggingface.co/docs/huggingface_hub/en/guides/cli) でモデルをダウンロードし、ローカルパスを vLLM に渡すことをおすすめします。これにより問題を切り分けられます。
 
-## Generation quality changed
+## ディスクからのモデル読み込みで固まる { #hangs-loading-a-model-from-disk }
 
-In v0.8.0, the source of default sampling parameters was changed in <https://github.com/vllm-project/vllm/pull/12622>. Prior to v0.8.0, the default sampling parameters came from vLLM's set of neutral defaults. From v0.8.0 onwards, the default sampling parameters come from the `generation_config.json` provided by the model creator.
+モデルが大きいと、ディスクからの読み込みに長い時間がかかります。モデルの保存場所に注意してください。クラスタによってはノード間で共有されるファイルシステム（分散ファイルシステムやネットワークファイルシステムなど）が使われており、速度が遅い場合があります。
+モデルはローカルディスクに置くほうが望ましいです。また、CPU メモリの使用量も確認してください。モデルが大きすぎると CPU メモリを大量に消費し、ディスクとメモリの間でスワップが頻発して OS 全体が遅くなることがあります。
 
-In most cases, this should lead to higher quality responses, because the model creator is likely to know which sampling parameters are best for their model. However, in some cases the defaults provided by the model creator can lead to degraded performance.
+!!! note
+    モデルのダウンロードと読み込みの問題を切り分けるには、`--load-format dummy` 引数でモデルの重みの読み込みをスキップできます。これにより、ダウンロードや読み込みがボトルネックかどうかを確認できます。
 
-You can check if this is happening by trying the old defaults with `--generation-config vllm` for online and `generation_config="vllm"` for offline. If, after trying this, your generation quality improves we would recommend continuing to use the vLLM defaults and petition the model creator on <https://huggingface.co> to update their default `generation_config.json` so that it produces better quality generations.
+## メモリ不足 (OOM) { #out-of-memory }
 
-## Enable more logging
+モデルが大きすぎて 1 つの GPU に収まらない場合、メモリ不足 (OOM) エラーが発生します。メモリ使用量を減らすために[これらのオプション](../configuration/conserving_memory.md)の利用を検討してください。
 
-If other strategies don't solve the problem, it's likely that the vLLM instance is stuck somewhere. You can use the following environment variables to help debug the issue:
+## 生成品質が変わった { #generation-quality-changed }
 
-- `export VLLM_LOGGING_LEVEL=DEBUG` to turn on more logging.
-- `export VLLM_LOG_STATS_INTERVAL=1.` to get log statistics more frequently for tracking running queue, waiting queue and cache hit states.
-- `export CUDA_LAUNCH_BLOCKING=1` to identify which CUDA kernel is causing the problem.
-- `export NCCL_DEBUG=TRACE` to turn on more logging for NCCL.
-- `export VLLM_TRACE_FUNCTION=1` to record all function calls for inspection in the log files to tell which function crashes or hangs. (WARNING: This flag will slow down the token generation by **over 100x**. Do not use unless absolutely needed.)
+v0.8.0 で、既定のサンプリングパラメータの取得元が <https://github.com/vllm-project/vllm/pull/12622> により変更されました。v0.8.0 より前は vLLM が定めた中立的な既定値が使われていましたが、v0.8.0 以降はモデル作成者が提供する `generation_config.json` の値が使われます。
 
-## Breakpoints
+多くの場合、モデル作成者は自分のモデルに最適なサンプリングパラメータを把握しているため、これは応答の品質向上につながります。ただし、モデル作成者が提供する既定値が性能低下を招く場合もあります。
 
-Setting normal `pdb` breakpoints may not work in vLLM's codebase if they are executed in a subprocess. You will experience something like:
+これが原因かどうかは、オンラインなら `--generation-config vllm`、オフラインなら `generation_config="vllm"` で以前の既定値を試すと確認できます。これで生成品質が改善する場合は、vLLM の既定値を使い続けたうえで、<https://huggingface.co> でモデル作成者に `generation_config.json` の既定値をより良い品質になるよう更新するよう働きかけることをおすすめします。
+
+## ログを増やす { #enable-more-logging }
+
+他の方法で解決しない場合、vLLM のインスタンスがどこかで停止している可能性があります。次の環境変数がデバッグに役立ちます。
+
+- `export VLLM_LOGGING_LEVEL=DEBUG`: ログ出力を増やします。
+- `export VLLM_LOG_STATS_INTERVAL=1.`: 実行中キュー・待機キュー・キャッシュヒット状況を追跡するため、統計ログをより頻繁に出力します。
+- `export CUDA_LAUNCH_BLOCKING=1`: どの CUDA カーネルが問題を起こしているかを特定します。
+- `export NCCL_DEBUG=TRACE`: NCCL のログ出力を増やします。
+- `export VLLM_TRACE_FUNCTION=1`: すべての関数呼び出しをログファイルに記録し、どの関数がクラッシュ・停止しているかを調べます。（注意: このフラグはトークン生成を **100 倍以上**遅くします。どうしても必要な場合以外は使わないでください。）
+
+## ブレークポイント { #breakpoints }
+
+vLLM のコードベースでは、サブプロセス内で実行される箇所に通常の `pdb` のブレークポイントを設定しても機能しないことがあります。次のような出力になります。
 
 ``` text
   File "/usr/local/uv/cpython-3.12.11-linux-x86_64-gnu/lib/python3.12/bdb.py", line 100, in trace_dispatch
@@ -54,35 +54,35 @@ Setting normal `pdb` breakpoints may not work in vLLM's codebase if they are exe
 bdb.BdbQuit
 ```
 
-One solution is using [forked-pdb](https://github.com/Lightning-AI/forked-pdb). Install with `pip install fpdb` and set a breakpoint with something like:
+1 つの解決策は [forked-pdb](https://github.com/Lightning-AI/forked-pdb) を使うことです。`pip install fpdb` でインストールし、次のようにブレークポイントを設定します。
 
 ``` python
 __import__('fpdb').ForkedPdb().set_trace()
 ```
 
-Another option is to disable multiprocessing entirely, with the `VLLM_ENABLE_V1_MULTIPROCESSING` environment variable.
-This keeps the scheduler in the same process, so you can use stock `pdb` breakpoints:
+もう 1 つの方法は、環境変数 `VLLM_ENABLE_V1_MULTIPROCESSING` でマルチプロセスを完全に無効化することです。
+スケジューラが同じプロセス内に留まるため、標準の `pdb` のブレークポイントが使えます。
 
 ``` python
 import os
 os.environ["VLLM_ENABLE_V1_MULTIPROCESSING"] = "0"
 ```
 
-## Incorrect network setup
+## ネットワーク設定が正しくない { #incorrect-network-setup }
 
-The vLLM instance cannot get the correct IP address if you have a complicated network config. You can find a log such as `DEBUG 06-10 21:32:17 parallel_state.py:88] world_size=8 rank=0 local_rank=0 distributed_init_method=tcp://xxx.xxx.xxx.xxx:54641 backend=nccl` and the IP address should be the correct one.
-If it's not, override the IP address using the environment variable `export VLLM_HOST_IP=<your_ip_address>`.
+ネットワーク構成が複雑な場合、vLLM のインスタンスが正しい IP アドレスを取得できないことがあります。`DEBUG 06-10 21:32:17 parallel_state.py:88] world_size=8 rank=0 local_rank=0 distributed_init_method=tcp://xxx.xxx.xxx.xxx:54641 backend=nccl` のようなログを確認し、IP アドレスが正しいかを見てください。
+正しくない場合は、環境変数 `export VLLM_HOST_IP=<your_ip_address>` で上書きします。
 
-You might also need to set `export NCCL_SOCKET_IFNAME=<your_network_interface>` and `export GLOO_SOCKET_IFNAME=<your_network_interface>` to specify the network interface for the IP address.
+その IP アドレスに対応するネットワークインターフェイスを指定するため、`export NCCL_SOCKET_IFNAME=<your_network_interface>` と `export GLOO_SOCKET_IFNAME=<your_network_interface>` の設定も必要になる場合があります。
 
-## Error near `self.graph.replay()`
+## `self.graph.replay()` 付近でのエラー { #error-near-selfgraphreplay }
 
-If vLLM crashes and the error trace captures it somewhere around `self.graph.replay()` in `vllm/worker/model_runner.py`, it is a CUDA error inside CUDAGraph.
-To identify the particular CUDA operation that causes the error, you can add `--enforce-eager` to the command line, or `enforce_eager=True` to the [`LLM`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM) class to disable the CUDAGraph optimization and isolate the exact CUDA operation that causes the error.
+vLLM がクラッシュし、エラートレースが `vllm/worker/model_runner.py` の `self.graph.replay()` 付近を指している場合、これは CUDAGraph 内部で発生した CUDA エラーです。
+原因となっている CUDA 演算を特定するには、コマンドラインに `--enforce-eager` を追加するか、[`LLM`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM) クラスに `enforce_eager=True` を指定して CUDAGraph の最適化を無効にし、問題の演算を切り分けてください。
 
-## Incorrect hardware/driver
+## ハードウェア・ドライバの問題 { #incorrect-hardwaredriver }
 
-If GPU/CPU communication cannot be established, you can use the following Python script and follow the instructions below to confirm whether the GPU/CPU communication is working correctly.
+GPU / CPU 間の通信が確立できない場合は、次の Python スクリプトと手順を使って、通信が正しく機能しているか確認できます。
 
 ??? code
 
@@ -149,13 +149,13 @@ If GPU/CPU communication cannot be established, you can use the following Python
     dist.destroy_process_group()
     ```
 
-If you are testing with a single node, adjust `--nproc-per-node` to the number of GPUs you want to use:
+単一ノードでテストする場合は、`--nproc-per-node` を使用したい GPU の数に合わせてください。
 
 ```bash
 NCCL_DEBUG=TRACE torchrun --nproc-per-node=<number-of-GPUs> test.py
 ```
 
-If you are testing with multi-nodes, adjust `--nproc-per-node` and `--nnodes` according to your setup and set `MASTER_ADDR` to the correct IP address and port of the master node (e.g., `10.0.0.1:29400`), reachable from all nodes. Then, run:
+複数ノードでテストする場合は、環境に合わせて `--nproc-per-node` と `--nnodes` を調整し、`MASTER_ADDR` にはすべてのノードから到達できるマスターノードの IP アドレスとポート（例: `10.0.0.1:29400`）を設定して、次を実行します。
 
 ```bash
 NCCL_DEBUG=TRACE torchrun --nnodes 2 \
@@ -165,20 +165,20 @@ NCCL_DEBUG=TRACE torchrun --nnodes 2 \
     --node-rank $NODE_RANK test.py
 ```
 
-Set `MASTER_ADDR` to the IP address and port of the master node (e.g., `10.0.0.1:29400`), reachable from all nodes. Set `NODE_RANK` to `0` on the master node and `1`, `2`, ... on the workers. Adjust `--nproc-per-node` and `--nnodes` according to your setup.
+`MASTER_ADDR` には、すべてのノードから到達できるマスターノードの IP アドレスとポート（例: `10.0.0.1:29400`）を設定します。`NODE_RANK` はマスターノードで `0`、ワーカーで `1`、`2`、... とします。`--nproc-per-node` と `--nnodes` は環境に合わせて調整してください。
 
 !!! note
-    We use `--rdzv_backend=static` instead of `c10d` because the `c10d` rendezvous backend can fail with DNS resolution errors in multi-node setups (see [pytorch/pytorch#85300](https://github.com/pytorch/pytorch/issues/85300)). The `static` backend avoids this by requiring explicit node ranks.
+    `c10d` ではなく `--rdzv_backend=static` を使っています。これは、複数ノード構成で `c10d` のランデブーバックエンドが DNS 解決エラーで失敗することがあるためです（[pytorch/pytorch#85300](https://github.com/pytorch/pytorch/issues/85300) を参照）。`static` バックエンドはノードのランクを明示的に指定させることで、この問題を回避します。
 
-If the script runs successfully, you should see the message `sanity check is successful!`.
+スクリプトが正常に実行されると、`sanity check is successful!` というメッセージが表示されます。
 
-If the test script hangs or crashes, usually it means the hardware/drivers are broken in some sense. You should try to contact your system administrator or hardware vendor for further assistance. As a common workaround, you can try to tune some NCCL environment variables, such as `export NCCL_P2P_DISABLE=1` to see if it helps. Please check [their documentation](https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/env.html) for more information. Please only use these environment variables as a temporary workaround, as they might affect the performance of the system. The best solution is still to fix the hardware/drivers so that the test script can run successfully.
+テストスクリプトが停止したりクラッシュしたりする場合は、通常ハードウェアまたはドライバに何らかの問題があります。システム管理者やハードウェアベンダーに問い合わせてください。よくある回避策として、`export NCCL_P2P_DISABLE=1` など NCCL の環境変数を調整して改善するか試せます。詳細は [NCCL のドキュメント](https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/env.html)（英語）を参照してください。これらの環境変数はシステムの性能に影響する可能性があるため、あくまで一時的な回避策として使用してください。最善の解決策は、テストスクリプトが正常に動作するようハードウェアやドライバを修正することです。
 
-## Python multiprocessing
+## Python のマルチプロセス { #python-multiprocessing }
 
-### `RuntimeError` Exception
+### `RuntimeError` 例外 { #runtimeerror-exception }
 
-If you have seen a warning in your logs like this:
+ログに次のような警告が出ている場合、
 
 ```console
 WARNING 12-11 14:50:37 multiproc_worker_utils.py:281] CUDA was previously
@@ -188,12 +188,12 @@ WARNING 12-11 14:50:37 multiproc_worker_utils.py:281] CUDA was previously
     for more information.
 ```
 
-or an error from Python that looks like this:
+あるいは Python から次のようなエラーが出ている場合、
 
 ??? console "Logs"
 
     ```console
-    RuntimeError:
+    RuntimeErrまたは、
             An attempt has been made to start a new process before the
             current process has finished its bootstrapping phase.
 
@@ -212,8 +212,8 @@ or an error from Python that looks like this:
             section in https://docs.python.org/3/library/multiprocessing.html
     ```
 
-then you must update your Python code to guard usage of `vllm` behind a `if
-__name__ == '__main__':` block. For example, instead of this:
+`vllm` の利用を `if __name__ == '__main__':` ブロックで囲むように Python コードを修正する必要があります。
+たとえば、次のコードの代わりに、
 
 ```python
 import vllm
@@ -221,7 +221,7 @@ import vllm
 llm = vllm.LLM(...)
 ```
 
-try this instead:
+次のように書いてください。
 
 ```python
 if __name__ == '__main__':
@@ -230,9 +230,9 @@ if __name__ == '__main__':
     llm = vllm.LLM(...)
 ```
 
-## `torch.compile` Error
+## `torch.compile` のエラー { #torchcompile-error }
 
-vLLM heavily depends on `torch.compile` to optimize the model for better performance, which introduces the dependency on the `torch.compile` functionality and the `triton` library. By default, we use `torch.compile` to [optimize some functions](https://github.com/vllm-project/vllm/pull/10406) in the model. Before running vLLM, you can check if `torch.compile` is working as expected by running the following script:
+vLLM は性能向上のためにモデルの最適化を `torch.compile` に大きく依存しており、そのため `torch.compile` の機能と `triton` ライブラリに依存関係があります。既定では、モデル内の[一部の関数を最適化](https://github.com/vllm-project/vllm/pull/10406)するために `torch.compile` を使用します。vLLM を実行する前に、次のスクリプトで `torch.compile` が期待どおり動作するか確認できます。
 
 ??? code
 
@@ -251,11 +251,11 @@ vLLM heavily depends on `torch.compile` to optimize the model for better perform
     print(f(x))
     ```
 
-If it raises errors from `torch/_inductor` directory, usually it means you have a custom `triton` library that is not compatible with the version of PyTorch you are using. See <https://github.com/vllm-project/vllm/issues/12219> for example.
+`torch/_inductor` ディレクトリ由来のエラーが出る場合、たいていは使用中の PyTorch のバージョンと互換性のない独自の `triton` ライブラリが入っています。例として <https://github.com/vllm-project/vllm/issues/12219> を参照してください。
 
-## Model failed to be inspected
+## モデルの検査に失敗する { #model-failed-to-be-inspected }
 
-If you see an error like:
+次のようなエラーが出る場合、
 
 ```text
   File "vllm/model_executor/models/registry.py", line xxx, in _raise_for_unsupported
@@ -263,13 +263,13 @@ If you see an error like:
 ValueError: Model architectures ['<arch>'] failed to be inspected. Please check the logs for more details.
 ```
 
-It means that vLLM failed to import the model file.
-Usually, it is related to missing dependencies or outdated binaries in the vLLM build.
-Please read the logs carefully to determine the root cause of the error.
+vLLM がモデルのファイルを import できなかったことを意味します。
+通常は依存関係の不足や、vLLM のビルドに含まれるバイナリが古いことが原因です。
+ログをよく読んで根本原因を特定してください。
 
-## Model not supported
+## モデルがサポートされていない { #model-not-supported }
 
-If you see an error like:
+次のようなエラーが出る場合、
 
 ```text
 Traceback (most recent call last):
@@ -279,7 +279,7 @@ Traceback (most recent call last):
 TypeError: 'NoneType' object is not iterable
 ```
 
-or:
+または、
 
 ```text
   File "vllm/model_executor/models/registry.py", line xxx, in _raise_for_unsupported
@@ -287,15 +287,15 @@ or:
 ValueError: Model architectures ['<arch>'] are not supported for now. Supported architectures: [...]
 ```
 
-But you are sure that the model is in the [list of supported models](../models/supported_models.md), there may be some issue with vLLM's model resolution. In that case, please follow [these steps](../configuration/model_resolution.md) to explicitly specify the vLLM implementation for the model.
+しかしそのモデルが[対応モデルの一覧](../models/supported_models.md)に含まれていることが確かな場合、vLLM のモデル解決に問題がある可能性があります。その場合は[こちらの手順](../configuration/model_resolution.md)に従って、モデルに対する vLLM の実装を明示的に指定してください。
 
-## Failed to infer device type
+## デバイス種別の推定に失敗する { #failed-to-infer-device-type }
 
-If you see an error like `RuntimeError: Failed to infer device type`, it means that vLLM failed to infer the device type of the runtime environment. You can check [the code](../../vllm/platforms/__init__.py) to see how vLLM infers the device type and why it is not working as expected. After [this PR](https://github.com/vllm-project/vllm/pull/14195), you can also set the environment variable `VLLM_LOGGING_LEVEL=DEBUG` to see more detailed logs to help debug the issue.
+`RuntimeError: Failed to infer device type` のようなエラーが出る場合、vLLM が実行環境のデバイス種別を推定できなかったことを意味します。vLLM がどのようにデバイス種別を推定しているか、なぜ期待どおりに動かないかは[コード](../../vllm/platforms/__init__.py)で確認できます。[この PR](https://github.com/vllm-project/vllm/pull/14195) 以降は、環境変数 `VLLM_LOGGING_LEVEL=DEBUG` を設定して、より詳細なログを確認することもできます。
 
-## NCCL error: unhandled system error during `ncclCommInitRank`
+## NCCL エラー: `ncclCommInitRank` 中の unhandled system error { #nccl-error-unhandled-system-error-during-nccl-comm-init-rank }
 
-If your serving workload uses GPUDirect RDMA for distributed serving across multiple nodes and encounters an error during `ncclCommInitRank`, with no clear error message even with `NCCL_DEBUG=INFO` set, it might look like this:
+複数ノードにまたがる分散サービングで GPUDirect RDMA を使用していて、`NCCL_DEBUG=INFO` を設定しても明確なエラーメッセージが出ないまま `ncclCommInitRank` でエラーになる場合、次のような出力になります。
 
 ```text
 Error executing method 'init_device'. This might cause deadlock in distributed execution.
@@ -312,21 +312,21 @@ Traceback (most recent call last):
 ...
 ```
 
-This indicates vLLM failed to initialize the NCCL communicator, possibly due to a missing `IPC_LOCK` linux capability  or an unmounted `/dev/shm`. Refer to [Enabling GPUDirect RDMA](../serving/parallelism_scaling.md#enabling-gpudirect-rdma) for guidance on properly configuring the environment for GPUDirect RDMA.
+これは vLLM が NCCL のコミュニケータを初期化できなかったことを示しており、Linux の `IPC_LOCK` ケーパビリティが付与されていない、または `/dev/shm` がマウントされていないことが原因の可能性があります。GPUDirect RDMA 向けの適切な環境設定については [Enabling GPUDirect RDMA](../serving/parallelism_scaling.md#enabling-gpudirect-rdma) を参照してください。
 
-## CUDA error: the provided PTX was compiled with an unsupported toolchain
+## CUDA エラー: the provided PTX was compiled with an unsupported toolchain { #cuda-error-the-provided-ptx-was-compiled-with-an-unsupported-toolchain }
 
-If you see an error like `RuntimeError: CUDA error: the provided PTX was compiled with an unsupported toolchain`, it means that the CUDA PTX in vLLM's wheels was compiled with a toolchain unsupported by your system. This section also applies if you get the error `RuntimeError: The NVIDIA driver on your system is too old`.
+`RuntimeError: CUDA error: the provided PTX was compiled with an unsupported toolchain` のようなエラーが出る場合、vLLM の wheel に含まれる CUDA PTX が、システムでサポートされていないツールチェーンでコンパイルされていることを意味します。`RuntimeError: The NVIDIA driver on your system is too old` というエラーの場合も、このセクションが該当します。
 
-The released vLLM wheels are compiled with a specific version of CUDA toolkit, and the compiled code might fail to run on lower versions of CUDA drivers. Read [CUDA compatibility](https://docs.nvidia.com/deploy/cuda-compatibility/) for more details. **This is only supported on select professional and datacenter NVIDIA GPUs.**
+公開されている vLLM の wheel は特定バージョンの CUDA ツールキットでコンパイルされており、それより古い CUDA ドライバでは動作しないことがあります。詳細は [CUDA compatibility](https://docs.nvidia.com/deploy/cuda-compatibility/)（英語）を参照してください。**この機能は一部のプロフェッショナル向け・データセンター向け NVIDIA GPU でのみサポートされています。**
 
-If you are using the vLLM official Docker image, you can solve this by adding `-e VLLM_ENABLE_CUDA_COMPATIBILITY=1` to your `docker run` command. This will enable the pre-installed CUDA forward compatibility libraries.
+vLLM 公式の Docker イメージを使っている場合は、`docker run` コマンドに `-e VLLM_ENABLE_CUDA_COMPATIBILITY=1` を追加すると解決できます。これにより、プリインストールされた CUDA 前方互換ライブラリが有効になります。
 
-If you are running vLLM outside of Docker, the solution is to install the `cuda-compat` package from your package manager with the [CUDA repository](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/) enabled. For example, on Ubuntu, you can run `sudo apt-get install cuda-compat-12-9`, and then set `export VLLM_ENABLE_CUDA_COMPATIBILITY=1` and `export VLLM_CUDA_COMPATIBILITY_PATH="/usr/local/cuda-12.9/compat"`.
+Docker の外で vLLM を実行している場合は、[CUDA リポジトリ](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/)を有効にしたうえで、パッケージマネージャから `cuda-compat` パッケージをインストールします。たとえば Ubuntu では `sudo apt-get install cuda-compat-12-9` を実行し、`export VLLM_ENABLE_CUDA_COMPATIBILITY=1` と `export VLLM_CUDA_COMPATIBILITY_PATH="/usr/local/cuda-12.9/compat"` を設定します。
 
-On Conda, you can install the `conda-forge::cuda-compat` package (e.g., `conda install -c conda-forge cuda-compat=12.9`), then after activating the environment, set `export VLLM_ENABLE_CUDA_COMPATIBILITY=1` and `export VLLM_CUDA_COMPATIBILITY_PATH="${CONDA_PREFIX}/cuda-compat"`.
+Conda では `conda-forge::cuda-compat` パッケージをインストールし（例: `conda install -c conda-forge cuda-compat=12.9`）、環境を有効化したあとに `export VLLM_ENABLE_CUDA_COMPATIBILITY=1` と `export VLLM_CUDA_COMPATIBILITY_PATH="${CONDA_PREFIX}/cuda-compat"` を設定します。
 
-You can verify the configuration works by running a minimal Python script that initializes CUDA via vLLM:
+設定が有効かどうかは、vLLM 経由で CUDA を初期化する最小限の Python スクリプトで確認できます。
 
 ```bash
 export VLLM_ENABLE_CUDA_COMPATIBILITY=1
@@ -341,11 +341,11 @@ print(f"CUDA device count: {torch.accelerator.device_count()}")
 EOF
 ```
 
-Note that we use CUDA 12.9 as an example here, and you may want to install a higher version of cuda-compat package in case vLLM's default CUDA version goes higher.
+ここでは例として CUDA 12.9 を使っていますが、vLLM の既定の CUDA バージョンが上がった場合は、より新しい cuda-compat パッケージをインストールしてください。
 
-## ptxas fatal: Value 'sm_110a' is not defined for option 'gpu-name'
+## ptxas fatal: Value 'sm_110a' is not defined for option 'gpu-name' { #ptxas-fatal-value-sm110a-is-not-defined-for-option-gpu-name }
 
-If you use triton kernels with cuda 13, you might see an error like `ptxas fatal: Value 'sm_110a' is not defined for option 'gpu-name'`:
+CUDA 13 で triton のカーネルを使うと、`ptxas fatal: Value 'sm_110a' is not defined for option 'gpu-name'` のようなエラーが出ることがあります。
 
 ```text
 (EngineCore_0 pid=9492) triton.runtime.errors.PTXASError: PTXAS error: Internal Triton PTX codegen error
@@ -361,7 +361,7 @@ If you use triton kernels with cuda 13, you might see an error like `ptxas fatal
 vllm.v1.engine.exceptions.EngineDeadError: EngineCore encountered an issue. See stack trace (above) for the root cause.
 ```
 
-It means that the ptxas in the triton bundle is not compatible with your device. You need to set `TRITON_PTXAS_PATH` environment variable to use cuda toolkit's ptxas manually instead:
+これは triton に同梱されている ptxas が使用中のデバイスと互換性がないことを意味します。環境変数 `TRITON_PTXAS_PATH` を設定して、CUDA ツールキットの ptxas を明示的に使ってください。
 
 ```shell
 export CUDA_HOME=/usr/local/cuda
@@ -369,8 +369,8 @@ export TRITON_PTXAS_PATH="${CUDA_HOME}/bin/ptxas"
 export PATH="${CUDA_HOME}/bin:$PATH"
 ```
 
-## Known Issues
+## 既知の問題 { #known-issues }
 
-- In `v0.5.2`, `v0.5.3`, and `v0.5.3.post1`, there is a bug caused by [zmq](https://github.com/zeromq/pyzmq/issues/2000) , which can occasionally cause vLLM to hang depending on the machine configuration. The solution is to upgrade to the latest version of `vllm` to include the [fix](https://github.com/vllm-project/vllm/pull/6759).
-- To address a memory overhead issue in older NCCL versions (see [bug](https://github.com/NVIDIA/nccl/issues/1234)), vLLM versions `>= 0.4.3, <= 0.10.1.1` would set the environment variable `NCCL_CUMEM_ENABLE=0`. External processes connecting to vLLM also needed to set this variable to prevent hangs or crashes. Since the underlying NCCL bug was fixed in NCCL 2.22.3, this override was removed in newer vLLM versions to allow for NCCL performance optimizations.
-- In some PCIe machines (e.g. machines without NVLink), if you see an error like `transport/shm.cc:590 NCCL WARN Cuda failure 217 'peer access is not supported between these two devices'`, it's likely caused by a driver bug. See [this issue](https://github.com/NVIDIA/nccl/issues/1838) for more details. In that case, you can try to set `NCCL_CUMEM_HOST_ENABLE=0` to disable the feature, or upgrade your driver to the latest version.
+- `v0.5.2`、`v0.5.3`、`v0.5.3.post1` には [zmq](https://github.com/zeromq/pyzmq/issues/2000) 起因のバグがあり、マシン構成によっては vLLM が停止することがあります。[修正](https://github.com/vllm-project/vllm/pull/6759)が含まれる最新の `vllm` にアップグレードしてください。
+- 古い NCCL のメモリオーバーヘッドの問題（[バグ](https://github.com/NVIDIA/nccl/issues/1234)）に対処するため、vLLM の `>= 0.4.3, <= 0.10.1.1` では環境変数 `NCCL_CUMEM_ENABLE=0` を設定していました。vLLM に接続する外部プロセスでも、停止やクラッシュを防ぐためにこの変数を設定する必要がありました。この NCCL のバグは NCCL 2.22.3 で修正されたため、NCCL の性能最適化を活かせるよう、新しい vLLM ではこの上書きは削除されています。
+- 一部の PCIe 環境（NVLink のないマシンなど）で `transport/shm.cc:590 NCCL WARN Cuda failure 217 'peer access is not supported between these two devices'` のようなエラーが出る場合、ドライバのバグが原因である可能性が高いです。詳細は[この Issue](https://github.com/NVIDIA/nccl/issues/1838) を参照してください。その場合は `NCCL_CUMEM_HOST_ENABLE=0` を設定して機能を無効にするか、ドライバを最新版に更新してみてください。
