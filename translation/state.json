@@ -152,8 +152,10 @@
       "upstream_sha": "5e455f909942a3d0"
     },
     "configuration/optimization.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "86ca9cde5064d129",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "86ca9cde5064d129"
     },
     "configuration/serve_args.md": {
@@ -818,8 +820,10 @@
       "upstream_sha": "6585dc99d3a6b9a1"
     },
     "features/structured_outputs.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "0720d1d9b94f77b0",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "0720d1d9b94f77b0"
     },
     "features/tool_calling.md": {
