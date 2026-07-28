@@ -6,7 +6,7 @@ mkdocs-material==9.7.7
 mkdocs-awesome-nav==3.1.2
 mkdocs-glightbox==0.5.1
 mkdocs-git-revision-date-localized-plugin==1.4.7
-pymdown-extensions==10.16.1
+pymdown-extensions==11.0
 regex==2025.7.34
 requests==2.32.4
 PyYAML==6.0.2
