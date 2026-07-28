@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block announce %}
+  <p>
+    このサイトは <a href="https://docs.vllm.ai/">vLLM 公式ドキュメント</a>
+    （{{ config.extra.upstream_ref }}）の<strong>非公式</strong>な日本語訳です。
+    内容が古い場合があります。正確な情報は
+    <a href="{{ config.extra.upstream_docs_url }}">英語原文</a>を参照してください。
+  </p>
+{% endblock %}

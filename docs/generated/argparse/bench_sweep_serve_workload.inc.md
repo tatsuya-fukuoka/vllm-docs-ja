@@ -1,0 +1,4 @@
+!!! info "自動生成される内容"
+    この一覧は vLLM 本体のソースから自動生成されるため、日本語版サイトには
+    含まれていません。最新の内容は
+    [英語版の該当ページ](https://docs.vllm.ai/en/v0.26.0/cli/bench/sweep/serve_workload/)を参照してください。

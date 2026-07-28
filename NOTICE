@@ -1,0 +1,37 @@
+vLLM ドキュメント日本語版 (vllm-docs-ja)
+=========================================
+
+本リポジトリは、vLLM プロジェクトの公式ドキュメントをコミュニティが日本語に翻訳した
+**非公式** の派生物です。vLLM プロジェクトおよび Anthropic とは関係ありません。
+
+原著作物
+--------
+
+  vLLM (https://github.com/vllm-project/vllm)
+  Copyright contributors to the vLLM project
+  Licensed under the Apache License, Version 2.0
+
+  対象: `docs/` 配下の文書、`upstream/` に保存した原文スナップショット、
+        `docs/stylesheets/extra.css`、`docs/javascript/mathjax.js`、
+        `docs/assets/logos/` 配下のロゴ、および
+        `hooks/url_schemes.py`（上流の `docs/mkdocs/hooks/url_schemes.py` を改変）
+
+改変内容
+--------
+
+  - 上記文書の日本語への翻訳
+  - vLLM 本体のインストールを必要とする自動生成部分（API リファレンス、
+    CLI の引数一覧、サンプル集）の除外と、英語版へのリンクへの差し替え
+  - サイト設定（MkDocs）の簡素化、翻訳ステータス表示の追加
+
+ライセンス
+----------
+
+  本リポジトリ全体は原著作物と同じ Apache License 2.0 の下で配布されます。
+  ライセンス全文は LICENSE を参照してください。
+
+免責
+----
+
+  翻訳の正確性は保証されません。内容に疑義がある場合は、必ず
+  https://docs.vllm.ai/ の英語原文を参照してください。

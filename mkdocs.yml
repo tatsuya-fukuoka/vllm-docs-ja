@@ -1,0 +1,121 @@
+site_name: vLLM ドキュメント日本語版
+site_description: vLLM 公式ドキュメントの非公式日本語訳
+site_url: https://tatsuya-fukuoka.github.io/vllm-docs-ja/
+repo_url: https://github.com/tatsuya-fukuoka/vllm-docs-ja
+edit_uri: edit/main/docs/
+copyright: >
+  原著作: <a href="https://github.com/vllm-project/vllm">vLLM Project</a> (Apache License 2.0) /
+  本サイトはコミュニティによる非公式日本語訳です
+
+exclude_docs: |
+  *.inc.md
+  *.template.md
+
+theme:
+  name: material
+  language: ja
+  logo: assets/logos/vllm-logo-only-light.ico
+  favicon: assets/logos/vllm-logo-only-light.ico
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: ライトモードに切り替え
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: white
+      toggle:
+        icon: material/brightness-7
+        name: ダークモードに切り替え
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      toggle:
+        icon: material/brightness-2
+        name: システム設定に合わせる
+  features:
+    - content.action.edit
+    - content.code.copy
+    - content.tabs.link
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.path
+    - search.highlight
+    - search.share
+    - toc.follow
+  custom_dir: overrides
+
+hooks:
+  - hooks/translation_banner.py
+  - hooks/url_schemes.py
+
+plugins:
+  - meta
+  - search:
+      lang:
+        - ja
+        - en
+      # 日本語と英語が混在する本文を分かち書きするためのセパレータ
+      separator: '[\s​\-_,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - awesome-nav
+  - glightbox
+  - git-revision-date-localized:
+      locale: ja
+      fallback_to_build_date: true
+      enable_creation_date: false
+
+markdown_extensions:
+  - attr_list
+  - def_list
+  - md_in_html
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  # base_path の先頭に upstream/src を置くことで、上流リポジトリのルートからの
+  # 相対パス (README.md や vllm/**/*.py) を取り込んだスナップショットから解決する。
+  # docs/... で始まるスニペットは upstream/src には存在しないため "." にフォールバックする。
+  - pymdownx.snippets:
+      base_path:
+        - upstream/src
+        - .
+      check_paths: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_css:
+  - stylesheets/extra.css
+  - stylesheets/translation.css
+
+extra_javascript:
+  - javascript/mathjax.js
+  - https://unpkg.com/mathjax@3.2.2/es5/tex-mml-chtml.js
+
+extra:
+  # 追随している上流のバージョン。scripts/sync_upstream.py が更新する。
+  upstream_ref: v0.26.0
+  upstream_docs_url: https://docs.vllm.ai/en/v0.26.0/

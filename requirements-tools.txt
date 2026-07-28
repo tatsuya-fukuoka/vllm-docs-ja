@@ -1,0 +1,2 @@
+# scripts/translate.py 用（ドキュメントのビルドには不要）
+anthropic>=0.40.0
