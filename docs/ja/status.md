@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **57 ページ**を翻訳済みです（25.2%）。
+全 226 ページ中 **59 ページ**を翻訳済みです（26.1%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -23,10 +23,10 @@
 | はじめに | 4 | 0 | 9 | 13 |
 | ガバナンス | 0 | 0 | 3 | 3 |
 | モデル | 1 | 0 | 15 | 16 |
-| 推論とサービング | 13 | 0 | 3 | 16 |
+| 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 0 | 0 | 8 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **57** | **0** | **169** | **226** |
+| **合計** | **59** | **0** | **167** | **226** |
 
 ## 翻訳済みのページ
 
@@ -67,6 +67,7 @@
 - `getting_started/quickstart.md`
 - `models/generative_models.md`
 - `serving/context_parallel_deployment.md`
+- `serving/data_parallel_deployment.md`
 - `serving/distributed_troubleshooting.md`
 - `serving/integrations/claude_code.md`
 - `serving/integrations/codex.md`
@@ -79,6 +80,7 @@
 - `serving/online_serving/openai_compatible_server.md`
 - `serving/online_serving/renderer.md`
 - `serving/online_serving/speech_to_text.md`
+- `serving/parallelism_scaling.md`
 - `usage/README.md`
 - `usage/faq.md`
 - `usage/metrics.md`

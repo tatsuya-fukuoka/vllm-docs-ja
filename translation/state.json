@@ -1055,8 +1055,10 @@
       "upstream_sha": "f549e37f350f4f48"
     },
     "serving/data_parallel_deployment.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "bb4f301d950b3f19",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "bb4f301d950b3f19"
     },
     "serving/distributed_troubleshooting.md": {
@@ -1149,8 +1151,10 @@
       "upstream_sha": "e0cabfac29ef94a2"
     },
     "serving/parallelism_scaling.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "edd3998246b0060e",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "edd3998246b0060e"
     },
     "training/async_rl.md": {
