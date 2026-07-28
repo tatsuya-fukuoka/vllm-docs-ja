@@ -295,13 +295,17 @@
       "upstream_sha": "8619b2fa7b181a86"
     },
     "deployment/frameworks/anyscale.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "baf4a924be6ba2f9",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "baf4a924be6ba2f9"
     },
     "deployment/frameworks/anything-llm.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "6bd5ad7857b5abb0",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "6bd5ad7857b5abb0"
     },
     "deployment/frameworks/autogen.md": {
@@ -310,8 +314,10 @@
       "upstream_sha": "49813b49c1d038d9"
     },
     "deployment/frameworks/bentoml.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "8bdf5836a8a43933",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "8bdf5836a8a43933"
     },
     "deployment/frameworks/cerebrium.md": {
@@ -320,13 +326,17 @@
       "upstream_sha": "385b1642a4f39e2b"
     },
     "deployment/frameworks/chatbox.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "8b7c7fe3ba659752",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "8b7c7fe3ba659752"
     },
     "deployment/frameworks/dify.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "48574b9d7337ee13",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "48574b9d7337ee13"
     },
     "deployment/frameworks/dstack.md": {
@@ -350,13 +360,17 @@
       "upstream_sha": "d4250da49a6afc74"
     },
     "deployment/frameworks/litellm.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "190fe68e89115d78",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "190fe68e89115d78"
     },
     "deployment/frameworks/lobe-chat.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "a4374ba6d17ae3d5",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "a4374ba6d17ae3d5"
     },
     "deployment/frameworks/lws.md": {
@@ -365,13 +379,17 @@
       "upstream_sha": "729c94be648e8d39"
     },
     "deployment/frameworks/modal.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "7e8110637f03454a",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "7e8110637f03454a"
     },
     "deployment/frameworks/open-webui.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "dc13605f120129b8",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "dc13605f120129b8"
     },
     "deployment/frameworks/retrieval_augmented_generation.md": {
@@ -390,33 +408,45 @@
       "upstream_sha": "5f397f88eb09e5cf"
     },
     "deployment/frameworks/streamlit.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "9b4a1f01cb04e574",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "9b4a1f01cb04e574"
     },
     "deployment/frameworks/triton.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "2c71e09226a35eab",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "2c71e09226a35eab"
     },
     "deployment/integrations/aibrix.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4b36288f0f22055c",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "4b36288f0f22055c"
     },
     "deployment/integrations/dynamo.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "e8f3ddd59dde1d8f",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "e8f3ddd59dde1d8f"
     },
     "deployment/integrations/kaito.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d1fc3bd06df7bc97",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "d1fc3bd06df7bc97"
     },
     "deployment/integrations/kserve.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1463b8d943c31b3b",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "1463b8d943c31b3b"
     },
     "deployment/integrations/kthena.md": {
@@ -425,28 +455,38 @@
       "upstream_sha": "1a3b3e65c3a481f7"
     },
     "deployment/integrations/kubeai.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "af71bf2657a8397f",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "af71bf2657a8397f"
     },
     "deployment/integrations/kuberay.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "ca814f2da14c1eeb",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "ca814f2da14c1eeb"
     },
     "deployment/integrations/llamastack.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "8cef86a10bc71994",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "8cef86a10bc71994"
     },
     "deployment/integrations/llm-d.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "16c792730f00d00d",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "16c792730f00d00d"
     },
     "deployment/integrations/llmaz.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "7fd1dabaef71f75d",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "7fd1dabaef71f75d"
     },
     "deployment/integrations/production-stack.md": {

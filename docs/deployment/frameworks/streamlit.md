@@ -1,28 +1,28 @@
-# Streamlit
+# Streamlit { #streamlit }
 
-[Streamlit](https://github.com/streamlit/streamlit) lets you transform Python scripts into interactive web apps in minutes, instead of weeks. Build dashboards, generate reports, or create chat apps.
+[Streamlit](https://github.com/streamlit/streamlit) を使うと、Python のスクリプトを数週間ではなく数分でインタラクティブな Web アプリに変えられます。ダッシュボードの構築、レポートの生成、チャットアプリの作成などが可能です。
 
-It can be quickly integrated with vLLM as a backend API server, enabling powerful LLM inference via API calls.
+vLLM をバックエンドの API サーバーとしてすぐに統合でき、API 呼び出しによる強力な LLM 推論を利用できます。
 
-## Prerequisites
+## 前提条件 { #prerequisites }
 
-Set up the vLLM environment by installing all required packages:
+必要なパッケージをインストールして vLLM の環境を用意します。
 
 ```bash
 pip install vllm streamlit openai
 ```
 
-## Deploy
+## デプロイ { #deploy }
 
-1. Start the vLLM server with a supported chat completion model, e.g.
+1. 対応するチャット補完モデルで vLLM サーバーを起動します。例:
 
     ```bash
     vllm serve Qwen/Qwen1.5-0.5B-Chat
     ```
 
-1. Use the script: [examples/applications/chatbot/streamlit_openai_chatbot_webserver.py](../../../examples/applications/chatbot/streamlit_openai_chatbot_webserver.py)
+1. 次のスクリプトを使います: [examples/applications/chatbot/streamlit_openai_chatbot_webserver.py](../../../examples/applications/chatbot/streamlit_openai_chatbot_webserver.py)
 
-1. Start the streamlit web UI and start to chat:
+1. Streamlit の Web UI を起動してチャットを始めます。
 
     ```bash
     streamlit run streamlit_openai_chatbot_webserver.py

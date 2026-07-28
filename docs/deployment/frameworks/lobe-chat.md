@@ -1,11 +1,11 @@
-# Lobe Chat
+# Lobe Chat { #lobe-chat }
 
-[Lobe Chat](https://github.com/lobehub/lobe-chat) is an open-source, modern-design ChatGPT/LLMs UI/Framework.
+[Lobe Chat](https://github.com/lobehub/lobe-chat) は、モダンなデザインのオープンソースな ChatGPT / LLM の UI・フレームワークです。
 
-Supports speech-synthesis, multi-modal, and extensible (function call) plugin system.
+音声合成、マルチモーダル、拡張可能な（関数呼び出しの）プラグインシステムに対応しています。
 
-One-click FREE deployment of your private OpenAI ChatGPT/Claude/Gemini/Groq/Ollama chat application.
+プライベートな OpenAI ChatGPT / Claude / Gemini / Groq / Ollama のチャットアプリケーションをワンクリックで無料デプロイできます。
 
-It supports vLLM as an AI model provider to efficiently serve large language models.
+AI モデルのプロバイダとして vLLM に対応しており、大規模言語モデルを効率的にサービングできます。
 
-For details, see the tutorial [Using vLLM in LobeChat](https://lobehub.com/docs/usage/providers/vllm).
+詳細は[チュートリアル「Using vLLM in LobeChat」](https://lobehub.com/docs/usage/providers/vllm)（英語）を参照してください。

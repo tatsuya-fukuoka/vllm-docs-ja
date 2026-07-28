@@ -1,14 +1,12 @@
-# KubeAI
+# KubeAI { #kubeai }
 
-[KubeAI](https://github.com/substratusai/kubeai) is a Kubernetes operator that enables you to deploy and manage AI models on Kubernetes. It provides a simple and scalable way to deploy vLLM in production. Functionality such as scale-from-zero, load based autoscaling, model caching, and much more is provided out of the box with zero external dependencies.
+[KubeAI](https://github.com/substratusai/kubeai) は、Kubernetes 上で AI モデルをデプロイ・管理できる Kubernetes オペレーターです。vLLM を本番環境にデプロイするためのシンプルでスケーラブルな方法を提供します。ゼロからのスケール、負荷に応じたオートスケーリング、モデルのキャッシュなどの機能を、外部依存なしで標準的に利用できます。
 
-Please see the Installation Guides for environment specific instructions:
+環境ごとの手順はインストールガイドを参照してください。
 
-- [Any Kubernetes Cluster](https://www.kubeai.org/installation/any/)
+- [任意の Kubernetes クラスタ](https://www.kubeai.org/installation/any/)
 - [AKS](https://www.kubeai.org/installation/aks/)
 - [EKS](https://www.kubeai.org/installation/eks/)
 - [GKE](https://www.kubeai.org/installation/gke/)
 
-Once you have KubeAI installed, you can
-[configure text generation models](https://www.kubeai.org/how-to/configure-text-generation-models/)
-using vLLM.
+KubeAI をインストールしたら、vLLM を使って[テキスト生成モデルを設定](https://www.kubeai.org/how-to/configure-text-generation-models/)できます。

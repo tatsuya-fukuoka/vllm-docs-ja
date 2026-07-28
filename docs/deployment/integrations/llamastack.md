@@ -1,16 +1,16 @@
-# Llama Stack
+# Llama Stack { #llama-stack }
 
-vLLM is also available via [Llama Stack](https://github.com/llamastack/llama-stack).
+vLLM は [Llama Stack](https://github.com/llamastack/llama-stack) からも利用できます。
 
-To install Llama Stack, run
+Llama Stack をインストールするには次を実行します。
 
 ```bash
 pip install llama-stack -q
 ```
 
-## Inference using OpenAI-Compatible API
+## OpenAI 互換 API を使った推論 { #inference-using-openai-compatible-api }
 
-Then start the Llama Stack server and configure it to point to your vLLM server with the following settings:
+Llama Stack のサーバーを起動し、次の設定で vLLM サーバーを指すようにします。
 
 ```yaml
 inference:
@@ -20,12 +20,11 @@ inference:
       url: http://127.0.0.1:8000
 ```
 
-Please refer to [this guide](https://llama-stack.readthedocs.io/en/latest/providers/inference/remote_vllm.html) for more details on this remote vLLM provider.
+このリモート vLLM プロバイダの詳細は[こちらのガイド](https://llama-stack.readthedocs.io/en/latest/providers/inference/remote_vllm.html)（英語）を参照してください。
 
-## Inference using Embedded vLLM
+## 組み込み vLLM を使った推論 { #inference-using-embedded-vllm }
 
-An [inline provider](https://github.com/llamastack/llama-stack/tree/main/llama_stack/providers/inline/inference)
-is also available. This is a sample of configuration using that method:
+[インラインプロバイダ](https://github.com/llamastack/llama-stack/tree/main/llama_stack/providers/inline/inference)も利用できます。この方法を使う設定例は次のとおりです。
 
 ```yaml
 inference:

@@ -1,15 +1,14 @@
-# Anyscale
+# Anyscale { #anyscale }
 
-[Anyscale](https://www.anyscale.com) is a managed, multi-cloud platform developed by the creators of Ray.
+[Anyscale](https://www.anyscale.com) は、Ray の開発者が作ったマネージドのマルチクラウドプラットフォームです。
 
-Anyscale automates the entire lifecycle of Ray clusters in your AWS, GCP, or Azure account, delivering the flexibility of open-source Ray
-without the operational overhead of maintaining Kubernetes control planes, configuring autoscalers, managing observability stacks, or manually managing head and worker nodes with helper scripts like [examples/ray_serving/run_cluster.sh](../../../examples/ray_serving/run_cluster.sh).
+Anyscale は、AWS・GCP・Azure のアカウント上で Ray クラスタのライフサイクル全体を自動化します。Kubernetes のコントロールプレーンの保守、オートスケーラーの設定、可観測性スタックの管理、[examples/ray_serving/run_cluster.sh](../../../examples/ray_serving/run_cluster.sh) のような補助スクリプトでのヘッドノード・ワーカーノードの手動管理といった運用の手間なしに、オープンソースの Ray の柔軟性を利用できます。
 
-When serving large language models with vLLM, Anyscale can rapidly provision [production-ready HTTPS endpoints](https://docs.anyscale.com/examples/deploy-ray-serve-llms) or [fault-tolerant batch inference jobs](https://docs.anyscale.com/examples/ray-data-llm).
+vLLM で大規模言語モデルをサービングする場合、Anyscale は[本番運用に耐える HTTPS エンドポイント](https://docs.anyscale.com/examples/deploy-ray-serve-llms)や[耐障害性のあるバッチ推論ジョブ](https://docs.anyscale.com/examples/ray-data-llm)を素早く用意できます。
 
-## Production-ready vLLM on Anyscale quickstarts
+## Anyscale 上の本番向け vLLM のクイックスタート { #production-ready-vllm-on-anyscale-quickstarts }
 
-- [Offline batch inference](https://console.anyscale.com/template-preview/llm_batch_inference?utm_source=vllm_docs)
-- [Deploy vLLM services](https://console.anyscale.com/template-preview/llm_serving?utm_source=vllm_docs)
-- [Curate a dataset](https://console.anyscale.com/template-preview/audio-dataset-curation-llm-judge?utm_source=vllm_docs)
-- [Finetune an LLM](https://console.anyscale.com/template-preview/entity-recognition-with-llms?utm_source=vllm_docs)
+- [オフラインバッチ推論](https://console.anyscale.com/template-preview/llm_batch_inference?utm_source=vllm_docs)
+- [vLLM サービスのデプロイ](https://console.anyscale.com/template-preview/llm_serving?utm_source=vllm_docs)
+- [データセットのキュレーション](https://console.anyscale.com/template-preview/audio-dataset-curation-llm-judge?utm_source=vllm_docs)
+- [LLM のファインチューニング](https://console.anyscale.com/template-preview/entity-recognition-with-llms?utm_source=vllm_docs)

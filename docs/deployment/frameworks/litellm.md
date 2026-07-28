@@ -1,35 +1,35 @@
-# LiteLLM
+# LiteLLM { #litellm }
 
-[LiteLLM](https://github.com/BerriAI/litellm) call all LLM APIs using the OpenAI format [Bedrock, Huggingface, VertexAI, TogetherAI, Azure, OpenAI, Groq etc.]
+[LiteLLM](https://github.com/BerriAI/litellm) は、あらゆる LLM の API を OpenAI の形式で呼び出せるようにします（Bedrock、Huggingface、VertexAI、TogetherAI、Azure、OpenAI、Groq など）。
 
-LiteLLM manages:
+LiteLLM が担うこと:
 
-- Translate inputs to provider's `completion`, `embedding`, and `image_generation` endpoints
-- [Consistent output](https://docs.litellm.ai/docs/completion/output), text responses will always be available at `['choices'][0]['message']['content']`
-- Retry/fallback logic across multiple deployments (e.g. Azure/OpenAI) - [Router](https://docs.litellm.ai/docs/routing)
-- Set Budgets & Rate limits per project, api key, model [LiteLLM Proxy Server (LLM Gateway)](https://docs.litellm.ai/docs/simple_proxy)
+- 入力を各プロバイダの `completion`・`embedding`・`image_generation` エンドポイント向けに変換する
+- [一貫した出力](https://docs.litellm.ai/docs/completion/output) — テキストの応答は常に `['choices'][0]['message']['content']` から取得できる
+- 複数のデプロイ（Azure / OpenAI など）にまたがるリトライ・フォールバックのロジック - [Router](https://docs.litellm.ai/docs/routing)
+- プロジェクト・API キー・モデルごとの予算とレート制限の設定 - [LiteLLM Proxy Server (LLM Gateway)](https://docs.litellm.ai/docs/simple_proxy)
 
-And LiteLLM supports all models on VLLM.
+LiteLLM は vLLM 上のすべてのモデルに対応しています。
 
-## Prerequisites
+## 前提条件 { #prerequisites }
 
-Set up the vLLM and litellm environment:
+vLLM と litellm の環境を用意します。
 
 ```bash
 pip install vllm litellm
 ```
 
-## Deploy
+## デプロイ { #deploy }
 
-### Chat completion
+### チャット補完 { #chat-completion }
 
-1. Start the vLLM server with the supported chat completion model, e.g.
+1. 対応するチャット補完モデルで vLLM サーバーを起動します。例:
 
     ```bash
     vllm serve qwen/Qwen1.5-0.5B-Chat
     ```
 
-1. Call it with litellm:
+1. litellm から呼び出します。
 
 ??? code
 
@@ -50,15 +50,15 @@ pip install vllm litellm
     print(response)
     ```
 
-### Embeddings
+### 埋め込み { #embeddings }
 
-1. Start the vLLM server with the supported embedding model, e.g.
+1. 対応する埋め込みモデルで vLLM サーバーを起動します。例:
 
     ```bash
     vllm serve BAAI/bge-base-en-v1.5
     ```
 
-1. Call it with litellm:
+1. litellm から呼び出します。
 
 ```python
 from litellm import embedding   
@@ -73,4 +73,4 @@ embedding = embedding(model="hosted_vllm/BAAI/bge-base-en-v1.5", input=["Hello w
 print(embedding)
 ```
 
-For details, see the tutorial [Using vLLM in LiteLLM](https://docs.litellm.ai/docs/providers/vllm).
+詳細は[チュートリアル「Using vLLM in LiteLLM」](https://docs.litellm.ai/docs/providers/vllm)（英語）を参照してください。

@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **59 ページ**を翻訳済みです（26.1%）。
+全 226 ページ中 **79 ページ**を翻訳済みです（35.0%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -17,7 +17,7 @@
 | コミュニティ | 3 | 0 | 0 | 3 |
 | 設定 | 7 | 0 | 0 | 7 |
 | 開発者ガイド | 0 | 0 | 16 | 16 |
-| デプロイ | 2 | 0 | 33 | 35 |
+| デプロイ | 22 | 0 | 13 | 35 |
 | 設計ドキュメント | 0 | 0 | 29 | 29 |
 | 機能 | 3 | 0 | 49 | 52 |
 | はじめに | 4 | 0 | 9 | 13 |
@@ -26,7 +26,7 @@
 | 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 0 | 0 | 8 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **59** | **0** | **167** | **226** |
+| **合計** | **79** | **0** | **147** | **226** |
 
 ## 翻訳済みのページ
 
@@ -57,6 +57,26 @@
 - `configuration/optimization.md`
 - `configuration/serve_args.md`
 - `deployment/docker.md`
+- `deployment/frameworks/anyscale.md`
+- `deployment/frameworks/anything-llm.md`
+- `deployment/frameworks/bentoml.md`
+- `deployment/frameworks/chatbox.md`
+- `deployment/frameworks/dify.md`
+- `deployment/frameworks/litellm.md`
+- `deployment/frameworks/lobe-chat.md`
+- `deployment/frameworks/modal.md`
+- `deployment/frameworks/open-webui.md`
+- `deployment/frameworks/streamlit.md`
+- `deployment/frameworks/triton.md`
+- `deployment/integrations/aibrix.md`
+- `deployment/integrations/dynamo.md`
+- `deployment/integrations/kaito.md`
+- `deployment/integrations/kserve.md`
+- `deployment/integrations/kubeai.md`
+- `deployment/integrations/kuberay.md`
+- `deployment/integrations/llamastack.md`
+- `deployment/integrations/llm-d.md`
+- `deployment/integrations/llmaz.md`
 - `deployment/k8s.md`
 - `features/README.md`
 - `features/quantization/README.md`
