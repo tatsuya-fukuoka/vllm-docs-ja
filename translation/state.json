@@ -276,8 +276,10 @@
       "upstream_sha": "8f44d34b939009d3"
     },
     "contributing/model/tests.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "7c9109c6b91df091",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "7c9109c6b91df091"
     },
     "contributing/model/transcription.md": {
@@ -291,8 +293,10 @@
       "upstream_sha": "1560bff48b1597ac"
     },
     "contributing/vulnerability_management.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "2ee5428a235ff186",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "2ee5428a235ff186"
     },
     "deployment/docker.md": {
@@ -651,8 +655,10 @@
       "upstream_sha": "b0c4fdde741fb87d"
     },
     "design/optimization_levels.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "ccd48ed50c640286",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "ccd48ed50c640286"
     },
     "design/paged_attention.md": {
@@ -756,8 +762,10 @@
       "upstream_sha": "46513bde61b79570"
     },
     "features/mooncake_connector_usage.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "457e58b76800d310",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "457e58b76800d310"
     },
     "features/mooncake_store_connector_usage.md": {

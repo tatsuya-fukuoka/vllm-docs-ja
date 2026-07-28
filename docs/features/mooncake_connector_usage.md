@@ -1,69 +1,69 @@
-# MooncakeConnector Usage Guide
+# MooncakeConnector 利用ガイド { #mooncakeconnector-usage-guide }
 
-## About Mooncake
+## Mooncake について { #about-mooncake }
 
-Mooncake aims to enhance the inference efficiency of large language models (LLMs), especially in slow object storage environments, by constructing a multi-level caching pool on high-speed interconnected DRAM/SSD resources. Compared to traditional caching systems, Mooncake utilizes (GPUDirect) RDMA technology to transfer data directly in a zero-copy manner, while maximizing the use of multi-NIC resources on a single machine.
+Mooncake は、高速に相互接続された DRAM / SSD リソース上に多階層のキャッシュプールを構築することで、特にオブジェクトストレージが遅い環境における大規模言語モデル（LLM）の推論効率を高めることを目指しています。従来のキャッシュシステムと比べ、Mooncake は（GPUDirect）RDMA 技術を利用してゼロコピーでデータを直接転送しつつ、1 台のマシン上の複数 NIC のリソースを最大限に活用します。
 
-For more details about Mooncake, please refer to [Mooncake project](https://github.com/kvcache-ai/Mooncake) and [Mooncake documents](https://kvcache-ai.github.io/Mooncake/).
+Mooncake の詳細は [Mooncake プロジェクト](https://github.com/kvcache-ai/Mooncake)と [Mooncake のドキュメント](https://kvcache-ai.github.io/Mooncake/)を参照してください。
 
-## Prerequisites
+## 前提条件 { #prerequisites }
 
-### Installation
+### インストール { #installation }
 
-Install mooncake through pip: `uv pip install mooncake-transfer-engine`.
+pip で mooncake をインストールします: `uv pip install mooncake-transfer-engine`
 
-Refer to [Mooncake official repository](https://github.com/kvcache-ai/Mooncake) for more installation instructions
+インストール方法の詳細は [Mooncake 公式リポジトリ](https://github.com/kvcache-ai/Mooncake)を参照してください。
 
-## Usage
+## 使い方 { #usage }
 
-### Prefiller Node (192.168.0.2)
+### プレフィルノード (192.168.0.2) { #prefiller-node-19216802 }
 
 ```bash
 vllm serve Qwen/Qwen2.5-7B-Instruct --port 8010 --kv-transfer-config '{"kv_connector":"MooncakeConnector","kv_role":"kv_producer"}'
 ```
 
-### Decoder Node (192.168.0.3)
+### デコードノード (192.168.0.3) { #decoder-node-19216803 }
 
 ```bash
 vllm serve Qwen/Qwen2.5-7B-Instruct --port 8020 --kv-transfer-config '{"kv_connector":"MooncakeConnector","kv_role":"kv_consumer"}'
 ```
 
-### Proxy
+### プロキシ { #proxy }
 
 ```bash
 python examples/disaggregated/mooncake_connector/mooncake_connector_proxy.py --prefill http://192.168.0.2:8010 --decode http://192.168.0.3:8020
 ```
 
-Now you can send requests to the proxy server through port 8000.
+これで、ポート 8000 経由でプロキシサーバーにリクエストを送れるようになります。
 
-## Environment Variables
+## 環境変数 { #environment-variables }
 
-- `VLLM_MOONCAKE_BOOTSTRAP_PORT`: Port for Mooncake bootstrap server
-    - Default: 8998
-    - Required only for prefiller instances
-    - For headless instances, must be the same as the master instance
-    - Each instance needs a unique port on its host; using the same port number across different hosts is fine
+- `VLLM_MOONCAKE_BOOTSTRAP_PORT`: Mooncake ブートストラップサーバーのポート
+    - 既定値: 8998
+    - プレフィルインスタンスでのみ必要
+    - headless インスタンスでは、マスターインスタンスと同じ値にする必要があります
+    - 各インスタンスは同一ホスト上で一意のポートを使う必要があります。異なるホスト間で同じポート番号を使うのは問題ありません
 
-- `VLLM_MOONCAKE_ABORT_REQUEST_TIMEOUT`: Timeout (in seconds) for automatically releasing the prefiller’s KV cache for a particular request. (Optional)
-    - Default: 480
-    - If a request is aborted and the decoder has not yet notified the prefiller, the prefill instance will release its KV-cache blocks after this timeout to avoid holding them indefinitely.
+- `VLLM_MOONCAKE_ABORT_REQUEST_TIMEOUT`: 特定のリクエストについて、プレフィル側の KV キャッシュを自動的に解放するまでのタイムアウト（秒）。（任意）
+    - 既定値: 480
+    - リクエストが中断され、デコード側がまだプレフィル側に通知していない場合、プレフィルインスタンスはこのタイムアウト後に KV キャッシュのブロックを解放し、無期限に保持し続けるのを防ぎます。
 
-## KV Transfer Config
+## KV 転送の設定 { #kv-transfer-config }
 
-### KV Role Options
+### kv_role の選択肢 { #kv-role-options }
 
-- **kv_producer**: For prefiller instances that generate KV caches
-- **kv_consumer**: For decoder instances that consume KV caches from prefiller
-- **kv_both**: Enables symmetric functionality where the connector can act as both producer and consumer. This provides flexibility for experimental setups and scenarios where the role distinction is not predetermined.
+- **kv_producer**: KV キャッシュを生成するプレフィルインスタンス向け
+- **kv_consumer**: プレフィル側から KV キャッシュを受け取るデコードインスタンス向け
+- **kv_both**: コネクタがプロデューサーとコンシューマーの両方として動作できる対称的な機能を有効にします。実験的な構成や、役割の区別があらかじめ決まっていないシナリオで柔軟に対応できます。
 
-### kv_connector_extra_config
+### kv_connector_extra_config { #kv_connector_extra_config }
 
-- **num_workers**: Size of thread pool for one prefiller worker to transfer KV caches by mooncake. (default 10)
-- **mooncake_protocol**: Mooncake connector protocol. (default "rdma")
+- **num_workers**: 1 つのプレフィルワーカーが mooncake で KV キャッシュを転送する際のスレッドプールのサイズ。（既定値 10）
+- **mooncake_protocol**: Mooncake コネクタのプロトコル。（既定値 "rdma"）
 
-## Example Scripts/Code
+## サンプルスクリプト / コード { #example-scriptscode }
 
-Refer to these example scripts in the vLLM repository:
+vLLM リポジトリにある次のサンプルスクリプトを参照してください。
 
 - [run_mooncake_connector.sh](../../examples/disaggregated/mooncake_connector/run_mooncake_connector.sh)
 - [mooncake_connector_proxy.py](../../examples/disaggregated/mooncake_connector/mooncake_connector_proxy.py)

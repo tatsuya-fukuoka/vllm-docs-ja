@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **128 ページ**を翻訳済みです（56.6%）。
+全 226 ページ中 **132 ページ**を翻訳済みです（58.4%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -16,17 +16,17 @@
 | CLI リファレンス | 15 | 0 | 0 | 15 |
 | コミュニティ | 3 | 0 | 0 | 3 |
 | 設定 | 7 | 0 | 0 | 7 |
-| 開発者ガイド | 3 | 0 | 13 | 16 |
+| 開発者ガイド | 5 | 0 | 11 | 16 |
 | デプロイ | 35 | 0 | 0 | 35 |
-| 設計ドキュメント | 0 | 0 | 29 | 29 |
-| 機能 | 23 | 0 | 29 | 52 |
+| 設計ドキュメント | 1 | 0 | 28 | 29 |
+| 機能 | 24 | 0 | 28 | 52 |
 | はじめに | 5 | 0 | 8 | 13 |
 | ガバナンス | 1 | 0 | 2 | 3 |
 | モデル | 3 | 0 | 13 | 16 |
 | 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **128** | **0** | **98** | **226** |
+| **合計** | **132** | **0** | **94** | **226** |
 
 ## 翻訳済みのページ
 
@@ -60,6 +60,8 @@
 - `contributing/dockerfile/dockerfile.md`
 - `contributing/model/README.md`
 - `contributing/model/registration.md`
+- `contributing/model/tests.md`
+- `contributing/vulnerability_management.md`
 - `deployment/docker.md`
 - `deployment/frameworks/anyscale.md`
 - `deployment/frameworks/anything-llm.md`
@@ -95,11 +97,13 @@
 - `deployment/integrations/production-stack.md`
 - `deployment/k8s.md`
 - `deployment/nginx.md`
+- `design/optimization_levels.md`
 - `features/README.md`
 - `features/automatic_prefix_caching.md`
 - `features/context_extension.md`
 - `features/custom_arguments.md`
 - `features/index_cache.md`
+- `features/mooncake_connector_usage.md`
 - `features/quantization/README.md`
 - `features/quantization/auto_awq.md`
 - `features/quantization/bnb.md`
