@@ -1,25 +1,25 @@
-# GGUF
+# GGUF { #gguf }
 
 !!! warning
-    Please note that GGUF support in vLLM is highly experimental and under-optimized at the moment, it might be incompatible with other features. Currently, you can use GGUF as a way to reduce memory footprint. If you encounter any issues, please report them to the vLLM team.
+    vLLM の GGUF サポートは現時点で非常に実験的で最適化も不十分であり、他の機能と併用できない場合があります。現状はメモリ使用量を減らす手段として利用できます。問題が起きた場合は vLLM チームに報告してください。
 
 !!! note
-    GGUF support has migrated to OOT [vllm-gguf-plugin](https://github.com/vllm-project/vllm-gguf-plugin). Make sure you have GGUF plugin installed before serving a GGUF model.
+    GGUF のサポートはツリー外の [vllm-gguf-plugin](https://github.com/vllm-project/vllm-gguf-plugin) に移行しました。GGUF のモデルをサービングする前に、GGUF プラグインがインストールされていることを確認してください。
 
-Before serving a GGUF model, make sure to install the [vllm-gguf-plugin](https://github.com/vllm-project/vllm-gguf-plugin):
+GGUF のモデルをサービングする前に、[vllm-gguf-plugin](https://github.com/vllm-project/vllm-gguf-plugin) をインストールしてください。
 
 ```bash
 uv pip install vllm-gguf-plugin
 ```
 
-To run a GGUF model with vLLM, you can use the `repo_id:quant_type` format to load directly from HuggingFace. For example, to load a Q4_K_M quantized model from [unsloth/Qwen3-0.6B-GGUF](https://huggingface.co/unsloth/Qwen3-0.6B-GGUF):
+GGUF のモデルを vLLM で実行するには、`repo_id:quant_type` の形式で Hugging Face から直接読み込めます。たとえば [unsloth/Qwen3-0.6B-GGUF](https://huggingface.co/unsloth/Qwen3-0.6B-GGUF) から Q4_K_M の量子化モデルを読み込むには次のようにします。
 
 ```bash
 # We recommend using the tokenizer from base model to avoid long-time and buggy tokenizer conversion.
 vllm serve unsloth/Qwen3-0.6B-GGUF:Q4_K_M --tokenizer Qwen/Qwen3-0.6B
 ```
 
-You can also add `--tensor-parallel-size 2` to enable tensor parallelism inference with 2 GPUs:
+`--tensor-parallel-size 2` を追加すると、2 台の GPU でテンソル並列の推論を有効にできます。
 
 ```bash
 vllm serve unsloth/Qwen3-0.6B-GGUF:Q4_K_M \
@@ -27,7 +27,7 @@ vllm serve unsloth/Qwen3-0.6B-GGUF:Q4_K_M \
    --tensor-parallel-size 2
 ```
 
-Alternatively, you can download and use a local GGUF file:
+ローカルにダウンロードした GGUF ファイルを使うこともできます。
 
 ```bash
 wget https://huggingface.co/unsloth/Qwen3-0.6B-GGUF/resolve/main/Qwen3-0.6B-Q4_K_M.gguf
@@ -35,9 +35,9 @@ vllm serve ./Qwen3-0.6B-Q4_K_M.gguf --tokenizer Qwen/Qwen3-0.6B
 ```
 
 !!! warning
-    We recommend using the tokenizer from base model instead of GGUF model. Because the tokenizer conversion from GGUF is time-consuming and unstable, especially for some models with large vocab size.
+    トークナイザーは GGUF のものではなくベースモデルのものを使うことを推奨します。GGUF からのトークナイザー変換は時間がかかり不安定で、特に語彙数の大きいモデルで顕著なためです。
 
-GGUF assumes that HuggingFace can convert the metadata to a config file. In case HuggingFace doesn't support your model you can manually create a config and pass it as hf-config-path
+GGUF は、Hugging Face がメタデータを設定ファイルへ変換できることを前提としています。Hugging Face が対象のモデルに対応していない場合は、設定を手動で用意して hf-config-path として渡せます。
 
 ```bash
 # If your model is not supported by HuggingFace you can manually provide a HuggingFace compatible config path
@@ -46,7 +46,7 @@ vllm serve unsloth/Qwen3-0.6B-GGUF:Q4_K_M \
    --hf-config-path Qwen/Qwen3-0.6B
 ```
 
-You can also use the GGUF model directly through the LLM entrypoint:
+GGUF のモデルは、LLM のエントリポイントから直接利用することもできます。
 
 ??? code
 

@@ -795,8 +795,10 @@
       "upstream_sha": "acc6bb7b2d1e7bda"
     },
     "features/quantization/auto_awq.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "c1fc388274efdba3",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "c1fc388274efdba3"
     },
     "features/quantization/bnb.md": {
@@ -812,8 +814,10 @@
       "upstream_sha": "7f9d73231a152d8a"
     },
     "features/quantization/gguf.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d2de9c92ead49209",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "d2de9c92ead49209"
     },
     "features/quantization/gptqmodel.md": {
@@ -822,8 +826,10 @@
       "upstream_sha": "692edefe3ddd27eb"
     },
     "features/quantization/inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "5e2d466d39f16416",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "5e2d466d39f16416"
     },
     "features/quantization/llm_compressor/README.md": {
@@ -901,8 +907,10 @@
       "upstream_sha": "7f46f52add9ac487"
     },
     "features/speculative_decoding/dynamic_speculative_decoding.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "6fc3b6564089697f",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "6fc3b6564089697f"
     },
     "features/speculative_decoding/eagle.md": {
