@@ -1019,8 +1019,10 @@
       "upstream_sha": "cda0714d7ac9d356"
     },
     "governance/collaboration.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "36f23109a3c53cdc",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "36f23109a3c53cdc"
     },
     "governance/committers.md": {
