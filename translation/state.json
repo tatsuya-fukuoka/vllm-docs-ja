@@ -230,8 +230,10 @@
       "upstream_sha": "f8dba4db5fed89f4"
     },
     "contributing/deprecation_policy.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "9d5902603fa78088",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "9d5902603fa78088"
     },
     "contributing/dockerfile/dockerfile.md": {
@@ -1122,13 +1124,17 @@
       "upstream_sha": "fcff94d6512d632e"
     },
     "models/extensions/runai_model_streamer.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4a32cdb51c000d31",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "4a32cdb51c000d31"
     },
     "models/extensions/tensorizer.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "e7342a869acbbb02",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "e7342a869acbbb02"
     },
     "models/generative_models.md": {
@@ -1139,8 +1145,10 @@
       "upstream_sha": "00cad3661500f4b4"
     },
     "models/hardware_supported_models/cpu.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "61178dfca26962ec",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "61178dfca26962ec"
     },
     "models/hardware_supported_models/xpu.md": {
