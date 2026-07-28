@@ -69,7 +69,7 @@ Models of any architecture can be converted into embedding models using `--conve
 <sup>C</sup> Automatically converted into an embedding model via `--convert embed`. ([details](./README.md#model-conversion))  
 \* Feature support is the same as that of the original model.
 
-If your model is not in the above list, we will try to automatically convert the model using [as_embedding_model][vllm.model_executor.models.adapters.as_embedding_model].
+If your model is not in the above list, we will try to automatically convert the model using [`as_embedding_model`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/adapters/#vllm.model_executor.models.adapters.as_embedding_model).
 
 ### Special models
 
@@ -85,7 +85,7 @@ jina-reranker-v3 is a listwise document reranker model with a novel `last but no
 
 ### Pooling Parameters
 
-The following [pooling parameters][vllm.PoolingParams] are supported.
+The following [`pooling parameters`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.PoolingParams) are supported.
 
 ```python
 --8<-- "vllm/pooling_params.py:common-pooling-params"
@@ -94,7 +94,7 @@ The following [pooling parameters][vllm.PoolingParams] are supported.
 
 ### `LLM.encode`
 
-The [encode][vllm.entrypoints.pooling.offline.PoolingOfflineMixin.encode] method is available to all pooling models in vLLM.
+The [`encode`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.encode) method is available to all pooling models in vLLM.
 
 Set `pooling_task="token_embed"` when using `LLM.encode` for token embedding Models:
 
@@ -110,7 +110,7 @@ print(f"Data: {data!r}")
 
 ### `LLM.score`
 
-The [score][vllm.entrypoints.pooling.offline.PoolingOfflineMixin.score] method outputs similarity scores between sentence pairs.
+The [`score`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.score) method outputs similarity scores between sentence pairs.
 
 All models that support token embedding task also support using the score API to compute similarity scores by calculating the late interaction of two input prompts.
 

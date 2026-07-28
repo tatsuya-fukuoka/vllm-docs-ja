@@ -7,7 +7,7 @@ This document walks you through the steps to extend a basic model so that it acc
 It is assumed that you have already implemented the model in vLLM according to [these steps](basic.md).
 Further update the model as follows:
 
-- Implement [get_placeholder_str][vllm.model_executor.models.interfaces.SupportsMultiModal.get_placeholder_str] to define the placeholder string which is used to represent the multi-modal item in the text prompt. This should be consistent with the chat template of the model.
+- Implement [`get_placeholder_str`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal.get_placeholder_str) to define the placeholder string which is used to represent the multi-modal item in the text prompt. This should be consistent with the chat template of the model.
 
     ??? code
 
@@ -23,7 +23,7 @@ Further update the model as follows:
                 raise ValueError("Only image modality is supported")
         ```
 
-- Inside `__init__` method, initialize the language components of the model inside [_mark_language_model][vllm.model_executor.models.interfaces.SupportsMultiModal._mark_language_model], and the multimodal components of the model inside [_mark_tower_model][vllm.model_executor.models.interfaces.SupportsMultiModal._mark_tower_model], e.g.:
+- Inside `__init__` method, initialize the language components of the model inside [`_mark_language_model`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal._mark_language_model), and the multimodal components of the model inside [`_mark_tower_model`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal._mark_tower_model), e.g.:
 
     ```python
         def __init__(self, *, vllm_config: VllmConfig, prefix: str = "") -> None:
@@ -44,8 +44,8 @@ Further update the model as follows:
     ```
 
 - Remove the embedding part from the [forward][torch.nn.Module.forward] method:
-    - Move the multi-modal embedding to [embed_multimodal][vllm.model_executor.models.interfaces.SupportsMultiModal.embed_multimodal].
-    - The text embedding and embedding merge are handled automatically by a default implementation of [embed_input_ids][vllm.model_executor.models.interfaces.SupportsMultiModal.embed_input_ids]. It does not need to be overridden in most cases.
+    - Move the multi-modal embedding to [`embed_multimodal`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal.embed_multimodal).
+    - The text embedding and embedding merge are handled automatically by a default implementation of [`embed_input_ids`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal.embed_input_ids). It does not need to be overridden in most cases.
 
     ```diff
       def forward(
@@ -90,7 +90,7 @@ Further update the model as follows:
     +      )
     ```
 
-    Below we provide a boilerplate of a typical implementation pattern of [embed_multimodal][vllm.model_executor.models.interfaces.SupportsMultiModal.embed_multimodal], but feel free to adjust it to your own needs.
+    Below we provide a boilerplate of a typical implementation pattern of [`embed_multimodal`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal.embed_multimodal), but feel free to adjust it to your own needs.
 
     ```python
     def _process_image_input(self, image_input: YourModelImageInputs) -> torch.Tensor:
@@ -116,12 +116,12 @@ Further update the model as follows:
 
 !!! note
     By default, vLLM merges the multimodal embeddings into text embeddings depending on the information of their locations defined in
-    [PlaceholderRange][vllm.multimodal.inputs.PlaceholderRange] from input processing.
-    This logic can be found at [embed_input_ids][vllm.model_executor.models.interfaces.SupportsMultiModal.embed_input_ids].
+    [`PlaceholderRange`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/inputs/#vllm.multimodal.inputs.PlaceholderRange) from input processing.
+    This logic can be found at [`embed_input_ids`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal.embed_input_ids).
 
     You may override this method if additional logic is required for your model when merging embeddings.
 
-- Once the above steps are done, update the model class with the [SupportsMultiModal][vllm.model_executor.models.interfaces.SupportsMultiModal] interface.
+- Once the above steps are done, update the model class with the [`SupportsMultiModal`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal) interface.
 
   ```diff
   + from vllm.model_executor.models.interfaces import SupportsMultiModal
@@ -136,12 +136,12 @@ Further update the model as follows:
 
 ## 2. Specify processing information
 
-Next, create a subclass of [BaseProcessingInfo][vllm.multimodal.processing.BaseProcessingInfo]
+Next, create a subclass of [`BaseProcessingInfo`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseProcessingInfo)
 to provide basic information related to HF processing.
 
 ### Maximum number of input items
 
-You need to override the abstract method [get_supported_mm_limits][vllm.multimodal.processing.BaseProcessingInfo.get_supported_mm_limits]
+You need to override the abstract method [`get_supported_mm_limits`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseProcessingInfo.get_supported_mm_limits)
 to return the maximum number of input items for each modality supported by the model.
 
 For example, if the model supports any number of images but only one video per prompt:
@@ -153,10 +153,10 @@ def get_supported_mm_limits(self) -> Mapping[str, int | None]:
 
 ## 3. Specify dummy inputs
 
-Then, inherit [BaseDummyInputsBuilder][vllm.multimodal.processing.BaseDummyInputsBuilder] to construct dummy inputs for
+Then, inherit [`BaseDummyInputsBuilder`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseDummyInputsBuilder) to construct dummy inputs for
 HF processing. The processed outputs are also used for memory profiling.
 
-Override the abstract methods [get_dummy_text][vllm.multimodal.processing.BaseDummyInputsBuilder.get_dummy_text] and [get_dummy_mm_data][vllm.multimodal.processing.BaseDummyInputsBuilder.get_dummy_mm_data] to construct dummy inputs. These dummy inputs should result in the worst-case memory usage of the model so that vLLM can reserve the correct amount of memory for it.
+Override the abstract methods [`get_dummy_text`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseDummyInputsBuilder.get_dummy_text) and [`get_dummy_mm_data`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseDummyInputsBuilder.get_dummy_mm_data) to construct dummy inputs. These dummy inputs should result in the worst-case memory usage of the model so that vLLM can reserve the correct amount of memory for it.
 
 Assuming that the memory usage increases with the number of tokens, the dummy inputs can be constructed to maximize the number of output embeddings, which is the same number as placeholder feature tokens.
 
@@ -392,7 +392,7 @@ Assuming that the memory usage increases with the number of tokens, the dummy in
 
 ## 4. Specify processing details
 
-Afterwards, create a subclass of [BaseMultiModalProcessor][vllm.multimodal.processing.BaseMultiModalProcessor]
+Afterwards, create a subclass of [`BaseMultiModalProcessor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor)
 to fill in the missing details about HF processing.
 
 !!! info
@@ -400,7 +400,7 @@ to fill in the missing details about HF processing.
 
 ### Multi-modal fields
 
-Override [_get_mm_fields_config][vllm.multimodal.processing.BaseMultiModalProcessor._get_mm_fields_config] to
+Override [`_get_mm_fields_config`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_mm_fields_config) to
 return a schema of the tensors outputted by the HF processor that are related to the input multi-modal items.
 
 === "Basic example: LLaVA"
@@ -420,7 +420,7 @@ return a schema of the tensors outputted by the HF processor that are related to
     return BatchFeature(data=data, tensor_type=return_tensors)
     ```
 
-    So, we override [_get_mm_fields_config][vllm.multimodal.processing.BaseMultiModalProcessor._get_mm_fields_config] as follows:
+    So, we override [`_get_mm_fields_config`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_mm_fields_config) as follows:
 
     ```python
     def _get_mm_fields_config(
@@ -442,11 +442,11 @@ return a schema of the tensors outputted by the HF processor that are related to
     The `pixel_values` output of Mistral3's HF processor pads every image in the
     batch to a common size, so that they can be stacked into a single tensor.
 
-    To use [MultiModalFieldConfig.batched][vllm.multimodal.inputs.MultiModalFieldConfig.batched]
+    To use [`MultiModalFieldConfig.batched`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/inputs/#vllm.multimodal.inputs.MultiModalFieldConfig.batched)
     like in LLaVA, each image's features must be independent of the others (which
     is also required for prefix caching to work correctly). So, we un-pad each image
     back to its own size by overriding
-    [BaseMultiModalProcessor._call_hf_processor][vllm.multimodal.processing.BaseMultiModalProcessor._call_hf_processor]:
+    [`BaseMultiModalProcessor._call_hf_processor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._call_hf_processor):
 
     ??? code
 
@@ -485,7 +485,7 @@ return a schema of the tensors outputted by the HF processor that are related to
         processor, whereas `tok_kwargs` is only used to call the huggingface processor.
 
     Since `pixel_values` is now a list with one tensor per image, we can override
-    [_get_mm_fields_config][vllm.multimodal.processing.BaseMultiModalProcessor._get_mm_fields_config] as follows:
+    [`_get_mm_fields_config`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_mm_fields_config) as follows:
 
     ```python
     def _get_mm_fields_config(
@@ -504,10 +504,10 @@ return a schema of the tensors outputted by the HF processor that are related to
 
 ### Prompt updates
 
-Override [_get_prompt_updates][vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates] to
-return a list of [PromptUpdate][vllm.multimodal.processing.PromptUpdate] instances.
+Override [`_get_prompt_updates`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates) to
+return a list of [`PromptUpdate`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.PromptUpdate) instances.
 
-Each [PromptUpdate][vllm.multimodal.processing.PromptUpdate] instance specifies an update operation
+Each [`PromptUpdate`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.PromptUpdate) instance specifies an update operation
 (e.g.: insertion, replacement) performed by the HF processor.
 
 === "Basic example: LLaVA"
@@ -523,7 +523,7 @@ Each [PromptUpdate][vllm.multimodal.processing.PromptUpdate] instance specifies 
     ```
 
     It simply repeats each input `image_token` a number of times equal to the number of placeholder feature tokens (`num_image_tokens`).
-    Based on this, we override [_get_prompt_updates][vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates] as follows:
+    Based on this, we override [`_get_prompt_updates`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates) as follows:
 
     ??? code
 
@@ -588,7 +588,7 @@ Each [PromptUpdate][vllm.multimodal.processing.PromptUpdate] instance specifies 
     The trailing `<bos>` token is an additional token that must **not** receive a
     vision embedding. To assign the vision embeddings to only the image tokens,
     instead of returning the token ids directly you can return an instance of
-    [PromptUpdateDetails][vllm.multimodal.processing.PromptUpdateDetails] and mark
+    [`PromptUpdateDetails`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.PromptUpdateDetails) and mark
     the embedding tokens with `embed_token_id`:
 
     ??? code
@@ -600,9 +600,9 @@ Each [PromptUpdate][vllm.multimodal.processing.PromptUpdate] instance specifies 
         )
         ```
 
-    Putting it together, we override [_get_prompt_updates][vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates].
+    Putting it together, we override [`_get_prompt_updates`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates).
     Since these tokens are inserted (rather than replacing an existing placeholder)
-    after the prompt's leading `<bos>`, we use [PromptInsertion][vllm.multimodal.processing.PromptInsertion]
+    after the prompt's leading `<bos>`, we use [`PromptInsertion`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.PromptInsertion)
     with a prefix target:
 
     ??? code
@@ -656,10 +656,10 @@ Each [PromptUpdate][vllm.multimodal.processing.PromptUpdate] instance specifies 
 
 ## 5. Register processor-related classes
 
-After you have defined [BaseProcessingInfo][vllm.multimodal.processing.BaseProcessingInfo] (Step 2),
-[BaseDummyInputsBuilder][vllm.multimodal.processing.BaseDummyInputsBuilder] (Step 3),
-and [BaseMultiModalProcessor][vllm.multimodal.processing.BaseMultiModalProcessor] (Step 4),
-decorate the model class with [MULTIMODAL_REGISTRY.register_processor][vllm.multimodal.registry.MultiModalRegistry.register_processor]
+After you have defined [`BaseProcessingInfo`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseProcessingInfo) (Step 2),
+[`BaseDummyInputsBuilder`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseDummyInputsBuilder) (Step 3),
+and [`BaseMultiModalProcessor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor) (Step 4),
+decorate the model class with [`MULTIMODAL_REGISTRY.register_processor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/registry/#vllm.multimodal.registry.MultiModalRegistry.register_processor)
 to register them to the multi-modal registry:
 
 ```diff
@@ -678,7 +678,7 @@ to register them to the multi-modal registry:
 
 ### Inserting feature tokens without replacement
 
-Some HF processors directly insert feature tokens without replacing anything in the original prompt. In that case, you can use [PromptInsertion][vllm.multimodal.processing.PromptInsertion] instead of [PromptReplacement][vllm.multimodal.processing.PromptReplacement] inside [_get_prompt_updates][vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates].
+Some HF processors directly insert feature tokens without replacing anything in the original prompt. In that case, you can use [`PromptInsertion`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.PromptInsertion) instead of [`PromptReplacement`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.PromptReplacement) inside [`_get_prompt_updates`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates).
 
 Examples:
 
@@ -687,7 +687,7 @@ Examples:
 
 ### Handling prompt updates unrelated to multi-modal data
 
-[_get_prompt_updates][vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates] assumes that each application of prompt update corresponds to one multi-modal item. If the HF processor performs additional processing regardless of how many multi-modal items there are, you should override [_apply_hf_processor_tokens_only][vllm.multimodal.processing.BaseMultiModalProcessor._apply_hf_processor_tokens_only] so that the processed token inputs are consistent with the result of applying the HF processor on text inputs. This is because token inputs bypass the HF processor according to [our design](../../design/mm_processing.md).
+[`_get_prompt_updates`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates) assumes that each application of prompt update corresponds to one multi-modal item. If the HF processor performs additional processing regardless of how many multi-modal items there are, you should override [`_apply_hf_processor_tokens_only`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._apply_hf_processor_tokens_only) so that the processed token inputs are consistent with the result of applying the HF processor on text inputs. This is because token inputs bypass the HF processor according to [our design](../../design/mm_processing.md).
 
 Examples:
 
@@ -697,7 +697,7 @@ Examples:
 
 ### Custom HF processor
 
-Some models don't define an HF processor class on HF Hub. In that case, you can define a custom HF processor that has the same call signature as HF processors and pass it to [_call_hf_processor][vllm.multimodal.processing.BaseMultiModalProcessor._call_hf_processor].
+Some models don't define an HF processor class on HF Hub. In that case, you can define a custom HF processor that has the same call signature as HF processors and pass it to [`_call_hf_processor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._call_hf_processor).
 
 Examples:
 

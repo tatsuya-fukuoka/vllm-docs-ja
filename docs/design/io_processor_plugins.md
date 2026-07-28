@@ -6,7 +6,7 @@ When performing an inference with IO Processor plugins, the prompt type is defin
 
 ## Writing an IO Processor Plugin
 
-IO Processor plugins implement the [`IOProcessor`][vllm.plugins.io_processors.interface.IOProcessor] interface:
+IO Processor plugins implement the [`IOProcessor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/plugins/io_processors/interface/#vllm.plugins.io_processors.interface.IOProcessor) interface:
 
 ```python
 IOProcessorInput = TypeVar("IOProcessorInput")

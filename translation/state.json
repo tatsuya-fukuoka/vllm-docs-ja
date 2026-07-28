@@ -6,8 +6,10 @@
   },
   "pages": {
     "README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "87681113461ee554",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "87681113461ee554"
     },
     "benchmarking/README.md": {
@@ -121,13 +123,17 @@
       "upstream_sha": "d88f4f471fb8bab6"
     },
     "configuration/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "c3f61764c0300181",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "c3f61764c0300181"
     },
     "configuration/conserving_memory.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "72dafb7a2e4b100e",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "72dafb7a2e4b100e"
     },
     "configuration/engine_args.md": {
@@ -146,8 +152,10 @@
       "upstream_sha": "5e455f909942a3d0"
     },
     "configuration/optimization.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "86ca9cde5064d129",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "86ca9cde5064d129"
     },
     "configuration/serve_args.md": {
@@ -236,8 +244,10 @@
       "upstream_sha": "2ee5428a235ff186"
     },
     "deployment/docker.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "8619b2fa7b181a86",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "8619b2fa7b181a86"
     },
     "deployment/frameworks/anyscale.md": {
@@ -401,8 +411,10 @@
       "upstream_sha": "e7cb18308f860db8"
     },
     "deployment/k8s.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "dc40f945f800f2c0",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "dc40f945f800f2c0"
     },
     "deployment/nginx.md": {
@@ -556,8 +568,10 @@
       "upstream_sha": "18948afec175985f"
     },
     "features/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "dc7a3717f0670b52",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "dc7a3717f0670b52"
     },
     "features/automatic_prefix_caching.md": {
@@ -656,8 +670,10 @@
       "upstream_sha": "4483c6d4a906b03d"
     },
     "features/quantization/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "acc6bb7b2d1e7bda",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "acc6bb7b2d1e7bda"
     },
     "features/quantization/auto_awq.md": {
@@ -806,8 +822,10 @@
       "upstream_sha": "6585dc99d3a6b9a1"
     },
     "features/structured_outputs.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "0720d1d9b94f77b0",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "0720d1d9b94f77b0"
     },
     "features/tool_calling.md": {
@@ -816,8 +834,10 @@
       "upstream_sha": "caa6db0c295aabbf"
     },
     "getting_started/installation/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "dc7a7b0d79f1fe51",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "dc7a7b0d79f1fe51"
     },
     "getting_started/installation/cpu.apple.inc.md": {
@@ -856,8 +876,10 @@
       "upstream_sha": "25f65fcb64e10515"
     },
     "getting_started/installation/gpu.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1bcf504d2c28d4f1",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "1bcf504d2c28d4f1"
     },
     "getting_started/installation/gpu.rocm.inc.md": {
@@ -871,13 +893,17 @@
       "upstream_sha": "0d0a98a738cc9ddf"
     },
     "getting_started/installation/python_env_setup.inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "5af31b3643a72b6e",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "5af31b3643a72b6e"
     },
     "getting_started/quickstart.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "cda0714d7ac9d356",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "cda0714d7ac9d356"
     },
     "governance/collaboration.md": {
@@ -916,8 +942,10 @@
       "upstream_sha": "e7342a869acbbb02"
     },
     "models/generative_models.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "00cad3661500f4b4",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "00cad3661500f4b4"
     },
     "models/hardware_supported_models/cpu.md": {
@@ -1016,13 +1044,17 @@
       "upstream_sha": "632469927696f101"
     },
     "serving/offline_inference.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "2413cf78d22c2342",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "2413cf78d22c2342"
     },
     "serving/online_serving/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1e7b8db27eb2397b",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "1e7b8db27eb2397b"
     },
     "serving/online_serving/derenderer.md": {
@@ -1036,8 +1068,10 @@
       "upstream_sha": "7f90d859b0a5b2b7"
     },
     "serving/online_serving/openai_compatible_server.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "8d261897ca52455f",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "8d261897ca52455f"
     },
     "serving/online_serving/renderer.md": {
@@ -1096,13 +1130,17 @@
       "upstream_sha": "29bfa804ed3dbb23"
     },
     "usage/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "f4f6abcb8f46cf1f",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "f4f6abcb8f46cf1f"
     },
     "usage/faq.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "dc0fe41b0861fbf3",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "dc0fe41b0861fbf3"
     },
     "usage/metrics.md": {
@@ -1121,8 +1159,10 @@
       "upstream_sha": "becabad8ad847047"
     },
     "usage/troubleshooting.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "966b8aa6fde411af",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "966b8aa6fde411af"
     },
     "usage/usage_stats.md": {
@@ -1131,8 +1171,10 @@
       "upstream_sha": "64abf26ed4a35f83"
     },
     "usage/v1_guide.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "94f548d23ff2e1b4",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "94f548d23ff2e1b4"
     }
   },

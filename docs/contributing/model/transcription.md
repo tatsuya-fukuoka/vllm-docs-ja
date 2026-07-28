@@ -1,11 +1,11 @@
 # Speech-to-Text (Transcription/Translation) Support
 
-This document walks you through the steps to add support for speech-to-text (ASR) models to vLLM’s transcription and translation APIs by implementing [SupportsTranscription][vllm.model_executor.models.interfaces.SupportsTranscription].
+This document walks you through the steps to add support for speech-to-text (ASR) models to vLLM’s transcription and translation APIs by implementing [`SupportsTranscription`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsTranscription).
 Please refer to the [supported models](../../models/supported_models.md#transcription) for further guidance.
 
 ## Update the base vLLM model
 
-It is assumed you have already implemented your model in vLLM according to the basic model guide. Extend your model with the [SupportsTranscription][vllm.model_executor.models.interfaces.SupportsTranscription] interface and implement the following class attributes and methods.
+It is assumed you have already implemented your model in vLLM according to the basic model guide. Extend your model with the [`SupportsTranscription`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsTranscription) interface and implement the following class attributes and methods.
 
 ### `supported_languages` and `supports_transcription_only`
 
@@ -39,7 +39,7 @@ Declare supported languages and capabilities:
         supports_transcription_only: ClassVar[bool] = True
     ```
 
-Provide an ASR configuration via [get_speech_to_text_config][vllm.model_executor.models.interfaces.SupportsTranscription.get_speech_to_text_config].
+Provide an ASR configuration via [`get_speech_to_text_config`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsTranscription.get_speech_to_text_config).
 
 This is for controlling general behavior of the API when serving your model:
 
@@ -66,7 +66,7 @@ This is for controlling general behavior of the API when serving your model:
 
 See [Audio preprocessing and chunking](#audio-preprocessing-and-chunking) for what each field controls.
 
-Implement the prompt construction via [get_generation_prompt][vllm.model_executor.models.interfaces.SupportsTranscription.get_generation_prompt]. The server builds a [SpeechToTextParams][vllm.config.speech_to_text.SpeechToTextParams] object that bundles the resampled waveform, task parameters, and request-specific options. Your model receives this single object and returns a valid [PromptType][vllm.inputs.llm.PromptType]. There are two common patterns:
+Implement the prompt construction via [`get_generation_prompt`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsTranscription.get_generation_prompt). The server builds a [`SpeechToTextParams`](https://docs.vllm.ai/en/v0.26.0/api/vllm/config/speech_to_text/#vllm.config.speech_to_text.SpeechToTextParams) object that bundles the resampled waveform, task parameters, and request-specific options. Your model receives this single object and returns a valid [`PromptType`](https://docs.vllm.ai/en/v0.26.0/api/vllm/inputs/llm/#vllm.inputs.llm.PromptType). There are two common patterns:
 
 #### Multimodal LLM with audio embeddings (e.g., Voxtral, Gemma3n)
 
@@ -148,7 +148,7 @@ Return a dict with separate `encoder_prompt` and `decoder_prompt` entries:
 
 ### `validate_language` (optional)
 
-Language validation via [validate_language][vllm.model_executor.models.interfaces.SupportsTranscription.validate_language]
+Language validation via [`validate_language`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsTranscription.validate_language)
 
 If your model requires a language and you want a default, override this method (see Whisper):
 
@@ -169,7 +169,7 @@ If your model requires a language and you want a default, override this method (
 
 ### `get_num_audio_tokens` (optional)
 
-Token accounting for streaming via [get_num_audio_tokens][vllm.model_executor.models.interfaces.SupportsTranscription.get_num_audio_tokens]
+Token accounting for streaming via [`get_num_audio_tokens`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsTranscription.get_num_audio_tokens)
 
 Provide a fast duration→token estimate to improve streaming usage statistics:
 

@@ -1,15 +1,15 @@
-# Using Kubernetes
+# Kubernetes を使う { #using-kubernetes }
 
-Deploying vLLM on Kubernetes is a scalable and efficient way to serve machine learning models. This guide walks you through deploying vLLM using native Kubernetes.
+Kubernetes 上への vLLM のデプロイは、機械学習モデルをスケーラブルかつ効率的にサービングする方法です。このガイドでは、素の Kubernetes を使って vLLM をデプロイする手順を説明します。
 
-- [Deployment with CPUs](#deployment-with-cpus)
-- [Deployment with GPUs](#deployment-with-gpus)
-- [Serving with gRPC](#serving-with-grpc)
-- [Troubleshooting](#troubleshooting)
-    - [Startup Probe or Readiness Probe Failure, container log contains "KeyboardInterrupt: terminated"](#startup-probe-or-readiness-probe-failure-container-log-contains-keyboardinterrupt-terminated)
-- [Conclusion](#conclusion)
+- [CPU でのデプロイ](#deployment-with-cpus)
+- [GPU でのデプロイ](#deployment-with-gpus)
+- [gRPC でのサービング](#serving-with-grpc)
+- [トラブルシューティング](#troubleshooting)
+    - [Startup Probe / Readiness Probe の失敗（コンテナログに "KeyboardInterrupt: terminated" が出る）](#startup-probe-or-readiness-probe-failure-container-log-contains-keyboardinterrupt-terminated)
+- [まとめ](#conclusion)
 
-Alternatively, you can deploy vLLM to Kubernetes using any of the following:
+次のいずれかを使って vLLM を Kubernetes にデプロイすることもできます。
 
 - [Helm](frameworks/helm.md)
 - [NVIDIA Dynamo](integrations/dynamo.md)
@@ -25,12 +25,12 @@ Alternatively, you can deploy vLLM to Kubernetes using any of the following:
 - [vllm-project/AIBrix](integrations/aibrix.md)
 - [vllm-project/production-stack](integrations/production-stack.md)
 
-## Deployment with CPUs
+## CPU でのデプロイ { #deployment-with-cpus }
 
 !!! note
-    The use of CPUs here is for demonstration and testing purposes only and its performance will not be on par with GPUs.
+    ここでの CPU の使用はデモとテストが目的であり、性能は GPU と同等にはなりません。
 
-First, create a Kubernetes PVC and Secret for downloading and storing Hugging Face model:
+まず、Hugging Face のモデルをダウンロード・保存するための Kubernetes PVC と Secret を作成します。
 
 ??? console "Config"
 
@@ -58,12 +58,12 @@ First, create a Kubernetes PVC and Secret for downloading and storing Hugging Fa
     EOF
     ```
 
-Here, the `token` field stores your **Hugging Face access token**. For details on how to generate a token,
-see the [Hugging Face documentation](https://huggingface.co/docs/hub/en/security-tokens).
+ここで `token` フィールドには **Hugging Face のアクセストークン**を格納します。トークンの発行方法は
+[Hugging Face のドキュメント](https://huggingface.co/docs/hub/en/security-tokens)を参照してください。
 
-Next, start the vLLM server as a Kubernetes Deployment and Service.
+次に、Kubernetes の Deployment と Service として vLLM サーバーを起動します。
 
-Note that you will want to configure your vLLM image based on your processor arch:
+vLLM のイメージは、プロセッサのアーキテクチャに合わせて指定してください。
 
 ??? console "Config"
 
@@ -123,7 +123,7 @@ Note that you will want to configure your vLLM image based on your processor arc
     EOF
     ```
 
-We can verify that the vLLM server has started successfully via the logs (this might take a couple of minutes to download the model):
+ログから vLLM サーバーが正常に起動したことを確認できます（モデルのダウンロードに数分かかることがあります）。
 
 ```bash
 kubectl logs -l app.kubernetes.io/name=vllm
@@ -134,13 +134,13 @@ INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ```
 
-## Deployment with GPUs
+## GPU でのデプロイ { #deployment-with-gpus }
 
-**Pre-requisite**: Ensure that you have a running [Kubernetes cluster with GPUs](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/).
+**前提条件**: [GPU を備えた Kubernetes クラスタ](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/)が稼働していること。
 
-1. Create a PVC, Secret and Deployment for vLLM
+1. vLLM 用の PVC・Secret・Deployment を作成する
 
-      PVC is used to store the model cache and it is optional, you can use hostPath or other storage options
+      PVC はモデルのキャッシュを保存するために使います。任意であり、hostPath や他のストレージオプションでも構いません。
 
       <details>
       <summary>Yaml</summary>
@@ -163,7 +163,7 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 
       </details>
 
-      Secret is optional and only required for accessing gated models, you can skip this step if you are not using gated models
+      Secret も任意で、アクセス制限のある gated モデルを使う場合にのみ必要です。gated モデルを使わない場合はこの手順を省略できます。
 
       ```yaml
       apiVersion: v1
@@ -176,11 +176,11 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
         token: "REPLACE_WITH_TOKEN"
       ```
   
-      Next to create the deployment file for vLLM to run the model server. The following example deploys the `Mistral-7B-Instruct-v0.3` model.
+      続いて、モデルサーバーを動かすための vLLM の Deployment ファイルを作成します。次の例では `Mistral-7B-Instruct-v0.3` モデルをデプロイします。
 
-      Here are two examples for using NVIDIA GPU and AMD GPU.
+      NVIDIA GPU と AMD GPU の 2 つの例を示します。
 
-      NVIDIA GPU:
+      NVIDIA GPU の場合:
 
       <details>
       <summary>Yaml</summary>
@@ -259,7 +259,7 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 
       AMD GPU:
 
-      You can refer to the `deployment.yaml` below if using AMD ROCm GPU like MI300X.
+      MI300X などの AMD ROCm GPU を使う場合は、以下の `deployment.yaml` を参考にしてください。
 
       <details>
       <summary>Yaml</summary>
@@ -334,11 +334,11 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 
       </details>
 
-      You can get the full example with steps and sample yaml files from <https://github.com/ROCm/k8s-device-plugin/tree/master/example/vllm-serve>.
+      手順とサンプルの yaml を含む完全な例は <https://github.com/ROCm/k8s-device-plugin/tree/master/example/vllm-serve> から入手できます。
 
-2. Create a Kubernetes Service for vLLM
+2. vLLM 用の Kubernetes Service を作成する
 
-      Next, create a Kubernetes Service file to expose the `mistral-7b` deployment:
+      次に、`mistral-7b` の Deployment を公開するための Kubernetes Service ファイルを作成します。
 
       <details>
       <summary>Yaml</summary>
@@ -364,16 +364,16 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 
       </details>
 
-3. Deploy and Test
+3. デプロイして動作確認する
 
-      Apply the deployment and service configurations using `kubectl apply -f <filename>`:
+      `kubectl apply -f <filename>` で Deployment と Service の設定を適用します。
 
       ```bash
       kubectl apply -f deployment.yaml
       kubectl apply -f service.yaml
       ```
 
-      To test the deployment, run the following `curl` command:
+      デプロイを確認するには、次の `curl` コマンドを実行します。
 
       ```bash
       curl http://mistral-7b.default.svc.cluster.local/v1/completions \
@@ -386,19 +386,19 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
             }'
       ```
 
-      If the service is correctly deployed, you should receive a response from the vLLM model.
+      Service が正しくデプロイされていれば、vLLM のモデルからレスポンスが返ります。
 
-## Serving with gRPC
+## gRPC でのサービング { #serving-with-grpc }
 
-vLLM can serve models over gRPC instead of HTTP by passing the `--grpc` flag. This requires the optional gRPC dependencies:
+`--grpc` フラグを指定すると、vLLM は HTTP ではなく gRPC でモデルをサービングできます。これにはオプションの gRPC 依存パッケージが必要です。
 
 ```bash
 pip install vllm[grpc]
 ```
 
-When using `--grpc`, the server exposes the standard [gRPC Health Checking Protocol](https://github.com/grpc/grpc/blob/master/doc/health-checking.md) (`grpc.health.v1.Health`), which integrates with Kubernetes [native gRPC probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-grpc-liveness-probe) (available since Kubernetes 1.24).
+`--grpc` を使うと、サーバーは標準の [gRPC Health Checking Protocol](https://github.com/grpc/grpc/blob/master/doc/health-checking.md)（`grpc.health.v1.Health`）を公開します。これは Kubernetes の [ネイティブ gRPC プローブ](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-grpc-liveness-probe)（Kubernetes 1.24 以降）と連携します。
 
-To deploy with gRPC, change the `vllm serve` command to include `--grpc` and replace `httpGet` probes with `grpc` probes:
+gRPC でデプロイするには、`vllm serve` コマンドに `--grpc` を追加し、`httpGet` のプローブを `grpc` のプローブに置き換えます。
 
 ```yaml
 containers:
@@ -423,25 +423,25 @@ containers:
 ```
 
 !!! note
-    The gRPC health service checks the engine status on every probe. If the engine is unhealthy or the server is shutting down, the probe returns `NOT_SERVING`.
+    gRPC のヘルスサービスは、プローブのたびにエンジンの状態を確認します。エンジンが異常な場合やサーバーが停止中の場合、プローブは `NOT_SERVING` を返します。
 
-You can also verify the health service manually with `grpcurl`:
+`grpcurl` を使って手動でヘルスサービスを確認することもできます。
 
 ```bash
 grpcurl -plaintext localhost:50051 grpc.health.v1.Health/Check
 ```
 
-## Troubleshooting
+## トラブルシューティング { #troubleshooting }
 
-### Startup Probe or Readiness Probe Failure, container log contains "KeyboardInterrupt: terminated"
+### Startup Probe / Readiness Probe の失敗（コンテナログに "KeyboardInterrupt: terminated" が出る） { #startup-probe-or-readiness-probe-failure-container-log-contains-keyboardinterrupt-terminated }
 
-If the startup or readiness probe failureThreshold is too low for the time needed to start up the server, Kubernetes scheduler will kill the container. A couple of indications that this has happened:
+startup / readiness プローブの failureThreshold がサーバーの起動時間に対して小さすぎると、Kubernetes のスケジューラがコンテナを停止します。これが起きたときの主な兆候は次のとおりです。
 
-1. container log contains "KeyboardInterrupt: terminated"
-2. `kubectl get events` shows message `Container $NAME failed startup probe, will be restarted`
+1. コンテナのログに "KeyboardInterrupt: terminated" が出力される
+2. `kubectl get events` に `Container $NAME failed startup probe, will be restarted` というメッセージが出る
 
-To mitigate, increase the failureThreshold to allow more time for the model server to start serving. You can identify an ideal failureThreshold by removing the probes from the manifest and measuring how much time it takes for the model server to show it's ready to serve.
+対処としては、failureThreshold を大きくしてモデルサーバーの起動に時間を与えてください。適切な値は、マニフェストからプローブを外したうえで、モデルサーバーがサービス可能になるまでの時間を計測すると判断できます。
 
-## Conclusion
+## まとめ { #conclusion }
 
-Deploying vLLM with Kubernetes allows for efficient scaling and management of ML models leveraging GPU resources. By following the steps outlined above, you should be able to set up and test a vLLM deployment within your Kubernetes cluster. If you encounter any issues or have suggestions, please feel free to contribute to the documentation.
+Kubernetes 上に vLLM をデプロイすると、GPU リソースを活かして ML モデルを効率的にスケール・管理できます。上記の手順に従えば、Kubernetes クラスタ内で vLLM のデプロイを構築してテストできるはずです。問題や改善案があれば、ぜひドキュメントへのコントリビューションをご検討ください。

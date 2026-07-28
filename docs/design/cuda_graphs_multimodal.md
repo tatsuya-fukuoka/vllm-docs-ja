@@ -17,12 +17,12 @@ For two-tower vision encoders such as DeepSeek-OCR (SAM + CLIP with dynamic tili
 
 ## Design
 
-The encoder CUDA Graph system uses a **budget-based capture/replay** strategy, managed by [EncoderCudaGraphManager][vllm.v1.worker.encoder_cudagraph.EncoderCudaGraphManager]. The system contains the following core components:
+The encoder CUDA Graph system uses a **budget-based capture/replay** strategy, managed by [`EncoderCudaGraphManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/worker/encoder_cudagraph/#vllm.v1.worker.encoder_cudagraph.EncoderCudaGraphManager). The system contains the following core components:
 
-* [EncoderCudaGraphManager][vllm.v1.worker.encoder_cudagraph.EncoderCudaGraphManager]: orchestrates capture, replay, greedy packing, and data-parallel execution for encoder CUDA Graphs.
-* [SupportsEncoderCudaGraph][vllm.model_executor.models.interfaces.SupportsEncoderCudaGraph]: a runtime-checkable protocol that models implement to opt-in to encoder CUDA Graphs.
-* [EncoderItemSpec][vllm.v1.worker.encoder_cudagraph_defs.EncoderItemSpec]: describes a single encoder input item (image or video) with its input size and output token count.
-* [BudgetGraphMetadata][vllm.v1.worker.encoder_cudagraph.BudgetGraphMetadata]: holds the captured CUDA Graph and its associated I/O buffers for a single token budget level.
+* [`EncoderCudaGraphManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/worker/encoder_cudagraph/#vllm.v1.worker.encoder_cudagraph.EncoderCudaGraphManager): orchestrates capture, replay, greedy packing, and data-parallel execution for encoder CUDA Graphs.
+* [`SupportsEncoderCudaGraph`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsEncoderCudaGraph): a runtime-checkable protocol that models implement to opt-in to encoder CUDA Graphs.
+* [`EncoderItemSpec`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/worker/encoder_cudagraph_defs/#vllm.v1.worker.encoder_cudagraph_defs.EncoderItemSpec): describes a single encoder input item (image or video) with its input size and output token count.
+* [`BudgetGraphMetadata`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/worker/encoder_cudagraph/#vllm.v1.worker.encoder_cudagraph.BudgetGraphMetadata): holds the captured CUDA Graph and its associated I/O buffers for a single token budget level.
 
 ### Budget-based graph capture
 
@@ -107,7 +107,7 @@ Following <https://github.com/vllm-project/vllm/pull/35963> (ViT full CUDA graph
 
 ## Model integration via `SupportsEncoderCudaGraph`
 
-Models opt-in to encoder CUDA Graphs by implementing the [SupportsEncoderCudaGraph][vllm.model_executor.models.interfaces.SupportsEncoderCudaGraph] protocol. This protocol encapsulates all model-specific logic so that the manager remains model-agnostic. The protocol defines the following methods:
+Models opt-in to encoder CUDA Graphs by implementing the [`SupportsEncoderCudaGraph`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsEncoderCudaGraph) protocol. This protocol encapsulates all model-specific logic so that the manager remains model-agnostic. The protocol defines the following methods:
 
 * `get_encoder_cudagraph_config()` — returns static configuration (supported modalities, buffer keys, output hidden size, padding logics, max frames per video).
 * `get_encoder_cudagraph_budget_range(vllm_config)` — returns `(min_budget, max_budget)` for auto-inference of token budgets.

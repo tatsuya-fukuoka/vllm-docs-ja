@@ -47,5 +47,5 @@ def register():
 ```
 
 !!! important
-    If your model is a multimodal model, ensure the model class implements the [SupportsMultiModal][vllm.model_executor.models.interfaces.SupportsMultiModal] interface.
+    If your model is a multimodal model, ensure the model class implements the [`SupportsMultiModal`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal) interface.
     Read more about that [here](multimodal.md).

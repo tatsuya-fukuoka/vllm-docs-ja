@@ -1,74 +1,74 @@
-# Optimization and Tuning
+# 最適化とチューニング { #optimization-and-tuning }
 
-This guide covers optimization strategies and performance tuning for vLLM V1.
+このガイドでは、vLLM V1 の最適化戦略と性能チューニングについて説明します。
 
 !!! tip
-    Running out of memory? Consult [this guide](./conserving_memory.md) on how to conserve memory.
+    メモリが不足していますか？ メモリ節約の方法は[このガイド](./conserving_memory.md)を参照してください。
 
-## Optimization Levels
+## 最適化レベル { #optimization-levels }
 
-vLLM provides 4 optimization levels (`-O0`, `-O1`, `-O2`, `-O3`) that allow users to trade off startup time for performance:
+vLLM には 4 段階の最適化レベル（`-O0`、`-O1`、`-O2`、`-O3`）があり、起動時間と性能のトレードオフを選べます。
 
-- `-O0`: No optimizations. Fastest startup time, but lowest performance.
-- `-O1`: Fast optimization. Simple compilation and fast fusions, and PIECEWISE cudagraphs.
-- `-O2`: Default optimization. Additional compilation ranges, additional fusions, FULL_AND_PIECEWISE cudagraphs.
-- `-O3`: Aggressive optimization. Currently equal to `-O2`, but may include additional time-consuming or experimental optimizations in the future.
+- `-O0`: 最適化なし。起動はもっとも速いが、性能はもっとも低い。
+- `-O1`: 高速な最適化。単純なコンパイルと軽量な融合、PIECEWISE の CUDA グラフ。
+- `-O2`: 既定の最適化。コンパイル範囲と融合が追加され、FULL_AND_PIECEWISE の CUDA グラフを使用。
+- `-O3`: 積極的な最適化。現時点では `-O2` と同じだが、将来的に時間のかかる最適化や実験的な最適化が追加される可能性がある。
 
-For more information, see the [optimization level documentation](../design/optimization_levels.md).
+詳細は[最適化レベルのドキュメント](../design/optimization_levels.md)を参照してください。
 
-## Faster Startup
+## 起動を速くする { #faster-startup }
 
-Beyond the optimization levels, three mechanisms reduce time-to-first-token on repeated boots of the same (model, config, hardware) combination:
+最適化レベル以外にも、同じ（モデル・設定・ハードウェア）の組み合わせで繰り返し起動する場合に、最初のトークンまでの時間を短縮する仕組みが 3 つあります。
 
-- **Reuse the compile cache.** vLLM persists `torch.compile` artifacts under `VLLM_CACHE_ROOT` (default `~/.cache/vllm`), and the cache directory can be copied between machines or baked into a container image; see the [torch.compile design doc](../design/torch_compile.md). Set `VLLM_FORCE_AOT_LOAD=1` to fail loudly instead of silently recompiling when the cache misses (any change to the model, config, relevant `VLLM_*` environment variables, torch build, or GPU model invalidates it).
-- **Skip memory profiling with `--kv-cache-memory`.** On startup, vLLM logs the exact `--kv-cache-memory` value that reproduces the current allocation. Passing it back on the next boot skips the memory-profiling measurement and the CUDA-graph memory estimation pass. Note that this has performance implications: the KV cache is sized to exactly the given value instead of being measured, so a conservative value caps batch concurrency (and therefore throughput), while an optimistic one fails at allocation time. The value is only valid on the same GPU with the same initial free memory; if a boot OOMs after hardware or co-tenant changes, remove the flag to re-profile.
-- **Serve without CUDA graphs using `--enforce-eager`.** Skips both compilation and CUDA-graph capture for the fastest possible startup, at the cost of steady-state decode performance. Useful for development loops and for measuring how much of a boot is compile/capture.
+- **コンパイルキャッシュを再利用する。** vLLM は `torch.compile` の成果物を `VLLM_CACHE_ROOT`（既定は `~/.cache/vllm`）に保存します。このキャッシュディレクトリはマシン間でコピーしたり、コンテナイメージに含めたりできます（[torch.compile の設計ドキュメント](../design/torch_compile.md)を参照）。`VLLM_FORCE_AOT_LOAD=1` を設定すると、キャッシュミス時に黙って再コンパイルする代わりに明示的にエラーになります（モデル・設定・関連する `VLLM_*` 環境変数・torch のビルド・GPU の機種のいずれかが変わるとキャッシュは無効になります）。
+- **`--kv-cache-memory` でメモリプロファイリングを省略する。** 起動時、vLLM は現在の割り当てを再現する `--kv-cache-memory` の値をログに出力します。次回の起動でその値を渡すと、メモリプロファイリングの計測と CUDA グラフのメモリ見積もりを省略できます。ただし性能への影響がある点に注意してください。KV キャッシュは計測結果ではなく指定した値ちょうどのサイズになるため、保守的な値ではバッチの同時実行数（ひいてはスループット）が制限され、楽観的すぎる値では割り当て時に失敗します。この値は同じ GPU・同じ初期空きメモリでのみ有効です。ハードウェアや同居プロセスが変わって起動時に OOM になる場合は、このフラグを外して再度プロファイリングしてください。
+- **`--enforce-eager` で CUDA グラフなしにサービングする。** コンパイルと CUDA グラフのキャプチャの両方を省略し、起動を最速にします。代わりに定常状態の Decode 性能は落ちます。開発サイクルや、起動時間のうちコンパイル・キャプチャがどれだけ占めるかを測るのに便利です。
 
-## Preemption
+## プリエンプション { #preemption }
 
-Due to the autoregressive nature of transformer architecture, there are times when KV cache space is insufficient to handle all batched requests.
-In such cases, vLLM can preempt requests to free up KV cache space for other requests. Preempted requests are recomputed when sufficient KV cache space becomes
-available again. When this occurs, you may see the following warning:
+Transformer は自己回帰的に動作するため、バッチ内のすべてのリクエストを処理するには KV キャッシュの容量が足りなくなることがあります。
+その場合、vLLM は他のリクエストのために KV キャッシュを空けようとしてリクエストをプリエンプト（横取り）します。プリエンプトされたリクエストは、
+十分な KV キャッシュが再び確保できた時点で再計算されます。これが起きると次のような警告が表示されます。
 
 ```text
 WARNING 05-09 00:49:33 scheduler.py:1057 Sequence group 0 is preempted by PreemptionMode.RECOMPUTE mode because there is not enough KV cache space. This can affect the end-to-end performance. Increase gpu_memory_utilization or tensor_parallel_size to provide more KV cache memory. total_cumulative_preemption_cnt=1
 ```
 
-While this mechanism ensures system robustness, preemption and recomputation can adversely affect end-to-end latency.
-If you frequently encounter preemptions, consider the following actions:
+この仕組みはシステムの堅牢性を保ちますが、プリエンプションと再計算はエンドツーエンドのレイテンシに悪影響を与えます。
+プリエンプションが頻発する場合は、次の対応を検討してください。
 
-- Increase `gpu_memory_utilization`. vLLM pre-allocates GPU cache using this percentage of memory. By increasing utilization, you can provide more KV cache space.
-- Decrease `max_num_seqs` or `max_num_batched_tokens`. This reduces the number of concurrent requests in a batch, thereby requiring less KV cache space.
-- Increase `tensor_parallel_size`. This shards model weights across GPUs, allowing each GPU to have more memory available for KV cache. However, increasing this value may cause excessive synchronization overhead.
-- Increase `pipeline_parallel_size`. This distributes model layers across GPUs, reducing the memory needed for model weights on each GPU, indirectly leaving more memory available for KV cache. However, increasing this value may cause latency penalties.
+- `gpu_memory_utilization` を上げる。vLLM はこの割合のメモリを使って GPU キャッシュを事前確保します。値を上げると KV キャッシュの容量が増えます。
+- `max_num_seqs` または `max_num_batched_tokens` を下げる。バッチ内の同時リクエスト数が減り、必要な KV キャッシュ容量が小さくなります。
+- `tensor_parallel_size` を上げる。モデルの重みを GPU 間で分割するため、各 GPU で KV キャッシュに使えるメモリが増えます。ただし値を上げすぎると同期のオーバーヘッドが大きくなります。
+- `pipeline_parallel_size` を上げる。モデルの層を GPU 間に分散するため、各 GPU で重みに必要なメモリが減り、間接的に KV キャッシュ用のメモリが増えます。ただし値を上げるとレイテンシが悪化することがあります。
 
-You can monitor the number of preemption requests through Prometheus metrics exposed by vLLM. Additionally, you can log the cumulative number of preemption requests by setting `disable_log_stats=False`.
+プリエンプトされたリクエスト数は、vLLM が公開する Prometheus メトリクスで監視できます。また `disable_log_stats=False` を設定すると、累計のプリエンプション数をログに出力できます。
 
-In vLLM V1, the default preemption mode is `RECOMPUTE` rather than `SWAP`, as recomputation has lower overhead in the V1 architecture.
+vLLM V1 では、既定のプリエンプションモードは `SWAP` ではなく `RECOMPUTE` です。V1 のアーキテクチャでは再計算のほうがオーバーヘッドが小さいためです。
 
-## Chunked Prefill
+## チャンク化 Prefill { #chunked-prefill }
 
-Chunked prefill allows vLLM to process large prefills in smaller chunks and batch them together with decode requests. This feature helps improve both throughput and latency by better balancing compute-bound (prefill) and memory-bound (decode) operations.
+チャンク化 Prefill を使うと、vLLM は大きな Prefill を小さなチャンクに分けて処理し、Decode のリクエストと同じバッチにまとめられます。計算律速（Prefill）とメモリ律速（Decode）の処理のバランスが良くなるため、スループットとレイテンシの両方が改善します。
 
-In V1, **chunked prefill is enabled by default whenever possible**. With chunked prefill enabled, the scheduling policy prioritizes decode requests. It batches all pending decode requests before scheduling any prefill operations. When there are available tokens in the `max_num_batched_tokens` budget, it schedules pending prefills. If a pending prefill request cannot fit into `max_num_batched_tokens`, it automatically chunks it.
+V1 では、**可能な限りチャンク化 Prefill が既定で有効**になります。チャンク化 Prefill が有効な場合、スケジューリングポリシーは Decode のリクエストを優先します。まず保留中の Decode をすべてバッチにまとめ、その後に Prefill をスケジュールします。`max_num_batched_tokens` の予算に余裕があれば保留中の Prefill をスケジュールし、`max_num_batched_tokens` に収まらない Prefill は自動的にチャンクに分割します。
 
-This policy has two benefits:
+このポリシーには 2 つの利点があります。
 
-- It improves inter-token latency (ITL) and generation decode because decode requests are prioritized.
-- It helps achieve better GPU utilization by locating compute-bound (prefill) and memory-bound (decode) requests to the same batch.
+- Decode のリクエストが優先されるため、トークン間レイテンシ (ITL) と生成の Decode が改善します。
+- 計算律速（Prefill）とメモリ律速（Decode）のリクエストを同じバッチに入れることで、GPU の使用効率が上がります。
 
-### Performance Tuning with Chunked Prefill
+### チャンク化 Prefill による性能チューニング { #performance-tuning-with-chunked-prefill }
 
-You can tune the performance by adjusting `max_num_batched_tokens`:
+`max_num_batched_tokens` を調整することで性能をチューニングできます。
 
-- Smaller values (e.g., 2048) achieve better ITL because there are fewer prefills slowing down decodes.
-- Higher values achieve better time to first token (TTFT) as you can process more prefill tokens in a batch.
-- For optimal throughput, we recommend setting `max_num_batched_tokens > 8192` especially for smaller models on large GPUs.
-- If `max_num_batched_tokens` is the same as `max_model_len`, that's almost the equivalent to the V0 default scheduling policy (except that it still prioritizes decodes).
+- 小さい値（例: 2048）では Decode を遅くする Prefill が減るため、ITL が良くなります。
+- 大きい値では 1 バッチでより多くの Prefill トークンを処理できるため、最初のトークンまでの時間 (TTFT) が良くなります。
+- スループットを最大化したい場合、特に大きな GPU で小さめのモデルを動かすときは `max_num_batched_tokens > 8192` を推奨します。
+- `max_num_batched_tokens` が `max_model_len` と同じ場合、V0 の既定のスケジューリングポリシーとほぼ同等になります（Decode を優先する点は異なります）。
 
 !!! warning
-    When chunked prefill is disabled, `max_num_batched_tokens` must be greater than `max_model_len`.  
-    In that case, if `max_num_batched_tokens < max_model_len`, vLLM may crash at server start‑up.
+    チャンク化 Prefill を無効にした場合、`max_num_batched_tokens` は `max_model_len` より大きくする必要があります。  
+    `max_num_batched_tokens < max_model_len` の場合、サーバー起動時に vLLM がクラッシュすることがあります。
 
 ```python
 from vllm import LLM
@@ -77,20 +77,20 @@ from vllm import LLM
 llm = LLM(model="meta-llama/Llama-3.1-8B-Instruct", max_num_batched_tokens=16384)
 ```
 
-See related papers for more details (<https://arxiv.org/pdf/2401.08671> or <https://arxiv.org/pdf/2308.16369>).
+詳細は関連論文（<https://arxiv.org/pdf/2401.08671> または <https://arxiv.org/pdf/2308.16369>）を参照してください。
 
-## Parallelism Strategies
+## 並列化の戦略 { #parallelism-strategies }
 
-vLLM supports multiple parallelism strategies that can be combined to optimize performance across different hardware configurations.
+vLLM は複数の並列化戦略をサポートしており、これらを組み合わせてさまざまなハードウェア構成で性能を最適化できます。
 
-### Tensor Parallelism (TP)
+### テンソル並列 (TP) { #tensor-parallelism-tp }
 
-Tensor parallelism shards model parameters across multiple GPUs within each model layer. This is the most common strategy for large model inference within a single node.
+テンソル並列は、各層の内部でモデルのパラメータを複数の GPU に分割します。単一ノード内で大きなモデルを推論する際にもっとも一般的な戦略です。
 
-**When to use:**
+**使いどころ:**
 
-- When the model is too large to fit on a single GPU
-- When you need to reduce memory pressure per GPU to allow more KV cache space for higher throughput
+- モデルが大きすぎて 1 つの GPU に収まらない場合
+- GPU あたりのメモリ圧迫を減らし、KV キャッシュの容量を増やしてスループットを上げたい場合
 
 ```python
 from vllm import LLM
@@ -99,18 +99,18 @@ from vllm import LLM
 llm = LLM(model="meta-llama/Llama-3.3-70B-Instruct", tensor_parallel_size=4)
 ```
 
-For models that are too large to fit on a single GPU (like 70B parameter models), tensor parallelism is essential.
+70B パラメータ級など、1 つの GPU に収まらないモデルではテンソル並列が不可欠です。
 
-### Pipeline Parallelism (PP)
+### パイプライン並列 (PP) { #pipeline-parallelism-pp }
 
-Pipeline parallelism distributes model layers across multiple GPUs. Each GPU processes different parts of the model in sequence.
+パイプライン並列は、モデルの層を複数の GPU に分散します。各 GPU はモデルの異なる部分を順に処理します。
 
-**When to use:**
+**使いどころ:**
 
-- When you've already maxed out efficient tensor parallelism but need to distribute the model further, or across nodes
-- For very deep and narrow models where layer distribution is more efficient than tensor sharding
+- テンソル並列を効率的に使い切ったうえで、さらにモデルを分散したい場合やノードをまたぎたい場合
+- 非常に深く幅の狭いモデルで、テンソル分割より層の分散のほうが効率的な場合
 
-Pipeline parallelism can be combined with tensor parallelism for very large models:
+非常に大きなモデルでは、パイプライン並列とテンソル並列を組み合わせられます。
 
 ```python
 from vllm import LLM
@@ -123,55 +123,50 @@ llm = LLM(
 )
 ```
 
-### Expert Parallelism (EP)
+### エキスパート並列 (EP) { #expert-parallelism-ep }
 
-Expert parallelism is a specialized form of parallelism for Mixture of Experts (MoE) models, where different expert networks are distributed across GPUs.
+エキスパート並列は Mixture of Experts (MoE) モデルに特化した並列化で、異なるエキスパートのネットワークを GPU 間に分散します。
 
-**When to use:**
+**使いどころ:**
 
-- Specifically for MoE models (like DeepSeekV3, Qwen3MoE, Llama-4)
-- When you want to balance the expert computation load across GPUs
+- MoE モデル（DeepSeekV3、Qwen3MoE、Llama-4 など）を使う場合
+- エキスパートの計算負荷を GPU 間で分散したい場合
 
-Expert parallelism is enabled by setting `enable_expert_parallel=True`, which will use expert parallelism instead of tensor parallelism for MoE layers.
-It will use the same degree of parallelism as what you have set for tensor parallelism.
+`enable_expert_parallel=True` を設定するとエキスパート並列が有効になり、MoE 層ではテンソル並列の代わりにエキスパート並列が使われます。
+並列度はテンソル並列に設定した値と同じになります。
 
-### Data Parallelism (DP)
+### データ並列 (DP) { #data-parallelism-dp }
 
-Data parallelism replicates the entire model across multiple GPU sets and processes different batches of requests in parallel.
+データ並列は、モデル全体を複数の GPU グループに複製し、異なるリクエストのバッチを並列に処理します。
 
-**When to use:**
+**使いどころ:**
 
-- When you have enough GPUs to replicate the entire model
-- When you need to scale throughput rather than model size
-- In multi-user environments where isolation between request batches is beneficial
+- モデル全体を複製できるだけの GPU がある場合
+- モデルサイズではなくスループットをスケールさせたい場合
+- リクエストのバッチ間で分離が有効なマルチユーザー環境
 
-Data parallelism can be combined with the other parallelism strategies and is set by `data_parallel_size=N`.
-Note that MoE layers will be sharded according to the product of the tensor parallel size and data parallel size.
+データ並列は他の並列化戦略と組み合わせられ、`data_parallel_size=N` で設定します。
+MoE 層は、テンソル並列サイズとデータ並列サイズの積に従って分割される点に注意してください。
 
-### NUMA Binding for Multi-Socket GPU Nodes
+### マルチソケット GPU ノードでの NUMA バインド { #numa-binding-for-multi-socket-gpu-nodes }
 
-On multi-socket GPU servers, GPU worker processes can lose performance if their
-CPU execution and memory allocation drift away from the NUMA node nearest to the
-GPU. vLLM can pin each worker with `numactl` before the Python subprocess starts,
-so the interpreter, imports, and early allocator state are created with the
-desired NUMA policy from the beginning.
+マルチソケットの GPU サーバーでは、GPU ワーカープロセスの CPU 実行やメモリ確保が、その GPU に
+もっとも近い NUMA ノードから外れると性能が低下することがあります。vLLM は Python のサブプロセスを
+起動する前に `numactl` で各ワーカーを固定できるため、インタプリタ・import・初期のアロケータの状態を
+最初から目的の NUMA ポリシーの下で作成できます。
 
-Use `--numa-bind` to enable the feature. By default, vLLM auto-detects the
-GPU-to-NUMA mapping and uses `--cpunodebind=<node> --membind=<node>` for each
-worker. When you need a custom CPU policy, add `--numa-bind-cpus` and vLLM will
-switch to `--physcpubind=<cpu-list> --membind=<node>`.
+この機能は `--numa-bind` で有効にします。既定では vLLM が GPU と NUMA ノードの対応を自動検出し、
+各ワーカーに `--cpunodebind=<node> --membind=<node>` を使います。独自の CPU ポリシーが必要な場合は
+`--numa-bind-cpus` を追加すると、vLLM は `--physcpubind=<cpu-list> --membind=<node>` に切り替えます。
 
-These `--numa-bind*` options only apply to GPU execution processes. They do not
-configure the CPU backend's separate thread-affinity controls. Automatic
-GPU-to-NUMA detection is currently implemented for CUDA/NVML-based as well as
-ROCM-based platforms; other GPU backends must provide explicit binding lists if
-they use these options.
+これらの `--numa-bind*` オプションは GPU の実行プロセスにのみ適用され、CPU バックエンドが持つ
+別のスレッドアフィニティ設定には影響しません。GPU と NUMA の自動検出は、現時点では CUDA/NVML 系と
+ROCM 系のプラットフォームで実装されています。その他の GPU バックエンドでこれらのオプションを使う場合は、
+バインド先を明示的に指定する必要があります。
 
-`--numa-bind-nodes` takes one non-negative NUMA node index per visible GPU, in
-the same order as the GPU indices.
-`--numa-bind-cpus` takes one `numactl` CPU list per visible GPU, in the same
-order as the GPU indices. Each CPU list must use
-`numactl --physcpubind` syntax such as `0-3`, `0,2,4-7`, or `16-31,48-63`.
+`--numa-bind-nodes` には、可視の GPU ごとに 0 以上の NUMA ノード番号を、GPU のインデックスと同じ順で指定します。
+`--numa-bind-cpus` には、可視の GPU ごとに `numactl` の CPU リストを、GPU のインデックスと同じ順で指定します。
+各 CPU リストは `0-3`、`0,2,4-7`、`16-31,48-63` のように `numactl --physcpubind` の書式で記述します。
 
 ```bash
 # Auto-detect NUMA nodes for visible GPUs
@@ -193,53 +188,50 @@ vllm serve meta-llama/Llama-3.1-8B-Instruct \
   --numa-bind-cpus 0-3 4-7 48-51 52-55
 ```
 
-Notes:
+注意点:
 
-- CLI usage forces multiprocessing to use the `spawn` method automatically. If you enable NUMA binding through the Python API, also set `VLLM_WORKER_MULTIPROC_METHOD=spawn`.
-- Automatic detection relies on NVML and NUMA support from the host. If it cannot determine the mapping reliably, pass `--numa-bind-nodes` explicitly.
-- Explicit `--numa-bind-nodes` and `--numa-bind-cpus` values must be valid `numactl` inputs. vLLM does a small amount of validation, but the effective binding semantics are still determined by `numactl`.
-- The current implementation binds GPU execution processes such as `EngineCore` and multiprocessing workers. It does not apply NUMA binding to frontend API server processes or the DP coordinator.
-- In containerized environments, NUMA policy syscalls may require extra permissions, such as `--cap-add SYS_NICE` when running via `docker run`.
+- CLI から使う場合、マルチプロセスの起動方式は自動的に `spawn` になります。Python API から NUMA バインドを有効にする場合は、`VLLM_WORKER_MULTIPROC_METHOD=spawn` も設定してください。
+- 自動検出はホスト側の NVML と NUMA のサポートに依存します。対応を確実に判定できない場合は `--numa-bind-nodes` を明示的に指定してください。
+- 明示的に指定する `--numa-bind-nodes` と `--numa-bind-cpus` の値は、`numactl` が受け付ける形式である必要があります。vLLM も簡単な検証は行いますが、最終的なバインドの意味は `numactl` が決定します。
+- 現在の実装では、`EngineCore` やマルチプロセスのワーカーといった GPU 実行プロセスをバインドします。フロントエンドの API サーバープロセスや DP コーディネーターには NUMA バインドは適用されません。
+- コンテナ環境では、NUMA ポリシーのシステムコールに追加の権限が必要になることがあります（`docker run` の場合は `--cap-add SYS_NICE` など）。
 
-### CPU Backend Thread Affinity
+### CPU バックエンドのスレッドアフィニティ { #cpu-backend-thread-affinity }
 
-The CPU backend uses a different mechanism from `--numa-bind`. CPU execution is
-configured through CPU-specific environment variables such as
-`VLLM_CPU_OMP_THREADS_BIND`, `VLLM_CPU_NUM_OF_RESERVED_CPU`, and
-`CPU_VISIBLE_MEMORY_NODES`, rather than the GPU-oriented `--numa-bind*` CLI
-options.
+CPU バックエンドは `--numa-bind` とは異なる仕組みを使います。CPU での実行は、GPU 向けの
+`--numa-bind*` CLI オプションではなく、`VLLM_CPU_OMP_THREADS_BIND`、
+`VLLM_CPU_NUM_OF_RESERVED_CPU`、`CPU_VISIBLE_MEMORY_NODES` といった CPU 固有の環境変数で設定します。
 
-By default, `VLLM_CPU_OMP_THREADS_BIND=auto` derives OpenMP placement from the
-available CPU and NUMA topology for each CPU worker. To override the automatic
-policy, set `VLLM_CPU_OMP_THREADS_BIND` explicitly using the CPU list format
-documented for the CPU backend, or use `nobind` to disable this behavior.
+既定の `VLLM_CPU_OMP_THREADS_BIND=auto` では、各 CPU ワーカーに対して利用可能な CPU と NUMA の
+トポロジから OpenMP の配置を決定します。自動のポリシーを上書きするには、CPU バックエンドの
+ドキュメントに記載された CPU リスト形式で `VLLM_CPU_OMP_THREADS_BIND` を明示的に設定するか、
+`nobind` を指定してこの動作を無効にします。
 
-For the current CPU backend setup and tuning guidance, see:
+現在の CPU バックエンドのセットアップとチューニングについては、次を参照してください。
 
 - [Related runtime environment variables](../getting_started/installation/cpu.md#related-runtime-environment-variables)
 - [How to decide `VLLM_CPU_OMP_THREADS_BIND`](../getting_started/installation/cpu.md#how-to-decide-vllm_cpu_omp_threads_bind)
 
-The GPU-only `--numa-bind`, `--numa-bind-nodes`, and `--numa-bind-cpus` options
-do not configure CPU worker affinity.
+GPU 専用の `--numa-bind`、`--numa-bind-nodes`、`--numa-bind-cpus` オプションは、
+CPU ワーカーのアフィニティを設定しません。
 
-### Batch-level DP for Multi-Modal Encoders
+### マルチモーダルエンコーダーのバッチ単位 DP { #batch-level-dp-for-multi-modal-encoders }
 
-By default, TP is used to shard the weights of multi-modal encoders just like for language decoders,
-in order to reduce the memory and compute load on each GPU.
+既定では、各 GPU のメモリと計算負荷を減らすため、言語デコーダーと同様に TP を使って
+マルチモーダルエンコーダーの重みを分割します。
 
-However, since the size of multi-modal encoders is very small compared to language decoders,
-there is relatively little gain from TP. On the other hand, TP incurs significant communication
-overhead because of all-reduce being performed after every layer.
+しかし、マルチモーダルエンコーダーは言語デコーダーに比べて非常に小さいため、TP による効果は限定的です。
+一方で TP は層ごとに all-reduce を行うため、通信のオーバーヘッドが無視できません。
 
-Given this, it may be advantageous to instead shard the batched input data using TP, essentially
-performing batch-level DP. This has been shown to improve the throughput and TTFT by around 10% for
-`tensor_parallel_size=8`. For vision encoders that use hardware-unoptimized Conv3D operations,
-batch-level DP can provide another 40% improvement compared to regular TP.
+そこで、重みではなくバッチ化された入力データを TP で分割する、実質的にバッチ単位の DP を行うほうが
+有利な場合があります。`tensor_parallel_size=8` では、スループットと TTFT がおよそ 10% 改善することが
+確認されています。ハードウェア最適化されていない Conv3D 演算を使う画像エンコーダーでは、
+通常の TP と比べてさらに 40% ほど改善します。
 
-Nevertheless, since the weights of the multi-modal encoder are replicated across each TP rank,
-there will be a minor increase in memory consumption and may cause OOM if you can barely fit the model already.
+ただし、マルチモーダルエンコーダーの重みは各 TP ランクに複製されるため、メモリ使用量がわずかに増えます。
+すでにぎりぎりでモデルが載っている状況では OOM を引き起こす可能性があります。
 
-You can enable batch-level DP by setting `mm_encoder_tp_mode="data"`, for example:
+バッチ単位の DP は `mm_encoder_tp_mode="data"` を設定すると有効になります。例:
 
 ```python
 from vllm import LLM
@@ -258,14 +250,14 @@ llm = LLM(
 ```
 
 !!! important
-    Batch-level DP is not to be confused with API request-level DP
-    (which is instead controlled by `data_parallel_size`).
+    バッチ単位の DP は、API のリクエスト単位の DP（こちらは `data_parallel_size` で制御します）とは
+    別のものです。混同しないでください。
 
-Batch-level DP needs to be implemented on a per-model basis,
-and enabled by setting `supports_encoder_tp_data = True` in the model class.
-Regardless, you need to set `mm_encoder_tp_mode="data"` in engine arguments to use this feature.
+バッチ単位の DP はモデルごとに実装が必要で、モデルクラスで `supports_encoder_tp_data = True` を
+設定することで有効になります。いずれの場合も、この機能を使うにはエンジン引数で
+`mm_encoder_tp_mode="data"` を指定する必要があります。
 
-Known supported models (with corresponding benchmarks):
+対応が確認されているモデル（対応するベンチマーク付き）:
 
 - dots_ocr (<https://github.com/vllm-project/vllm/pull/25466>)
 - GLM-4.1V or above (<https://github.com/vllm-project/vllm/pull/23168>)
@@ -276,23 +268,22 @@ Known supported models (with corresponding benchmarks):
 - Qwen2-VL or above (<https://github.com/vllm-project/vllm/pull/22742>, <https://github.com/vllm-project/vllm/pull/24955>, <https://github.com/vllm-project/vllm/pull/25445>)
 - Step3 (<https://github.com/vllm-project/vllm/pull/22697>)
 
-## Input Processing
+## 入力処理 { #input-processing }
 
-### fastokens Backend
+### fastokens バックエンド { #fastokens-backend }
 
-By default vLLM uses the standard Hugging Face `tokenizers` library to power
-the fast tokenizer. For BPE tokenizers (Qwen, Llama, DeepSeek, GPT-OSS, etc.)
-you can switch to the [fastokens](https://github.com/crusoecloud/fastokens)
-Rust backend, a drop-in replacement that's substantially faster on
-encode/decode and on streaming detokenization. `VLLM_USE_FASTOKENS` is
-available in vLLM v0.23.0 and later. If your installed vLLM version does not
-recognize the environment variable, upgrade vLLM before enabling the override:
+既定では、vLLM は fast tokenizer に標準の Hugging Face `tokenizers` ライブラリを使います。
+BPE 系のトークナイザー（Qwen、Llama、DeepSeek、GPT-OSS など）では、
+[fastokens](https://github.com/crusoecloud/fastokens) の Rust バックエンドに切り替えられます。
+これは差し替え可能な実装で、エンコード・デコードやストリーミングのデトークナイズが大幅に高速です。
+`VLLM_USE_FASTOKENS` は vLLM v0.23.0 以降で利用できます。インストール済みの vLLM がこの環境変数を
+認識しない場合は、有効にする前に vLLM をアップグレードしてください。
 
 ```console
 VLLM_USE_FASTOKENS=1 vllm serve Qwen/Qwen3-8B
 ```
 
-Equivalent in the offline API:
+オフライン API での同等の指定:
 
 ```python
 import os
@@ -302,22 +293,21 @@ from vllm import LLM
 llm = LLM(model="Qwen/Qwen3-8B")
 ```
 
-The `fastokens` Python package (>= 0.2.0) must be installed; if it isn't,
-vLLM raises a clear `ImportError` at tokenizer load. The override applies to
-any `--tokenizer-mode` that ends up loading an HF fast tokenizer (`hf`,
-`deepseek_v32`, `deepseek_v4`, …). Models that don't use the HF
-fast tokenizer (`mistral`, `kimi_audio`) ignore the flag.
+`fastokens` の Python パッケージ（0.2.0 以上）がインストールされている必要があります。
+入っていない場合、vLLM はトークナイザーの読み込み時に明確な `ImportError` を発生させます。
+この上書きは、HF の fast tokenizer を読み込む `--tokenizer-mode`（`hf`、`deepseek_v32`、
+`deepseek_v4` など）すべてに適用されます。HF の fast tokenizer を使わないモデル
+（`mistral`、`kimi_audio`）ではこのフラグは無視されます。
 
-Tokenizer-bound workloads — long shared prefixes, bursty short prompts,
-batch detokenization — see the largest wins. If your bottleneck is GPU
-prefill/decode, the tokenizer change is unlikely to be visible end-to-end.
+トークナイザーが律速となるワークロード（長い共通プレフィックス、短いプロンプトのバースト、
+バッチのデトークナイズ）でもっとも効果が大きくなります。ボトルネックが GPU の Prefill / Decode に
+ある場合、トークナイザーの変更はエンドツーエンドではほとんど体感できません。
 
-### Parallel Processing
+### 並列処理 { #parallel-processing }
 
-You can run input processing in parallel via [API server scale-out](../serving/data_parallel_deployment.md#internal-load-balancing).
-This is useful when input processing (which is run inside the API server)
-becomes a bottleneck compared to model execution (which is run inside engine core)
-and you have excess CPU capacity.
+[API サーバーのスケールアウト](../serving/data_parallel_deployment.md#internal-load-balancing)により、入力処理を並列に実行できます。
+これは、（API サーバー内で実行される）入力処理が、（エンジンコア内で実行される）モデルの実行に比べて
+ボトルネックになっていて、かつ CPU に余裕がある場合に有効です。
 
 ```console
 # Run 4 API processes and 1 engine core process
@@ -328,59 +318,54 @@ vllm serve Qwen/Qwen2.5-VL-3B-Instruct --api-server-count 4 -dp 2
 ```
 
 !!! note
-    API server scale-out is only available for online inference.
+    API サーバーのスケールアウトはオンライン推論でのみ利用できます。
 
 !!! warning
-    By default, 8 CPU threads are used in each API server to load media items (e.g. images)
-    from request data.
+    既定では、リクエストデータからメディア（画像など）を読み込むために、各 API サーバーで 8 個の CPU スレッドが使われます。
 
-    If you apply API server scale-out, consider adjusting `VLLM_MEDIA_LOADING_THREAD_COUNT`
-    to avoid CPU resource exhaustion.
+    API サーバーをスケールアウトする場合は、CPU リソースの枯渇を避けるために
+    `VLLM_MEDIA_LOADING_THREAD_COUNT` の調整を検討してください。
 
 !!! note
-    API server scale-out disables [multi-modal IPC caching](#ipc-caching)
-    because it requires a one-to-one correspondence between API and engine core processes.
+    API サーバーのスケールアウトを行うと、[マルチモーダルの IPC キャッシュ](#ipc-caching)は無効になります。
+    このキャッシュは API プロセスとエンジンコアプロセスが 1 対 1 で対応している必要があるためです。
 
-    This does not impact [multi-modal processor caching](#processor-caching).
+    [マルチモーダルのプロセッサキャッシュ](#processor-caching)には影響しません。
 
-## Multi-Modal Caching
+## マルチモーダルキャッシュ { #multi-modal-caching }
 
-Multi-modal caching avoids repeated transfer or processing of the same multi-modal data,
-which commonly occurs in multi-turn conversations.
+マルチモーダルキャッシュは、同じマルチモーダルデータの転送や処理が繰り返されるのを防ぎます。
+これはマルチターンの会話でよく発生します。
 
-### Processor Caching
+### プロセッサキャッシュ { #processor-caching }
 
-Multi-modal processor caching is automatically enabled
-to avoid repeatedly processing the same multi-modal inputs in `BaseMultiModalProcessor`.
+マルチモーダルのプロセッサキャッシュは自動的に有効になり、`BaseMultiModalProcessor` で
+同じマルチモーダル入力を繰り返し処理しないようにします。
 
-### IPC Caching
+### IPC キャッシュ { #ipc-caching }
 
-Multi-modal IPC caching is automatically enabled when
-there is a one-to-one correspondence between API (`P0`) and engine core (`P1`) processes,
-to avoid repeatedly transferring the same multi-modal inputs between them.
+マルチモーダルの IPC キャッシュは、API プロセス (`P0`) とエンジンコアプロセス (`P1`) が 1 対 1 で
+対応している場合に自動的に有効になり、両者の間で同じマルチモーダル入力を繰り返し転送しないようにします。
 
-#### Key-Replicated Cache
+#### キー複製キャッシュ { #key-replicated-cache }
 
-By default, IPC caching uses a **key-replicated cache**, where cache keys exist
-in both the API (`P0`) and engine core (`P1`) processes, but the actual cache
-data resides only in `P1`.
+既定では、IPC キャッシュは**キー複製キャッシュ**を使います。キャッシュのキーは API (`P0`) と
+エンジンコア (`P1`) の両プロセスに存在しますが、実際のキャッシュデータは `P1` にのみ置かれます。
 
-#### Shared Memory Cache
+#### 共有メモリキャッシュ { #shared-memory-cache }
 
-When multiple worker processes are involved (e.g., when TP > 1), a
-**shared-memory cache** is more efficient. This can be enabled by setting
-`mm_processor_cache_type="shm"`. In this mode, cache keys are stored
-on `P0`, while the cache data itself lives in shared memory accessible by all
-processes.
+複数のワーカープロセスが関わる場合（TP > 1 のときなど）は、**共有メモリキャッシュ**のほうが効率的です。
+`mm_processor_cache_type="shm"` を設定すると有効になります。このモードではキャッシュのキーは `P0` に置かれ、
+キャッシュデータ自体はすべてのプロセスからアクセスできる共有メモリに置かれます。
 
-### Configuration
+### 設定 { #configuration }
 
-You can adjust the size of the cache by setting the value of `mm_processor_cache_gb` (default 4 GiB).
+キャッシュのサイズは `mm_processor_cache_gb`（既定 4 GiB）で調整できます。
 
-If you do not benefit much from the cache, you can disable both IPC
-and processor caching completely via `mm_processor_cache_gb=0`.
+キャッシュの効果があまりない場合は、`mm_processor_cache_gb=0` で IPC キャッシュとプロセッサキャッシュの
+両方を完全に無効化できます。
 
-Examples:
+例:
 
 ```python
 # Use a larger cache
@@ -404,38 +389,38 @@ llm = LLM(
 )
 ```
 
-### Cache Placement
+### キャッシュの配置 { #cache-placement }
 
-Based on the configuration, the content of the multi-modal caches on `P0` and `P1` are as follows:
+設定に応じて、`P0` と `P1` 上のマルチモーダルキャッシュの内容は次のようになります。
 
-| mm_processor_cache_type | Cache Type | `P0` Cache | `P1` Engine Cache | `P1` Worker Cache | Max. Memory |
+| mm_processor_cache_type | キャッシュ種別 | `P0` のキャッシュ | `P1` エンジンのキャッシュ | `P1` ワーカーのキャッシュ | 最大メモリ |
 | ----------------- | ----------- | ---------- | ---------- | ----------- | ----------- |
-| lru | Processor Caching | K + V | N/A | N/A | `mm_processor_cache_gb * data_parallel_size` |
-| lru | Key-Replicated Caching | K | K + V | N/A | `mm_processor_cache_gb * api_server_count` |
-| shm | Shared Memory Caching | K | N/A | V | `mm_processor_cache_gb * api_server_count` |
-| N/A | Disabled | N/A | N/A | N/A | `0` |
+| lru | プロセッサキャッシュ | K + V | N/A | N/A | `mm_processor_cache_gb * data_parallel_size` |
+| lru | キー複製キャッシュ | K | K + V | N/A | `mm_processor_cache_gb * api_server_count` |
+| shm | 共有メモリキャッシュ | K | N/A | V | `mm_processor_cache_gb * api_server_count` |
+| N/A | 無効 | N/A | N/A | N/A | `0` |
 
-K: Stores the hashes of multi-modal items
-V: Stores the processed tensor data of multi-modal items
+K: マルチモーダル項目のハッシュを保持
+V: マルチモーダル項目の処理済みテンソルデータを保持
 
-## CPU Resources for GPU Deployments
+## GPU デプロイにおける CPU リソース { #cpu-resources-for-gpu-deployments }
 
-vLLM V1 uses a multi-process architecture (see [V1 Process Architecture](../design/arch_overview.md#v1-process-architecture)) where each process requires CPU resources. Underprovisioning CPU cores is a common source of performance degradation, especially in virtualized environments.
+vLLM V1 はマルチプロセス構成（[V1 のプロセス構成](../design/arch_overview.md#v1-process-architecture)を参照）を採用しており、各プロセスが CPU リソースを必要とします。CPU コアの割り当て不足は、特に仮想化環境において性能低下のよくある原因です。
 
-### Minimum CPU Requirements
+### 最低限必要な CPU { #minimum-cpu-requirements }
 
-For a deployment with `N` GPUs, there are at minimum:
+`N` 個の GPU を使うデプロイでは、少なくとも次のプロセスが動きます。
 
-- **1 API server process** -- handles HTTP requests, tokenization, and input processing
-- **1 engine core process** -- runs the scheduler and coordinates GPU workers
-- **N GPU worker processes** -- one per GPU, executes model forward passes
+- **API サーバープロセス 1 個** -- HTTP リクエスト、トークナイズ、入力処理を担当
+- **エンジンコアプロセス 1 個** -- スケジューラを実行し、GPU ワーカーを統括
+- **GPU ワーカープロセス N 個** -- GPU ごとに 1 個で、モデルの forward を実行
 
-This means there are always at least **`2 + N` processes** competing for CPU time.
+つまり、常に少なくとも **`2 + N` 個のプロセス**が CPU 時間を奪い合うことになります。
 
 !!! warning
-    Using fewer physical CPU cores than processes will cause contention and significantly degrade throughput and latency. The engine core process runs a busy loop and is particularly sensitive to CPU starvation.
+    物理 CPU コア数がプロセス数より少ないと競合が発生し、スループットとレイテンシが大きく悪化します。エンジンコアプロセスはビジーループで動作するため、CPU 不足の影響を特に受けやすいです。
 
-The minimum is `2 + N` physical cores (1 for the API server, 1 for the engine core, and 1 per GPU worker). In practice, allocating more cores improves performance because the OS, PyTorch background threads, and other system processes also need CPU time.
+最低でも `2 + N` 個の物理コア（API サーバーに 1、エンジンコアに 1、GPU ワーカーごとに 1）が必要です。実際には、OS や PyTorch のバックグラウンドスレッド、その他のシステムプロセスも CPU 時間を必要とするため、より多くのコアを割り当てるほど性能が向上します。
 
 !!! important
     Please note we are referring to **physical CPU cores** here. If your system has hyperthreading enabled, then 1 vCPU = 1 hyperthread = 1/2 physical CPU core, so you need `2 x (2 + N)` minimum vCPUs.

@@ -2,9 +2,9 @@
 toc_depth: 3
 ---
 
-# GPU
+# GPU { #gpu }
 
-vLLM is a Python library that supports the following GPU variants. Select your GPU type to see vendor specific instructions:
+vLLM は次の GPU 種別をサポートする Python ライブラリです。ベンダー固有の手順を見るには、お使いの GPU の種類を選択してください。
 
 === "NVIDIA CUDA"
 
@@ -22,13 +22,13 @@ vLLM is a Python library that supports the following GPU variants. Select your G
 
     --8<-- "docs/getting_started/installation/gpu.apple.inc.md:installation"
 
-## Requirements
+## 要件 { #requirements }
 
 - OS: Linux
 - Python: 3.10 -- 3.13
 
 !!! note
-    vLLM does not support Windows natively. To run vLLM on Windows, you can use the Windows Subsystem for Linux (WSL) with a compatible Linux distribution, or use some community-maintained forks, e.g. [https://github.com/SystemPanic/vllm-windows](https://github.com/SystemPanic/vllm-windows).
+    vLLM は Windows をネイティブにはサポートしていません。Windows で vLLM を実行するには、対応する Linux ディストリビューションを入れた Windows Subsystem for Linux (WSL) を使うか、コミュニティが保守するフォーク（例: [https://github.com/SystemPanic/vllm-windows](https://github.com/SystemPanic/vllm-windows)）を利用してください。
 
 === "NVIDIA CUDA"
 
@@ -46,9 +46,9 @@ vLLM is a Python library that supports the following GPU variants. Select your G
 
     --8<-- "docs/getting_started/installation/gpu.apple.inc.md:requirements"
 
-## Set up using Python
+## Python でセットアップする { #set-up-using-python }
 
-### Create a new Python environment
+### 新しい Python 環境を作成する { #create-a-new-python-environment }
 
 --8<-- "docs/getting_started/installation/python_env_setup.inc.md"
 
@@ -68,7 +68,7 @@ vLLM is a Python library that supports the following GPU variants. Select your G
 
     --8<-- "docs/getting_started/installation/gpu.apple.inc.md:set-up-using-python"
 
-### Pre-built wheels {#pre-built-wheels}
+### ビルド済み wheel {#pre-built-wheels}
 
 === "NVIDIA CUDA"
 
@@ -86,7 +86,7 @@ vLLM is a Python library that supports the following GPU variants. Select your G
 
     --8<-- "docs/getting_started/installation/gpu.apple.inc.md:pre-built-wheels"
 
-### Build wheel from source
+### ソースから wheel をビルドする { #build-wheel-from-source }
 
 === "NVIDIA CUDA"
 
@@ -104,9 +104,9 @@ vLLM is a Python library that supports the following GPU variants. Select your G
 
     --8<-- "docs/getting_started/installation/gpu.apple.inc.md:build-wheel-from-source"
 
-## Set up using Docker
+## Docker でセットアップする { #set-up-using-docker }
 
-### Pre-built images
+### ビルド済みイメージ { #pre-built-images }
 
 --8<-- [start:pre-built-images]
 
@@ -128,7 +128,7 @@ vLLM is a Python library that supports the following GPU variants. Select your G
 
 --8<-- [end:pre-built-images]
 
-### Build image from source
+### ソースからイメージをビルドする { #build-image-from-source }
 
 --8<-- [start:build-image-from-source]
 
@@ -150,7 +150,7 @@ vLLM is a Python library that supports the following GPU variants. Select your G
 
 --8<-- [end:build-image-from-source]
 
-## Supported features
+## サポートされている機能 { #supported-features }
 
 === "NVIDIA CUDA"
 

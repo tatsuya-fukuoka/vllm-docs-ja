@@ -1,9 +1,9 @@
-# Using vLLM
+# vLLM を使う { #using-vllm }
 
-First, vLLM must be [installed](../getting_started/installation/README.md) for your chosen device in either a Python or Docker environment.
+まず、使用するデバイス向けに vLLM を Python 環境または Docker 環境に[インストール](../getting_started/installation/README.md)する必要があります。
 
-Then, vLLM supports the following usage patterns:
+vLLM は次の使い方をサポートしています。
 
-- [Inference and Serving](../serving/offline_inference.md): Run a single instance of a model.
-- [Deployment](../deployment/docker.md): Scale up model instances for production.
-- [Training](../training/rlhf.md): Train or fine-tune a model.
+- [推論とサービング](../serving/offline_inference.md): モデルを 1 インスタンス実行する。
+- [デプロイ](../deployment/docker.md): 本番向けにモデルのインスタンスをスケールさせる。
+- [学習](../training/rlhf.md): モデルを学習またはファインチューニングする。

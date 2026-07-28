@@ -8,7 +8,7 @@ the **HTTP surface only** registering routes and optionally per app state used b
 
 ## The `EndpointPlugin` protocol
 
-Endpoint plugins implement the [`EndpointPlugin`][vllm.plugins.endpoint_plugins.interface.EndpointPlugin] runtime checkable `Protocol`:
+Endpoint plugins implement the [`EndpointPlugin`](https://docs.vllm.ai/en/v0.26.0/api/vllm/plugins/endpoint_plugins/interface/#vllm.plugins.endpoint_plugins.interface.EndpointPlugin) runtime checkable `Protocol`:
 
 ```python
 class EndpointPlugin(Protocol):
@@ -102,7 +102,7 @@ The entry point name (`my_admin_api` above) is independent of the plugin's `name
 
 ## Gating: `VLLM_PLUGINS` and `required_tasks`
 
-Endpoint plugins are discovered and gated by [`load_endpoint_plugins`][vllm.plugins.load_endpoint_plugins] which is stricter than the loader used for other plugin groups:
+Endpoint plugins are discovered and gated by [`load_endpoint_plugins`](https://docs.vllm.ai/en/v0.26.0/api/vllm/plugins/#vllm.plugins.load_endpoint_plugins) which is stricter than the loader used for other plugin groups:
 
 - **Nothing loads unless `VLLM_PLUGINS` is set and names the plugin.** Other plugin groups load everything unless `VLLM_PLUGINS` narrows the set. Endpoint plugins invert that default because they add network exposed surface. See [Security](../usage/security.md#endpoint-plugins).
 - **`required_tasks` must intersect the server's supported tasks** unless it is `None`. Use this to keep a plugin from attaching routes on a server that can't service them (e.g. a pooling only deployment).

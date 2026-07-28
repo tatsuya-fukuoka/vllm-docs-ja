@@ -11,7 +11,7 @@ Many recent "hybrid" LLMs combine multiple attention types within one model. For
 2. Mamba + full: Bamba, Jamba, Minimax, etc.
 3. Local chunked attention + full: Llama4
 
-To serve these models efficiently, our [KVCacheManager][vllm.v1.core.kv_cache_manager.KVCacheManager] must:
+To serve these models efficiently, our [`KVCacheManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_manager/#vllm.v1.core.kv_cache_manager.KVCacheManager) must:
 
 1. Allocate different slots to different layer type, for example:
     - Full attention layers: reserve slots for **all** tokens.
@@ -44,7 +44,7 @@ To serve these models efficiently, our [KVCacheManager][vllm.v1.core.kv_cache_ma
 
 ### High level idea
 
-We use a single memory pool for all layer types. The memory pool is split into multiple blocks with the same page size. [KVCacheManager][vllm.v1.core.kv_cache_manager.KVCacheManager] allocates different numbers of blocks to different layers according to its attention type.
+We use a single memory pool for all layer types. The memory pool is split into multiple blocks with the same page size. [`KVCacheManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_manager/#vllm.v1.core.kv_cache_manager.KVCacheManager) allocates different numbers of blocks to different layers according to its attention type.
 
 The core challenge is ensuring every layer type uses the same **page size**.  For full-attention-only models, the page size is straightforward, defined as:
 
@@ -64,7 +64,7 @@ $$
 \text{page_size} = \text{kv_hidden_size} \times \text{block_size}
 $$
 
-[KVCacheManager][vllm.v1.core.kv_cache_manager.KVCacheManager] allocates a different number of blocks to each layer.
+[`KVCacheManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_manager/#vllm.v1.core.kv_cache_manager.KVCacheManager) allocates a different number of blocks to each layer.
 
 This case is only a toy example. For real models, please refer to the following cases.
 
@@ -151,7 +151,7 @@ The current algorithm is:
 ### Case 5: KV sharing
 
 KV sharing refers to a layer using the KV cache of another layer, e.g., gemma-3n.
-In these models, [KVCacheManager][vllm.v1.core.kv_cache_manager.KVCacheManager] ignores all layers with kv sharing and only allocates KV cache for layers that need kv cache, and some patches are made in model runner to apply the allocation result to kv sharing layers.
+In these models, [`KVCacheManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_manager/#vllm.v1.core.kv_cache_manager.KVCacheManager) ignores all layers with kv sharing and only allocates KV cache for layers that need kv cache, and some patches are made in model runner to apply the allocation result to kv sharing layers.
 
 ## Prefix caching
 
@@ -213,12 +213,12 @@ The prefix caching support of the mamba model is work in progress. Once implemen
 
 The `KVCacheManager` is organized into 3 layers:
 
-- **[KVCacheManager][vllm.v1.core.kv_cache_manager.KVCacheManager]**: The interface between the scheduler and kv cache management system.
-- **[KVCacheCoordinator][vllm.v1.core.kv_cache_coordinator.KVCacheCoordinator]**: coordinate per-group SingleTypeKVCacheManagers to generate the allocation result of a request. Depending on the model's configuration, one of these coordinators is chosen:
-    - **[KVCacheCoordinatorNoPrefixCache][vllm.v1.core.kv_cache_coordinator.KVCacheCoordinatorNoPrefixCache]**: Used when prefix caching is disabled.
-    - **[UnitaryKVCacheCoordinator][vllm.v1.core.kv_cache_coordinator.UnitaryKVCacheCoordinator]**: If only one KV cache group. The prefix caching logic is simplified as no intersection is needed.
-    - **[HybridKVCacheCoordinator][vllm.v1.core.kv_cache_coordinator.HybridKVCacheCoordinator]**: Handles exactly two KV cache groups (must include one full‑attention group plus one other efficient‑attention group). Other cases are not implemented. You can disable prefix caching to use the KVCacheCoordinatorNoPrefixCache.
-- **[SingleTypeKVCacheManager][vllm.v1.core.single_type_kv_cache_manager.SingleTypeKVCacheManager]**: Each instance manages allocation and prefix caching for one KV cache group, implementing the attention‑type–specific logic (e.g., full attention, sliding window, Mamba).
+- **[`KVCacheManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_manager/#vllm.v1.core.kv_cache_manager.KVCacheManager)**: The interface between the scheduler and kv cache management system.
+- **[`KVCacheCoordinator`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_coordinator/#vllm.v1.core.kv_cache_coordinator.KVCacheCoordinator)**: coordinate per-group SingleTypeKVCacheManagers to generate the allocation result of a request. Depending on the model's configuration, one of these coordinators is chosen:
+    - **[`KVCacheCoordinatorNoPrefixCache`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_coordinator/#vllm.v1.core.kv_cache_coordinator.KVCacheCoordinatorNoPrefixCache)**: Used when prefix caching is disabled.
+    - **[`UnitaryKVCacheCoordinator`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_coordinator/#vllm.v1.core.kv_cache_coordinator.UnitaryKVCacheCoordinator)**: If only one KV cache group. The prefix caching logic is simplified as no intersection is needed.
+    - **[`HybridKVCacheCoordinator`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_coordinator/#vllm.v1.core.kv_cache_coordinator.HybridKVCacheCoordinator)**: Handles exactly two KV cache groups (must include one full‑attention group plus one other efficient‑attention group). Other cases are not implemented. You can disable prefix caching to use the KVCacheCoordinatorNoPrefixCache.
+- **[`SingleTypeKVCacheManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/single_type_kv_cache_manager/#vllm.v1.core.single_type_kv_cache_manager.SingleTypeKVCacheManager)**: Each instance manages allocation and prefix caching for one KV cache group, implementing the attention‑type–specific logic (e.g., full attention, sliding window, Mamba).
 
 The blue box in the above figure shows the case with 10 full attention layers and 20 sliding window attention layers, thus:
 

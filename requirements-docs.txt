@@ -6,7 +6,9 @@ mkdocs-material==9.7.7
 mkdocs-awesome-nav==3.1.2
 mkdocs-glightbox==0.5.1
 mkdocs-git-revision-date-localized-plugin==1.4.7
-pymdown-extensions==10.16.1
+# Pygments 2.20 以降と組み合わせるには 11.0 以上が必要
+# (10.x はコードブロックのタイトル未指定時に html.escape(None) で落ちる)
+pymdown-extensions==11.0.1
+Pygments==2.20.0
+# hooks/url_schemes.py が利用（可変長 lookbehind のため標準 re ではなく regex）
 regex==2025.7.34
-requests==2.32.4
-PyYAML==6.0.2

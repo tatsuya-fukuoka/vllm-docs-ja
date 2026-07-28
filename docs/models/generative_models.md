@@ -1,31 +1,31 @@
-# Generative Models
+# 生成モデル { #generative-models }
 
-vLLM provides first-class support for generative models, which covers most of LLMs.
+vLLM は生成モデルを第一級でサポートしており、これはほとんどの LLM を含みます。
 
-In vLLM, generative models implement the [VllmModelForTextGeneration][vllm.model_executor.models.VllmModelForTextGeneration] interface.
-Based on the final hidden states of the input, these models output log probabilities of the tokens to generate,
-which are then passed through [Sampler][vllm.v1.sample.sampler.Sampler] to obtain the final text.
+vLLM の生成モデルは [`VllmModelForTextGeneration`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/#vllm.model_executor.models.VllmModelForTextGeneration) インターフェイスを実装します。
+これらのモデルは入力の最終的な隠れ状態にもとづいて、生成するトークンの対数確率を出力し、
+それが [`Sampler`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/sample/sampler/#vllm.v1.sample.sampler.Sampler) を通って最終的なテキストになります。
 
-## Configuration
+## 設定 { #configuration }
 
-### Model Runner (`--runner`)
+### モデルランナー (`--runner`) { #model-runner-runner }
 
-Run a model in generation mode via the option `--runner generate`.
+`--runner generate` オプションを指定すると、モデルを生成モードで実行します。
 
 !!! tip
-    There is no need to set this option in the vast majority of cases as vLLM can automatically
-    detect the model runner to use via `--runner auto`.
+    vLLM は `--runner auto` で使用するモデルランナーを自動的に判定できるため、
+    ほとんどの場合このオプションを設定する必要はありません。
 
-## Offline Inference
+## オフライン推論 { #offline-inference }
 
-The [LLM][vllm.LLM] class provides various methods for offline inference.
-See [configuration](https://docs.vllm.ai/en/v0.26.0/api/#configuration) for a list of options when initializing the model.
+[`LLM`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM) クラスは、オフライン推論のためのさまざまなメソッドを提供します。
+モデル初期化時に指定できるオプションの一覧は[設定](https://docs.vllm.ai/en/v0.26.0/api/#configuration)（英語）を参照してください。
 
-### `LLM.generate`
+### `LLM.generate` { #llmgenerate }
 
-The [generate][vllm.LLM.generate] method is available to all generative models in vLLM.
-It is similar to [its counterpart in HF Transformers](https://huggingface.co/docs/transformers/main/en/main_classes/text_generation#transformers.GenerationMixin.generate),
-except that tokenization and detokenization are also performed automatically.
+[`generate`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM.generate) メソッドは、vLLM のすべての生成モデルで利用できます。
+[HF Transformers の同名メソッド](https://huggingface.co/docs/transformers/main/en/main_classes/text_generation#transformers.GenerationMixin.generate)に似ていますが、
+トークナイズとデトークナイズも自動的に行われる点が異なります。
 
 ```python
 from vllm import LLM
@@ -39,8 +39,8 @@ for output in outputs:
     print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
 ```
 
-You can optionally control the language generation by passing [SamplingParams][vllm.SamplingParams].
-For example, you can use greedy sampling by setting `temperature=0`:
+[`SamplingParams`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.SamplingParams) を渡すことで、テキスト生成を制御することもできます。
+たとえば `temperature=0` を設定すると貪欲サンプリングになります。
 
 ```python
 from vllm import LLM, SamplingParams
@@ -56,15 +56,15 @@ for output in outputs:
 ```
 
 !!! important
-    By default, vLLM will use sampling parameters recommended by model creator by applying the `generation_config.json` from the huggingface model repository if it exists. In most cases, this will provide you with the best results by default if [SamplingParams][vllm.SamplingParams] is not specified.
+    vLLM は既定で、Hugging Face のモデルリポジトリに `generation_config.json` があればそれを適用し、モデル作成者が推奨するサンプリングパラメータを使用します。多くの場合、[`SamplingParams`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.SamplingParams) を指定しなくてもこれが最良の結果をもたらします。
 
-    However, if vLLM's default sampling parameters are preferred, please pass `generation_config="vllm"` when creating the [LLM][vllm.LLM] instance.
-A code example can be found here: [examples/basic/offline_inference/basic.py](../../examples/basic/offline_inference/basic.py)
+    vLLM 既定のサンプリングパラメータを使いたい場合は、[`LLM`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM) インスタンスの作成時に `generation_config="vllm"` を渡してください。
+コード例はこちらにあります: [examples/basic/offline_inference/basic.py](../../examples/basic/offline_inference/basic.py)
 
-### `LLM.beam_search`
+### `LLM.beam_search` { #llmbeam_search }
 
-The [beam_search][vllm.LLM.beam_search] method implements [beam search](https://huggingface.co/docs/transformers/en/generation_strategies#beam-search) on top of [generate][vllm.LLM.generate].
-For example, to search using 5 beams and output at most 50 tokens:
+[`beam_search`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM.beam_search) メソッドは、[`generate`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM.generate) の上に [ビームサーチ](https://huggingface.co/docs/transformers/en/generation_strategies#beam-search)を実装したものです。
+たとえば、ビーム幅 5 で最大 50 トークンを出力する場合は次のようにします。
 
 ```python
 from vllm import LLM
@@ -79,15 +79,15 @@ for output in outputs:
     print(f"Generated text: {generated_text!r}")
 ```
 
-### `LLM.chat`
+### `LLM.chat` { #llmchat }
 
-The [chat][vllm.LLM.chat] method implements chat functionality on top of [generate][vllm.LLM.generate].
-In particular, it accepts input similar to [OpenAI Chat Completions API](https://platform.openai.com/docs/api-reference/chat)
-and automatically applies the model's [chat template](https://huggingface.co/docs/transformers/en/chat_templating) to format the prompt.
+[`chat`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM.chat) メソッドは、[`generate`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM.generate) の上にチャット機能を実装したものです。
+[OpenAI Chat Completions API](https://platform.openai.com/docs/api-reference/chat) と同様の入力を受け取り、
+モデルの[チャットテンプレート](https://huggingface.co/docs/transformers/en/chat_templating)を自動的に適用してプロンプトを組み立てます。
 
 !!! important
-    In general, only instruction-tuned models have a chat template.
-    Base models may perform poorly as they are not trained to respond to the chat conversation.
+    一般に、チャットテンプレートを持つのは instruction チューニング済みのモデルだけです。
+    ベースモデルはチャット形式の会話に応答するよう学習されていないため、性能が低いことがあります。
 
 ??? code
 
@@ -121,10 +121,10 @@ and automatically applies the model's [chat template](https://huggingface.co/doc
         print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
     ```
 
-A code example can be found here: [examples/basic/offline_inference/chat.py](../../examples/basic/offline_inference/chat.py)
+コード例はこちらにあります: [examples/basic/offline_inference/chat.py](../../examples/basic/offline_inference/chat.py)
 
-If the model doesn't have a chat template or you want to specify another one,
-you can explicitly pass a chat template:
+モデルがチャットテンプレートを持たない場合や、別のテンプレートを指定したい場合は、
+チャットテンプレートを明示的に渡せます。
 
 ```python
 from vllm.entrypoints.chat_utils import load_chat_template
@@ -136,9 +136,9 @@ print("Loaded chat template:", custom_template)
 outputs = llm.chat(conversation, chat_template=custom_template)
 ```
 
-## Online Serving
+## オンラインサービング { #online-serving }
 
-Our [OpenAI-Compatible Server](../serving/online_serving/openai_compatible_server.md) provides endpoints that correspond to the offline APIs:
+vLLM の [OpenAI 互換サーバー](../serving/online_serving/openai_compatible_server.md)は、オフライン API に対応するエンドポイントを提供します。
 
-- [Completions API](../serving/online_serving/openai_compatible_server.md#completions-api) is similar to `LLM.generate` but only accepts text.
-- [Chat API](../serving/online_serving/openai_compatible_server.md#chat-api)  is similar to `LLM.chat`, accepting both text and [multi-modal inputs](../features/multimodal_inputs.md) for models with a chat template.
+- [Completions API](../serving/online_serving/openai_compatible_server.md#completions-api) は `LLM.generate` に相当しますが、テキストのみを受け付けます。
+- [Chat API](../serving/online_serving/openai_compatible_server.md#chat-api) は `LLM.chat` に相当し、チャットテンプレートを持つモデルであればテキストと[マルチモーダル入力](../features/multimodal_inputs.md)の両方を受け付けます。

@@ -1,13 +1,12 @@
-# Structured Outputs
+# 構造化出力 { #structured-outputs }
 
-vLLM supports the generation of structured outputs using
-[xgrammar](https://github.com/mlc-ai/xgrammar) or
-[guidance](https://github.com/guidance-ai/llguidance) as backends.
-This document shows you some examples of the different options that are
-available to generate structured outputs.
+vLLM は、[xgrammar](https://github.com/mlc-ai/xgrammar) または
+[guidance](https://github.com/guidance-ai/llguidance) をバックエンドとして、
+構造化出力の生成をサポートしています。
+このドキュメントでは、構造化出力を生成するためのさまざまなオプションの例を示します。
 
 !!! warning
-    If you are still using the following deprecated API fields which were removed in v0.12.0, please update your code to use `structured_outputs` as demonstrated in the rest of this document:
+    v0.12.0 で削除された以下の非推奨 API フィールドをまだ使っている場合は、このドキュメントで示すように `structured_outputs` を使うようコードを更新してください。
 
     - `guided_json` -> `{"structured_outputs": {"json": ...}}` or `StructuredOutputsParams(json=...)`
     - `guided_regex` -> `{"structured_outputs": {"regex": ...}}` or `StructuredOutputsParams(regex=...)`
@@ -15,31 +14,29 @@ available to generate structured outputs.
     - `guided_grammar` -> `{"structured_outputs": {"grammar": ...}}` or `StructuredOutputsParams(grammar=...)`
     - `guided_whitespace_pattern` -> `{"structured_outputs": {"whitespace_pattern": ...}}` or `StructuredOutputsParams(whitespace_pattern=...)`
     - `structural_tag` -> `{"structured_outputs": {"structural_tag": ...}}` or `StructuredOutputsParams(structural_tag=...)`
-    - `guided_decoding_backend` -> Remove this field from your request
+    - `guided_decoding_backend` -> このフィールドをリクエストから削除してください
 
-## Online Serving (OpenAI API)
+## オンラインサービング (OpenAI API) { #online-serving-openai-api }
 
-You can generate structured outputs using the OpenAI's [Completions](https://platform.openai.com/docs/api-reference/completions) and [Chat](https://platform.openai.com/docs/api-reference/chat) API.
+OpenAI の [Completions](https://platform.openai.com/docs/api-reference/completions) API と [Chat](https://platform.openai.com/docs/api-reference/chat) API を使って構造化出力を生成できます。
 
-The following parameters are supported, which must be added as extra parameters:
+次のパラメータがサポートされています。いずれも追加パラメータとして指定する必要があります。
 
-- `choice`: the output will be exactly one of the choices.
-- `regex`: the output will follow the regex pattern.
-- `json`: the output will follow the JSON schema.
-- `grammar`: the output will follow the context free grammar.
-- `structural_tag`: Follow a JSON schema within a set of specified tags within the generated text.
+- `choice`: 出力は選択肢のいずれか 1 つに厳密に一致します。
+- `regex`: 出力は正規表現のパターンに従います。
+- `json`: 出力は JSON スキーマに従います。
+- `grammar`: 出力は文脈自由文法に従います。
+- `structural_tag`: 生成テキスト内の指定したタグに囲まれた部分が JSON スキーマに従います。
 
-You can see the complete list of supported parameters on the [OpenAI-Compatible Server](../serving/online_serving/openai_compatible_server.md) page.
+サポートされているパラメータの一覧は [OpenAI 互換サーバー](../serving/online_serving/openai_compatible_server.md)のページを参照してください。
 
-Structured outputs are supported by default in the OpenAI-Compatible Server. You
-may choose to specify the backend to use by setting the
-`--structured-outputs-config.backend` flag to `vllm serve`. The default backend is `auto`,
-which will try to choose an appropriate backend based on the details of the
-request. You may also choose a specific backend, along with
-some options. A full set of options is available in the `vllm serve --help`
-text.
+OpenAI 互換サーバーでは、構造化出力が既定でサポートされています。
+使用するバックエンドは `vllm serve` の `--structured-outputs-config.backend` フラグで指定できます。
+既定のバックエンドは `auto` で、リクエストの内容に応じて適切なバックエンドを選択しようとします。
+特定のバックエンドとそのオプションを明示的に指定することもできます。
+オプションの一覧は `vllm serve --help` で確認できます。
 
-Now let's see an example for each of the cases, starting with the `choice`, as it's the easiest one:
+それでは各ケースの例を見ていきます。まずはもっとも簡単な `choice` からです。
 
 ??? code
 
@@ -61,7 +58,7 @@ Now let's see an example for each of the cases, starting with the `choice`, as i
     print(completion.choices[0].message.content)
     ```
 
-The next example shows how to use the `regex`. The supported regex syntax depends on the structured output backend. For example, `xgrammar`, `guidance`, and `outlines` use Rust-style regex, while `lm-format-enforcer` uses Python's `re` module. The idea is to generate an email address, given a simple regex template:
+次の例は `regex` の使い方です。サポートされる正規表現の文法は構造化出力のバックエンドによって異なります。たとえば `xgrammar`、`guidance`、`outlines` は Rust 形式の正規表現を、`lm-format-enforcer` は Python の `re` モジュールを使います。ここでは、単純な正規表現テンプレートからメールアドレスを生成します。
 
 ??? code
 
@@ -79,13 +76,13 @@ The next example shows how to use the `regex`. The supported regex syntax depend
     print(completion.choices[0].message.content)
     ```
 
-One of the most relevant features in structured text generation is the option to generate a valid JSON with pre-defined fields and formats.
-For this we can use the `json` parameter in two different ways:
+構造化テキスト生成でもっとも重要な機能の 1 つが、あらかじめ定義したフィールドと形式に沿った正しい JSON を生成できることです。
+これには `json` パラメータを 2 通りの方法で使えます。
 
-- Using directly a [JSON Schema](https://json-schema.org/)
-- Defining a [Pydantic model](https://docs.pydantic.dev/latest/) and then extracting the JSON Schema from it (which is normally an easier option).
+- [JSON Schema](https://json-schema.org/) を直接指定する
+- [Pydantic モデル](https://docs.pydantic.dev/latest/)を定義し、そこから JSON Schema を取り出す（通常はこちらのほうが簡単です）
 
-The next example shows how to use the `response_format` parameter with a Pydantic model:
+次の例は、Pydantic モデルと `response_format` パラメータを組み合わせる方法です。
 
 ??? code
 
@@ -126,14 +123,12 @@ The next example shows how to use the `response_format` parameter with a Pydanti
     ```
 
 !!! tip
-    While not strictly necessary, normally it's better to indicate in the prompt the
-    JSON schema and how the fields should be populated. This can improve the
-    results notably in most cases.
+    必須ではありませんが、JSON スキーマと各フィールドの埋め方をプロンプトにも書いておくとよいでしょう。
+    多くの場合、これで結果が大きく改善します。
 
-Finally we have the `grammar` option, which is probably the most
-difficult to use, but it's really powerful. It allows us to define complete
-languages like SQL queries. It works by using a context free EBNF grammar.
-As an example, we can use to define a specific format of simplified SQL queries:
+最後は `grammar` オプションです。使いこなすのはもっとも難しいですが、非常に強力です。
+SQL クエリのような言語全体を定義でき、文脈自由な EBNF 文法によって動作します。
+例として、簡略化した SQL クエリの形式を定義してみます。
 
 ??? code
 
@@ -165,17 +160,17 @@ As an example, we can use to define a specific format of simplified SQL queries:
     print(completion.choices[0].message.content)
     ```
 
-See also: [full example](https://docs.vllm.ai/en/v0.26.0/examples/features/structured_outputs/)
+参考: [完全な例](https://docs.vllm.ai/en/v0.26.0/examples/features/structured_outputs/)（英語）
 
-## Reasoning Outputs
+## Reasoning 出力 { #reasoning-outputs }
 
-You can also use structured outputs with <project:#reasoning-outputs> for reasoning models.
+reasoning モデルでは、<project:#reasoning-outputs> と構造化出力を組み合わせることもできます。
 
 ```bash
 vllm serve deepseek-ai/DeepSeek-R1-Distill-Qwen-7B --reasoning-parser deepseek_r1
 ```
 
-Note that you can use reasoning with any provided structured outputs feature. The following uses one with JSON schema:
+reasoning はどの構造化出力の機能とも組み合わせられます。次の例では JSON スキーマと併用しています。
 
 ??? code
 
@@ -208,23 +203,23 @@ Note that you can use reasoning with any provided structured outputs feature. Th
     print("content: ", completion.choices[0].message.content)
     ```
 
-See also: [full example](https://docs.vllm.ai/en/v0.26.0/examples/features/structured_outputs/)
+参考: [完全な例](https://docs.vllm.ai/en/v0.26.0/examples/features/structured_outputs/)（英語）
 
 !!! note
-    When using Qwen3 Coder models with reasoning enabled, structured outputs might become disabled if the reasoning content does not get parsed into the `reasoning` field separately (v0.11.2+).
-    To use both features together, you must explicitly enable structured outputs in reasoning mode.
-    To do so, add the following flag when starting the vLLM server: `--structured-outputs-config.enable_in_reasoning=True`.
-    See also: [Reasoning Outputs](reasoning_outputs.md) documentation.
+    Qwen3 Coder 系のモデルで reasoning を有効にした場合、reasoning の内容が `reasoning` フィールドに分離して解析されないと、構造化出力が無効になることがあります（v0.11.2 以降）。
+    両方の機能を同時に使うには、reasoning モードでの構造化出力を明示的に有効にする必要があります。
+    vLLM サーバーの起動時に `--structured-outputs-config.enable_in_reasoning=True` を追加してください。
+    参考: [Reasoning 出力](reasoning_outputs.md)のドキュメント。
 
-## Experimental Automatic Parsing (OpenAI API)
+## 実験的な自動パース (OpenAI API) { #experimental-automatic-parsing-openai-api }
 
-This section covers the OpenAI beta wrapper over the `client.chat.completions.create()` method that provides richer integrations with Python specific types.
+このセクションでは、`client.chat.completions.create()` を包む OpenAI のベータ版ラッパーについて説明します。Python の型とより密に連携できます。
 
-At the time of writing (`openai==1.54.4`), this is a "beta" feature in the OpenAI client library. Code reference can be found [here](https://github.com/openai/openai-python/blob/52357cff50bee57ef442e94d78a0de38b4173fc2/src/openai/resources/beta/chat/completions.py#L100-L104).
+執筆時点（`openai==1.54.4`）では、これは OpenAI クライアントライブラリの「ベータ」機能です。コードは[こちら](https://github.com/openai/openai-python/blob/52357cff50bee57ef442e94d78a0de38b4173fc2/src/openai/resources/beta/chat/completions.py#L100-L104)を参照してください。
 
-For the following examples, vLLM was set up using `vllm serve meta-llama/Llama-3.1-8B-Instruct`
+以下の例では、`vllm serve meta-llama/Llama-3.1-8B-Instruct` で vLLM を起動しています。
 
-Here is a simple example demonstrating how to get structured output using Pydantic models:
+Pydantic モデルを使って構造化出力を得る簡単な例です。
 
 ??? code
 
@@ -260,7 +255,7 @@ Name: Cameron
 Age: 28
 ```
 
-Here is a more complex example using nested Pydantic models to handle a step-by-step math solution:
+ネストした Pydantic モデルを使い、数学の解法を段階的に扱うより複雑な例です。
 
 ??? code
 
@@ -294,7 +289,7 @@ Here is a more complex example using nested Pydantic models to handle a step-by-
     print("Answer:", message.parsed.final_answer)
     ```
 
-Output:
+出力:
 
 ```console
 ParsedChatCompletionMessage[MathResponse](content='{ "steps": [{ "explanation": "First, let\'s isolate the term with the variable \'x\'. To do this, we\'ll subtract 31 from both sides of the equation.", "output": "8x + 31 - 31 = 2 - 31"}, { "explanation": "By subtracting 31 from both sides, we simplify the equation to 8x = -29.", "output": "8x = -29"}, { "explanation": "Next, let\'s isolate \'x\' by dividing both sides of the equation by 8.", "output": "8x / 8 = -29 / 8"}], "final_answer": "x = -29/8" }', refusal=None, role='assistant', audio=None, function_call=None, tool_calls=[], parsed=MathResponse(steps=[Step(explanation="First, let's isolate the term with the variable 'x'. To do this, we'll subtract 31 from both sides of the equation.", output='8x + 31 - 31 = 2 - 31'), Step(explanation='By subtracting 31 from both sides, we simplify the equation to 8x = -29.', output='8x = -29'), Step(explanation="Next, let's isolate 'x' by dividing both sides of the equation by 8.", output='8x / 8 = -29 / 8')], final_answer='x = -29/8'))
@@ -304,13 +299,13 @@ Step #2: explanation="Next, let's isolate 'x' by dividing both sides of the equa
 Answer: x = -29/8
 ```
 
-An example of using `structural_tag` can be found here: [examples/features/structured_outputs](https://docs.vllm.ai/en/v0.26.0/examples/features/structured_outputs/)
+`structural_tag` の使用例はこちらにあります: [examples/features/structured_outputs](https://docs.vllm.ai/en/v0.26.0/examples/features/structured_outputs/)（英語）
 
-## Offline Inference
+## オフライン推論 { #offline-inference }
 
-Offline inference allows for the same types of structured outputs.
-To use it, we'll need to configure the structured outputs using the class `StructuredOutputsParams` inside `SamplingParams`.
-The main available options inside `StructuredOutputsParams` are:
+オフライン推論でも同じ種類の構造化出力を利用できます。
+利用するには、`SamplingParams` の中で `StructuredOutputsParams` クラスを使って構造化出力を設定します。
+`StructuredOutputsParams` で指定できる主なオプションは次のとおりです。
 
 - `json`
 - `regex`
@@ -318,9 +313,8 @@ The main available options inside `StructuredOutputsParams` are:
 - `grammar`
 - `structural_tag`
 
-These parameters can be used in the same way as the parameters from the Online
-Serving examples above. One example for the usage of the `choice` parameter is
-shown below:
+これらのパラメータは、上記のオンラインサービングの例と同じように使えます。
+`choice` パラメータの使用例を次に示します。
 
 ??? code
 
@@ -339,4 +333,4 @@ shown below:
     print(outputs[0].outputs[0].text)
     ```
 
-See also: [full example](../../examples/features/structured_outputs/structured_outputs_offline.py)
+参考: [完全な例](../../examples/features/structured_outputs/structured_outputs_offline.py)

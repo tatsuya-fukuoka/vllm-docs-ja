@@ -1,31 +1,31 @@
-# OpenAI-Compatible Server
+# OpenAI 互換サーバー { #openai-compatible-server }
 
-vLLM provides an HTTP server that implements OpenAI's [Completions API](https://platform.openai.com/docs/api-reference/completions), [Chat API](https://platform.openai.com/docs/api-reference/chat), and more! This functionality lets you serve models and interact with them using an HTTP client.
+vLLM は、OpenAI の [Completions API](https://platform.openai.com/docs/api-reference/completions) や [Chat API](https://platform.openai.com/docs/api-reference/chat) などを実装した HTTP サーバーを提供します。これにより、モデルをサービングして HTTP クライアントからやり取りできます。
 
-## Supported APIs
+## サポートしている API { #supported-apis }
 
-We currently support the following OpenAI APIs:
+現在サポートしている OpenAI API は次のとおりです。
 
 - [Completions API](#completions-api) (`/v1/completions`)
-    - Only applicable to [text generation models](../../models/generative_models.md).
-    - *Note: `suffix` parameter is not supported.*
+    - [テキスト生成モデル](../../models/generative_models.md)にのみ適用できます。
+    - *注意: `suffix` パラメータはサポートされていません。*
 - [Chat Completions API](#chat-api) (`/v1/chat/completions`)
-    - Only applicable to [text generation models](../../models/generative_models.md) with a [chat template](../online_serving/README.md#chat-template).
-    - *Note: `user` parameter is ignored.*
-    - *Note:* Setting the `parallel_tool_calls` parameter to `false` ensures vLLM only returns zero or one tool call per request. Setting it to `true` (the default) allows returning more than one tool call per request. There is no guarantee more than one tool call will be returned if this is set to `true`, as that behavior is model dependent and not all models are designed to support parallel tool calls.
+    - [チャットテンプレート](../online_serving/README.md#chat-template)を持つ[テキスト生成モデル](../../models/generative_models.md)にのみ適用できます。
+    - *注意: `user` パラメータは無視されます。*
+    - *注意:* `parallel_tool_calls` パラメータを `false` にすると、vLLM は 1 リクエストにつきツール呼び出しを 0 個または 1 個しか返しません。`true`（既定値）にすると 1 リクエストで複数のツール呼び出しを返せます。ただし `true` にしても複数返ることは保証されません。この挙動はモデルに依存し、すべてのモデルが並列のツール呼び出しに対応しているわけではないためです。
 - [Chat Completions batch API](#chat-api) (`/v1/chat/completions/batch`)
 - [Responses API](#responses-api) (`/v1/responses`, `/v1/responses/{response_id}`, `/v1/responses/{response_id}/cancel`)
-    - Only applicable to [text generation models](../../models/generative_models.md).
+    - [テキスト生成モデル](../../models/generative_models.md)にのみ適用できます。
 - [Embeddings API](../../models/pooling_models/embed.md#openai-compatible-embeddings-api) (`/v1/embeddings`)
-    - Only applicable to [embedding models](../../models/pooling_models/embed.md).
+    - [埋め込みモデル](../../models/pooling_models/embed.md)にのみ適用できます。
 - [Transcriptions API](./speech_to_text.md#transcriptions-api) (`/v1/audio/transcriptions`)
-    - Only applicable to [Automatic Speech Recognition (ASR) models](../../models/supported_models.md#transcription).
+    - [自動音声認識 (ASR) モデル](../../models/supported_models.md#transcription)にのみ適用できます。
 - [Translation API](./speech_to_text.md#translations-api) (`/v1/audio/translations`)
-    - Only applicable to [Automatic Speech Recognition (ASR) models](../../models/supported_models.md#transcription).
+    - [自動音声認識 (ASR) モデル](../../models/supported_models.md#transcription)にのみ適用できます。
 
-## Completions API
+## Completions API { #completions-api }
 
-In your terminal, you can [install](../../getting_started/installation/README.md) vLLM, then start the server with the [`vllm serve`](../../configuration/serve_args.md) command. (You can also use our [Docker](../../deployment/docker.md) image.)
+ターミナルで vLLM を[インストール](../../getting_started/installation/README.md)し、[`vllm serve`](../../configuration/serve_args.md) コマンドでサーバーを起動します（[Docker](../../deployment/docker.md) イメージを使うこともできます）。
 
 ```bash
 vllm serve NousResearch/Meta-Llama-3-8B-Instruct \
@@ -33,7 +33,7 @@ vllm serve NousResearch/Meta-Llama-3-8B-Instruct \
   --api-key token-abc123
 ```
 
-To call the server, in your preferred text editor, create a script that uses an HTTP client. Include any messages that you want to send to the model. Then run that script. Below is an example script using the [official OpenAI Python client](https://github.com/openai/openai-python).
+サーバーを呼び出すには、好みのテキストエディタで HTTP クライアントを使うスクリプトを作成し、モデルに送りたいメッセージを記述して実行します。以下は[公式の OpenAI Python クライアント](https://github.com/openai/openai-python)を使った例です。
 
 ??? code
 
@@ -55,19 +55,19 @@ To call the server, in your preferred text editor, create a script that uses an 
     ```
 
 !!! tip
-    vLLM supports some parameters that are not supported by OpenAI, `top_k` for example.
-    You can pass these parameters to vLLM using the OpenAI client in the `extra_body` parameter of your requests, i.e. `extra_body={"top_k": 50}` for `top_k`.
+    vLLM は、OpenAI がサポートしていないパラメータ（たとえば `top_k`）にも対応しています。
+    OpenAI クライアントからこれらを渡すには、リクエストの `extra_body` パラメータを使います（`top_k` の場合は `extra_body={"top_k": 50}`）。
 
 !!! important
-    By default, the server applies `generation_config.json` from the Hugging Face model repository if it exists. This means the default values of certain sampling parameters can be overridden by those recommended by the model creator.
+    既定では、Hugging Face のモデルリポジトリに `generation_config.json` があればサーバーがそれを適用します。つまり、一部のサンプリングパラメータの既定値がモデル作成者の推奨値で上書きされます。
 
-    To disable this behavior, please pass `--generation-config vllm` when launching the server.
+    この動作を無効にするには、サーバー起動時に `--generation-config vllm` を指定してください。
 
-## Extra Parameters
+## 追加パラメータ { #extra-parameters }
 
-vLLM supports a set of parameters that are not part of the OpenAI API.
-In order to use them, you can pass them as extra parameters in the OpenAI client.
-Or directly merge them into the JSON payload if you are using HTTP call directly.
+vLLM は、OpenAI API には含まれない一連のパラメータをサポートしています。
+これらを使うには、OpenAI クライアントの追加パラメータとして渡すか、
+HTTP を直接呼び出している場合は JSON ペイロードにそのまま含めてください。
 
 ```python
 completion = client.chat.completions.create(
@@ -81,10 +81,10 @@ completion = client.chat.completions.create(
 )
 ```
 
-## Extra HTTP Headers
+## 追加の HTTP ヘッダー { #extra-http-headers }
 
-Only `X-Request-Id` HTTP request header is supported for now. It can be enabled
-with `--enable-request-id-headers`.
+現時点でサポートしている HTTP リクエストヘッダーは `X-Request-Id` のみです。
+`--enable-request-id-headers` を指定すると有効になります。
 
 ??? code
 
@@ -110,18 +110,18 @@ with `--enable-request-id-headers`.
     print(completion._request_id)
     ```
 
-## API Reference
+## API リファレンス { #api-reference }
 
-### Completions API
+### Completions API { #completions-api_1 }
 
-Our Completions API is compatible with [OpenAI's Completions API](https://platform.openai.com/docs/api-reference/completions);
-you can use the [official OpenAI Python client](https://github.com/openai/openai-python) to interact with it.
+vLLM の Completions API は [OpenAI の Completions API](https://platform.openai.com/docs/api-reference/completions) と互換性があり、
+[公式の OpenAI Python クライアント](https://github.com/openai/openai-python)からやり取りできます。
 
-Code example: [examples/basic/online_serving/openai_completion_client.py](../../../examples/basic/online_serving/openai_completion_client.py)
+コード例: [examples/basic/online_serving/openai_completion_client.py](../../../examples/basic/online_serving/openai_completion_client.py)
 
-#### Extra parameters
+#### 追加パラメータ { #extra-parameters_1 }
 
-The following [sampling parameters](https://docs.vllm.ai/en/v0.26.0/api/#inference-parameters) are supported.
+次の[サンプリングパラメータ](https://docs.vllm.ai/en/v0.26.0/api/#inference-parameters)がサポートされています。
 
 ??? code
 
@@ -129,7 +129,7 @@ The following [sampling parameters](https://docs.vllm.ai/en/v0.26.0/api/#inferen
     --8<-- "vllm/entrypoints/openai/completion/protocol.py:completion-sampling-params"
     ```
 
-The following extra parameters are supported:
+次の追加パラメータがサポートされています。
 
 ??? code
 
@@ -137,22 +137,22 @@ The following extra parameters are supported:
     --8<-- "vllm/entrypoints/openai/completion/protocol.py:completion-extra-params"
     ```
 
-### Chat API
+### Chat API { #chat-api }
 
-Our Chat API is compatible with [OpenAI's Chat Completions API](https://platform.openai.com/docs/api-reference/chat);
-you can use the [official OpenAI Python client](https://github.com/openai/openai-python) to interact with it.
+vLLM の Chat API は [OpenAI の Chat Completions API](https://platform.openai.com/docs/api-reference/chat) と互換性があり、
+[公式の OpenAI Python クライアント](https://github.com/openai/openai-python)からやり取りできます。
 
-We support both [Vision](https://platform.openai.com/docs/guides/vision)- and
-[Audio](https://platform.openai.com/docs/guides/audio?audio-generation-quickstart-example=audio-in)-related parameters;
-see our [Multimodal Inputs](../../features/multimodal_inputs.md) guide for more information.
+[Vision](https://platform.openai.com/docs/guides/vision) と
+[Audio](https://platform.openai.com/docs/guides/audio?audio-generation-quickstart-example=audio-in) に関するパラメータの両方をサポートしています。
+詳細は[マルチモーダル入力](../../features/multimodal_inputs.md)のガイドを参照してください。
 
-- *Note: `image_url.detail` parameter is not supported.*
+- *注意: `image_url.detail` パラメータはサポートされていません。*
 
-Code example: [examples/basic/online_serving/openai_chat_completion_client.py](../../../examples/basic/online_serving/openai_chat_completion_client.py)
+コード例: [examples/basic/online_serving/openai_chat_completion_client.py](../../../examples/basic/online_serving/openai_chat_completion_client.py)
 
-#### Extra parameters
+#### 追加パラメータ { #extra-parameters_2 }
 
-The following [sampling parameters](https://docs.vllm.ai/en/v0.26.0/api/#inference-parameters) are supported.
+次の[サンプリングパラメータ](https://docs.vllm.ai/en/v0.26.0/api/#inference-parameters)がサポートされています。
 
 ??? code
 
@@ -160,7 +160,7 @@ The following [sampling parameters](https://docs.vllm.ai/en/v0.26.0/api/#inferen
     --8<-- "vllm/entrypoints/openai/chat_completion/protocol.py:chat-completion-sampling-params"
     ```
 
-The following extra parameters are supported:
+次の追加パラメータがサポートされています。
 
 ??? code
 
@@ -168,16 +168,16 @@ The following extra parameters are supported:
     --8<-- "vllm/entrypoints/openai/chat_completion/protocol.py:chat-completion-extra-params"
     ```
 
-### Responses API
+### Responses API { #responses-api }
 
-Our Responses API is compatible with [OpenAI's Responses API](https://platform.openai.com/docs/api-reference/responses);
-you can use the [official OpenAI Python client](https://github.com/openai/openai-python) to interact with it.
+vLLM の Responses API は [OpenAI の Responses API](https://platform.openai.com/docs/api-reference/responses) と互換性があり、
+[公式の OpenAI Python クライアント](https://github.com/openai/openai-python)からやり取りできます。
 
-Code example: [examples/tool_calling/openai_responses_client_with_tools.py](../../../examples/tool_calling/openai_responses_client_with_tools.py)
+コード例: [examples/tool_calling/openai_responses_client_with_tools.py](../../../examples/tool_calling/openai_responses_client_with_tools.py)
 
-#### Extra parameters
+#### 追加パラメータ { #extra-parameters_3 }
 
-The following extra parameters in the request object are supported:
+リクエストオブジェクトでは次の追加パラメータがサポートされています。
 
 ??? code
 
@@ -185,7 +185,7 @@ The following extra parameters in the request object are supported:
     --8<-- "vllm/entrypoints/openai/responses/protocol.py:responses-extra-params"
     ```
 
-The following extra parameters in the response object are supported:
+レスポンスオブジェクトでは次の追加パラメータがサポートされています。
 
 ??? code
 
