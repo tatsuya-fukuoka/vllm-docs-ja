@@ -1,26 +1,26 @@
-# Haystack
+# Haystack { #haystack }
 
-[Haystack](https://github.com/deepset-ai/haystack) is an end-to-end LLM framework that allows you to build applications powered by LLMs, Transformer models, vector search and more. Whether you want to perform retrieval-augmented generation (RAG), document search, question answering or answer generation, Haystack can orchestrate state-of-the-art embedding models and LLMs into pipelines to build end-to-end NLP applications and solve your use case.
+[Haystack](https://github.com/deepset-ai/haystack) は、LLM・Transformer モデル・ベクトル検索などを活用したアプリケーションを構築できるエンドツーエンドの LLM フレームワークです。RAG（検索拡張生成）、ドキュメント検索、質問応答、回答生成のいずれについても、最新の埋め込みモデルと LLM をパイプラインとして組み合わせ、エンドツーエンドの NLP アプリケーションを構築できます。
 
-It allows you to deploy a large language model (LLM) server with vLLM as the backend, which exposes OpenAI-compatible endpoints.
+vLLM をバックエンドとする大規模言語モデル (LLM) のサーバーをデプロイし、OpenAI 互換のエンドポイントを利用できます。
 
-## Prerequisites
+## 前提条件 { #prerequisites }
 
-Set up the vLLM and Haystack environment:
+vLLM と Haystack の環境を用意します。
 
 ```bash
 pip install vllm haystack-ai
 ```
 
-## Deploy
+## デプロイ { #deploy }
 
-1. Start the vLLM server with the supported chat completion model, e.g.
+1. 対応するチャット補完モデルで vLLM サーバーを起動します。例:
 
     ```bash
     vllm serve mistralai/Mistral-7B-Instruct-v0.1
     ```
 
-1. Use the `OpenAIGenerator` and `OpenAIChatGenerator` components in Haystack to query the vLLM server.
+1. Haystack の `OpenAIGenerator` および `OpenAIChatGenerator` コンポーネントから vLLM サーバーに問い合わせます。
 
 ??? code
 
@@ -52,4 +52,4 @@ pip install vllm haystack-ai
 ------------------------------
 ```
 
-For details, see the tutorial [Using vLLM in Haystack](https://github.com/deepset-ai/haystack-integrations/blob/main/integrations/vllm.md).
+詳細は[チュートリアル「Using vLLM in Haystack」](https://github.com/deepset-ai/haystack-integrations/blob/main/integrations/vllm.md)（英語）を参照してください。

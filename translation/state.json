@@ -309,8 +309,10 @@
       "upstream_sha": "6bd5ad7857b5abb0"
     },
     "deployment/frameworks/autogen.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "49813b49c1d038d9",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "49813b49c1d038d9"
     },
     "deployment/frameworks/bentoml.md": {
@@ -321,8 +323,10 @@
       "upstream_sha": "8bdf5836a8a43933"
     },
     "deployment/frameworks/cerebrium.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "385b1642a4f39e2b",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "385b1642a4f39e2b"
     },
     "deployment/frameworks/chatbox.md": {
@@ -340,13 +344,17 @@
       "upstream_sha": "48574b9d7337ee13"
     },
     "deployment/frameworks/dstack.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "7b387d508e12b18f",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "7b387d508e12b18f"
     },
     "deployment/frameworks/haystack.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "3cb6a2237f4e6bf5",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "3cb6a2237f4e6bf5"
     },
     "deployment/frameworks/helm.md": {
@@ -393,13 +401,17 @@
       "upstream_sha": "dc13605f120129b8"
     },
     "deployment/frameworks/retrieval_augmented_generation.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "9ce2addfe0380b93",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "9ce2addfe0380b93"
     },
     "deployment/frameworks/runpod.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "0e7f50ebbc5dcc5b",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "0e7f50ebbc5dcc5b"
     },
     "deployment/frameworks/skypilot.md": {
@@ -502,8 +514,10 @@
       "upstream_sha": "dc40f945f800f2c0"
     },
     "deployment/nginx.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "213b7c7c4455a235",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "213b7c7c4455a235"
     },
     "design/arch_overview.md": {

@@ -1,10 +1,10 @@
-# AutoGen
+# AutoGen { #autogen }
 
-[AutoGen](https://github.com/microsoft/autogen) is a framework for creating multi-agent AI applications that can act autonomously or work alongside humans.
+[AutoGen](https://github.com/microsoft/autogen) は、自律的に動作したり人と協働したりするマルチエージェントの AI アプリケーションを作るためのフレームワークです。
 
-## Prerequisites
+## 前提条件 { #prerequisites }
 
-Set up the vLLM and [AutoGen](https://microsoft.github.io/autogen/0.2/docs/installation/) environment:
+vLLM と [AutoGen](https://microsoft.github.io/autogen/0.2/docs/installation/) の環境を用意します。
 
 ```bash
 pip install vllm
@@ -14,15 +14,15 @@ pip install vllm
 pip install -U "autogen-agentchat" "autogen-ext[openai]"
 ```
 
-## Deploy
+## デプロイ { #deploy }
 
-1. Start the vLLM server with the supported chat completion model, e.g.
+1. 対応するチャット補完モデルで vLLM サーバーを起動します。例:
 
     ```bash
     vllm serve mistralai/Mistral-7B-Instruct-v0.2
     ```
 
-1. Call it with AutoGen:
+1. AutoGen から呼び出します。
 
 ??? code
 
@@ -72,8 +72,8 @@ pip install -U "autogen-agentchat" "autogen-ext[openai]"
     asyncio.run(main())
     ```
 
-For details, see the tutorial:
+詳細は次のチュートリアルを参照してください。
 
-- [Using vLLM in AutoGen](https://microsoft.github.io/autogen/0.2/docs/topics/non-openai-models/local-vllm/)
+- [Using vLLM in AutoGen](https://microsoft.github.io/autogen/0.2/docs/topics/non-openai-models/local-vllm/)（英語）
 
-- [OpenAI-compatible API examples](https://microsoft.github.io/autogen/stable/reference/python/autogen_ext.models.openai.html#autogen_ext.models.openai.OpenAIChatCompletionClient)
+- [OpenAI 互換 API の例](https://microsoft.github.io/autogen/stable/reference/python/autogen_ext.models.openai.html#autogen_ext.models.openai.OpenAIChatCompletionClient)（英語）

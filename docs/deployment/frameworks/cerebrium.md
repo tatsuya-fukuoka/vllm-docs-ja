@@ -1,25 +1,25 @@
-# Cerebrium
+# Cerebrium { #cerebrium }
 
 <p align="center">
     <img src="https://i.ibb.co/hHcScTT/Screenshot-2024-06-13-at-10-14-54.png" alt="vLLM_plus_cerebrium"/>
 </p>
 
-vLLM can be run on a cloud based GPU machine with [Cerebrium](https://www.cerebrium.ai/), a serverless AI infrastructure platform that makes it easier for companies to build and deploy AI based applications.
+vLLM は、AI アプリケーションの構築とデプロイを容易にするサーバーレスの AI インフラプラットフォーム [Cerebrium](https://www.cerebrium.ai/) を使って、クラウドの GPU マシン上で実行できます。
 
-To install the Cerebrium client, run:
+Cerebrium のクライアントをインストールするには次を実行します。
 
 ```bash
 pip install cerebrium
 cerebrium login
 ```
 
-Next, create your Cerebrium project, run:
+次に、Cerebrium のプロジェクトを作成します。
 
 ```bash
 cerebrium init vllm-project
 ```
 
-Next, to install the required packages, add the following to your cerebrium.toml:
+次に、必要なパッケージをインストールするため、cerebrium.toml に以下を追加します。
 
 ```toml
 [cerebrium.deployment]
@@ -29,7 +29,7 @@ docker_base_image_url = "nvidia/cuda:12.1.1-runtime-ubuntu22.04"
 vllm = "latest"
 ```
 
-Next, let us add our code to handle inference for the LLM of your choice (`mistralai/Mistral-7B-Instruct-v0.1` for this example), add the following code to your `main.py`:
+続いて、任意の LLM（この例では `mistralai/Mistral-7B-Instruct-v0.1`）の推論を行うコードを `main.py` に追加します。
 
 ??? code
 
@@ -53,15 +53,15 @@ Next, let us add our code to handle inference for the LLM of your choice (`mistr
         return {"results": results}
     ```
 
-Then, run the following code to deploy it to the cloud:
+そのうえで、次のコマンドを実行してクラウドにデプロイします。
 
 ```bash
 cerebrium deploy
 ```
 
-If successful, you should be returned a CURL command that you can call inference against. Just remember to end the url with the function name you are calling (in our case `/run`)
+成功すると、推論を呼び出すための curl コマンドが返されます。URL の末尾には呼び出す関数名（この例では `/run`）を付ける点に注意してください。
 
-??? console "Command"
+??? console "コマンド"
 
     ```bash
     curl -X POST https://api.cortex.cerebrium.ai/v4/p-xxxxxx/vllm/run \
@@ -77,9 +77,9 @@ If successful, you should be returned a CURL command that you can call inference
     }'
     ```
 
-You should get a response like:
+次のようなレスポンスが返ります。
 
-??? console "Response"
+??? console "レスポンス"
 
     ```json
     {
@@ -108,4 +108,4 @@ You should get a response like:
     }
     ```
 
-You now have an autoscaling endpoint where you only pay for the compute you use!
+これで、使った分の計算リソースにだけ課金される、オートスケーリング対応のエンドポイントが手に入りました。
