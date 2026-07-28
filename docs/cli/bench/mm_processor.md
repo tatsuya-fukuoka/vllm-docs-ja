@@ -1,18 +1,17 @@
-# vllm bench mm-processor
+# vllm bench mm-processor { #vllm-bench-mm-processor }
 
-## Overview
+## 概要 { #overview }
 
-`vllm bench mm-processor` profiles the multimodal input processor pipeline of
-vision-language models. It measures per-stage latency from the HuggingFace
-processor through to the encoder forward pass, helping you identify
-preprocessing bottlenecks and understand how different image resolutions or
-item counts affect end-to-end request time.
+`vllm bench mm-processor` は、視覚言語モデルのマルチモーダル入力プロセッサのパイプラインを
+プロファイリングします。HuggingFace のプロセッサからエンコーダーの forward までを段階ごとに
+計測するため、前処理のボトルネックを特定したり、画像の解像度や項目数の違いが
+リクエスト全体の時間にどう影響するかを把握したりできます。
 
-The benchmark supports two data sources: synthetic random multimodal inputs
-(`random-mm`) and HuggingFace datasets (`hf`). Warmup requests are run before
-measurement to ensure stable results.
+データソースは 2 種類サポートしています。合成のランダムなマルチモーダル入力 (`random-mm`) と
+HuggingFace のデータセット (`hf`) です。計測前にウォームアップのリクエストを実行し、
+結果が安定するようにしています。
 
-## Quick Start
+## クイックスタート { #quick-start }
 
 ```bash
 vllm bench mm-processor \
@@ -26,30 +25,30 @@ vllm bench mm-processor \
   --random-mm-bucket-config '{(256, 256, 1): 0.7, (720, 1280, 1): 0.3}'
 ```
 
-## Measured Stages
+## 計測される段階 { #measured-stages }
 
-| Stage | Description |
+| 段階 | 説明 |
 | ----- | ----------- |
-| `get_mm_hashes_secs` | Time spent hashing multimodal inputs |
-| `get_cache_missing_items_secs` | Time spent looking up the processor cache |
-| `apply_hf_processor_secs` | Time spent in the HuggingFace processor |
-| `merge_mm_kwargs_secs` | Time spent merging multimodal kwargs |
-| `apply_prompt_updates_secs` | Time spent updating prompt tokens |
-| `preprocessor_total_secs` | Total preprocessing time |
-| `encoder_forward_secs` | Time spent in the encoder model forward pass |
-| `num_encoder_calls` | Number of encoder invocations per request |
+| `get_mm_hashes_secs` | マルチモーダル入力のハッシュ計算にかかった時間 |
+| `get_cache_missing_items_secs` | プロセッサキャッシュの参照にかかった時間 |
+| `apply_hf_processor_secs` | HuggingFace のプロセッサでの処理時間 |
+| `merge_mm_kwargs_secs` | マルチモーダルの kwargs のマージにかかった時間 |
+| `apply_prompt_updates_secs` | プロンプトトークンの更新にかかった時間 |
+| `preprocessor_total_secs` | 前処理の合計時間 |
+| `encoder_forward_secs` | エンコーダーモデルの forward にかかった時間 |
+| `num_encoder_calls` | リクエストあたりのエンコーダー呼び出し回数 |
 
-The benchmark also reports end-to-end latency (TTFT + decode time) per
-request. Use `--metric-percentiles` to select which percentiles to report
-(default: p99) and `--output-json` to save results.
+ベンチマークはリクエストごとのエンドツーエンドのレイテンシ（TTFT + Decode 時間）も出力します。
+報告するパーセンタイルは `--metric-percentiles` で選択でき（既定は p99）、
+`--output-json` で結果を保存できます。
 
-For more examples (HF datasets, warmup, JSON output), see
-[Benchmarking CLI — Multimodal Processor Benchmark](../../benchmarking/cli.md#multimodal-processor-benchmark).
+HF データセット、ウォームアップ、JSON 出力などのより詳しい例は
+[ベンチマーク CLI — マルチモーダルプロセッサのベンチマーク](../../benchmarking/cli.md#multimodal-processor-benchmark)を参照してください。
 
-## JSON CLI Arguments
+## JSON 形式の CLI 引数 { #json-cli-arguments }
 
 --8<-- "docs/cli/json_tip.inc.md"
 
-## Arguments
+## 引数 { #arguments }
 
 --8<-- "docs/generated/argparse/bench_mm_processor.inc.md"

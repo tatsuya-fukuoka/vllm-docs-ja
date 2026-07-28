@@ -1,40 +1,40 @@
-# vLLM CLI Guide
+# vLLM CLI ガイド { #vllm-cli-guide }
 
-The vllm command-line tool is used to run and manage vLLM models. You can start by viewing the help message with:
+vllm コマンドラインツールは、vLLM のモデルを実行・管理するために使います。まずはヘルプメッセージを表示してみましょう。
 
 ```bash
 vllm --help
 ```
 
-Available Commands:
+利用できるコマンド:
 
 ```bash
 vllm {chat,complete,serve,launch,bench,collect-env,run-batch}
 ```
 
-## serve
+## serve { #serve }
 
-Starts the vLLM OpenAI Compatible API server.
+vLLM の OpenAI 互換 API サーバーを起動します。
 
-Start with a model:
+モデルを指定して起動する:
 
 ```bash
 vllm serve meta-llama/Llama-2-7b-hf
 ```
 
-Specify the port:
+ポートを指定する:
 
 ```bash
 vllm serve meta-llama/Llama-2-7b-hf --port 8100
 ```
 
-Serve over a Unix domain socket:
+Unix ドメインソケットでサービングする:
 
 ```bash
 vllm serve meta-llama/Llama-2-7b-hf --uds /tmp/vllm.sock
 ```
 
-Check with --help for more options:
+その他のオプションは --help で確認できます。
 
 ```bash
 # To list all flags
@@ -50,26 +50,26 @@ vllm serve --help=max-num-seqs
 vllm serve --help=max
 ```
 
-!!! tip "Human-readable integer arguments"
-    Many integer arguments accept human-readable suffixes for convenience. For example:
+!!! tip "人が読みやすい整数の指定"
+    多くの整数の引数では、利便性のために人が読みやすい接尾辞を指定できます。例:
 
-    - `1k` = 1,000 (decimal kilo)
-    - `1K` = 1,024 (binary kibibyte)
-    - `1m` = 1,000,000 (decimal mega)
-    - `1M` = 1,048,576 (binary mebibyte)
-    - `1g` / `1G` = 1 billion / 1 gibibyte
-    - `1t` / `1T` = 1 trillion / 1 tebibyte
+    - `1k` = 1,000（10 進のキロ）
+    - `1K` = 1,024（2 進のキビ）
+    - `1m` = 1,000,000（10 進のメガ）
+    - `1M` = 1,048,576（2 進のメビ）
+    - `1g` / `1G` = 10 億 / 1 ギビ
+    - `1t` / `1T` = 1 兆 / 1 テビ
     
-    Decimal suffixes (`k`, `m`, `g`, `t`) also accept floating point: `25.6k` = 25,600.
-    Binary suffixes (`K`, `M`, `G`, `T`) require integers: `32K` = 32,768.
+    10 進の接尾辞（`k`、`m`、`g`、`t`）は小数も受け付けます: `25.6k` = 25,600。
+    2 進の接尾辞（`K`、`M`、`G`、`T`）は整数のみです: `32K` = 32,768。
     
-    Supported arguments include: `--max-model-len`, `--max-num-batched-tokens`, `--max-num-scheduled-tokens`, `--kv-cache-memory-bytes`, `--safetensors-prefetch-block-size`.
+    対応する引数には `--max-model-len`、`--max-num-batched-tokens`、`--max-num-scheduled-tokens`、`--kv-cache-memory-bytes`、`--safetensors-prefetch-block-size` などがあります。
 
-See [vllm serve](./serve.md) for the full reference of all available arguments.
+指定できる引数の完全な一覧は [vllm serve](./serve.md) を参照してください。
 
-## launch
+## launch { #launch }
 
-Launch individual vLLM components.
+vLLM の個々のコンポーネントを起動します。
 
 ```bash
 # Launch the rendering server component
@@ -79,12 +79,11 @@ vllm launch render meta-llama/Llama-3.2-1B-Instruct
 vllm launch render --help=all
 ```
 
-See [vllm launch render](./launch/render.md) for the current launch
-component reference.
+現在の launch コンポーネントのリファレンスは [vllm launch render](./launch/render.md) を参照してください。
 
-## chat
+## chat { #chat }
 
-Generate chat completions via the running API server.
+起動中の API サーバー経由でチャットの応答を生成します。
 
 ```bash
 # Directly connect to localhost API without arguments
@@ -100,11 +99,11 @@ vllm chat --quick "hi"
 vllm chat --stats
 ```
 
-See [vllm chat](./chat.md) for the full reference of all available arguments.
+指定できる引数の完全な一覧は [vllm chat](./chat.md) を参照してください。
 
-## complete
+## complete { #complete }
 
-Generate text completions based on the given prompt via the running API server.
+起動中の API サーバー経由で、与えられたプロンプトに対するテキスト補完を生成します。
 
 ```bash
 # Directly connect to localhost API without arguments
@@ -120,23 +119,23 @@ vllm complete --quick "The future of AI is"
 vllm complete --stats
 ```
 
-See [vllm complete](./complete.md) for the full reference of all available arguments.
+指定できる引数の完全な一覧は [vllm complete](./complete.md) を参照してください。
 
-## bench
+## bench { #bench }
 
-Run benchmark tests for latency online serving throughput and offline inference throughput.
+レイテンシ、オンラインサービングのスループット、オフライン推論のスループットのベンチマークを実行します。
 
-To use benchmark commands, please install with extra dependencies using `pip install vllm[bench]`.
+ベンチマークのコマンドを使うには、`pip install vllm[bench]` で追加の依存関係をインストールしてください。
 
-Available Commands:
+利用できるコマンド:
 
 ```bash
 vllm bench {latency, serve, throughput}
 ```
 
-### latency
+### latency { #latency }
 
-Benchmark the latency of a single batch of requests.
+1 バッチ分のリクエストのレイテンシを計測します。
 
 ```bash
 vllm bench latency \
@@ -147,11 +146,11 @@ vllm bench latency \
     --load-format dummy
 ```
 
-See [vllm bench latency](./bench/latency.md) for the full reference of all available arguments.
+指定できる引数の完全な一覧は [vllm bench latency](./bench/latency.md) を参照してください。
 
-### serve
+### serve { #serve }
 
-Benchmark the online serving throughput.
+オンラインサービングのスループットを計測します。
 
 ```bash
 vllm bench serve \
@@ -163,11 +162,11 @@ vllm bench serve \
     --num-prompts  5
 ```
 
-See [vllm bench serve](./bench/serve.md) for the full reference of all available arguments.
+指定できる引数の完全な一覧は [vllm bench serve](./bench/serve.md) を参照してください。
 
-### throughput
+### throughput { #throughput }
 
-Benchmark offline inference throughput.
+オフライン推論のスループットを計測します。
 
 ```bash
 vllm bench throughput \
@@ -178,21 +177,21 @@ vllm bench throughput \
     --load-format dummy
 ```
 
-See [vllm bench throughput](./bench/throughput.md) for the full reference of all available arguments.
+指定できる引数の完全な一覧は [vllm bench throughput](./bench/throughput.md) を参照してください。
 
-## collect-env
+## collect-env { #collect-env }
 
-Start collecting environment information.
+環境情報の収集を開始します。
 
 ```bash
 vllm collect-env
 ```
 
-## run-batch
+## run-batch { #run-batch }
 
-Run batch prompts and write results to file.
+プロンプトをバッチで実行し、結果をファイルに書き出します。
 
-Running with a local file:
+ローカルのファイルを使う場合:
 
 ```bash
 vllm run-batch \
@@ -201,7 +200,7 @@ vllm run-batch \
     --model meta-llama/Meta-Llama-3-8B-Instruct
 ```
 
-Using remote file:
+リモートのファイルを使う場合:
 
 ```bash
 vllm run-batch \
@@ -210,11 +209,11 @@ vllm run-batch \
     --model meta-llama/Meta-Llama-3-8B-Instruct
 ```
 
-See [vllm run-batch](./run-batch.md) for the full reference of all available arguments.
+指定できる引数の完全な一覧は [vllm run-batch](./run-batch.md) を参照してください。
 
-## More Help
+## さらに詳しく { #more-help }
 
-For detailed options of any subcommand, use:
+各サブコマンドの詳細なオプションは次で確認できます。
 
 ```bash
 vllm <subcommand> --help

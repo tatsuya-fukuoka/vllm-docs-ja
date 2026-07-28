@@ -1,5 +1,5 @@
-# vllm complete
+# vllm complete { #vllm-complete }
 
-## Arguments
+## 引数 { #arguments }
 
 --8<-- "docs/generated/argparse/complete.inc.md"

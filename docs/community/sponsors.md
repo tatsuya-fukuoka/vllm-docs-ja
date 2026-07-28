@@ -1,5 +1,5 @@
-# Sponsors
+# スポンサー { #sponsors }
 
-vLLM is a community project. Our compute resources for development and testing are supported by the following organizations. Thank you for your support!
+vLLM はコミュニティによるプロジェクトです。開発とテストのための計算リソースは、以下の組織にご支援いただいています。ご支援ありがとうございます。
 
-Please visit [vllm.ai/#sponsors](https://vllm.ai/#sponsors) to learn more.
+詳細は [vllm.ai/#sponsors](https://vllm.ai/#sponsors)（英語）を参照してください。

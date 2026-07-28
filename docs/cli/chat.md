@@ -1,5 +1,5 @@
-# vllm chat
+# vllm chat { #vllm-chat }
 
-## Arguments
+## 引数 { #arguments }
 
 --8<-- "docs/generated/argparse/chat.inc.md"

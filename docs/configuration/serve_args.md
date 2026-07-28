@@ -1,18 +1,18 @@
-# Server Arguments
+# サーバー引数 { #server-arguments }
 
-The `vllm serve` command is used to launch the OpenAI-compatible server.
+`vllm serve` コマンドは OpenAI 互換サーバーを起動するために使います。
 
-## CLI Arguments
+## CLI 引数 { #cli-arguments }
 
-The `vllm serve` command is used to launch the OpenAI-compatible server.
-To see the available options, take a look at the [CLI Reference](../cli/README.md)!
+`vllm serve` コマンドは OpenAI 互換サーバーを起動するために使います。
+指定できるオプションは [CLI リファレンス](../cli/README.md)を参照してください。
 
-## Configuration file
+## 設定ファイル { #configuration-file }
 
-You can load CLI arguments via a [YAML](https://yaml.org/) config file.
-The argument names must be the long form of those outlined [above](serve_args.md).
+CLI 引数は [YAML](https://yaml.org/) の設定ファイルから読み込むこともできます。
+引数名は[上記](serve_args.md)の長い形式（ロングオプション）で記述する必要があります。
 
-For example:
+例:
 
 ```yaml
 # config.yaml
@@ -23,13 +23,13 @@ port: 6379
 uvicorn-log-level: "info"
 ```
 
-To use the above config file:
+上記の設定ファイルを使うには次のようにします。
 
 ```bash
 vllm serve --config config.yaml
 ```
 
 !!! note
-    In case an argument is supplied simultaneously using command line and the config file, the value from the command line will take precedence.
-    The order of priorities is `command line > config file values > defaults`.
-    e.g. `vllm serve SOME_MODEL --config config.yaml`, SOME_MODEL takes precedence over `model` in config file.
+    同じ引数がコマンドラインと設定ファイルの両方で指定された場合は、コマンドラインの値が優先されます。
+    優先順位は `コマンドライン > 設定ファイルの値 > 既定値` です。
+    たとえば `vllm serve SOME_MODEL --config config.yaml` では、設定ファイルの `model` より SOME_MODEL が優先されます。

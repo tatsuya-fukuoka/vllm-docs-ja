@@ -1,14 +1,14 @@
-# Usage Stats Collection
+# 利用統計の収集 { #usage-stats-collection }
 
-vLLM collects anonymous usage data by default to help the engineering team better understand which hardware and model configurations are widely used. This data allows them to prioritize their efforts on the most common workloads. The collected data is transparent, does not contain any sensitive information.
+vLLM は既定で匿名の利用データを収集しています。これは、どのハードウェアやモデル構成が広く使われているかを開発チームが把握し、もっとも一般的なワークロードに優先的に取り組めるようにするためです。収集内容は公開されており、機微な情報は含まれません。
 
-A subset of the data, after cleaning and aggregation, will be publicly released for the community's benefit. For example, you can see the 2024 usage report [here](https://2024.vllm.ai).
+データの一部は、整形・集計したうえでコミュニティのために公開されます。たとえば 2024 年の利用レポートは[こちら](https://2024.vllm.ai)（英語）で見られます。
 
-## What data is collected?
+## どのようなデータが収集されるか { #what-data-is-collected }
 
-The list of data collected by the latest version of vLLM can be found here: [vllm/usage/usage_lib.py](../../vllm/usage/usage_lib.py)
+最新バージョンの vLLM が収集するデータの一覧はこちらにあります: [vllm/usage/usage_lib.py](../../vllm/usage/usage_lib.py)
 
-Here is an example as of v0.4.0:
+v0.4.0 時点の例を示します。
 
 ??? console "Output"
 
@@ -43,15 +43,15 @@ Here is an example as of v0.4.0:
     }
     ```
 
-You can preview the collected data by running the following command:
+収集されたデータは次のコマンドで確認できます。
 
 ```bash
 tail ~/.config/vllm/usage_stats.json
 ```
 
-## Opting out
+## 収集を停止する { #opting-out }
 
-You can opt out of usage stats collection by setting the `VLLM_NO_USAGE_STATS` or `DO_NOT_TRACK` environment variable, or by creating a `~/.config/vllm/do_not_track` file:
+環境変数 `VLLM_NO_USAGE_STATS` または `DO_NOT_TRACK` を設定するか、`~/.config/vllm/do_not_track` ファイルを作成すると、利用統計の収集を停止できます。
 
 ```bash
 # Any of the following methods can disable usage stats collection

@@ -33,93 +33,129 @@
       "upstream_sha": "4342cc2a183802d9"
     },
     "cli/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "c7b13600660be158",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "c7b13600660be158"
     },
     "cli/bench/latency.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4a9076859ae87404",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "4a9076859ae87404"
     },
     "cli/bench/mm_processor.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "519eb3bab3171ac9",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "519eb3bab3171ac9"
     },
     "cli/bench/serve.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "143c6e8347871b41",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "143c6e8347871b41"
     },
     "cli/bench/sweep/plot.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4294fbc448cd91d2",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "4294fbc448cd91d2"
     },
     "cli/bench/sweep/plot_pareto.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "784cbd0fafd2ca1a",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "784cbd0fafd2ca1a"
     },
     "cli/bench/sweep/serve.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "b1c15c9921933f0f",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "b1c15c9921933f0f"
     },
     "cli/bench/sweep/serve_workload.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "eea798b02217417e",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "eea798b02217417e"
     },
     "cli/bench/throughput.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "f3689e3f8f49a798",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "f3689e3f8f49a798"
     },
     "cli/chat.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "3fa7e79da91da6c8",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "3fa7e79da91da6c8"
     },
     "cli/complete.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d9ede99a7f15453b",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "d9ede99a7f15453b"
     },
     "cli/json_tip.inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "dcd9e0230d756184",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "dcd9e0230d756184"
     },
     "cli/launch/render.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "48ad9a226d55c122",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "48ad9a226d55c122"
     },
     "cli/run-batch.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "8f31db9e48d05da6",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "8f31db9e48d05da6"
     },
     "cli/serve.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "a98a678ea21acd4e",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "a98a678ea21acd4e"
     },
     "community/contact_us.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "6abc6f474ee858e1",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "6abc6f474ee858e1"
     },
     "community/meetups.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "7d4ecff5912a4afc",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "7d4ecff5912a4afc"
     },
     "community/sponsors.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d88f4f471fb8bab6",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "d88f4f471fb8bab6"
     },
     "configuration/README.md": {
@@ -137,18 +173,24 @@
       "upstream_sha": "72dafb7a2e4b100e"
     },
     "configuration/engine_args.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "37e570c7addf971f",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "37e570c7addf971f"
     },
     "configuration/env_vars.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4cd1d5bdec7bb2bc",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "4cd1d5bdec7bb2bc"
     },
     "configuration/model_resolution.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "5e455f909942a3d0",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "5e455f909942a3d0"
     },
     "configuration/optimization.md": {
@@ -159,8 +201,10 @@
       "upstream_sha": "86ca9cde5064d129"
     },
     "configuration/serve_args.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "fcfa8185d671493c",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "fcfa8185d671493c"
     },
     "contributing/README.md": {
@@ -1144,13 +1188,17 @@
       "upstream_sha": "dc0fe41b0861fbf3"
     },
     "usage/metrics.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "11b6f6609ecb9f78",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "11b6f6609ecb9f78"
     },
     "usage/reproducibility.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "9fdae4b7979a8d06",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "9fdae4b7979a8d06"
     },
     "usage/security.md": {
@@ -1166,8 +1214,10 @@
       "upstream_sha": "966b8aa6fde411af"
     },
     "usage/usage_stats.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "64abf26ed4a35f83",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "64abf26ed4a35f83"
     },
     "usage/v1_guide.md": {
