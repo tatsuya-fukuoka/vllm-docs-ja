@@ -697,8 +697,10 @@
       "upstream_sha": "ebe506231f06503b"
     },
     "features/context_extension.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "3dc4a086bb028df6",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "3dc4a086bb028df6"
     },
     "features/custom_arguments.md": {
@@ -724,8 +726,10 @@
       "upstream_sha": "925d6b629de17495"
     },
     "features/index_cache.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "ce06dcccc9342215",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "ce06dcccc9342215"
     },
     "features/interleaved_thinking.md": {
@@ -902,8 +906,10 @@
       "upstream_sha": "6fc3b6564089697f"
     },
     "features/speculative_decoding/eagle.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "7492f3892f169135",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "7492f3892f169135"
     },
     "features/speculative_decoding/extract_hidden_states.md": {
@@ -912,13 +918,17 @@
       "upstream_sha": "381923f15317cb4b"
     },
     "features/speculative_decoding/mlp.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4ae425ff87d9bb31",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "4ae425ff87d9bb31"
     },
     "features/speculative_decoding/mtp.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "eae02c10ccb05901",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "eae02c10ccb05901"
     },
     "features/speculative_decoding/n_gram.md": {
@@ -936,8 +946,10 @@
       "upstream_sha": "5d39b6a14586af98"
     },
     "features/speculative_decoding/speculators.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "42a498ee9c4b9f81",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "42a498ee9c4b9f81"
     },
     "features/speculative_decoding/suffix.md": {

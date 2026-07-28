@@ -1,21 +1,19 @@
-# MTP (Multi-Token Prediction)
+# MTP（マルチトークン予測） { #mtp-multi-token-prediction }
 
-MTP is a speculative decoding method where the target model includes native
-multi-token prediction capability. Unlike draft-model-based methods, you do not
-need to provide a separate draft model.
+MTP は、ターゲットモデル自身がマルチトークン予測の機能を備えている投機的デコーディングの手法です。
+ドラフトモデルを使う手法と異なり、別途ドラフトモデルを用意する必要がありません。
 
-MTP is useful when:
+MTP は次のような場合に有効です。
 
-- Your model natively supports MTP.
-- You want model-based speculative decoding with minimal extra configuration.
+- 使用するモデルが MTP をネイティブにサポートしている。
+- 追加の設定を最小限に抑えて、モデルベースの投機的デコーディングを使いたい。
 
-## Gemma 4 Assistant Models
+## Gemma 4 のアシスタントモデル { #gemma-4-assistant-models }
 
-Gemma 4 assistant checkpoints use vLLM's Gemma 4 MTP path. They are not generic
-draft models, even though they are passed through the `model` field in
-`--speculative-config`.
+Gemma 4 のアシスタントのチェックポイントは、vLLM の Gemma 4 MTP の経路を使います。
+`--speculative-config` の `model` フィールドで渡しますが、汎用のドラフトモデルではありません。
 
-Use `"method": "mtp"` when serving Gemma 4 with an assistant checkpoint:
+アシスタントのチェックポイントを使って Gemma 4 をサービングする場合は `"method": "mtp"` を指定します。
 
 ```bash
 vllm serve google/gemma-4-E2B-it \
@@ -24,18 +22,19 @@ vllm serve google/gemma-4-E2B-it \
     --speculative-config '{"method":"mtp","model":"gg-hf-am/gemma-4-E2B-it-assistant","num_speculative_tokens":1}'
 ```
 
-The E2B, E4B, 12B, 26B-A4B, and 31B Gemma 4 IT assistant checkpoints are supported.
-Tower-based variants use `model_type: gemma4_assistant` and the encoder-free
-Gemma 4 Unified variant (12B) uses `model_type: gemma4_unified_assistant`.
-vLLM maps both to `Gemma4MTPModel` internally and wires the assistant layers
-to share KV cache with the target model.
+E2B、E4B、12B、26B-A4B、31B の Gemma 4 IT アシスタントのチェックポイントに対応しています。
+タワー型のものは `model_type: gemma4_assistant`、エンコーダーを持たない
+Gemma 4 Unified（12B）は `model_type: gemma4_unified_assistant` を使います。
+vLLM は内部でどちらも `Gemma4MTPModel` に対応付け、アシスタントの層が
+ターゲットモデルと KV キャッシュを共有するよう接続します。
 
-If an older vLLM release logs `SpeculativeConfig(method='draft_model', ...)`
-for a Gemma 4 assistant checkpoint, that release is treating the assistant as a
-generic draft model and may fail during initialization for multimodal Gemma 4
-targets. Upgrade to a version with Gemma 4 MTP support instead.
+古い vLLM で Gemma 4 のアシスタントのチェックポイントに対して
+`SpeculativeConfig(method='draft_model', ...)` とログに出る場合、そのバージョンは
+アシスタントを汎用のドラフトモデルとして扱っており、マルチモーダルの Gemma 4 を
+ターゲットにすると初期化に失敗することがあります。Gemma 4 の MTP に対応した
+バージョンへアップグレードしてください。
 
-## Offline Example
+## オフラインの例 { #offline-example }
 
 ```python
 from vllm import LLM, SamplingParams
@@ -59,7 +58,7 @@ for output in outputs:
     print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
 ```
 
-## Online Example
+## オンラインの例 { #online-example }
 
 ```bash
 vllm serve XiaomiMiMo/MiMo-7B-Base \
@@ -67,10 +66,10 @@ vllm serve XiaomiMiMo/MiMo-7B-Base \
     --speculative-config '{"method":"mtp","num_speculative_tokens":1}'
 ```
 
-## Notes
+## 注意点 { #notes }
 
-- MTP only works for model families that support MTP in vLLM.
-- `num_speculative_tokens` controls speculative depth. A small value like `1`
-  is a good default to start with.
-- If your model does not support MTP, use another method such as EAGLE or draft
-  model speculation.
+- MTP は、vLLM で MTP に対応しているモデルファミリーでのみ動作します。
+- `num_speculative_tokens` は投機の深さを制御します。まずは `1` のような
+  小さい値から始めるとよいでしょう。
+- モデルが MTP に対応していない場合は、EAGLE やドラフトモデルによる投機など
+  別の手法を使ってください。
