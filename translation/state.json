@@ -730,8 +730,10 @@
       "upstream_sha": "f6a8e87ade51aaf4"
     },
     "features/disagg_encoder.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "964f03b4a4f13c74",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "964f03b4a4f13c74"
     },
     "features/disagg_prefill.md": {
@@ -747,8 +749,10 @@
       "upstream_sha": "ce06dcccc9342215"
     },
     "features/interleaved_thinking.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "592f52ddb9dd73f3",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "592f52ddb9dd73f3"
     },
     "features/kv_offloading_usage.md": {
@@ -794,13 +798,17 @@
       "upstream_sha": "d5004353dd9935f2"
     },
     "features/per_request_metrics.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "b0c36fb19695e6e5",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "b0c36fb19695e6e5"
     },
     "features/prompt_embeds.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4483c6d4a906b03d",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "4483c6d4a906b03d"
     },
     "features/quantization/README.md": {

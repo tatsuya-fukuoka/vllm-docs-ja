@@ -1,29 +1,25 @@
-# Per-Request Metrics
+# リクエストごとのメトリクス { #per-request-metrics }
 
-vLLM can return per-request timing metrics directly in API responses.
-This is useful for billing, SLA monitoring, and latency analysis at the
-individual request level, as a complement to the server-aggregated Prometheus
-metrics exposed at `/metrics`.
+vLLM は、リクエストごとのタイミングに関するメトリクスを API レスポンスに直接含めて返せます。これは、`/metrics` で公開されるサーバー全体を集約した Prometheus メトリクスを補完するもので、課金や SLA モニタリング、個々のリクエスト単位のレイテンシ分析に役立ちます。
 
-## Enabling
+## 有効化 { #enabling }
 
-Start the server with `--enable-per-request-metrics`:
+`--enable-per-request-metrics` を付けてサーバーを起動します。
 
 ```bash
 vllm serve meta-llama/Llama-3.1-8B-Instruct --enable-per-request-metrics
 ```
 
-When this flag is set, supported API responses include metrics for each
-attributable request.
+このフラグを指定すると、対応する API のレスポンスに、対象となる各リクエストのメトリクスが含まれます。
 
 !!! note
-    At high concurrency, enabling per-request metrics computation may introduce
-    non-negligible CPU overhead. Benchmark your specific workload to evaluate the
-    impact before enabling in production.
+    高い並行度のもとでは、リクエストごとのメトリクス計算を有効にすると無視できない
+    CPU オーバーヘッドが生じる場合があります。本番で有効にする前に、実際のワークロードで
+    ベンチマークを取って影響を評価してください。
 
-## Response Format
+## レスポンスの形式 { #response-format }
 
-When per-request metrics are enabled, the response includes a `metrics` object:
+リクエストごとのメトリクスを有効にすると、レスポンスに `metrics` オブジェクトが含まれます。
 
 ```json
 {
@@ -46,29 +42,27 @@ When per-request metrics are enabled, the response includes a `metrics` object:
 }
 ```
 
-| Field | Description |
+| フィールド | 説明 |
 | --- | --- |
-| `time_to_first_token_ms` | Time from when the request was scheduled until the first output token was generated (TTFT). |
-| `generation_time_ms` | Decode time: time from the first output token to the last output token. Excludes both queue wait and prefill/TTFT. |
-| `queue_time_ms` | Time the request spent waiting in the scheduler queue before processing began. |
-| `mean_itl_ms` | Mean inter-token latency (average time between successive output tokens) during the decode phase. `null` for single-token responses. |
-| `tokens_per_second` | Overall output token throughput: all generated tokens over the inference interval (scheduling to last output token). Unlike `generation_time_ms`, this includes the prefill phase, so it reflects end-to-end generation speed rather than pure decode speed. |
+| `time_to_first_token_ms` | リクエストがスケジュールされてから最初の出力トークンが生成されるまでの時間（TTFT）。 |
+| `generation_time_ms` | デコード時間。最初の出力トークンから最後の出力トークンまでの時間。キューでの待ち時間とプレフィル / TTFT はいずれも含みません。 |
+| `queue_time_ms` | 処理が始まるまでにリクエストがスケジューラのキューで待った時間。 |
+| `mean_itl_ms` | デコードフェーズにおける平均トークン間レイテンシ（連続する出力トークンの平均間隔）。出力が 1 トークンのみの場合は `null`。 |
+| `tokens_per_second` | 出力トークンの全体スループット。推論区間（スケジュールから最後の出力トークンまで）における全生成トークン数を基準にします。`generation_time_ms` とは異なりプレフィルフェーズも含むため、純粋なデコード速度ではなくエンドツーエンドの生成速度を表します。 |
 
-All fields are `null` if the underlying timing data is not available for that
-request.
+そのリクエストについて元となるタイミングデータが取得できない場合、すべてのフィールドは `null` になります。
 
 !!! note
-    Timing metrics describe a single generation stream, so they are only
-    returned when the request maps to exactly one. They are suppressed (the
-    `metrics` object is `null`) for requests with `n > 1`, because the
-    underlying timing data reflects only one of the `n` sequences and cannot be
-    accurately attributed to the request as a whole. Token usage
-    (`prompt_tokens`, `completion_tokens`) remains accurate in these cases.
-    Per-request metrics also require server-side statistics logging, which is
-    on by default. vLLM rejects `--enable-per-request-metrics` when
-    `--disable-log-stats` is also set.
+    タイミングのメトリクスは 1 本の生成ストリームを表すため、リクエストがちょうど 1 本に
+    対応する場合にのみ返されます。`n > 1` のリクエストでは抑制されます（`metrics`
+    オブジェクトが `null` になります）。これは、元のタイミングデータが `n` 本のシーケンスの
+    うち 1 本しか反映しておらず、リクエスト全体に正確に紐づけられないためです。この場合でも
+    トークン使用量（`prompt_tokens`、`completion_tokens`）は正確なままです。
+    また、リクエストごとのメトリクスにはサーバー側の統計ログが必要で、これは既定で有効です。
+    `--disable-log-stats` も同時に指定されている場合、vLLM は
+    `--enable-per-request-metrics` を受け付けません。
 
-## Example Request
+## リクエストの例 { #example-request }
 
 === "Non-streaming"
 
@@ -88,12 +82,12 @@ request.
 
 === "Streaming"
 
-    In streaming responses, metrics are attached to the final usage chunk (the
-    chunk sent after all content chunks). That chunk is only emitted when usage
-    reporting is enabled with `stream_options.include_usage: true` or forced
-    server-side with `--enable-force-include-usage`. Without forced usage, a
-    streaming client must set `stream_options.include_usage: true` to receive
-    metrics.
+    ストリーミングのレスポンスでは、メトリクスは最後の usage チャンク（すべてのコンテンツ
+    チャンクの後に送られるチャンク）に付与されます。このチャンクは、
+    `stream_options.include_usage: true` で usage の報告を有効にするか、サーバー側で
+    `--enable-force-include-usage` によって強制した場合にのみ送出されます。強制していない
+    場合、ストリーミングのクライアントはメトリクスを受け取るために
+    `stream_options.include_usage: true` を設定する必要があります。
 
     ```python
     from openai import OpenAI
@@ -113,15 +107,10 @@ request.
             print("Metrics:", chunk.model_extra.get("metrics"))
     ```
 
-## Completions API
+## Completions API { #completions-api }
 
-Per-request metrics are also available on the `/v1/completions` endpoint using
-the same `metrics` response field. As with `n > 1`, metrics are omitted for
-requests with multiple prompts, because the timing data cannot be attributed to
-a single prompt's generation.
+リクエストごとのメトリクスは、同じ `metrics` レスポンスフィールドを使って `/v1/completions` エンドポイントでも利用できます。`n > 1` の場合と同様に、複数のプロンプトを含むリクエストではメトリクスは省略されます。タイミングデータを個々のプロンプトの生成に紐づけられないためです。
 
-## Relationship to Prometheus Metrics
+## Prometheus メトリクスとの関係 { #relationship-to-prometheus-metrics }
 
-The `metrics` response field provides per-request values for a single request.
-The `/metrics` Prometheus endpoint exposes server-level histograms (e.g.
-`vllm:time_to_first_token_seconds`) that aggregate across all requests.
+`metrics` レスポンスフィールドは、単一のリクエストについてリクエスト単位の値を提供します。一方、`/metrics` の Prometheus エンドポイントは、全リクエストにわたって集約したサーバーレベルのヒストグラム（`vllm:time_to_first_token_seconds` など）を公開します。

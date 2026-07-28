@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **132 ページ**を翻訳済みです（58.4%）。
+全 226 ページ中 **136 ページ**を翻訳済みです（60.2%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -19,14 +19,14 @@
 | 開発者ガイド | 5 | 0 | 11 | 16 |
 | デプロイ | 35 | 0 | 0 | 35 |
 | 設計ドキュメント | 1 | 0 | 28 | 29 |
-| 機能 | 24 | 0 | 28 | 52 |
+| 機能 | 28 | 0 | 24 | 52 |
 | はじめに | 5 | 0 | 8 | 13 |
 | ガバナンス | 1 | 0 | 2 | 3 |
 | モデル | 3 | 0 | 13 | 16 |
 | 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **132** | **0** | **94** | **226** |
+| **合計** | **136** | **0** | **90** | **226** |
 
 ## 翻訳済みのページ
 
@@ -102,8 +102,12 @@
 - `features/automatic_prefix_caching.md`
 - `features/context_extension.md`
 - `features/custom_arguments.md`
+- `features/disagg_encoder.md`
 - `features/index_cache.md`
+- `features/interleaved_thinking.md`
 - `features/mooncake_connector_usage.md`
+- `features/per_request_metrics.md`
+- `features/prompt_embeds.md`
 - `features/quantization/README.md`
 - `features/quantization/auto_awq.md`
 - `features/quantization/bnb.md`

@@ -1,40 +1,40 @@
-# Prompt Embedding Inputs
+# プロンプト埋め込み入力 { #prompt-embedding-inputs }
 
-This page teaches you how to pass prompt embedding inputs to vLLM.
+このページでは、vLLM にプロンプト埋め込み（prompt embedding）を入力として渡す方法を説明します。
 
-## What are prompt embeddings?
+## プロンプト埋め込みとは { #what-are-prompt-embeddings }
 
-The traditional flow of text data for a Large Language Model goes from text to token ids (via a tokenizer) then from token ids to prompt embeddings. For a traditional decoder-only model (such as meta-llama/Llama-3.1-8B-Instruct), this step of converting token ids to prompt embeddings happens via a look-up from a learned embedding matrix, but the model is not limited to processing only the embeddings corresponding to its token vocabulary.
+大規模言語モデルにおけるテキストデータの伝統的な流れは、テキストから（トークナイザーを通じて）トークン ID へ、そしてトークン ID からプロンプト埋め込みへ、というものです。従来のデコーダのみのモデル（meta-llama/Llama-3.1-8B-Instruct など）では、トークン ID をプロンプト埋め込みに変換するこのステップは、学習済みの埋め込み行列からの参照によって行われます。しかし、モデルが処理できるのは自身のトークン語彙に対応する埋め込みだけに限られるわけではありません。
 
-## Offline Inference
+## オフライン推論 { #offline-inference }
 
-To input multi-modal data, follow this schema in [vllm.inputs.EmbedsPrompt][]:
+マルチモーダルデータを入力するには、[vllm.inputs.EmbedsPrompt][] のスキーマに従います。
 
-- `prompt_embeds`: A torch tensor representing a sequence of prompt/token embeddings. This has the shape (sequence_length, hidden_size), where sequence length is the number of tokens embeddings and hidden_size is the hidden size (embedding size) of the model.
+- `prompt_embeds`: プロンプト / トークンの埋め込み列を表す torch テンソル。形状は (sequence_length, hidden_size) で、sequence_length はトークン埋め込みの数、hidden_size はモデルの隠れ層のサイズ（埋め込みサイズ）です。
 
-### Hugging Face Transformers Inputs
+### Hugging Face Transformers からの入力 { #hugging-face-transformers-inputs }
 
-You can pass prompt embeddings from Hugging Face Transformers models to the  `'prompt_embeds'` field of the prompt embedding dictionary, as shown in the following examples:
+次の例のように、Hugging Face Transformers のモデルから得たプロンプト埋め込みを、プロンプト埋め込み辞書の `'prompt_embeds'` フィールドに渡せます。
 
 [examples/features/prompt_embed/prompt_embed_offline.py](../../examples/features/prompt_embed/prompt_embed_offline.py)
 
-## Online Serving
+## オンラインサービング { #online-serving }
 
-Our OpenAI-compatible server accepts prompt embeddings inputs via both the [Completions API](https://platform.openai.com/docs/api-reference/completions) and the [Chat Completions API](https://platform.openai.com/docs/api-reference/chat). Both are enabled by the `--enable-prompt-embeds` flag in `vllm serve`.
+vLLM の OpenAI 互換サーバーは、[Completions API](https://platform.openai.com/docs/api-reference/completions) と [Chat Completions API](https://platform.openai.com/docs/api-reference/chat) の両方でプロンプト埋め込み入力を受け付けます。どちらも `vllm serve` の `--enable-prompt-embeds` フラグで有効になります。
 
-### Completions API
+### Completions API { #completions-api }
 
-Prompt embeddings inputs are added via a `'prompt_embeds'` key in the JSON request body.
+プロンプト埋め込みの入力は、JSON リクエストボディの `'prompt_embeds'` キーで追加します。
 
-When a mixture of `'prompt_embeds'` and `'prompt'` inputs are provided in a single request, the prompt embeds are always returned first.
+1 つのリクエストで `'prompt_embeds'` と `'prompt'` の入力が混在している場合、プロンプト埋め込みの結果が常に先に返されます。
 
-Prompt embeddings are passed in as base64 encoded torch tensors.
+プロンプト埋め込みは base64 エンコードされた torch テンソルとして渡します。
 
-The Completions endpoint does **not** apply a chat template to `prompt_embeds`. If the model assumes some chat template, the caller is responsible for producing embeddings for the full, already-templated prompt: apply the chat template, then embed the resulting token IDs. Anything the model would normally need (system prompt, role markers, generation prompt, etc.) must already be baked into the embedded tokens.
+Completions エンドポイントは `prompt_embeds` にチャットテンプレートを適用**しません**。モデルが何らかのチャットテンプレートを前提としている場合、テンプレート適用済みのプロンプト全体に対する埋め込みを生成するのは呼び出し側の責任です。つまり、チャットテンプレートを適用してから、その結果のトークン ID を埋め込みに変換してください。モデルが通常必要とするもの（システムプロンプト、ロールのマーカー、生成プロンプトなど）は、あらかじめ埋め込み対象のトークンに含めておく必要があります。
 
-### Chat Completions API
+### Chat Completions API { #chat-completions-api }
 
-Prompt embeddings can be included as content parts in chat messages, interleaved with text:
+プロンプト埋め込みは、チャットメッセージのコンテンツパートとしてテキストと交互に含められます。
 
 ```json
 {
@@ -57,23 +57,23 @@ Prompt embeddings can be included as content parts in chat messages, interleaved
 }
 ```
 
-Each `prompt_embeds` content part contains a `data` field with a base64-encoded `torch.Tensor` of shape `(num_tokens, hidden_size)`. Multiple `prompt_embeds` parts can appear in any message, in any position relative to text parts. The server expands each part into the correct number of placeholder tokens during chat template rendering, then splices the pre-computed embeddings into the model's input at the corresponding positions.
+各 `prompt_embeds` コンテンツパートには `data` フィールドがあり、形状 `(num_tokens, hidden_size)` の `torch.Tensor` を base64 エンコードしたものを格納します。`prompt_embeds` パートは、どのメッセージにも、テキストパートとの相対位置を問わず複数含められます。サーバーはチャットテンプレートのレンダリング時に各パートを適切な数のプレースホルダートークンへ展開し、計算済みの埋め込みを対応する位置でモデルの入力に差し込みます。
 
-Unlike the Completions API, a `prompt_embeds` content part should encode **only** the content, not a templated conversation. The server wraps the chat template around the embedded content at request time, the same way it would for a plain text `content` string. Embedding a full templated conversation here would double-apply the template and produce incorrect inputs to the model.
+Completions API とは異なり、`prompt_embeds` のコンテンツパートにはコンテンツ**のみ**をエンコードすべきで、テンプレート適用済みの会話を入れてはいけません。サーバーはリクエスト時に、埋め込まれたコンテンツの周りにチャットテンプレートを適用します。これは、プレーンテキストの `content` 文字列に対して行うのと同じ処理です。ここにテンプレート適用済みの会話全体を埋め込むと、テンプレートが二重に適用され、モデルへの入力が不正になります。
 
 !!! warning
-    The vLLM engine may crash if incorrect shape of embeddings is passed.
-    Only enable this flag for trusted users!
+    埋め込みの形状が誤っていると、vLLM エンジンがクラッシュする可能性があります。
+    このフラグは信頼できるユーザーに対してのみ有効にしてください。
 
-### Transformers Inputs via OpenAI Client
+### OpenAI クライアント経由で Transformers の入力を渡す { #transformers-inputs-via-openai-client }
 
-First, launch the OpenAI-compatible server:
+まず、OpenAI 互換サーバーを起動します。
 
 ```bash
 vllm serve meta-llama/Llama-3.2-1B-Instruct --runner generate \
   --max-model-len 4096 --enable-prompt-embeds
 ```
 
-Then, you can use the OpenAI client as follows:
+次のように OpenAI クライアントを利用できます。
 
 [examples/features/prompt_embed/prompt_embed_inference_with_openai_client.py](../../examples/features/prompt_embed/prompt_embed_inference_with_openai_client.py)

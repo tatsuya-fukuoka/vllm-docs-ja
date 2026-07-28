@@ -1,32 +1,32 @@
-# Interleaved Thinking
+# インターリーブド思考 { #interleaved-thinking }
 
-## Introduction
+## はじめに { #introduction }
 
-Interleaved thinking allows models to reason between tool calls, enabling more sophisticated decision-making after receiving tool results. This feature helps models chain multiple tool calls with reasoning steps in between and make nuanced decisions based on intermediate results.
+インターリーブド思考（interleaved thinking）を使うと、モデルはツール呼び出しの合間に推論できるようになり、ツールの実行結果を受け取ったあとでより高度な判断を下せます。この機能により、モデルは推論ステップを挟みながら複数のツール呼び出しを連鎖させ、途中の結果にもとづいて細やかな判断を行えます。
 
-Important: Interleaved thinking increases token usage and response latency. Consider your budget and performance requirements when enabling this feature.
+重要: インターリーブド思考はトークン使用量と応答レイテンシを増加させます。有効にする際は、予算と性能の要件を考慮してください。
 
-## How Interleaved Thinking Works
+## インターリーブド思考の仕組み { #how-interleaved-thinking-works }
 
-With interleaved thinking, the model can:
+インターリーブド思考では、モデルは次のことができます。
 
-- Reason about the results of a tool call before deciding what to do next
-- Chain multiple tool calls with reasoning steps in between
-- Make more nuanced decisions based on intermediate results
-- Provide transparent reasoning for its tool selection process
+- 次に何をするかを決める前に、ツール呼び出しの結果について推論する
+- 推論ステップを挟みながら複数のツール呼び出しを連鎖させる
+- 途中の結果にもとづいて、より細やかな判断を下す
+- ツールを選んだ理由を透明性のある形で示す
 
-## Supported Models
+## 対応モデル { #supported-models }
 
-vLLM currently supports the following interleaved thinking models:
+vLLM は現在、次のインターリーブド思考モデルに対応しています。
 
-| Model Series | Reasoning Parser Name |
+| モデルシリーズ | 推論パーサー名 |
 | ------------ | --------------------- |
 | moonshotai/Kimi-K2-Thinking | kimi_k2 |
 | MiniMaxAI/MiniMax-M2 | minimax_m2 |
 
-## Example Usage
+## 使用例 { #example-usage }
 
-To use interleaved thinking with tool calls, specify a model that supports this feature and enable tool calls in your chat completion request. Here's an example:
+ツール呼び出しでインターリーブド思考を使うには、この機能に対応したモデルを指定し、chat completion のリクエストでツール呼び出しを有効にします。次に例を示します。
 
 ??? code
 
@@ -115,4 +115,4 @@ To use interleaved thinking with tool calls, specify a model that supports this 
     )
     print(response_2.choices[0].message.content)
     ```
-This example demonstrates how to set up interleaved thinking with tool calls using a weather retrieval function. The model reasons about the tool results before generating the final response.
+この例では、天気を取得する関数を使って、ツール呼び出しを伴うインターリーブド思考をどう構成するかを示しています。モデルは最終的な応答を生成する前に、ツールの結果について推論します。
