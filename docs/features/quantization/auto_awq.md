@@ -1,20 +1,20 @@
-# AutoAWQ
+# AutoAWQ { #autoawq }
 
-> ⚠️ **Warning:**
-    The `AutoAWQ` library is deprecated. This functionality has been adopted by the vLLM project in [`llm-compressor`](https://github.com/vllm-project/llm-compressor/tree/main/examples/awq).
-    For the recommended quantization workflow, please see the AWQ examples in [`llm-compressor`](https://github.com/vllm-project/llm-compressor/tree/main/examples/awq). For more details on the deprecation, refer to the original [AutoAWQ repository](https://github.com/casper-hansen/AutoAWQ).
+> ⚠️ **注意:**
+    `AutoAWQ` ライブラリは非推奨です。この機能は vLLM プロジェクトの [`llm-compressor`](https://github.com/vllm-project/llm-compressor/tree/main/examples/awq) に取り込まれました。
+    推奨される量子化のワークフローは [`llm-compressor`](https://github.com/vllm-project/llm-compressor/tree/main/examples/awq) の AWQ の例を参照してください。非推奨化の詳細は元の [AutoAWQ のリポジトリ](https://github.com/casper-hansen/AutoAWQ)を参照してください。
 
-To create a new 4-bit quantized model, you can leverage [AutoAWQ](https://github.com/casper-hansen/AutoAWQ).
-Quantization reduces the model's precision from BF16/FP16 to INT4 which effectively reduces the total model memory footprint.
-The main benefits are lower latency and memory usage.
+4 ビット量子化のモデルを新たに作るには [AutoAWQ](https://github.com/casper-hansen/AutoAWQ) を利用できます。
+量子化はモデルの精度を BF16/FP16 から INT4 に落とし、モデル全体のメモリ使用量を効果的に削減します。
+主な利点はレイテンシとメモリ使用量の低減です。
 
-You can quantize your own models by installing AutoAWQ or picking one of the [6500+ models on Huggingface](https://huggingface.co/models?search=awq).
+AutoAWQ をインストールして自分のモデルを量子化することも、[Hugging Face にある 6500 以上のモデル](https://huggingface.co/models?search=awq)から選ぶこともできます。
 
 ```bash
 pip install autoawq
 ```
 
-After installing AutoAWQ, you are ready to quantize a model. Please refer to the [AutoAWQ documentation](https://casper-hansen.github.io/AutoAWQ/examples/#basic-quantization) for further details. Here is an example of how to quantize `mistralai/Mistral-7B-Instruct-v0.2`:
+AutoAWQ をインストールすると、モデルを量子化できます。詳細は [AutoAWQ のドキュメント](https://casper-hansen.github.io/AutoAWQ/examples/#basic-quantization)（英語）を参照してください。以下は `mistralai/Mistral-7B-Instruct-v0.2` を量子化する例です。
 
 ??? code
 
@@ -44,7 +44,7 @@ After installing AutoAWQ, you are ready to quantize a model. Please refer to the
     print(f'Model is quantized and saved at "{quant_path}"')
     ```
 
-To run an AWQ model with vLLM, you can use [TheBloke/Llama-2-7b-Chat-AWQ](https://huggingface.co/TheBloke/Llama-2-7b-Chat-AWQ) with the following command:
+AWQ のモデルを vLLM で実行するには、[TheBloke/Llama-2-7b-Chat-AWQ](https://huggingface.co/TheBloke/Llama-2-7b-Chat-AWQ) を次のコマンドで使えます。
 
 ```bash
 python examples/deployment/llm_engine_example.py \
@@ -52,7 +52,7 @@ python examples/deployment/llm_engine_example.py \
     --quantization auto_awq
 ```
 
-AWQ models are also supported directly through the LLM entrypoint:
+AWQ のモデルは、LLM のエントリポイントから直接利用することもできます。
 
 ??? code
 

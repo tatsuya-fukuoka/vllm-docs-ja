@@ -1,31 +1,31 @@
-# What is Layerwise (Re)loading?
+# 層単位の（再）読み込みとは { #what-is-layerwise-reloading }
 
-Layerwise reloading is the system used to handle the loading of new weight data into existing weight data destinations without triggering recompilation of the cuda graph and other runtime artifacts. This system is used to enable [QeRL](https://arxiv.org/pdf/2510.11696)-style post training flows, where full-precision trainer weights are quantized and loaded into a target vLLM instance for fast, high-exploration rollouts. The core implementation can be found in [layerwise.py](../../vllm/model_executor/model_loader/reload/layerwise.py).
+層単位の再読み込み (layerwise reloading) は、CUDA グラフなどの実行時アーティファクトの再コンパイルを引き起こさずに、既存の重みの格納先へ新しい重みデータを読み込むための仕組みです。[QeRL](https://arxiv.org/pdf/2510.11696) 形式の事後学習フローを実現するために使われます。QeRL では、全精度のトレーナーの重みを量子化して対象の vLLM インスタンスへ読み込み、高速かつ探索性の高いロールアウトを行います。中心的な実装は [layerwise.py](../../vllm/model_executor/model_loader/reload/layerwise.py) にあります。
 
 ![Layerwise](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/training/layerwise.png)
 
-## Layerwise Reloading for QeRL
+## QeRL のための層単位の再読み込み { #layerwise-reloading-for-qerl }
 
-In order to load new weights into existing weight data destinations, a weight must undergo the following operations:
+既存の重みの格納先へ新しい重みを読み込むには、重みに対して次の処理が必要です。
 
-- Transfer: weights must be transferred from trainer model to target node/device
-- Fuse: weight partitions must be fused, for example qkv/gate_up
-- Process: this typically means online quantization and kernel-specific padding or striding
-- Shard: weights must be sharded according to the selected parallelism strategy
-- Copy: weights must be copied into the existing weight data destinations
+- 転送: トレーナーのモデルから対象のノード / デバイスへ重みを転送する
+- 融合: qkv や gate_up など、分割された重みを融合する
+- 処理: 通常はオンライン量子化や、カーネル固有のパディング・ストライドの調整を指す
+- 分割: 選択した並列化戦略に従って重みを分割する
+- コピー: 既存の重みの格納先へ重みをコピーする
 
-Layerwise reloading achieves this using the following steps:
+層単位の再読み込みは、次の手順でこれを実現します。
 
-1. Weights are **transferred** from the trainer to the target (see [weight_transfer](weight_transfer/README.md))
-2. Weights loaded via `model.load_weights`, during which they are **sharded** and **fused**
-3. Weights are **processed** in an online fashion as soon as all of a layer's weights are loaded
-4. Weights are **copied** into the existing weight data destinations
+1. トレーナーから対象へ重みを**転送**します（[重み転送](weight_transfer/README.md)を参照）
+2. `model.load_weights` で重みを読み込みます。この過程で**分割**と**融合**が行われます
+3. ある層の重みがすべて読み込まれた時点で、オンラインに**処理**されます
+4. 既存の重みの格納先へ**コピー**されます
 
-For more information on implementation, see [Low Level `layerwise` API](#low-level-layerwise-api).
+実装の詳細は[低レベルの `layerwise` API](#low-level-layerwise-api) を参照してください。
 
-## Layerwise Loading with Online Quantization
+## オンライン量子化を伴う層単位の読み込み { #layerwise-loading-with-online-quantization }
 
-Online quantization refers to when a user provides full precision weights and those weights are quantized on-the-fly as they are loaded into the model. The layerwise reloading system handles this by treating online quantization as a **processing** step, which is then handled in an online way both during first-time load and during reload. A typical online quantization method implementation should look like this:
+オンライン量子化とは、利用者が全精度の重みを与え、それらをモデルへ読み込む際にその場で量子化することを指します。層単位の再読み込みの仕組みでは、オンライン量子化を**処理**のステップとして扱い、初回の読み込み時と再読み込み時の両方でオンラインに処理します。オンライン量子化の実装は通常、次のような形になります。
 
 ```python
 class Fp8PerTensorOnlineLinearMethod(LinearMethodBase):
@@ -54,15 +54,15 @@ class Fp8PerTensorOnlineLinearMethod(LinearMethodBase):
         layer._already_called_process_weights_after_loading = True
 ```
 
-## Example Usages
+## 使用例 { #example-usages }
 
-### High Level Weight Transfer API
+### 高レベルの重み転送 API { #high-level-weight-transfer-api }
 
-The layerwise reloading system is integrated with the post-training weight transfer system. To use layerwise reloading in conjunction to the weight transfer system, follow the examples found [here](../../examples/rl/). Checkpoint-format weight transfer engines (e.g. the NCCL and IPC backends) run layerwise reloading automatically inside their `start_weight_update`/`finish_weight_update` lifecycle.
+層単位の再読み込みは、事後学習の重み転送の仕組みと統合されています。重み転送と組み合わせて層単位の再読み込みを使うには、[こちら](../../examples/rl/)の例を参照してください。チェックポイント形式の重み転送エンジン（NCCL と IPC のバックエンドなど）は、`start_weight_update` / `finish_weight_update` のライフサイクルの中で層単位の再読み込みを自動的に実行します。
 
-### Mid Level `reload_weights` API
+### 中レベルの `reload_weights` API { #mid-level-reload_weights-api }
 
-Layerwise reloading is also exposed via the `reload_weights` API. This interface can be called using the following code:
+層単位の再読み込みは `reload_weights` API からも利用できます。次のコードで呼び出せます。
 
 ```python
 from vllm import LLM
@@ -71,7 +71,7 @@ llm = LLM("Qwen/Qwen3-0.6B")
 llm.collective_rpc("reload_weights")
 ```
 
-This interface also allows specifying a `weights_path` which can be used to select a checkpoint path to load from:
+このインターフェイスでは `weights_path` も指定でき、読み込み元のチェックポイントのパスを選べます。
 
 ```python
 from vllm import LLM
@@ -88,7 +88,7 @@ llm.collective_rpc("reload_weights", kwargs={"weights_path": add_path})
 llm.generate("3 4 = ")  # 7
 ```
 
-Finally, a `weights_iterator` can be provided directly. This iterator can be lazy or eagerly defined.
+さらに、`weights_iterator` を直接渡すこともできます。このイテレータは遅延評価でも即時評価でも構いません。
 
 ```python
 from vllm import LLM
@@ -99,20 +99,20 @@ llm = LLM("Qwen/Qwen3-0.6B")
 llm.collective_rpc("reload_weights", kwargs={"weights_iterator": weights_iterator})
 ```
 
-### Low Level `layerwise` API
+### 低レベルの `layerwise` API { #low-level-layerwise-api }
 
-[layerwise.py](../../vllm/model_executor/model_loader/reload/layerwise.py) Implements the following functions to execute its lifecycle:
+[layerwise.py](../../vllm/model_executor/model_loader/reload/layerwise.py) は、ライフサイクルを実行するために次の関数を実装しています。
 
-| Function | Purpose | Quantized Reload | Online Quantization |
+| 関数 | 目的 | 量子化済みの再読み込み | オンライン量子化 |
 | - | - | - | - |
-| `record_metadata_for_reloading` | Record tensor metadata so that layers can be restored on the meta device | Called by `BaseModelLoader` | Called by `BaseModelLoader` |
-| `restore_layer_on_meta` | Restore layer to model format at start of reload | Called by `initialize_layerwise_reload` | Not called. Online quantized weights already start on meta device via `...OnlineLinearMethod.create_weights` |
-| `initialize_online_processing` | Wrap weight loaders with the `online_process_loader` wrapper, which buffers weights until all layer weights have been loaded | Called by `initialize_layerwise_reload` | Called by `...OnlineLinearMethod.create_weights` |
-| `_layerwise_process` | Process layer once all weights are loaded | Called by `online_process_loader` during loading | Called by `online_process_loader` during loading |
-| `_copy_and_restore_kernel_tensors` | Copy processed weights into original tensor locations to affect compiled cuda graphs, etc. | Called by `_layerwise_process` after `process_weights_after_loading` | Not called. There is no compiled cuda graph yet |
-| `finalize_layerwise_processing` | Catch any layers which did not load all weights (for example attention weights or weights with padding) | Called by `BaseModelLoader` | Called by `BaseModelLoader` |
+| `record_metadata_for_reloading` | メタデバイス上で層を復元できるよう、テンソルのメタデータを記録する | `BaseModelLoader` が呼び出す | `BaseModelLoader` が呼び出す |
+| `restore_layer_on_meta` | 再読み込みの開始時に、層をモデルの形式へ復元する | `initialize_layerwise_reload` が呼び出す | 呼び出されない。オンライン量子化された重みは `...OnlineLinearMethod.create_weights` により最初からメタデバイス上にある |
+| `initialize_online_processing` | 層のすべての重みが読み込まれるまで重みをバッファする `online_process_loader` で重みローダーをラップする | `initialize_layerwise_reload` が呼び出す | `...OnlineLinearMethod.create_weights` が呼び出す |
+| `_layerwise_process` | すべての重みが読み込まれた時点で層を処理する | 読み込み中に `online_process_loader` が呼び出す | 読み込み中に `online_process_loader` が呼び出す |
+| `_copy_and_restore_kernel_tensors` | コンパイル済みの CUDA グラフなどに反映されるよう、処理後の重みを元のテンソルの位置へコピーする | `process_weights_after_loading` の後に `_layerwise_process` が呼び出す | 呼び出されない。まだコンパイル済みの CUDA グラフが存在しないため |
+| `finalize_layerwise_processing` | すべての重みが読み込まれなかった層（Attention の重みやパディングを含む重みなど）を拾う | `BaseModelLoader` が呼び出す | `BaseModelLoader` が呼び出す |
 
-You can plug into this lifecycle directly by calling the `initialize_layerwise_reload`, loading weights, then calling `finalize_layerwise_processing`:
+`initialize_layerwise_reload` を呼び、重みを読み込み、`finalize_layerwise_processing` を呼ぶことで、このライフサイクルに直接組み込めます。
 
 ```python
 from vllm import LLM
@@ -129,17 +129,17 @@ model.load_weights(...)
 finalize_layerwise_processing(model, llm.model_config)
 ```
 
-## Troubleshooting Excessive Memory Usage
+## メモリ使用量が過大になる場合のトラブルシューティング { #troubleshooting-excessive-memory-usage }
 
-Layerwise reloading allows users to incrementally load and process weights as they are loaded into the model. This system relies on buffering layer weights on device until all weights of a layer have been loaded. However, without offloading, this approach necessarily causes excessive buffering if weights are loaded out of order.
+層単位の再読み込みでは、重みをモデルへ読み込みながら段階的に処理できます。この仕組みは、ある層のすべての重みが読み込まれるまで、その層の重みをデバイス上にバッファすることに依存しています。ただしオフロードを行わない場合、重みが順不同で読み込まれると、どうしてもバッファが過大になります。
 
-For this reason, users must take care as to the order of weights when they are reloading into the model. Weight should be loaded "in order", meaning that each layer's weights are fully loaded before beginning to load the next layer's weights. "Out of order" loading can cause layer weights to stay buffered while other layer weights are loading, leading to excessive memory usage. In the example below, q_proj, k_proj, v_proj, and up_proj are all buffered at the same time, using more memory than if up_proj was loaded after q_proj, k_proj and v_proj.
+そのため、モデルへ再読み込みする際の重みの順序に注意する必要があります。重みは「順番どおり」に、つまり次の層の重みを読み始める前に各層の重みを読み終える形で読み込むべきです。「順不同」の読み込みでは、他の層の重みを読み込んでいる間もある層の重みがバッファに残り、メモリ使用量が過大になります。以下の例では、q_proj・k_proj・v_proj・up_proj が同時にバッファされており、up_proj を q_proj・k_proj・v_proj の後に読み込む場合よりメモリを消費しています。
 
-| Correct Loading | Incorrect Loading |
+| 正しい読み込み | 誤った読み込み |
 | - | - |
 | ![Layerwise](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/training/layerwise_good_loading.png) | ![Layerwise](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/training/layerwise_bad_loading.png) |
 
-Users will see a warning like the one below if weights are loaded out-of-order.
+重みが順不同で読み込まれると、次のような警告が表示されます。
 
 ```console
 WARNING [layerwise.py:198] Allocating 28.5 MB of device memory to buffers to load ["QKVParallelLinear", "MergedColumnParallelLinear"] layers. This extra memory usage can be avoided by ordering weights by their parent layer when reloading.

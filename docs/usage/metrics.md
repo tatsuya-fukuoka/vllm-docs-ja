@@ -1,16 +1,15 @@
-# Production Metrics
+# 本番運用のメトリクス { #production-metrics }
 
-vLLM exposes a number of metrics that can be used to monitor the health of the
-system. These metrics are exposed via the `/metrics` endpoint on the vLLM
-OpenAI compatible API server.
+vLLM は、システムの健全性を監視するための各種メトリクスを公開しています。
+これらは vLLM の OpenAI 互換 API サーバーの `/metrics` エンドポイントから取得できます。
 
-You can start the server using Python, or using [Docker](../deployment/docker.md):
+サーバーは Python から、あるいは [Docker](../deployment/docker.md) を使って起動できます。
 
 ```bash
 vllm serve unsloth/Llama-3.2-1B-Instruct
 ```
 
-Then query the endpoint to get the latest metrics from the server:
+起動したら、エンドポイントに問い合わせて最新のメトリクスを取得します。
 
 ??? console "Output"
 
@@ -31,28 +30,27 @@ Then query the endpoint to get the latest metrics from the server:
     ...
     ```
 
-The following metrics are exposed:
+公開されているメトリクスは次のとおりです。
 
-## General Metrics
+## 一般的なメトリクス { #general-metrics }
 
 --8<-- "docs/generated/metrics/general.inc.md"
 
-## Speculative Decoding Metrics
+## 投機的デコーディングのメトリクス { #speculative-decoding-metrics }
 
 --8<-- "docs/generated/metrics/spec_decode.inc.md"
 
-## NIXL KV Connector Metrics
+## NIXL KV コネクタのメトリクス { #nixl-kv-connector-metrics }
 
 --8<-- "docs/generated/metrics/nixl_connector.inc.md"
 
-## Model Flops Utilization (MFU) Performance Metrics
+## Model Flops Utilization (MFU) の性能メトリクス { #model-flops-utilization-mfu-performance-metrics }
 
-These metrics are available via `--enable-mfu-metrics`:
+これらのメトリクスは `--enable-mfu-metrics` を指定すると利用できます。
 
 --8<-- "docs/generated/metrics/perf.inc.md"
 
-## Deprecation Policy
+## 非推奨化の方針 { #deprecation-policy }
 
-Note: when metrics are deprecated in version `X.Y`, they are hidden in version `X.Y+1`
-but can be re-enabled using the `--show-hidden-metrics-for-version=X.Y` escape hatch,
-and are then removed in version `X.Y+2`.
+補足: バージョン `X.Y` で非推奨になったメトリクスは、`X.Y+1` では非表示になりますが
+`--show-hidden-metrics-for-version=X.Y` を指定すれば再度有効にできます。その後 `X.Y+2` で削除されます。

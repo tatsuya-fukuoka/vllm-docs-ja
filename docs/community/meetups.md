@@ -1,5 +1,5 @@
-# Meetups
+# ミートアップ { #meetups }
 
-We host regular meetups around the world. We will share the project updates from the vLLM team and have guest speakers from the industry to share their experience and insights.
+vLLM では世界各地で定期的にミートアップを開催しています。vLLM チームからプロジェクトの最新情報を共有するほか、業界のゲストスピーカーを招いて経験や知見を語っていただいています。
 
-Please visit [vllm.ai/events](https://vllm.ai/events) to learn more.
+詳細は [vllm.ai/events](https://vllm.ai/events)（英語）を参照してください。

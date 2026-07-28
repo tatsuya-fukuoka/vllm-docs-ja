@@ -1,17 +1,17 @@
-# Dynamic Speculative Decoding
+# 動的な投機的デコーディング { #dynamic-speculative-decoding }
 
-## Why is Dynamic SD needed?
+## 動的 SD が必要な理由 { #why-is-dynamic-sd-needed }
 
-SD methods need to verify K tokens for each sequence during decoding. As BS increases, the effective BS becomes BS\*K which increases the compute requirement during verification. When this BS\*K goes beyond a critical BS then SD negatively impacts the decode speed (TPOT). DSD helps by tuning the K to an optimal value such that we continue to reap the benefits from SD.
+投機的デコーディング (SD) では、Decode 中に各系列について K 個のトークンを検証する必要があります。バッチサイズ (BS) が大きくなると実効的な BS は BS\*K となり、検証時の計算量が増えます。この BS\*K がある臨界点を超えると、SD はかえって Decode 速度 (TPOT) を悪化させます。動的 SD (DSD) は K を最適な値に調整することで、SD の利点を維持できるようにします。
 
-## Use cases
+## ユースケース { #use-cases }
 
-* Variable concurrency workload using same deployment. K would decrease as concurrency increases.
-* During RL rollout where we start off with high BS but then end up with small BS due to very few long tail request which end up generating a lot of tokens stalling the progress of the current rollout. Here K would go up during the end of rollout.
+* 同じデプロイで同時実行数が変動するワークロード。同時実行数が増えると K は小さくなります。
+* RL のロールアウト。最初は BS が大きいものの、大量のトークンを生成する少数のロングテールのリクエストが残ってロールアウトの進行を妨げ、最終的に BS が小さくなる場合です。この場合、ロールアウトの終盤で K は大きくなります。
 
-## `--speculative-config` schema
+## `--speculative-config` のスキーマ { #speculative-config-schema }
 
-To use Dynamic SD, add `num_speculative_tokens_per_batch_size` to the config of an SD method which is a list of list. Here, an entry is `[start_bs, end_bs, optimal_K]` which means when the concurrency is within range `[start_bs, end_bs]` then `optimal_K` number of draft tokens are used. For e.g.,
+動的 SD を使うには、SD 手法の設定にリストのリストである `num_speculative_tokens_per_batch_size` を追加します。各要素は `[start_bs, end_bs, optimal_K]` で、同時実行数が `[start_bs, end_bs]` の範囲にあるとき `optimal_K` 個のドラフトトークンを使うことを意味します。例:
 
 ```bash
 --speculative-config '{
@@ -26,15 +26,15 @@ To use Dynamic SD, add `num_speculative_tokens_per_batch_size` to the config of 
   }'
 ```
 
-implies that:
+この設定は次を意味します。
 
-* K=3 will be used when the concurrency is in range [1, 64]
-* K=1 will be used when the concurrency is in range [65, 128]
-* K=0 will be used when the concurrency is in range [129, 512], i.e., no draft tokens will be produced.
+* 同時実行数が [1, 64] の範囲では K=3 を使う
+* 同時実行数が [65, 128] の範囲では K=1 を使う
+* 同時実行数が [129, 512] の範囲では K=0 を使う（ドラフトトークンを生成しない）
 
-## Online Examples
+## オンラインの例 { #online-examples }
 
-### Dynamic SD Eagle Drafter
+### 動的 SD + Eagle ドラフタ { #dynamic-sd-eagle-drafter }
 
 ```bash
 VLLM_USE_V2_MODEL_RUNNER=0 vllm serve meta-llama/Llama-3.1-8B-Instruct \
@@ -50,7 +50,7 @@ VLLM_USE_V2_MODEL_RUNNER=0 vllm serve meta-llama/Llama-3.1-8B-Instruct \
   }'
 ```
 
-### Dynamic SD Eagle3 Drafter
+### 動的 SD + Eagle3 ドラフタ { #dynamic-sd-eagle3-drafter }
 
 ```bash
 VLLM_USE_V2_MODEL_RUNNER=0 vllm serve meta-llama/Llama-3.1-8B-Instruct \
@@ -69,8 +69,8 @@ VLLM_USE_V2_MODEL_RUNNER=0 vllm serve meta-llama/Llama-3.1-8B-Instruct \
 
 ```
 
-## Limitations
+## 制限事項 { #limitations }
 
-* Tested with Eagle, Eagle-3, and DFlash. Other SD methods may or may not work out of the box
-* Full Cudagraph only works with Model Runner V2. MRv1 only supports piece-wise cuda graph with this feature
-* Not compatible with data parallelism (`--data-parallel-size > 1`). Each DP rank schedules independently, so ranks can pick different K values, causing DP collective divergence and deadlocks. When DP is enabled, vLLM automatically disables `num_speculative_tokens_per_batch_size` and falls back to the static `num_speculative_tokens` value.
+* Eagle、Eagle-3、DFlash で検証済みです。他の SD 手法はそのままでは動作しない可能性があります
+* Full CUDA グラフは Model Runner V2 でのみ動作します。MRv1 ではこの機能と組み合わせると piecewise の CUDA グラフのみ対応します
+* データ並列（`--data-parallel-size > 1`）とは併用できません。各 DP ランクが独立にスケジューリングするため、ランクごとに異なる K が選ばれ、DP の集団通信が食い違ってデッドロックする可能性があります。DP が有効な場合、vLLM は自動的に `num_speculative_tokens_per_batch_size` を無効化し、静的な `num_speculative_tokens` の値にフォールバックします。

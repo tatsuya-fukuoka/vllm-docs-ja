@@ -1,22 +1,22 @@
 <!-- markdownlint-disable MD041 MD051 -->
 --8<-- [start:installation]
 
-vLLM contains pre-compiled C++ and CUDA (12.9) binaries.
+vLLM には、あらかじめコンパイルされた C++ と CUDA (12.9) のバイナリが含まれています。
 
 --8<-- [end:installation]
 --8<-- [start:requirements]
 
-- GPU: compute capability 7.5 or higher (e.g., T4, RTX20xx, A100, L4, H100, B200, etc.)
+- GPU: compute capability 7.5 以上（T4、RTX20xx、A100、L4、H100、B200 など）
 
 --8<-- [end:requirements]
 --8<-- [start:set-up-using-python]
 
 !!! note
-    PyTorch installed via `conda` will statically link `NCCL` library, which can cause issues when vLLM tries to use `NCCL`. See <https://github.com/vllm-project/vllm/issues/8420> for more details.
+    `conda` でインストールした PyTorch は `NCCL` ライブラリを静的リンクするため、vLLM が `NCCL` を使おうとしたときに問題が起きることがあります。詳細は <https://github.com/vllm-project/vllm/issues/8420> を参照してください。
 
-In order to be performant, vLLM has to compile many cuda kernels. The compilation unfortunately introduces binary incompatibility with other CUDA versions and PyTorch versions, even for the same PyTorch version with different building configurations.
+vLLM は性能を出すために多数の CUDA カーネルをコンパイルする必要があります。残念ながらこのコンパイルは、他の CUDA バージョンや PyTorch バージョンとのバイナリ非互換をもたらします。同じ PyTorch バージョンでもビルド設定が異なれば互換性がありません。
 
-Therefore, it is recommended to install vLLM with a **fresh new** environment. If either you have a different CUDA version or you want to use an existing PyTorch installation, you need to build vLLM from source. See [below](#build-wheel-from-source) for more details.
+そのため、vLLM は**まっさらな新しい**環境にインストールすることを推奨します。CUDA のバージョンが異なる場合や、既存の PyTorch を使いたい場合は、ソースから vLLM をビルドする必要があります。詳細は[以下](#build-wheel-from-source)を参照してください。
 
 --8<-- [end:set-up-using-python]
 --8<-- [start:pre-built-wheels]
@@ -31,12 +31,12 @@ uv pip install vllm --torch-backend=auto
     pip install vllm --extra-index-url https://download.pytorch.org/whl/cu129
     ```
 
-We recommend leveraging `uv` to [automatically select the appropriate PyTorch index at runtime](https://docs.astral.sh/uv/guides/integration/pytorch/#automatic-backend-selection) by inspecting the installed CUDA driver version via `--torch-backend=auto` (or `UV_TORCH_BACKEND=auto`). To select a specific backend (e.g., `cu130`), set `--torch-backend=cu130` (or `UV_TORCH_BACKEND=cu130`). If this doesn't work, try running `uv self update` to update `uv` first.
+`uv` の `--torch-backend=auto`（または `UV_TORCH_BACKEND=auto`）を使うと、インストール済みの CUDA ドライバのバージョンを調べて[実行時に適切な PyTorch のインデックスを自動選択](https://docs.astral.sh/uv/guides/integration/pytorch/#automatic-backend-selection)できるため、これを推奨します。特定のバックエンド（例: `cu130`）を選ぶには `--torch-backend=cu130`（または `UV_TORCH_BACKEND=cu130`）を指定します。うまくいかない場合は、まず `uv self update` で `uv` を更新してみてください。
 
 !!! note
-    NVIDIA Blackwell GPUs (B200, GB200) require a minimum of CUDA 12.8, so make sure you are installing PyTorch wheels with at least that version. PyTorch itself offers a [dedicated interface](https://pytorch.org/get-started/locally/) to determine the appropriate pip command to run for a given target configuration.
+    NVIDIA Blackwell 世代の GPU（B200、GB200）は CUDA 12.8 以上が必要です。その版以降の PyTorch の wheel をインストールしてください。PyTorch 側でも、対象の構成に応じた適切な pip コマンドを調べられる[専用のページ](https://pytorch.org/get-started/locally/)が用意されています。
 
-As of now, vLLM's binaries are compiled with CUDA 12.9 and public PyTorch release versions by default. We also provide vLLM binaries compiled with CUDA 12.8, 13.0, and public PyTorch release versions:
+現時点では、vLLM のバイナリは既定で CUDA 12.9 と公開版の PyTorch でコンパイルされています。CUDA 12.8 および 13.0 と公開版 PyTorch でコンパイルしたバイナリも提供しています。
 
 ```bash
 # Install vLLM with a specific CUDA version (e.g., 13.0).
@@ -46,14 +46,14 @@ export CPU_ARCH=$(uname -m) # x86_64 or aarch64
 uv pip install https://github.com/vllm-project/vllm/releases/download/v${VLLM_VERSION}/vllm-${VLLM_VERSION}+cu${CUDA_VERSION}-cp38-abi3-manylinux_2_28_${CPU_ARCH}.whl --extra-index-url https://download.pytorch.org/whl/cu${CUDA_VERSION}
 ```
 
-#### Install the latest code
+#### 最新のコードをインストールする { #install-the-latest-code }
 
-LLM inference is a fast-evolving field, and the latest code may contain bug fixes, performance improvements, and new features that are not released yet. To allow users to try the latest code without waiting for the next release, vLLM provides wheels for every commit since `v0.5.3` on <https://wheels.vllm.ai/nightly>. There are multiple indices that could be used:
+LLM 推論は変化の速い分野で、最新のコードにはまだリリースされていないバグ修正・性能改善・新機能が含まれていることがあります。次のリリースを待たずに最新のコードを試せるよう、vLLM は `v0.5.3` 以降のすべてのコミットについて <https://wheels.vllm.ai/nightly> で wheel を提供しています。利用できるインデックスは複数あります。
 
-- `https://wheels.vllm.ai/nightly`: the default variant (CUDA with version specified in `VLLM_MAIN_CUDA_VERSION`) built with the last commit on the `main` branch. Currently it is CUDA 12.9.
-- `https://wheels.vllm.ai/nightly/<variant>`: all other variants. Now this includes `cu130`, and `cpu`. The default variant (`cu129`) also has a subdirectory to keep consistency.
+- `https://wheels.vllm.ai/nightly`: 既定のバリアント（`VLLM_MAIN_CUDA_VERSION` で指定された CUDA バージョン）を `main` ブランチの最新コミットでビルドしたもの。現時点では CUDA 12.9 です。
+- `https://wheels.vllm.ai/nightly/<variant>`: その他すべてのバリアント。現在は `cu130` と `cpu` を含みます。一貫性のため、既定のバリアント（`cu129`）にもサブディレクトリがあります。
 
-To install from nightly index, run:
+nightly のインデックスからインストールするには次を実行します。
 
 ```bash
 uv pip install -U vllm \
@@ -61,20 +61,20 @@ uv pip install -U vllm \
     --extra-index-url https://wheels.vllm.ai/nightly # add variant subdirectory here if needed
 ```
 
-!!! warning "`pip` caveat"
+!!! warning "`pip` に関する注意"
 
-    Using `pip` to install from nightly indices is _not supported_, because `pip` combines packages from `--extra-index-url` and the default index, choosing only the latest version, which makes it difficult to install a development version prior to the released version. In contrast, `uv` gives the extra index [higher priority than the default index](https://docs.astral.sh/uv/pip/compatibility/#packages-that-exist-on-multiple-indexes).
+    nightly のインデックスからのインストールに `pip` を使うことは*サポートされていません*。`pip` は `--extra-index-url` と既定のインデックスのパッケージをまとめて扱い、最新バージョンのみを選ぶため、リリース版より前の開発版をインストールしづらいためです。一方 `uv` は追加のインデックスを[既定のインデックスより優先](https://docs.astral.sh/uv/pip/compatibility/#packages-that-exist-on-multiple-indexes)します。
 
-    If you insist on using `pip`, you have to specify the full URL of the wheel file (which can be obtained from the web page).
+    どうしても `pip` を使う場合は、wheel ファイルの完全な URL（Web ページから取得できます）を指定する必要があります。
 
     ```bash
     pip install -U https://wheels.vllm.ai/2f3f441f84bd5b35ec8aa9fcfffb540f107da8a7/vllm-0.23.1rc1.dev901%2Bg2f3f441f8-cp38-abi3-manylinux_2_28_x86_64.whl # current nightly build (the filename will change!)
     pip install -U https://wheels.vllm.ai/${VLLM_COMMIT}/vllm-0.23.1rc1.dev901%2Bg2f3f441f8-cp38-abi3-manylinux_2_28_x86_64.whl # from specific commit
     ```
 
-##### Install specific revisions
+##### 特定のリビジョンをインストールする { #install-specific-revisions }
 
-If you want to access the wheels for previous commits (e.g. to bisect the behavior change, performance regression), you can specify the commit hash in the URL:
+過去のコミットの wheel を使いたい場合（挙動の変化や性能退行の二分探索など）は、URL にコミットハッシュを指定できます。
 
 ```bash
 export VLLM_COMMIT=72d9c316d3f6ede485146fe5aabd4e61dbc59069 # use full commit hash from the main branch
@@ -86,9 +86,9 @@ uv pip install vllm \
 --8<-- [end:pre-built-wheels]
 --8<-- [start:build-wheel-from-source]
 
-#### Set up using Python-only build (without compilation) {#python-only-build}
+#### Python のみのビルド（コンパイルなし）でセットアップする {#python-only-build}
 
-If you only need to change Python code, you can build and install vLLM without compilation. Using `uv pip`'s [`--editable` flag](https://docs.astral.sh/uv/pip/packages/#editable-packages), changes you make to the code will be reflected when you run vLLM:
+Python のコードだけを変更する場合は、コンパイルなしで vLLM をビルド・インストールできます。`uv pip` の [`--editable` フラグ](https://docs.astral.sh/uv/pip/packages/#editable-packages)を使うと、変更内容が vLLM の実行に反映されます。
 
 ```bash
 git clone https://github.com/vllm-project/vllm.git
@@ -96,28 +96,28 @@ cd vllm
 VLLM_USE_PRECOMPILED=1 uv pip install --editable . --torch-backend=auto
 ```
 
-This command will do the following:
+このコマンドは次の処理を行います。
 
-1. Look for the current branch in your vLLM clone.
-1. Identify the corresponding base commit in the main branch.
-1. Download the pre-built wheel of the base commit.
-1. Use its compiled libraries and `vllm-rs` binary in the installation.
+1. vLLM のクローンで現在のブランチを調べます。
+1. main ブランチ上の対応するベースコミットを特定します。
+1. そのベースコミットのビルド済み wheel をダウンロードします。
+1. その中のコンパイル済みライブラリと `vllm-rs` バイナリをインストールに使います。
 
 !!! note
-    1. If you change C++ or kernel code, you cannot use Python-only build; otherwise you will see an import error about library not found or undefined symbol.
-    2. If you rebase your dev branch, it is recommended to uninstall vllm and re-run the above command to make sure your libraries are up to date.
+    1. C++ やカーネルのコードを変更する場合、Python のみのビルドは使えません。使うと、ライブラリが見つからない、あるいは未定義シンボルといった import エラーになります。
+    2. 開発ブランチをリベースした場合は、vllm をアンインストールして上記のコマンドを再実行し、ライブラリを最新に保つことを推奨します。
 
-!!! tip "Rebuilding the Rust frontend"
-If you need to recompile the `vllm-rs` Rust frontend binary, you can rebuild and install it without re-running the full pip install:
+!!! tip "Rust フロントエンドの再ビルド"
+`vllm-rs` の Rust フロントエンドのバイナリを再コンパイルしたい場合は、pip install をやり直さずに再ビルドしてインストールできます。
 
     ```bash
     ./build_rust.sh          # release build
     ./build_rust.sh --debug  # faster build for development
     ```
 
-    This will install the required Rust toolchain if needed, build the binary, and place it in `vllm/vllm-rs`.
+    必要であれば Rust のツールチェーンをインストールし、バイナリをビルドして `vllm/vllm-rs` に配置します。
 
-In case you see an error about wheel not found when running the above command, it might be because the commit you based on in the `main` branch was just merged and its precompiled wheel is not available yet. You can wait around an hour and retry, or set `VLLM_PRECOMPILED_WHEEL_COMMIT=nightly` to automatically select the most recent already-built commit on `main`.
+上記のコマンドで wheel が見つからないというエラーが出る場合、ベースにした `main` のコミットがマージされたばかりで、ビルド済み wheel がまだ用意されていない可能性があります。1 時間ほど待って再試行するか、`VLLM_PRECOMPILED_WHEEL_COMMIT=nightly` を設定して、`main` 上でビルド済みの最新コミットを自動選択してください。
 
 ```bash
 export VLLM_PRECOMPILED_WHEEL_COMMIT=nightly
@@ -125,30 +125,30 @@ export VLLM_USE_PRECOMPILED=1
 uv pip install --editable .
 ```
 
-There are more environment variables to control the behavior of Python-only build:
+Python のみのビルドの挙動を制御する環境変数は他にもあります。
 
-- `VLLM_PRECOMPILED_WHEEL_LOCATION`: specify the exact wheel URL or local file path of a pre-compiled wheel to use. All other logic to find the wheel will be skipped.
-- `VLLM_PRECOMPILED_WHEEL_COMMIT`: override the commit hash to download the pre-compiled wheel. It can be `nightly` to use the last **already built** commit on the main branch.
-- `VLLM_PRECOMPILED_WHEEL_VARIANT`: specify the variant subdirectory to use on the nightly index, e.g., `cu129`, `cu130`, `cpu`. If not specified, the variant is auto-detected based on your system's CUDA version (from PyTorch or nvidia-smi). You can also set `VLLM_MAIN_CUDA_VERSION` to override auto-detection.
+- `VLLM_PRECOMPILED_WHEEL_LOCATION`: 使用するビルド済み wheel の URL またはローカルのファイルパスを直接指定します。wheel を探す他のロジックはすべてスキップされます。
+- `VLLM_PRECOMPILED_WHEEL_COMMIT`: ダウンロードするビルド済み wheel のコミットハッシュを上書きします。`nightly` を指定すると、main ブランチ上で**すでにビルド済み**の最新コミットを使います。
+- `VLLM_PRECOMPILED_WHEEL_VARIANT`: nightly のインデックスで使うバリアントのサブディレクトリ（`cu129`、`cu130`、`cpu` など）を指定します。指定しない場合は、システムの CUDA バージョン（PyTorch または nvidia-smi から取得）にもとづいて自動判定されます。`VLLM_MAIN_CUDA_VERSION` を設定して自動判定を上書きすることもできます。
 
-You can find more information about vLLM's wheels in [Install the latest code](#install-the-latest-code).
+vLLM の wheel についての詳細は[最新のコードをインストールする](#install-the-latest-code)を参照してください。
 
 !!! note
-    There is a possibility that your source code may have a different commit ID compared to the latest vLLM wheel, which could potentially lead to unknown errors.
-    It is recommended to use the same commit ID for the source code as the vLLM wheel you have installed. Please refer to [Install the latest code](#install-the-latest-code) for instructions on how to install a specified wheel.
+    手元のソースコードのコミット ID が最新の vLLM wheel と異なる可能性があり、原因不明のエラーにつながることがあります。
+    ソースコードとインストール済みの vLLM wheel は同じコミット ID を使うことを推奨します。指定した wheel のインストール方法は[最新のコードをインストールする](#install-the-latest-code)を参照してください。
 
-#### Full build (with compilation) {#full-build}
+#### フルビルド（コンパイルあり） {#full-build}
 
-!!! note "Compiler requirement"
-    Building from source requires GCC/G++ ≥ 11.3. PyTorch's C++20 headers are
-    not compatible with GCC 10 or GCC < 11.3. On Ubuntu 22.04:
+!!! note "コンパイラの要件"
+    ソースからのビルドには GCC/G++ 11.3 以上が必要です。PyTorch の C++20 ヘッダーは
+    GCC 10 や 11.3 未満の GCC とは互換性がありません。Ubuntu 22.04 の場合:
     ```bash
     sudo apt-get install -y gcc-11 g++-11
     sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110 \
         --slave /usr/bin/g++ g++ /usr/bin/g++-11
     ```
 
-If you want to modify C++ or CUDA code, you'll need to build vLLM from source. This can take several minutes:
+C++ や CUDA のコードを変更したい場合は、ソースから vLLM をビルドする必要があります。数分かかることがあります。
 
 ```bash
 git clone https://github.com/vllm-project/vllm.git
@@ -157,24 +157,24 @@ uv pip install -e . --torch-backend=auto
 ```
 
 !!! tip
-    Building from source requires a lot of compilation. If you are building from source repeatedly, it's more efficient to cache the compilation results.
+    ソースからのビルドは大量のコンパイルを伴います。繰り返しビルドする場合は、コンパイル結果をキャッシュすると効率的です。
 
-    For example, you can install [ccache](https://github.com/ccache/ccache) using `conda install ccache` or `apt install ccache` .
-    As long as `which ccache` command can find the `ccache` binary, it will be used automatically by the build system. After the first build, subsequent builds will be much faster.
+    たとえば `conda install ccache` や `apt install ccache` で [ccache](https://github.com/ccache/ccache) をインストールできます。
+    `which ccache` で `ccache` のバイナリが見つかる状態であれば、ビルドシステムが自動的に利用します。初回のビルド以降は大幅に高速になります。
 
-    When using `ccache` with `pip install -e .`, you should run `CCACHE_NOHASHDIR="true" pip install --no-build-isolation -e .`. This is because `pip` creates a new folder with a random name for each build, preventing `ccache` from recognizing that the same files are being built.
+    `pip install -e .` で `ccache` を使う場合は、`CCACHE_NOHASHDIR="true" pip install --no-build-isolation -e .` を実行してください。`pip` はビルドごとにランダムな名前のフォルダを作るため、`ccache` が同じファイルのビルドだと認識できなくなるためです。
 
-    [sccache](https://github.com/mozilla/sccache) works similarly to `ccache`, but has the capability to utilize caching in remote storage environments.
-    The following environment variables can be set to configure the vLLM `sccache` remote: `SCCACHE_BUCKET=vllm-build-sccache SCCACHE_REGION=us-west-2 SCCACHE_S3_NO_CREDENTIALS=1`. We also recommend setting `SCCACHE_IDLE_TIMEOUT=0`.
+    [sccache](https://github.com/mozilla/sccache) は `ccache` と同様に動作しますが、リモートストレージ上のキャッシュも利用できます。
+    vLLM の `sccache` のリモート設定には次の環境変数を使えます: `SCCACHE_BUCKET=vllm-build-sccache SCCACHE_REGION=us-west-2 SCCACHE_S3_NO_CREDENTIALS=1`。あわせて `SCCACHE_IDLE_TIMEOUT=0` の設定も推奨します。
 
-!!! note "Faster Kernel Development"
-    For frequent C++/CUDA kernel changes, after the initial `uv pip install -e .` setup, consider using the [Incremental Compilation Workflow](../../contributing/incremental_build.md) for significantly faster rebuilds of only the modified kernel code.
+!!! note "カーネル開発を速くする"
+    C++ / CUDA のカーネルを頻繁に変更する場合は、最初の `uv pip install -e .` の後に[インクリメンタルコンパイルのワークフロー](../../contributing/incremental_build.md)を使うと、変更したカーネルのみを大幅に速く再ビルドできます。
 
-##### Use an existing PyTorch installation
+##### 既存の PyTorch を使う { #use-an-existing-pytorch-installation }
 
-There are scenarios where the PyTorch dependency cannot be easily installed with `uv`, for example, when building vLLM with non-default PyTorch builds (like nightly or a custom build).
+PyTorch の依存関係を `uv` で簡単にインストールできない場面があります。たとえば、既定でない PyTorch のビルド（nightly や独自ビルド）で vLLM をビルドする場合です。
 
-To build vLLM using an existing PyTorch installation:
+既存の PyTorch を使って vLLM をビルドするには次のようにします。
 
 ```bash
 # install PyTorch first, either from PyPI or from source
@@ -185,8 +185,8 @@ uv pip install -r requirements/build/cuda.txt
 uv pip install --no-build-isolation -e .
 ```
 
-Alternatively: if you are exclusively using `uv` to create and manage virtual environments, it has [a unique mechanism](https://docs.astral.sh/uv/concepts/projects/config/#disabling-build-isolation)
-for disabling build isolation for specific packages. vLLM can leverage this mechanism to specify `torch` as the package to disable build isolation for:
+あるいは、仮想環境の作成と管理に `uv` だけを使っている場合は、特定のパッケージについてビルドの分離を無効にする[独自の仕組み](https://docs.astral.sh/uv/concepts/projects/config/#disabling-build-isolation)があります。
+vLLM はこの仕組みを利用して、`torch` をビルド分離の対象外に指定できます。
 
 ```bash
 # install PyTorch first, either from PyPI or from source
@@ -196,10 +196,10 @@ cd vllm
 uv pip install -e .
 ```
 
-##### Use the local cutlass for compilation
+##### ローカルの cutlass を使ってコンパイルする { #use-the-local-cutlass-for-compilation }
 
-Currently, before starting the build process, vLLM fetches cutlass code from GitHub. However, there may be scenarios where you want to use a local version of cutlass instead.
-To achieve this, you can set the environment variable VLLM_CUTLASS_SRC_DIR to point to your local cutlass directory.
+現在、vLLM はビルドを開始する前に GitHub から cutlass のコードを取得します。ただし、ローカルにある cutlass を使いたい場合もあります。
+その場合は、環境変数 VLLM_CUTLASS_SRC_DIR にローカルの cutlass のディレクトリを指定してください。
 
 ```bash
 git clone https://github.com/vllm-project/vllm.git
@@ -207,20 +207,20 @@ cd vllm
 VLLM_CUTLASS_SRC_DIR=/path/to/cutlass uv pip install -e . --torch-backend=auto
 ```
 
-##### Troubleshooting
+##### トラブルシューティング { #troubleshooting }
 
-To avoid your system being overloaded, you can limit the number of compilation jobs
-to be run simultaneously, via the environment variable `MAX_JOBS`. For example:
+システムの負荷を抑えるため、同時に実行するコンパイルジョブの数を
+環境変数 `MAX_JOBS` で制限できます。例:
 
 ```bash
 export MAX_JOBS=6
 uv pip install -e .
 ```
 
-This is especially useful when you are building on less powerful machines. For example, when you use WSL it only [assigns 50% of the total memory by default](https://learn.microsoft.com/en-us/windows/wsl/wsl-config#main-wsl-settings), so using `export MAX_JOBS=1` can avoid compiling multiple files simultaneously and running out of memory.
-A side effect is a much slower build process.
+これは非力なマシンでビルドする場合に特に有効です。たとえば WSL では[既定で全メモリの 50% しか割り当てられない](https://learn.microsoft.com/en-us/windows/wsl/wsl-config#main-wsl-settings)ため、`export MAX_JOBS=1` にすると複数ファイルの同時コンパイルによるメモリ不足を避けられます。
+副作用として、ビルドはかなり遅くなります。
 
-Additionally, if you have trouble building vLLM, we recommend using the NVIDIA PyTorch Docker image.
+また、vLLM のビルドがうまくいかない場合は、NVIDIA の PyTorch Docker イメージの利用を推奨します。
 
 ```bash
 # Use `--ipc=host` to make sure the shared memory is large enough.
@@ -231,25 +231,25 @@ docker run \
     --ipc=host nvcr.io/nvidia/pytorch:23.10-py3
 ```
 
-If you don't want to use docker, it is recommended to have a full installation of CUDA Toolkit. You can download and install it from [the official website](https://developer.nvidia.com/cuda-toolkit-archive). After installation, set the environment variable `CUDA_HOME` to the installation path of CUDA Toolkit, and make sure that the `nvcc` compiler is in your `PATH`, e.g.:
+Docker を使いたくない場合は、CUDA Toolkit を完全にインストールすることを推奨します。[公式サイト](https://developer.nvidia.com/cuda-toolkit-archive)からダウンロードしてインストールできます。インストール後は、環境変数 `CUDA_HOME` に CUDA Toolkit のインストール先を設定し、`nvcc` コンパイラが `PATH` に含まれるようにしてください。例:
 
 ```bash
 export CUDA_HOME=/usr/local/cuda
 export PATH="${CUDA_HOME}/bin:$PATH"
 ```
 
-Here is a sanity check to verify that the CUDA Toolkit is correctly installed:
+CUDA Toolkit が正しくインストールされているかを確認する簡単なチェックです。
 
 ```bash
 nvcc --version # verify that nvcc is in your PATH
 ${CUDA_HOME}/bin/nvcc --version # verify that nvcc is in your CUDA_HOME
 ```
 
-#### Unsupported OS build
+#### サポート外の OS でのビルド { #unsupported-os-build }
 
-vLLM can fully run only on Linux but for development purposes, you can still build it on other systems (for example, macOS), allowing for imports and a more convenient development environment. The binaries will not be compiled and won't work on non-Linux systems.
+vLLM が完全に動作するのは Linux だけですが、開発目的であれば他のシステム（macOS など）でもビルドでき、import や開発環境の利便性を得られます。バイナリはコンパイルされず、Linux 以外では動作しません。
 
-Simply disable the `VLLM_TARGET_DEVICE` environment variable before installing:
+インストール前に環境変数 `VLLM_TARGET_DEVICE` を無効にするだけです。
 
 ```bash
 export VLLM_TARGET_DEVICE=empty
@@ -259,8 +259,8 @@ uv pip install -e .
 --8<-- [end:build-wheel-from-source]
 --8<-- [start:pre-built-images]
 
-vLLM offers an official Docker image for deployment.
-The image can be used to run OpenAI compatible server and is available on Docker Hub as [vllm/vllm-openai](https://hub.docker.com/r/vllm/vllm-openai/tags).
+vLLM はデプロイ用に公式の Docker イメージを提供しています。
+このイメージは OpenAI 互換サーバーの実行に使え、Docker Hub の [vllm/vllm-openai](https://hub.docker.com/r/vllm/vllm-openai/tags) で公開されています。
 
 ```bash
 docker run --runtime nvidia --gpus all \
@@ -272,7 +272,7 @@ docker run --runtime nvidia --gpus all \
     --model Qwen/Qwen3-0.6B
 ```
 
-This image can also be used with other container engines such as [Podman](https://podman.io/).
+このイメージは [Podman](https://podman.io/) など他のコンテナエンジンでも利用できます。
 
 ```bash
 podman run --device nvidia.com/gpu=all \
@@ -284,18 +284,18 @@ docker.io/vllm/vllm-openai:latest \
 --model Qwen/Qwen3-0.6B
 ```
 
-You can add any other [engine-args](https://docs.vllm.ai/en/latest/configuration/engine_args/) you need after the image tag (`vllm/vllm-openai:latest`).
+イメージタグ（`vllm/vllm-openai:latest`）の後ろに、必要な[エンジン引数](https://docs.vllm.ai/en/latest/configuration/engine_args/)を追加できます。
 
 !!! note
-    You can either use the `ipc=host` flag or `--shm-size` flag to allow the
-    container to access the host's shared memory. vLLM uses PyTorch, which uses shared
-    memory to share data between processes under the hood, particularly for tensor parallel inference.
+    コンテナがホストの共有メモリにアクセスできるよう、`ipc=host` フラグまたは `--shm-size` フラグを指定できます。
+    vLLM は PyTorch を使っており、PyTorch は内部でプロセス間のデータ共有に共有メモリを使います。
+    特にテンソル並列の推論で必要になります。
 
 !!! note
-    Optional dependencies are not included in order to avoid licensing issues (e.g. <https://github.com/vllm-project/vllm/issues/8030>).
+    ライセンス上の問題を避けるため、任意の依存パッケージは含まれていません（例: <https://github.com/vllm-project/vllm/issues/8030>）。
 
-    If you need to use those dependencies (having accepted the license terms),
-    create a custom Dockerfile on top of the base image with an extra layer that installs them:
+    それらの依存パッケージが必要な場合は（ライセンス条項に同意したうえで）、
+    ベースイメージの上にインストール用のレイヤーを追加した独自の Dockerfile を作成してください。
 
     ```Dockerfile
     FROM vllm/vllm-openai:v0.11.0
@@ -306,10 +306,10 @@ You can add any other [engine-args](https://docs.vllm.ai/en/latest/configuration
     ```
 
 !!! tip
-    Some new models may only be available on the main branch of [HF Transformers](https://github.com/huggingface/transformers).
+    新しいモデルの中には、[HF Transformers](https://github.com/huggingface/transformers) の main ブランチにしか入っていないものがあります。
 
-    To use the development version of `transformers`, create a custom Dockerfile on top of the base image
-    with an extra layer that installs their code from source:
+    開発版の `transformers` を使うには、ベースイメージの上に
+    ソースからインストールするレイヤーを追加した独自の Dockerfile を作成してください。
 
     ```Dockerfile
     FROM vllm/vllm-openai:latest
@@ -317,11 +317,11 @@ You can add any other [engine-args](https://docs.vllm.ai/en/latest/configuration
     RUN uv pip install --system git+https://github.com/huggingface/transformers.git
     ```
 
-#### Running on Systems with Older CUDA Drivers
+#### 古い CUDA ドライバのシステムで実行する { #running-on-systems-with-older-cuda-drivers }
 
-vLLM's Docker image comes with [CUDA compatibility libraries](https://docs.nvidia.com/deploy/cuda-compatibility/index.html) pre-installed. This allows you to run vLLM on systems with NVIDIA drivers that are older than the CUDA Toolkit version used in the image, but only supports select professional and datacenter NVIDIA GPUs.
+vLLM の Docker イメージには [CUDA 互換ライブラリ](https://docs.nvidia.com/deploy/cuda-compatibility/index.html)があらかじめインストールされています。これにより、イメージのビルドに使われた CUDA Toolkit より古い NVIDIA ドライバのシステムでも vLLM を実行できます。
 
-To enable this feature, set the `VLLM_ENABLE_CUDA_COMPATIBILITY` environment variable to `1` or `true` when running the container:
+この機能を有効にするには、コンテナの実行時に環境変数 `VLLM_ENABLE_CUDA_COMPATIBILITY` を `1` または `true` に設定します。
 
 ```bash
 docker run --runtime nvidia --gpus all \
@@ -332,12 +332,12 @@ docker run --runtime nvidia --gpus all \
     vllm/vllm-openai <args...>
 ```
 
-This will automatically configure `LD_LIBRARY_PATH` to point to the compatibility libraries before loading PyTorch and other dependencies.
+これにより、PyTorch などの依存パッケージを読み込む前に `LD_LIBRARY_PATH` が互換ライブラリを指すよう自動的に設定されます。
 
 --8<-- [end:pre-built-images]
 --8<-- [start:build-image-from-source]
 
-You can build and run vLLM from source via the provided [docker/Dockerfile](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile). To build vLLM:
+付属の [docker/Dockerfile](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile) を使って、ソースから vLLM をビルドして実行できます。ビルドするには次のようにします。
 
 ```bash
 # optionally specifies: --build-arg max_jobs=8 --build-arg nvcc_threads=2
@@ -348,30 +348,30 @@ DOCKER_BUILDKIT=1 docker build . \
 ```
 
 !!! note
-    By default vLLM will build for all GPU types for widest distribution. If you are just building for the
-    current GPU type the machine is running on, you can add the argument `--build-arg torch_cuda_arch_list=""`
-    for vLLM to find the current GPU type and build for that.
+    既定では、vLLM は幅広く配布できるようすべての GPU 種別向けにビルドします。実行中のマシンの GPU 種別だけを対象にビルドする場合は、
+    `--build-arg torch_cuda_arch_list=""` を指定すると、vLLM が現在の GPU 種別を判定してそれ向けにビルドします。
 
-    If you are using Podman instead of Docker, you might need to disable SELinux labeling by
-    adding `--security-opt label=disable` when running `podman build` command to avoid certain [existing issues](https://github.com/containers/buildah/discussions/4184).
 
-!!! note
-    If you have not changed any C++ or CUDA kernel code, you can use precompiled wheels to significantly reduce Docker build time.
-
-    *   **Enable the feature** by adding the build argument: `--build-arg VLLM_USE_PRECOMPILED="1"`.
-    *   **How it works**: By default, vLLM automatically finds the correct wheels from our [Nightly Builds](https://docs.vllm.ai/en/latest/contributing/ci/nightly_builds/) by using the merge-base commit with the upstream `main` branch.
-    *   **Override commit**: To use wheels from a specific commit, provide the `--build-arg VLLM_PRECOMPILED_WHEEL_COMMIT=<commit_hash>` argument.
-
-    For a detailed explanation, refer to the documentation on 'Set up using Python-only build (without compilation)' part in [Build wheel from source](https://docs.vllm.ai/en/latest/contributing/ci/nightly_builds/#precompiled-wheels-usage), these args are similar.
-
-#### Building vLLM's Docker Image from Source for Arm64/aarch64
-
-A docker container can be built for aarch64 systems such as the Nvidia Grace-Hopper and Grace-Blackwell. Using the flag `--platform "linux/arm64"` will build for arm64.
+    Docker ではなく Podman を使う場合、[既知の問題](https://github.com/containers/buildah/discussions/4184)を避けるため、
+    `podman build` の実行時に `--security-opt label=disable` を付けて SELinux のラベル付けを無効にする必要があるかもしれません。
 
 !!! note
-    Multiple modules must be compiled, so this process can take a while. Recommend using `--build-arg max_jobs=` & `--build-arg nvcc_threads=`
-    flags to speed up build process. However, ensure your `max_jobs` is substantially larger than `nvcc_threads` to get the most benefits.
-    Keep an eye on memory usage with parallel jobs as it can be substantial (see example below).
+    C++ や CUDA のカーネルコードを変更していない場合は、ビルド済み wheel を使って Docker のビルド時間を大幅に短縮できます。
+
+    *   **有効化**: ビルド引数 `--build-arg VLLM_USE_PRECOMPILED="1"` を追加します。
+    *   **仕組み**: 既定では、上流 `main` ブランチとのマージベースのコミットを使って、[Nightly Builds](https://docs.vllm.ai/en/latest/contributing/ci/nightly_builds/) から適切な wheel を自動的に探します。
+    *   **コミットの上書き**: 特定のコミットの wheel を使うには `--build-arg VLLM_PRECOMPILED_WHEEL_COMMIT=<commit_hash>` を指定します。
+
+    詳しい説明は [Build wheel from source](https://docs.vllm.ai/en/latest/contributing/ci/nightly_builds/#precompiled-wheels-usage) の「Python のみのビルド（コンパイルなし）でセットアップする」の項を参照してください。これらの引数は同じ仕組みを利用しています。
+
+#### Arm64/aarch64 向けに vLLM の Docker イメージをソースからビルドする { #building-vllms-docker-image-from-source-for-arm64aarch64 }
+
+Nvidia Grace-Hopper や Grace-Blackwell のような aarch64 のシステム向けに Docker コンテナをビルドできます。`--platform "linux/arm64"` フラグを付けると arm64 向けにビルドされます。
+
+!!! note
+    多数のモジュールをコンパイルするため、この処理には時間がかかります。ビルドを高速化するには `--build-arg max_jobs=` と `--build-arg nvcc_threads=` の
+    フラグの利用を推奨します。ただし効果を最大化するには、`max_jobs` を `nvcc_threads` より十分大きくしてください。
+    並列ジョブのメモリ使用量はかなり大きくなることがあるため注意してください（以下の例を参照）。
 
 ??? console "Command"
 
@@ -388,7 +388,7 @@ A docker container can be built for aarch64 systems such as the Nvidia Grace-Hop
     --build-arg RUN_WHEEL_CHECK=false
     ```
 
-For (G)B300, we recommend using CUDA 13, as shown in the following command.
+(G)B300 では、次のコマンドのように CUDA 13 の使用を推奨します。
 
 ??? console "Command"
 
@@ -408,19 +408,19 @@ For (G)B300, we recommend using CUDA 13, as shown in the following command.
     ```
 
 !!! note
-    If you are building the `linux/arm64` image on a non-ARM host (e.g., an x86_64 machine), you need to ensure your system is set up for cross-compilation using QEMU. This allows your host machine to emulate ARM64 execution.
+    ARM 以外のホスト（x86_64 のマシンなど）で `linux/arm64` のイメージをビルドする場合は、QEMU によるクロスコンパイルの準備が必要です。これにより、ホストマシンで ARM64 の実行をエミュレートできます。
 
-    Run the following command on your host machine to register QEMU user static handlers:
+    ホストマシンで次のコマンドを実行し、QEMU の user static ハンドラを登録します。
 
     ```bash
     docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
     ```
 
-    After setting up QEMU, you can use the `--platform "linux/arm64"` flag in your `docker build` command.
+    QEMU の設定後は、`docker build` コマンドで `--platform "linux/arm64"` フラグを使えます。
 
-#### Use the custom-built vLLM Docker image**
+#### 独自ビルドの vLLM Docker イメージを使う { #use-the-custom-built-vllm-docker-image }
 
-To run vLLM with the custom-built Docker image:
+独自ビルドの Docker イメージで vLLM を実行するには次のようにします。
 
 ```bash
 docker run --runtime nvidia --gpus all \
@@ -430,14 +430,14 @@ docker run --runtime nvidia --gpus all \
     vllm/vllm-openai <args...>
 ```
 
-The argument `vllm/vllm-openai` specifies the image to run, and should be replaced with the name of the custom-built image (the `-t` tag from the build command).
+引数の `vllm/vllm-openai` は実行するイメージを指定するもので、独自ビルドしたイメージ名（ビルドコマンドの `-t` タグ）に置き換えてください。
 
 !!! note
-    **For version 0.4.1 and 0.4.2 only** - the vLLM docker images under these versions are supposed to be run under the root user since a library under the root user's home directory, i.e. `/root/.config/vllm/nccl/cu12/libnccl.so.2.18.1` is required to be loaded during runtime. If you are running the container under a different user, you may need to first change the permissions of the library (and all the parent directories) to allow the user to access it, then run vLLM with environment variable `VLLM_NCCL_SO_PATH=/root/.config/vllm/nccl/cu12/libnccl.so.2.18.1` .
+    **バージョン 0.4.1 と 0.4.2 のみ** - これらのバージョンの vLLM の Docker イメージは root ユーザーで実行する必要があります。実行時に root ユーザーのホームディレクトリ配下のライブラリ（`/root/.config/vllm/nccl/cu12/libnccl.so.2.18.1`）が必要になるためです。
 
 --8<-- [end:build-image-from-source]
 --8<-- [start:supported-features]
 
-See [Feature x Hardware](../../features/README.md#feature-x-hardware) compatibility matrix for feature support information.
+機能のサポート状況は[機能 × ハードウェア](../../features/README.md#feature-x-hardware)の互換性マトリクスを参照してください。
 
 --8<-- [end:supported-features]

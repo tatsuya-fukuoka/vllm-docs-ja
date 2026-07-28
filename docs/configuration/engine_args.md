@@ -2,21 +2,21 @@
 toc_depth: 3
 ---
 
-# Engine Arguments
+# エンジン引数 { #engine-arguments }
 
-Engine arguments control the behavior of the vLLM engine.
+エンジン引数は vLLM エンジンの挙動を制御します。
 
-- For [offline inference](../serving/offline_inference.md), they are part of the arguments to [`LLM`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM) class.
-- For [online serving](../serving/online_serving/README.md), they are part of the arguments to `vllm serve`.
+- [オフライン推論](../serving/offline_inference.md)では、[`LLM`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.LLM) クラスの引数の一部になります。
+- [オンラインサービング](../serving/online_serving/README.md)では、`vllm serve` の引数の一部になります。
 
-The engine argument classes, [`EngineArgs`](https://docs.vllm.ai/en/v0.26.0/api/vllm/engine/arg_utils/#vllm.engine.arg_utils.EngineArgs) and [`AsyncEngineArgs`](https://docs.vllm.ai/en/v0.26.0/api/vllm/engine/arg_utils/#vllm.engine.arg_utils.AsyncEngineArgs), are a combination of the configuration classes defined in [vllm.config][]. Therefore, if you are interested in developer documentation, we recommend looking at these configuration classes as they are the source of truth for types, defaults and docstrings.
+エンジン引数のクラスである [`EngineArgs`](https://docs.vllm.ai/en/v0.26.0/api/vllm/engine/arg_utils/#vllm.engine.arg_utils.EngineArgs) と [`AsyncEngineArgs`](https://docs.vllm.ai/en/v0.26.0/api/vllm/engine/arg_utils/#vllm.engine.arg_utils.AsyncEngineArgs) は、[vllm.config][] で定義された設定クラスを組み合わせたものです。開発者向けの情報を探している場合は、型・既定値・docstring の正となるこれらの設定クラスを参照することをおすすめします。
 
 --8<-- "docs/cli/json_tip.inc.md"
 
-## `EngineArgs`
+## `EngineArgs` { #engineargs }
 
 --8<-- "docs/generated/argparse/engine_args.inc.md"
 
-## `AsyncEngineArgs`
+## `AsyncEngineArgs` { #asyncengineargs }
 
 --8<-- "docs/generated/argparse/async_engine_args.inc.md"

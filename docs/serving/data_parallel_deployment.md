@@ -1,40 +1,40 @@
-# Data Parallel Deployment
+# データ並列のデプロイ { #data-parallel-deployment }
 
-vLLM supports Data Parallel deployment, where model weights are replicated across separate instances/GPUs to process independent batches of requests.
+vLLM はデータ並列のデプロイをサポートしています。これは、モデルの重みを別々のインスタンス / GPU に複製し、独立したリクエストのバッチを処理する方式です。
 
-This will work with both dense and MoE models.
+dense モデルと MoE モデルのどちらでも動作します。
 
-For MoE models, particularly those like DeepSeek that employ MLA (Multi-head Latent Attention), it can be advantageous to use data parallel for the attention layers and expert or tensor parallel (EP or TP) for the expert layers.
+MoE モデル、特に DeepSeek のように MLA（Multi-head Latent Attention）を採用したモデルでは、Attention 層にデータ並列を、エキスパート層にエキスパート並列またはテンソル並列（EP / TP）を使うと有利なことがあります。
 
-In these cases, the data parallel ranks are not completely independent. Forward passes must be aligned, and expert layers across all ranks are required to synchronize during every forward pass, even when there are fewer requests to be processed than DP ranks.
+この場合、データ並列のランクは完全には独立していません。forward の実行タイミングを揃える必要があり、処理すべきリクエスト数が DP ランク数より少ない場合でも、すべてのランクのエキスパート層は forward のたびに同期する必要があります。
 
-By default, expert layers form a tensor parallel group of size `DP × TP`. To use expert parallelism instead, include the `--enable-expert-parallel` CLI arg (on all nodes in the multi-node case). See [Expert Parallel Deployment](expert_parallel_deployment.md) for details on how attention and expert layers behave differently with EP enabled.
+既定では、エキスパート層は `DP × TP` のサイズのテンソル並列グループを形成します。代わりにエキスパート並列を使うには、CLI 引数 `--enable-expert-parallel` を指定します（複数ノードの場合はすべてのノードで指定）。EP を有効にしたときの Attention 層とエキスパート層の挙動の違いは[エキスパート並列のデプロイ](expert_parallel_deployment.md)を参照してください。
 
-In vLLM, each DP rank is deployed as a separate "core engine" process that communicates with front-end process(es) via ZMQ sockets. Data Parallel attention can be combined with Tensor Parallel attention, in which case each DP engine owns a number of per-GPU worker processes equal to the configured TP size.
+vLLM では、各 DP ランクは独立した「コアエンジン」プロセスとしてデプロイされ、ZMQ ソケットを通じてフロントエンドのプロセスと通信します。データ並列の Attention はテンソル並列の Attention と組み合わせられ、その場合、各 DP エンジンは設定した TP サイズと同じ数の GPU ごとのワーカープロセスを持ちます。
 
-For MoE models, when any requests are in progress in any rank, we must ensure that empty "dummy" forward passes are performed in all ranks that don't currently have any requests scheduled. This is handled via a separate DP Coordinator process that communicates with all ranks, and a collective operation performed every N steps to determine when all ranks become idle and can be paused. When TP is used in conjunction with DP, expert layers form a group of size `DP × TP` (using either tensor parallelism by default, or expert parallelism if `--enable-expert-parallel` is set).
+MoE モデルでは、いずれかのランクでリクエストが処理中のとき、リクエストがスケジュールされていない他のすべてのランクでも空の「ダミー」forward を実行する必要があります。これは、すべてのランクと通信する専用の DP コーディネータープロセスと、N ステップごとに実行される集団通信によって処理され、すべてのランクがアイドルになって停止できるタイミングを判定します。DP と TP を併用する場合、エキスパート層は `DP × TP` のサイズのグループを形成します（既定ではテンソル並列、`--enable-expert-parallel` を設定した場合はエキスパート並列）。
 
-In all cases, it is beneficial to load-balance requests between DP ranks. For online deployments, this balancing can be optimized by taking into account the state of each DP engine - in particular its currently scheduled and waiting (queued) requests, and KV cache state. Each DP engine has an independent KV cache, and the benefit of prefix caching can be maximized by directing prompts intelligently.
+いずれの場合も、DP ランク間でリクエストを負荷分散すると効果的です。オンラインのデプロイでは、各 DP エンジンの状態、特にスケジュール済み・待機中（キュー内）のリクエストや KV キャッシュの状態を考慮することで、負荷分散を最適化できます。各 DP エンジンは独立した KV キャッシュを持つため、プロンプトの振り分けを工夫することでプレフィックスキャッシュの効果を最大化できます。
 
-This document focuses on online deployments (with the API server). DP + EP is also supported for offline usage (via the LLM class), for an example see [examples/features/data_parallel/data_parallel_offline.py](../../examples/features/data_parallel/data_parallel_offline.py).
+このドキュメントはオンラインのデプロイ（API サーバーを使う形態）に焦点を当てています。DP + EP はオフライン利用（LLM クラス経由）でもサポートされています。例は [examples/features/data_parallel/data_parallel_offline.py](../../examples/features/data_parallel/data_parallel_offline.py) を参照してください。
 
-There are two distinct modes supported for online deployments - self-contained with internal load balancing, or externally per-rank process deployment and load balancing.
+オンラインのデプロイには 2 つのモードがあります。内部で負荷分散する自己完結型と、ランクごとのプロセスを外部でデプロイ・負荷分散する形態です。
 
-## Internal Load Balancing
+## 内部での負荷分散 { #internal-load-balancing }
 
-vLLM supports "self-contained" data parallel deployments that expose a single API endpoint.
+vLLM は、単一の API エンドポイントを公開する「自己完結型」のデータ並列デプロイをサポートしています。
 
-It can be configured by simply including e.g. `--data-parallel-size=4` in the vllm serve command line arguments. This will require 4 GPUs. It can be combined with tensor parallel, for example `--data-parallel-size=4 --tensor-parallel-size=2`, which would require 8 GPUs. When sizing DP deployments, remember that `--max-num-seqs` applies per DP rank.
+設定は、vllm serve のコマンドライン引数に `--data-parallel-size=4` のように追加するだけです。この場合 GPU が 4 台必要になります。テンソル並列と組み合わせることもでき、たとえば `--data-parallel-size=4 --tensor-parallel-size=2` なら GPU が 8 台必要です。DP デプロイのサイジングでは、`--max-num-seqs` が DP ランクごとに適用される点に注意してください。
 
-Running a single data parallel deployment across multiple nodes requires a different `vllm serve` to be run on each node, specifying which DP ranks should run on that node. In this case, there will still be a single HTTP entrypoint - the API server(s) will run only on one node, but it doesn't necessarily need to be co-located with the DP ranks.
+1 つのデータ並列デプロイを複数ノードにまたがって動かす場合、ノードごとに異なる `vllm serve` を実行し、そのノードで動かす DP ランクを指定します。この場合も HTTP のエントリポイントは 1 つで、API サーバーは 1 ノードでのみ動作します。ただし、そのノードは必ずしも DP ランクと同居している必要はありません。
 
-This will run DP=4, TP=2 on a single 8-GPU node:
+次は、GPU 8 台の単一ノードで DP=4、TP=2 を動かす例です。
 
 ```bash
 vllm serve $MODEL --data-parallel-size 4 --tensor-parallel-size 2
 ```
 
-This will run DP=4 with DP ranks 0 and 1 on the head node and ranks 2 and 3 on the second node:
+次は、DP=4 で、DP ランク 0 と 1 をヘッドノード、ランク 2 と 3 を 2 台目のノードで動かす例です。
 
 ```bash
 # Node 0  (with ip address 10.99.48.128)
@@ -46,7 +46,7 @@ vllm serve $MODEL --headless --data-parallel-size 4 --data-parallel-size-local 2
                   --data-parallel-address 10.99.48.128 --data-parallel-rpc-port 13345
 ```
 
-This will run DP=4 with only the API server on the first node and all engines on the second node:
+次は、DP=4 で、1 台目のノードには API サーバーのみを置き、すべてのエンジンを 2 台目のノードで動かす例です。
 
 ```bash
 # Node 0  (with ip address 10.99.48.128)
@@ -57,52 +57,52 @@ vllm serve $MODEL --headless --data-parallel-size 4 --data-parallel-size-local 4
                   --data-parallel-address 10.99.48.128 --data-parallel-rpc-port 13345
 ```
 
-This DP mode can also be used with Ray by specifying `--data-parallel-backend=ray`:
+この DP モードは、`--data-parallel-backend=ray` を指定して Ray と組み合わせることもできます。
 
 ```bash
 vllm serve $MODEL --data-parallel-size 4 --data-parallel-size-local 2 \
                   --data-parallel-backend=ray
 ```
 
-There are several notable differences when using Ray:
+Ray を使う場合、いくつか重要な違いがあります。
 
-- A single launch command (on any node) is needed to start all local and remote DP ranks, therefore it is more convenient compared to launching on each node
-- There is no need to specify `--data-parallel-address`, and the node where the command is run is used as `--data-parallel-address`
-- There is no need to specify `--data-parallel-rpc-port`
-- When a single DP group requires multiple nodes, *e.g.* in case a single model replica needs to run on at least two nodes, make sure to set `VLLM_RAY_DP_PACK_STRATEGY="span"` in which case `--data-parallel-size-local` is ignored and will be automatically determined
-- Remote DP ranks will be allocated based on node resources of the Ray cluster
+- いずれかのノードで 1 回コマンドを実行するだけで、ローカルとリモートのすべての DP ランクが起動します。ノードごとに起動するより便利です
+- `--data-parallel-address` を指定する必要はありません。コマンドを実行したノードが `--data-parallel-address` として使われます
+- `--data-parallel-rpc-port` を指定する必要はありません
+- 1 つの DP グループが複数ノードを必要とする場合（1 つのモデルレプリカを 2 ノード以上で動かす必要がある場合など）は、`VLLM_RAY_DP_PACK_STRATEGY="span"` を設定してください。この場合 `--data-parallel-size-local` は無視され、自動的に決定されます
+- リモートの DP ランクは、Ray クラスタのノードのリソースに応じて割り当てられます
 
-Currently, the internal DP load balancing is done within the API server process(es) and is based on the running and waiting queues in each of the engines. This could be made more sophisticated in future by incorporating KV cache aware logic.
+現時点では、内部の DP の負荷分散は API サーバーのプロセス内で行われ、各エンジンの実行中キューと待機キューにもとづいて判断されます。将来的には KV キャッシュを考慮したロジックを取り込み、より高度にできる可能性があります。
 
-When deploying large DP sizes using this method, the API server process can become a bottleneck. In this case, the orthogonal `--api-server-count` command line option can be used to scale this out (for example `--api-server-count=4`). This is transparent to users - a single HTTP endpoint / port is still exposed. Note that this API server scale-out is "internal" and still confined to the "head" node.
+この方式で大きな DP サイズをデプロイすると、API サーバーのプロセスがボトルネックになることがあります。その場合は、独立したオプションである `--api-server-count`（たとえば `--api-server-count=4`）でスケールアウトできます。これは利用者から見て透過的で、公開される HTTP エンドポイント / ポートは 1 つのままです。この API サーバーのスケールアウトは「内部的」なもので、「ヘッド」ノード内に閉じている点に注意してください。
 
 <figure markdown="1">
 ![DP Internal LB Diagram](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/deployment/dp_internal_lb.png)
 </figure>
 
-## Hybrid Load Balancing
+## ハイブリッドな負荷分散 { #hybrid-load-balancing }
 
-Hybrid load balancing sits between the internal and external approaches. Each node runs its own API server(s) that only queue requests to the data-parallel engines colocated on that node. An upstream load balancer (for example, an ingress controller or traffic router) spreads user requests across those per-node endpoints.
+ハイブリッドな負荷分散は、内部方式と外部方式の中間に位置します。各ノードが自身の API サーバーを持ち、そのノードに同居するデータ並列エンジンにのみリクエストを流します。上流のロードバランサー（Ingress コントローラーやトラフィックルーターなど）が、ノードごとのエンドポイントにユーザーのリクエストを振り分けます。
 
-Enable this mode with `--data-parallel-hybrid-lb` while still launching every node with the global data-parallel size. The key differences from internal load balancing are:
+このモードは `--data-parallel-hybrid-lb` で有効にします。各ノードの起動時には全体のデータ並列サイズを指定します。内部での負荷分散との主な違いは次のとおりです。
 
-- You must provide `--data-parallel-size-local` and `--data-parallel-start-rank` so each node knows which ranks it owns.
-- Not compatible with `--headless` since every node exposes an API endpoint.
-- Scale `--api-server-count` per node based on the number of local ranks
+- 各ノードが担当するランクを把握できるよう、`--data-parallel-size-local` と `--data-parallel-start-rank` を指定する必要があります。
+- すべてのノードが API エンドポイントを公開するため、`--headless` とは併用できません。
+- ノードごとに、ローカルのランク数に応じて `--api-server-count` をスケールさせます
 
-In this configuration, each node keeps scheduling decisions local, which reduces cross-node traffic and avoids single node bottlenecks at larger DP sizes.
+この構成では、各ノードがスケジューリングの判断をローカルに閉じるため、ノード間のトラフィックが減り、DP サイズが大きい場合でも単一ノードがボトルネックになるのを避けられます。
 
-## External Load Balancing
+## 外部での負荷分散 { #external-load-balancing }
 
-For larger scale deployments especially, it can make sense to handle the orchestration and load balancing of data parallel ranks externally.
+特に大規模なデプロイでは、データ並列ランクのオーケストレーションと負荷分散を外部で行うほうが合理的な場合があります。
 
-In this case, it's more convenient to treat each DP rank like a separate vLLM deployment, with its own endpoint, and have an external router balance HTTP requests between them, making use of appropriate real-time telemetry from each server for routing decisions.
+この場合、各 DP ランクを独自のエンドポイントを持つ別々の vLLM デプロイとして扱い、各サーバーからのリアルタイムなテレメトリを活用しながら外部のルーターが HTTP リクエストを振り分けるほうが便利です。
 
-This can already be done trivially for non-MoE models, since each deployed server is fully independent. In that case, launch independent vLLM instances without any `--data-parallel-*` arguments; external DP CLI options are only supported for MoE deployments.
+MoE 以外のモデルでは、各サーバーが完全に独立しているため、これは簡単に実現できます。その場合、`--data-parallel-*` の引数を一切付けずに独立した vLLM インスタンスを起動してください。外部 DP 用の CLI オプションは MoE のデプロイでのみサポートされます。
 
-We support an equivalent topology for MoE DP+EP which can be configured via the following CLI arguments.
+MoE の DP+EP でも同等の構成をサポートしており、次の CLI 引数で設定できます。
 
-If DP ranks are co-located (same node / ip address), a default RPC port is used, but a different HTTP server port must be specified for each rank:
+DP ランクが同居している（同じノード / IP アドレスの）場合は既定の RPC ポートが使われますが、HTTP サーバーのポートはランクごとに別の値を指定する必要があります。
 
 ```bash
 # Rank 0
@@ -113,7 +113,7 @@ CUDA_VISIBLE_DEVICES=1 vllm serve $MODEL --data-parallel-size 2 --data-parallel-
                                          --port 8001
 ```
 
-For multi-node cases, the address/port of rank 0 must also be specified:
+複数ノードの場合は、ランク 0 のアドレスとポートも指定する必要があります。
 
 ```bash
 # Rank 0  (with ip address 10.99.48.128)
@@ -124,10 +124,10 @@ vllm serve $MODEL --data-parallel-size 2 --data-parallel-rank 1 \
                   --data-parallel-address 10.99.48.128 --data-parallel-rpc-port 13345
 ```
 
-The coordinator process also runs in this scenario, co-located with the DP rank 0 engine.
+この構成でもコーディネータープロセスは動作し、DP ランク 0 のエンジンと同居します。
 
 <figure markdown="1">
 ![DP External LB Diagram](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/deployment/dp_external_lb.png)
 </figure>
 
-In the above diagram, each of the dotted boxes corresponds to a separate launch of `vllm serve` - these could be separate Kubernetes pods, for example.
+上の図では、点線の各ボックスが `vllm serve` の個別の起動に対応します。たとえば、それぞれ別の Kubernetes Pod にできます。

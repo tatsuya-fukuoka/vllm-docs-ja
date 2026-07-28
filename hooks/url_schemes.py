@@ -33,8 +33,10 @@ REPO = r"(?P<repo>.+?/.+?)"
 TYPE = r"(?P<type>issues|pull|projects)"
 NUMBER = r"(?P<number>\d+)"
 VERSION = r"[^/\s]+"
-PATH = r"(?P<path>[^\s]+?)"
-FRAGMENT = r"(?P<fragment>#[^\s]+)?"
+# 日本語の本文は単語間に空白がないため、`)` や `]` を明示的に除外しないと
+# パスやフラグメントが後続の文をまるごと飲み込んでしまう（上流の英語前提の実装からの変更点）。
+PATH = r"(?P<path>[^\s)]+?)"
+FRAGMENT = r"(?P<fragment>#[^\s)\]]+)?"
 URL_GITHUB = f"https://github.com/{REPO}/{TYPE}/{NUMBER}{FRAGMENT}"
 RELATIVE = rf"(?!(https?|ftp)://|#|mailto:){PATH}{FRAGMENT}"
 URL_DOCS = f"https://docs.vllm.ai/en/{VERSION}/{PATH}{FRAGMENT}"

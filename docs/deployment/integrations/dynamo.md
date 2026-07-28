@@ -1,7 +1,7 @@
-# NVIDIA Dynamo
+# NVIDIA Dynamo { #nvidia-dynamo }
 
-[NVIDIA Dynamo](https://github.com/ai-dynamo/dynamo) is an open-source framework for distributed LLM inference that can run vLLM on Kubernetes with flexible serving architectures (e.g. aggregated/disaggregated, optional router/planner).
+[NVIDIA Dynamo](https://github.com/ai-dynamo/dynamo) は分散 LLM 推論のためのオープンソースフレームワークで、柔軟なサービング構成（統合型 / 分離型、任意のルーター・プランナーなど）で Kubernetes 上の vLLM を動かせます。
 
-For Kubernetes deployment instructions and examples (including vLLM), see the [Deploying Dynamo on Kubernetes](https://github.com/ai-dynamo/dynamo/blob/main/docs/kubernetes/README.md) guide.
+vLLM を含む Kubernetes へのデプロイ手順と例は、[Deploying Dynamo on Kubernetes](https://github.com/ai-dynamo/dynamo/blob/main/docs/kubernetes/README.md)（英語）を参照してください。
 
-Background reading: InfoQ news coverage — [NVIDIA Dynamo simplifies Kubernetes deployment for LLM inference](https://www.infoq.com/news/2025/12/nvidia-dynamo-kubernetes/).
+背景情報: InfoQ の記事 — [NVIDIA Dynamo simplifies Kubernetes deployment for LLM inference](https://www.infoq.com/news/2025/12/nvidia-dynamo-kubernetes/)（英語）。

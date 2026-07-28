@@ -1,39 +1,39 @@
-# Production stack
+# Production stack { #production-stack }
 
-Deploying vLLM on Kubernetes is a scalable and efficient way to serve machine learning models. This guide walks you through deploying vLLM using the [vLLM production stack](https://github.com/vllm-project/production-stack). Born out of a Berkeley-UChicago collaboration, [vLLM production stack](https://github.com/vllm-project/production-stack) is an officially released, production-optimized codebase under the [vLLM project](https://github.com/vllm-project), designed for LLM deployment with:
+Kubernetes 上への vLLM のデプロイは、機械学習モデルをスケーラブルかつ効率的にサービングする方法です。このガイドでは、[vLLM production stack](https://github.com/vllm-project/production-stack) を使ったデプロイ手順を説明します。バークレー校とシカゴ大学の共同研究から生まれた vLLM production stack は、[vLLM プロジェクト](https://github.com/vllm-project)配下で公式に公開されている本番向けに最適化されたコードベースで、次の特徴を持つ LLM のデプロイを想定しています。
 
-* **Upstream vLLM compatibility** – It wraps around upstream vLLM without modifying its code.
-* **Ease of use** – Simplified deployment via Helm charts and observability through Grafana dashboards.
-* **High performance** – Optimized for LLM workloads with features like multimodel support, model-aware and prefix-aware routing, fast vLLM bootstrapping, and KV cache offloading with [LMCache](https://github.com/LMCache/LMCache) (wired up in vLLM via `--kv-offloading-backend lmcache`; see the [LMCache examples](https://github.com/vllm-project/vllm/tree/main/examples/disaggregated/lmcache) and [docs.lmcache.ai](https://docs.lmcache.ai)), among others.
+* **上流 vLLM との互換性** – 上流の vLLM のコードを変更せずにラップします。
+* **使いやすさ** – Helm チャートによる簡単なデプロイと、Grafana ダッシュボードによる可観測性。
+* **高い性能** – 複数モデルのサポート、モデル / プレフィックスを考慮したルーティング、vLLM の高速な起動、[LMCache](https://github.com/LMCache/LMCache) による KV キャッシュのオフロード（vLLM では `--kv-offloading-backend lmcache` で接続します。[LMCache の例](https://github.com/vllm-project/vllm/tree/main/examples/disaggregated/lmcache)と [docs.lmcache.ai](https://docs.lmcache.ai) を参照）など、LLM のワークロード向けに最適化されています。
 
-If you are new to Kubernetes, don't worry: in the vLLM production stack [repo](https://github.com/vllm-project/production-stack), we provide a step-by-step [guide](https://github.com/vllm-project/production-stack/blob/main/tutorials/00-install-kubernetes-env.md) and a [short video](https://www.youtube.com/watch?v=EsTJbQtzj0g) to set up everything and get started in **4 minutes**!
+Kubernetes が初めてでも心配ありません。vLLM production stack の[リポジトリ](https://github.com/vllm-project/production-stack)には、**4 分**で環境を用意して始められる[手順ガイド](https://github.com/vllm-project/production-stack/blob/main/tutorials/00-install-kubernetes-env.md)と[短い動画](https://www.youtube.com/watch?v=EsTJbQtzj0g)があります。
 
-## Pre-requisite
+## 前提条件 { #pre-requisite }
 
-Ensure that you have a running Kubernetes environment with GPU (you can follow [this tutorial](https://github.com/vllm-project/production-stack/blob/main/tutorials/00-install-kubernetes-env.md) to install a Kubernetes environment on a bare-metal GPU machine).
+GPU を備えた Kubernetes 環境が稼働していることを確認してください（ベアメタルの GPU マシンに Kubernetes 環境を構築する手順は[このチュートリアル](https://github.com/vllm-project/production-stack/blob/main/tutorials/00-install-kubernetes-env.md)を参照）。
 
-## Deployment using vLLM production stack
+## vLLM production stack を使ったデプロイ { #deployment-using-vllm-production-stack }
 
-The standard vLLM production stack is installed using a Helm chart. You can run this [bash script](https://github.com/vllm-project/production-stack/blob/main/utils/install-helm.sh) to install Helm on your GPU server.
+標準的な vLLM production stack は Helm チャートでインストールします。GPU サーバーへの Helm のインストールには、この [bash スクリプト](https://github.com/vllm-project/production-stack/blob/main/utils/install-helm.sh)を利用できます。
 
-To install the vLLM production stack, run the following commands on your desktop:
+vLLM production stack をインストールするには、手元の環境で次のコマンドを実行します。
 
 ```bash
 sudo helm repo add vllm https://vllm-project.github.io/production-stack
 sudo helm install vllm vllm/vllm-stack -f tutorials/assets/values-01-minimal-example.yaml
 ```
 
-This will instantiate a vLLM-production-stack-based deployment named `vllm` that runs a small LLM (Facebook opt-125M model).
+これにより、小さな LLM（Facebook の opt-125M モデル）を動かす `vllm` という名前の vLLM production stack ベースのデプロイが作成されます。
 
-### Validate Installation
+### インストールの確認 { #validate-installation }
 
-Monitor the deployment status using:
+次のコマンドでデプロイの状態を確認します。
 
 ```bash
 sudo kubectl get pods
 ```
 
-And you will see that pods for the `vllm` deployment will transit to `Running` state.
+`vllm` デプロイの Pod が `Running` 状態に遷移するのが確認できます。
 
 ```text
 NAME                                           READY   STATUS    RESTARTS   AGE
@@ -42,23 +42,23 @@ vllm-opt125m-deployment-vllm-84dfc9bd7-vb9bs   1/1     Running   0          2m38
 ```
 
 !!! note
-    It may take some time for the containers to download the Docker images and LLM weights.
+    コンテナが Docker イメージと LLM の重みをダウンロードするまで、しばらく時間がかかることがあります。
 
-### Send a Query to the Stack
+### スタックにクエリを送る { #send-a-query-to-the-stack }
 
-Forward the `vllm-router-service` port to the host machine:
+`vllm-router-service` のポートをホストマシンに転送します。
 
 ```bash
 sudo kubectl port-forward svc/vllm-router-service 30080:80
 ```
 
-And then you can send out a query to the OpenAI-compatible API to check the available models:
+そのうえで、OpenAI 互換 API にクエリを送って利用可能なモデルを確認できます。
 
 ```bash
 curl -o- http://localhost:30080/v1/models
 ```
 
-??? console "Output"
+??? console "出力"
 
     ```json
     {
@@ -75,7 +75,7 @@ curl -o- http://localhost:30080/v1/models
     }
     ```
 
-To send an actual chatting request, you can issue a curl request to the OpenAI `/completion` endpoint:
+実際にチャットのリクエストを送るには、OpenAI の `/completion` エンドポイントに curl でリクエストします。
 
 ```bash
 curl -X POST http://localhost:30080/v1/completions \
@@ -87,7 +87,7 @@ curl -X POST http://localhost:30080/v1/completions \
   }'
 ```
 
-??? console "Output"
+??? console "出力"
 
     ```json
     {
@@ -105,9 +105,9 @@ curl -X POST http://localhost:30080/v1/completions \
     }
     ```
 
-### Uninstall
+### アンインストール { #uninstall }
 
-To remove the deployment, run:
+デプロイを削除するには次を実行します。
 
 ```bash
 sudo helm uninstall vllm
@@ -115,11 +115,11 @@ sudo helm uninstall vllm
 
 ---
 
-### (Advanced) Configuring vLLM production stack
+### （応用）vLLM production stack の設定 { #advanced-configuring-vllm-production-stack }
 
-The core vLLM production stack configuration is managed with YAML. Here is the example configuration used in the installation above:
+vLLM production stack の中心的な設定は YAML で管理します。上記のインストールで使った設定例は次のとおりです。
 
-??? code "Yaml"
+??? code "YAML"
 
     ```yaml
     servingEngineSpec:
@@ -139,20 +139,20 @@ The core vLLM production stack configuration is managed with YAML. Here is the e
         pvcStorage: "10Gi"
     ```
 
-In this YAML configuration:
+この YAML 設定の各項目:
 
-* **`modelSpec`** includes:
-    * `name`: A nickname that you prefer to call the model.
-    * `repository`: Docker repository of vLLM.
-    * `tag`: Docker image tag.
-    * `modelURL`: The LLM model that you want to use.
-* **`replicaCount`**: Number of replicas.
-* **`requestCPU` and `requestMemory`**: Specifies the CPU and memory resource requests for the pod.
-* **`requestGPU`**: Specifies the number of GPUs required.
-* **`pvcStorage`**: Allocates persistent storage for the model.
+* **`modelSpec`** に含まれる項目:
+    * `name`: モデルに付ける任意の呼び名。
+    * `repository`: vLLM の Docker リポジトリ。
+    * `tag`: Docker イメージのタグ。
+    * `modelURL`: 使用したい LLM のモデル。
+* **`replicaCount`**: レプリカ数。
+* **`requestCPU` と `requestMemory`**: Pod に要求する CPU とメモリのリソース量。
+* **`requestGPU`**: 必要な GPU の数。
+* **`pvcStorage`**: モデル用に確保する永続ストレージ。
 
 !!! note
-    If you intend to set up two pods, please refer to this [YAML file](https://github.com/vllm-project/production-stack/blob/main/tutorials/assets/values-01-2pods-minimal-example.yaml).
+    Pod を 2 つ構成したい場合は、この [YAML ファイル](https://github.com/vllm-project/production-stack/blob/main/tutorials/assets/values-01-2pods-minimal-example.yaml)を参照してください。
 
 !!! tip
-    vLLM production stack offers many more features (*e.g.* CPU offloading and a wide range of routing algorithms). Please check out these [examples and tutorials](https://github.com/vllm-project/production-stack/tree/main/tutorials) and our [repo](https://github.com/vllm-project/production-stack) for more details!
+    vLLM production stack には、CPU へのオフロードや多様なルーティングアルゴリズムなど、さらに多くの機能があります。詳細は[例とチュートリアル](https://github.com/vllm-project/production-stack/tree/main/tutorials)や[リポジトリ](https://github.com/vllm-project/production-stack)を参照してください。

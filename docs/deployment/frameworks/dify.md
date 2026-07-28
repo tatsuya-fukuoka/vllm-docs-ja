@@ -1,30 +1,30 @@
-# Dify
+# Dify { #dify }
 
-[Dify](https://github.com/langgenius/dify) is an open-source LLM app development platform. Its intuitive interface combines agentic AI workflow, RAG pipeline, agent capabilities, model management, observability features, and more, allowing you to quickly move from prototype to production.
+[Dify](https://github.com/langgenius/dify) はオープンソースの LLM アプリ開発プラットフォームです。直感的なインターフェイスに、エージェント型 AI のワークフロー、RAG のパイプライン、エージェント機能、モデル管理、可観測性などを備え、プロトタイプから本番まで素早く進められます。
 
-It supports vLLM as a model provider to efficiently serve large language models.
+モデルプロバイダとして vLLM に対応しており、大規模言語モデルを効率的にサービングできます。
 
-This guide walks you through deploying Dify using a vLLM backend.
+このガイドでは、vLLM をバックエンドとして Dify をデプロイする手順を説明します。
 
-## Prerequisites
+## 前提条件 { #prerequisites }
 
-Set up the vLLM environment:
+vLLM の環境を用意します。
 
 ```bash
 pip install vllm
 ```
 
-And install [Docker](https://docs.docker.com/engine/install/) and [Docker Compose](https://docs.docker.com/compose/install/).
+さらに [Docker](https://docs.docker.com/engine/install/) と [Docker Compose](https://docs.docker.com/compose/install/) をインストールします。
 
-## Deploy
+## デプロイ { #deploy }
 
-1. Start the vLLM server with the supported chat completion model, e.g.
+1. 対応するチャット補完モデルで vLLM サーバーを起動します。例:
 
     ```bash
     vllm serve Qwen/Qwen1.5-7B-Chat
     ```
 
-1. Start the Dify server with docker compose ([details](https://github.com/langgenius/dify?tab=readme-ov-file#quick-start)):
+1. docker compose で Dify のサーバーを起動します（[詳細](https://github.com/langgenius/dify?tab=readme-ov-file#quick-start)）。
 
     ```bash
     git clone https://github.com/langgenius/dify.git
@@ -34,11 +34,11 @@ And install [Docker](https://docs.docker.com/engine/install/) and [Docker Compos
     docker compose up -d
     ```
 
-1. Open the browser to access `http://localhost/install`, config the basic login information and login.
+1. ブラウザで `http://localhost/install` を開き、基本のログイン情報を設定してログインします。
 
-1. In the top-right user menu (under the profile icon), go to Settings, then click `Model Provider`, and locate the `vLLM` provider to install it.
+1. 右上のユーザーメニュー（プロフィールアイコン）から Settings を開き、`Model Provider` をクリックして `vLLM` プロバイダを見つけ、インストールします。
 
-1. Fill in the model provider details as follows:
+1. モデルプロバイダの情報を次のように入力します。
 
     - **Model Type**: `LLM`
     - **Model Name**: `Qwen/Qwen1.5-7B-Chat`
@@ -48,10 +48,10 @@ And install [Docker](https://docs.docker.com/engine/install/) and [Docker Compos
 
     ![Dify settings screen](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/deployment/dify-settings.png)
 
-1. To create a test chatbot, go to `Studio → Chatbot → Create from Blank`, then select Chatbot as the type:
+1. テスト用のチャットボットを作るには、`Studio → Chatbot → Create from Blank` を選び、種類として Chatbot を選択します。
 
     ![Dify create chatbot screen](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/deployment/dify-create-chatbot.png)
 
-1. Click the chatbot you just created to open the chat interface and start interacting with the model:
+1. 作成したチャットボットをクリックしてチャット画面を開き、モデルとやり取りを始めます。
 
     ![Dify chat screen](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/deployment/dify-chat.png)

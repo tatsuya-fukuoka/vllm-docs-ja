@@ -1,11 +1,11 @@
-# Environment Variables
+# 環境変数 { #environment-variables }
 
-vLLM uses the following environment variables to configure the system:
+vLLM はシステムの設定に次の環境変数を使用します。
 
 !!! warning
-    Please note that `VLLM_PORT` and `VLLM_HOST_IP` set the port and ip for vLLM's **internal usage**. It is not the port and ip for the API server. If you use `--host $VLLM_HOST_IP` and `--port $VLLM_PORT` to start the API server, it will not work.
+    `VLLM_PORT` と `VLLM_HOST_IP` は vLLM の**内部処理用**のポートと IP を設定するものである点に注意してください。API サーバーのポートと IP ではありません。`--host $VLLM_HOST_IP` や `--port $VLLM_PORT` で API サーバーを起動しても意図どおりには動作しません。
 
-    Most vLLM-specific environment variables are prefixed with `VLLM_` (a handful of standard names — for example `CUDA_VISIBLE_DEVICES`, `MAX_JOBS`, `S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY`/`S3_ENDPOINT_URL`, `DO_NOT_TRACK`, `NO_COLOR` — are also read directly when set). **Special care should be taken for Kubernetes users**: please do not name the service as `vllm`, otherwise environment variables set by Kubernetes might conflict with vLLM's environment variables, because [Kubernetes sets environment variables for each service with the capitalized service name as the prefix](https://kubernetes.io/docs/concepts/services-networking/service/#environment-variables).
+    vLLM 固有の環境変数はほとんどが `VLLM_` で始まります（`CUDA_VISIBLE_DEVICES`、`MAX_JOBS`、`S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` / `S3_ENDPOINT_URL`、`DO_NOT_TRACK`、`NO_COLOR` など、一部の標準的な名前も設定されていれば読み取られます）。**Kubernetes を利用している場合は特に注意してください**。サービス名を `vllm` にしないでください。[Kubernetes はサービスごとに、大文字化したサービス名を接頭辞とする環境変数を設定する](https://kubernetes.io/docs/concepts/services-networking/service/#environment-variables)ため、vLLM の環境変数と衝突する可能性があります。
 
 ```python
 --8<-- "vllm/envs.py:env-vars-definition"

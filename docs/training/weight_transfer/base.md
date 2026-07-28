@@ -1,36 +1,36 @@
-# Base Class and Custom Engines
+# 基底クラスと独自エンジン { #base-class-and-custom-engines }
 
-The weight transfer system is built on an abstract base class that defines the contract between vLLM's worker infrastructure and the transport backend. You can implement custom backends by subclassing `WeightTransferEngine` and registering them with the `WeightTransferEngineFactory`.
+重み転送の仕組みは、vLLM のワーカー基盤と転送バックエンドの間の取り決めを定義する抽象基底クラスの上に構築されています。`WeightTransferEngine` を継承し、`WeightTransferEngineFactory` に登録することで独自のバックエンドを実装できます。
 
-## WeightTransferEngine
+## WeightTransferEngine { #weighttransferengine }
 
-The `WeightTransferEngine` is a generic abstract class parameterized by two dataclass types:
+`WeightTransferEngine` は、2 つのデータクラス型をパラメータに取るジェネリックな抽象クラスです。
 
-- **`TInitInfo`** (extends `WeightTransferInitInfo`): Backend-specific initialization parameters.
-- **`TUpdateInfo`** (extends `WeightTransferUpdateInfo`): Backend-specific weight update metadata.
+- **`TInitInfo`**（`WeightTransferInitInfo` を継承）: バックエンド固有の初期化パラメータ。
+- **`TUpdateInfo`**（`WeightTransferUpdateInfo` を継承）: バックエンド固有の重み更新メタデータ。
 
-### Abstract Methods
+### 抽象メソッド { #abstract-methods }
 
-Subclasses must implement these methods:
+サブクラスは次のメソッドを実装する必要があります。
 
-| Method | Side | Description |
+| メソッド | 側 | 説明 |
 | ------ | ---- | ----------- |
-| `init_transfer_engine(init_info)` | Inference | Initialize the communication channel on each inference worker |
-| `start_weight_update()` | Inference | Prepare for an update (e.g. begin layerwise reload); no-op for in-place engines |
-| `finish_weight_update()` | Inference | Finalize the update (e.g. finalize layerwise reload); no-op for in-place engines |
-| `receive_weights(update_info)` | Inference | Receive weights and load them into `self.model` |
-| `shutdown()` | Inference | Clean up resources |
-| `trainer_send_weights(iterator, trainer_args)` | Trainer | Static method to send weights from the trainer process |
+| `init_transfer_engine(init_info)` | 推論 | 各推論ワーカーで通信路を初期化する |
+| `start_weight_update()` | 推論 | 更新の準備をする（層単位の再読み込みの開始など）。in-place なエンジンでは何もしない |
+| `finish_weight_update()` | 推論 | 更新を確定する（層単位の再読み込みの終了処理など）。in-place なエンジンでは何もしない |
+| `receive_weights(update_info)` | 推論 | 重みを受け取り `self.model` に読み込む |
+| `shutdown()` | 推論 | リソースを解放する |
+| `trainer_send_weights(iterator, trainer_args)` | トレーナー | トレーナーのプロセスから重みを送る静的メソッド |
 
-The base class provides two methods:
+基底クラスは次の 2 つのメソッドを提供します。
 
-1. `__init__` : Engines receive `config` (`WeightTransferConfig`),  `vllm_config` (`VllmConfig`), `device` (`torch.device`) and  `model` (`nn.Module`)  
-2. `update_weights(update_info_dict)`:  Thin wrapper for `receive_weights`: parses
-the dict into user-specified data type, calls `receive_weights`, and synchronizes the device. Subclasses implement `receive_weights`.
+1. `__init__`: エンジンは `config`（`WeightTransferConfig`）、`vllm_config`（`VllmConfig`）、`device`（`torch.device`）、`model`（`nn.Module`）を受け取ります。  
+2. `update_weights(update_info_dict)`: `receive_weights` の薄いラッパーです。辞書を
+指定されたデータ型に変換し、`receive_weights` を呼び出してデバイスを同期します。サブクラスは `receive_weights` を実装します。
 
-### Request Classes
+### リクエストのクラス { #request-classes }
 
-The API-level request classes provide backend-agnostic serialization using plain dictionaries. The engine's `parse_init_info` and `parse_update_info` methods convert these dictionaries into typed dataclasses.
+API レベルのリクエストクラスは、素の辞書を使ったバックエンド非依存のシリアライズを提供します。エンジンの `parse_init_info` と `parse_update_info` が、これらの辞書を型付きのデータクラスに変換します。
 
 ```python
 from vllm.distributed.weight_transfer.base import (
@@ -49,13 +49,13 @@ update_request = WeightTransferUpdateRequest(
 )
 ```
 
-At the LLM/API layer, call `start_draft_weight_update()` instead of
-`start_weight_update()` to target the speculative draft model;
-`update_weights` / `finish_weight_update` are unchanged.
+LLM / API の層では、投機的デコーディングのドラフトモデルを対象にするために、
+`start_weight_update()` の代わりに `start_draft_weight_update()` を呼び出します。
+`update_weights` と `finish_weight_update` は同じです。
 
-### WeightTransferUpdateInfo
+### WeightTransferUpdateInfo { #weighttransferupdateinfo }
 
-The base `WeightTransferUpdateInfo` is a marker class for backend-specific update info:
+基底の `WeightTransferUpdateInfo` は、バックエンド固有の更新情報のためのマーカークラスです。
 
 ```python
 @dataclass
@@ -63,11 +63,11 @@ class WeightTransferUpdateInfo(ABC):
     pass
 ```
 
-## Implementing a Custom Engine
+## 独自エンジンの実装 { #implementing-a-custom-engine }
 
-To create a custom weight transfer backend:
+独自の重み転送バックエンドを作るには次のようにします。
 
-### 1. Define Info Dataclasses
+### 1. 情報のデータクラスを定義する { #1-define-info-dataclasses }
 
 ```python
 from dataclasses import dataclass
@@ -90,7 +90,7 @@ class MyUpdateInfo(WeightTransferUpdateInfo):
     # Add custom fields as needed
 ```
 
-### 2. Implement the Engine
+### 2. エンジンを実装する { #2-implement-the-engine }
 
 ```python
 from collections.abc import Iterator
@@ -140,7 +140,7 @@ class MyWeightTransferEngine(WeightTransferEngine[MyInitInfo, MyUpdateInfo]):
             ...
 ```
 
-### 3. Register with the Factory
+### 3. ファクトリに登録する { #3-register-with-the-factory }
 
 ```python
 from vllm.distributed.weight_transfer.factory import WeightTransferEngineFactory
@@ -159,11 +159,11 @@ WeightTransferEngineFactory.register_engine(
 )
 ```
 
-Once registered, users can select your backend via `WeightTransferConfig(backend="my_backend")`.
+登録すると、利用者は `WeightTransferConfig(backend="my_backend")` でそのバックエンドを選べます。
 
-## WeightTransferEngineFactory
+## WeightTransferEngineFactory { #weighttransferenginefactory }
 
-The factory uses a registry pattern with lazy loading. Built-in engines (`nccl`, `ipc`, and `sparse_nccl`) are registered at import time but their modules are only loaded when the backend is actually requested. This avoids importing heavy dependencies (like NCCL communicators) when they aren't needed.
+ファクトリはレジストリのパターンと遅延読み込みを使います。組み込みのエンジン（`nccl`、`ipc`、`sparse_nccl`）は import 時に登録されますが、そのモジュールが実際に読み込まれるのは、そのバックエンドが要求されたときだけです。これにより、不要なときに NCCL のコミュニケータのような重い依存を import せずに済みます。
 
 ```python
 from vllm.distributed.weight_transfer.factory import WeightTransferEngineFactory

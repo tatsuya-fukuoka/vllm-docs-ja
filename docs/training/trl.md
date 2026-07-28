@@ -1,12 +1,12 @@
-# Transformers Reinforcement Learning
+# Transformers Reinforcement Learning (TRL) { #transformers-reinforcement-learning }
 
-[Transformers Reinforcement Learning](https://huggingface.co/docs/trl) (TRL) is a full stack library that provides a set of tools to train transformer language models with methods like Supervised Fine-Tuning (SFT), Group Relative Policy Optimization (GRPO), Direct Preference Optimization (DPO), Reward Modeling, and more. The library is integrated with 🤗 transformers.
+[Transformers Reinforcement Learning](https://huggingface.co/docs/trl) (TRL) は、教師ありファインチューニング (SFT)、Group Relative Policy Optimization (GRPO)、Direct Preference Optimization (DPO)、報酬モデリングなどの手法で Transformer 系の言語モデルを学習するためのツール群を提供するフルスタックのライブラリです。🤗 transformers と統合されています。
 
-Online methods such as GRPO or Online DPO require the model to generate completions. vLLM can be used to generate these completions!
+GRPO や Online DPO のようなオンライン手法では、モデルが補完を生成する必要があります。この生成に vLLM を利用できます。
 
-See the [vLLM integration guide](https://huggingface.co/docs/trl/main/en/vllm_integration) in the TRL documentation for more information.
+詳細は TRL のドキュメントにある [vLLM 統合ガイド](https://huggingface.co/docs/trl/main/en/vllm_integration)（英語）を参照してください。
 
-TRL currently supports the following online trainers with vLLM:
+TRL は現在、vLLM と組み合わせて次のオンライントレーナーをサポートしています。
 
 - [GRPO](https://huggingface.co/docs/trl/main/en/grpo_trainer)
 - [Online DPO](https://huggingface.co/docs/trl/main/en/online_dpo_trainer)
@@ -14,15 +14,15 @@ TRL currently supports the following online trainers with vLLM:
 - [Nash-MD](https://huggingface.co/docs/trl/main/en/nash_md_trainer)
 - [XPO](https://huggingface.co/docs/trl/main/en/xpo_trainer)
 
-To enable vLLM in TRL, set the `use_vllm` flag in the trainer configuration to `True`.
+TRL で vLLM を有効にするには、トレーナーの設定で `use_vllm` フラグを `True` にします。
 
-## Modes of Using vLLM During Training
+## 学習時の vLLM の使い方（モード） { #modes-of-using-vllm-during-training }
 
-TRL supports **two modes** for integrating vLLM during training: **server mode** and **colocate mode**. You can control how vLLM operates during training with the `vllm_mode` parameter.
+TRL は学習時の vLLM の統合について **2 つのモード**をサポートしています。**サーバーモード**と**コロケートモード**です。`vllm_mode` パラメータで切り替えます。
 
-### Server mode
+### サーバーモード { #server-mode }
 
-In **server mode**, vLLM runs as an independent process on dedicated GPUs and communicates with the trainer through HTTP requests. This configuration is ideal when you have separate GPUs for inference, as it isolates generation workloads from training, ensuring stable performance and easier scaling.
+**サーバーモード**では、vLLM は専用の GPU 上で独立したプロセスとして動作し、HTTP リクエストでトレーナーと通信します。推論用に別の GPU を用意できる場合に適した構成で、生成のワークロードを学習から分離できるため、性能が安定しスケールも容易になります。
 
 ```python
 from trl import GRPOConfig
@@ -34,9 +34,9 @@ training_args = GRPOConfig(
 )
 ```
 
-### Colocate mode
+### コロケートモード { #colocate-mode }
 
-In **colocate mode**, vLLM runs inside the trainer process and shares GPU memory with the training model. This avoids launching a separate server and can improve GPU utilization, but may lead to memory contention on the training GPUs.
+**コロケートモード**では、vLLM はトレーナーのプロセス内で動作し、学習中のモデルと GPU メモリを共有します。別途サーバーを起動する必要がなく GPU の使用効率を高められますが、学習用 GPU でメモリの競合が起きる可能性があります。
 
 ```python
 from trl import GRPOConfig
@@ -48,7 +48,7 @@ training_args = GRPOConfig(
 )
 ```
 
-Some trainers also support **vLLM sleep mode**, which offloads parameters and caches to GPU RAM during training, helping reduce memory usage. Learn more in the [memory optimization docs](https://huggingface.co/docs/trl/main/en/reducing_memory_usage#vllm-sleep-mode).
+一部のトレーナーは **vLLM のスリープモード**にも対応しており、学習中にパラメータとキャッシュを GPU の RAM へ退避してメモリ使用量を抑えられます。詳細は[メモリ最適化のドキュメント](https://huggingface.co/docs/trl/main/en/reducing_memory_usage#vllm-sleep-mode)（英語）を参照してください。
 
 !!! info
-    For detailed configuration options and flags, refer to the documentation of the specific trainer you are using.
+    詳細な設定項目やフラグについては、使用するトレーナーのドキュメントを参照してください。

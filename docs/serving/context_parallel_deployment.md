@@ -1,47 +1,47 @@
-# Context Parallel Deployment
+# コンテキスト並列のデプロイ { #context-parallel-deployment }
 
-Context parallel mainly solves the problem of serving long context requests. As prefill and decode present quite different characteristics and have quite different SLO (service level objectives), we need to implement context parallel separately for them. The major considerations are:
+コンテキスト並列は主に、長いコンテキストのリクエストをサービングする問題を解決します。Prefill と Decode は性質が大きく異なり、SLO（サービスレベル目標）も大きく異なるため、それぞれに対して別々にコンテキスト並列を実装する必要があります。主な検討事項は次のとおりです。
 
-- For long context prefill, we need to control the TTFT (time to first token) by amortizing the computation time of the prefill across query tokens.
-- For long context decode, we need more space for KV cache to increase the batchsize (and hence the throughput).
+- 長いコンテキストの Prefill では、Prefill の計算時間をクエリのトークン間で分散させることで TTFT（最初のトークンまでの時間）を抑える必要があります。
+- 長いコンテキストの Decode では、バッチサイズ（ひいてはスループット）を上げるために KV キャッシュ用の領域をより多く確保する必要があります。
 
-## Prefill Context Parallel
+## Prefill のコンテキスト並列 { #prefill-context-parallel }
 
-During prefill, for a long request with `T` new tokens, we need to compute query/key/value tensors for these new tokens. Say we have `N` GPUs, we can split the request into `N` chunks, and each GPU computes one chunk of the query/key/value tensors.
+Prefill では、`T` 個の新規トークンを持つ長いリクエストに対して、それらの query / key / value テンソルを計算する必要があります。GPU が `N` 台あるとすると、リクエストを `N` 個のチャンクに分割し、各 GPU が 1 チャンク分の query / key / value テンソルを計算できます。
 
-Depending on the use case, there are two possible strategies:
+用途に応じて 2 つの戦略が考えられます。
 
-1. Partial query, full key/value: If the request token length is moderately long (we can afford holding the full key/value tensors), and the goal is to accelerate the prefill (and amortize the computation time of the prefill across query tokens), then we can gather the key/value tensors from all GPUs and let each GPU compute the attention output corresponding to the query tokens of its chunk.
-2. Partial query, partial key/value: If the request token length is too long, we cannot afford holding the full key/value tensors anymore, then we can only compute one chunk of query/key/value tensors for each GPU, and use techniques like [ring-attention](http://arxiv.org/abs/2310.01889) to send/recv key/value tensors chunk by chunk.
+1. query を分割し、key/value は全体を保持する: リクエストのトークン長がほどほどの長さで（key/value テンソル全体を保持できる）、目的が Prefill の高速化（および Prefill の計算時間をクエリのトークン間で分散すること）である場合、すべての GPU から key/value テンソルを集め、各 GPU が自分のチャンクの query トークンに対応する Attention 出力を計算します。
+2. query も key/value も分割する: リクエストのトークン長が長すぎて key/value テンソル全体を保持できない場合は、各 GPU で query / key / value テンソルを 1 チャンク分だけ計算し、[ring-attention](http://arxiv.org/abs/2310.01889) のような手法で key/value テンソルをチャンクごとに送受信します。
 
-Both approaches are under active development.
+どちらの手法も活発に開発が進められています。
 
-## Decode Context Parallel
+## Decode のコンテキスト並列 { #decode-context-parallel }
 
-Due to the auto-regressive nature of decoding, every decoding step needs to compute a small amount of query tokens w.r.t. a large number of key/value tokens stored in the paged KV cache. The core of decode context parallel is how to shard the KV cache across GPUs.
+Decode は自己回帰的な性質を持つため、各ステップでは、ページ化された KV キャッシュに保存された大量の key/value トークンに対して、少数の query トークンを計算します。Decode のコンテキスト並列の要点は、KV キャッシュを GPU 間でどう分割するかにあります。
 
-For a model with `H` kv-heads, a request with `T` tokens in the context needs to store `H * T` key/value tensors in the KV cache.
+kv ヘッドが `H` 個のモデルでは、コンテキストに `T` 個のトークンを持つリクエストは `H * T` 個の key/value テンソルを KV キャッシュに保存する必要があります。
 
-1. If one GPU can hold them all, and the performance is good enough, then no parallelization is needed.
-2. If one GPU cannot hold them all, or we want to hold more requests in the KV cache, we can first shard the KV cache along the `H` dimension, that's the plain tensor parallel sharding. It's as simple as adding `-tp <num_gpus>` to the command line.
-3. Since `H` is limited (determined by the model architecture), when we continue to increase the tensor parallel size, the KV cache for each GPU will be duplicated for `tp_size / H` times. Of course, duplication is not good for efficiency. Then we need to add decode context parallel to further shard the KV cache along the `T` dimension. This is as simple as adding `-dcp <size>` to the command line. Note that `size` does not increase the number of GPUs we need to launch, but just reduces the KV cache duplication. The dcp size should lie in the range of `[1, tp_size/H]`. With larger dcp size, the KV cache duplication is reduced, but the communication overhead increases.
+1. 1 台の GPU にすべて収まり、性能も十分であれば、並列化は不要です。
+2. 1 台の GPU に収まらない場合、あるいは KV キャッシュにより多くのリクエストを保持したい場合は、まず `H` の次元で KV キャッシュを分割します。これが通常のテンソル並列の分割で、コマンドラインに `-tp <num_gpus>` を追加するだけです。
+3. `H` はモデルのアーキテクチャで決まる有限の値なので、テンソル並列のサイズを増やし続けると、各 GPU の KV キャッシュは `tp_size / H` 回だけ重複します。当然ながら重複は効率的ではありません。そこで Decode のコンテキスト並列を加え、`T` の次元でさらに KV キャッシュを分割します。これはコマンドラインに `-dcp <size>` を追加するだけです。`size` は起動に必要な GPU の台数を増やすものではなく、KV キャッシュの重複を減らすだけである点に注意してください。dcp サイズは `[1, tp_size/H]` の範囲で指定します。dcp サイズを大きくすると KV キャッシュの重複は減りますが、通信のオーバーヘッドは増えます。
 
-Theoretically, it is possible to extend the dcp size beyond `tp_size / H` to further shard the KV cache and accelerate the decoding phase. However, since the number of query tokens is limited in decoding, it's unclear what should we do for the remaining `dcp_size - tp_size / H` GPUs for non-attention layers. For the sake of simplicity, dcp size is upper bounded by `tp_size / H`. If you want to further accelerate the decoding phase, you can consider increasing the `tp_size` first, and then increasing the dcp size.
+理論上は、dcp サイズを `tp_size / H` より大きくして KV キャッシュをさらに分割し、Decode フェーズを高速化することも可能です。ただし Decode では query トークン数が限られるため、Attention 以外の層について残りの `dcp_size - tp_size / H` 台の GPU をどう扱うべきかが不明です。簡潔さのため、dcp サイズの上限は `tp_size / H` としています。Decode フェーズをさらに高速化したい場合は、まず `tp_size` を増やし、その後 dcp サイズを増やすことを検討してください。
 
-Note that kv cache can grow during decoding, and the sharding strategy needs to be carefully implemented. We use an interleaving strategy to shard the KV cache along the `T` dimension, so that kv cache for future tokens can be naturally sharded along the `T` dimension. This is proposed by [Chao Hong from Moonshot](https://github.com/youzhedian), and also explained in details in [this paper](http://arxiv.org/abs/2507.07120).
+なお、KV キャッシュは Decode 中に増えていくため、分割の戦略は慎重に実装する必要があります。vLLM では `T` の次元をインターリーブして分割する方式を採用しており、これにより将来のトークンの KV キャッシュも自然に `T` の次元で分割されます。この方式は [Moonshot の Chao Hong 氏](https://github.com/youzhedian)によって提案されたもので、[こちらの論文](http://arxiv.org/abs/2507.07120)でも詳しく説明されています。
 
-Case study:
+ケーススタディ:
 
-For DeepSeek-R1, we have 1 kv-head when MLA is enabled. The typical single-node deployment with `-tp 8` causes 8x KV cache duplication. We can consider adding `-dcp 8` to reduce the KV cache duplication.
+DeepSeek-R1 では、MLA を有効にすると kv ヘッドは 1 個です。`-tp 8` の典型的な単一ノード構成では KV キャッシュが 8 倍に重複します。`-dcp 8` を加えて重複を減らすことを検討できます。
 
-For Kimi-K2, the architecture is similar to DeepSeek-R1, but with more parameters. When we deploy it with `-tp 16`, the KV cache duplication is 16x. We can add `-dcp 16` to completely remove the KV cache duplication, at the cost of more communication overhead. We can also add `-dcp 8` to reduce the KV cache duplication to 2x. Although it still duplicates the KV cache twice, the communication overhead is smaller since the DCP communication only happens inside one node.
+Kimi-K2 は DeepSeek-R1 に似たアーキテクチャですが、パラメータ数がより多くなっています。`-tp 16` でデプロイすると KV キャッシュの重複は 16 倍になります。`-dcp 16` を加えれば重複を完全になくせますが、通信のオーバーヘッドは増えます。`-dcp 8` にして重複を 2 倍まで減らすこともできます。この場合 KV キャッシュは 2 倍重複しますが、DCP の通信が 1 ノード内で完結するためオーバーヘッドは小さくなります。
 
-For Qwen3-235B-A22B, we have 4 kv-heads. When we deploy it with `-tp 8`, the KV cache duplication is 2x. Then we can add `-dcp 2` to remove the KV cache duplication.
+Qwen3-235B-A22B では kv ヘッドが 4 個です。`-tp 8` でデプロイすると KV キャッシュの重複は 2 倍になるため、`-dcp 2` を加えて重複をなくせます。
 
-In short, for decode context parallel, try to increase `-tp` size until you get satisfactory performance, and then add `-dcp` to reduce the KV cache duplication.
+要するに Decode のコンテキスト並列では、まず満足のいく性能が得られるまで `-tp` を増やし、その後 `-dcp` を加えて KV キャッシュの重複を減らすとよいでしょう。
 
-Decode context parallel is supported in vLLM, for both MLA and GQA models. Some attention backends also support the combination of decode context parallel and MTP (multi-token prediction) to further accelerate the decoding phase.
+Decode のコンテキスト並列は、MLA と GQA の両方のモデルで vLLM がサポートしています。一部の Attention バックエンドは、Decode のコンテキスト並列と MTP（マルチトークン予測）の併用にも対応しており、Decode フェーズをさらに高速化できます。
 
-## Technical Discussions
+## 技術的な議論 { #technical-discussions }
 
-The main discussions happen in the `#sig-context-parallel` channel of [vLLM Slack](https://slack.vllm.ai/).
+主な議論は [vLLM Slack](https://slack.vllm.ai/) の `#sig-context-parallel` チャンネルで行われています。

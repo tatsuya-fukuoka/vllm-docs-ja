@@ -1,20 +1,20 @@
-# KubeRay
+# KubeRay { #kuberay }
 
-[KubeRay](https://github.com/ray-project/kuberay) provides a Kubernetes-native way to run vLLM workloads on Ray clusters.
-A Ray cluster can be declared in YAML, and the operator then handles pod scheduling, networking configuration, restarts, and blue-green deployments — all while preserving the familiar Kubernetes experience.
+[KubeRay](https://github.com/ray-project/kuberay) は、Ray クラスタ上で vLLM のワークロードを動かすための Kubernetes ネイティブな方法を提供します。
+Ray クラスタを YAML で宣言でき、オペレーターが Pod のスケジューリング、ネットワークの設定、再起動、ブルーグリーンデプロイを、使い慣れた Kubernetes の作法のまま処理します。
 
-## Why KubeRay instead of manual scripts?
+## 手動スクリプトではなく KubeRay を使う理由 { #why-kuberay-instead-of-manual-scripts }
 
-| Feature | Manual scripts | KubeRay |
+| 機能 | 手動スクリプト | KubeRay |
 | ------- | --------------------------------------------------------- | ------- |
-| Cluster bootstrap | Manually SSH into every node and run a script | One command to create or update the whole cluster: `kubectl apply -f cluster.yaml` |
-| Autoscaling | Manual | Automatically patches CRDs for adjusting cluster size |
-| Upgrades | Tear down & re-create manually | Blue/green deployment updates supported |
-| Declarative config | Bash flags & environment variables | Git-ops-friendly YAML CRDs (RayCluster/RayService) |
+| クラスタの初期構築 | 各ノードに手動で SSH してスクリプトを実行 | 1 コマンドでクラスタ全体を作成・更新: `kubectl apply -f cluster.yaml` |
+| オートスケーリング | 手動 | クラスタサイズの調整のため CRD を自動的にパッチ |
+| アップグレード | 手動で破棄して作り直す | ブルーグリーンデプロイによる更新に対応 |
+| 宣言的な設定 | bash のフラグと環境変数 | GitOps と相性の良い YAML の CRD (RayCluster / RayService) |
 
-Using KubeRay reduces the operational burden and simplifies integration of Ray + vLLM with existing Kubernetes workflows (CI/CD, secrets, storage classes, etc.).
+KubeRay を使うと運用負荷が下がり、Ray + vLLM を既存の Kubernetes のワークフロー（CI/CD、Secret、StorageClass など）に統合しやすくなります。
 
-## Learn more
+## さらに詳しく { #learn-more }
 
-* ["Serve a Large Language Model using Ray Serve LLM on Kubernetes"](https://docs.ray.io/en/master/cluster/kubernetes/examples/rayserve-llm-example.html) - An end-to-end example of how to serve a model using vLLM, KubeRay, and Ray Serve.
-* [KubeRay documentation](https://docs.ray.io/en/latest/cluster/kubernetes/index.html)
+* [「Serve a Large Language Model using Ray Serve LLM on Kubernetes」](https://docs.ray.io/en/master/cluster/kubernetes/examples/rayserve-llm-example.html) - vLLM・KubeRay・Ray Serve を使ってモデルをサービングするエンドツーエンドの例（英語）。
+* [KubeRay のドキュメント](https://docs.ray.io/en/latest/cluster/kubernetes/index.html)（英語）

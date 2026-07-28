@@ -1,43 +1,43 @@
-# Collaboration Policy
+# コラボレーションの方針 { #collaboration-policy }
 
-This page outlines how vLLM collaborates with model providers, hardware vendors, and other stakeholders.
+このページでは、vLLM がモデル提供者・ハードウェアベンダー・その他の関係者とどのように協働するかを説明します。
 
-## Adding New Major Features
+## 大きな新機能の追加 { #adding-new-major-features }
 
-Anyone can contribute to vLLM. For major features, submit an RFC (request for comments) first. To submit an RFC, create an [issue](https://github.com/vllm-project/vllm/issues/new/choose) and select the `RFC` template.
-RFCs are similar to design docs that discuss the motivation, problem solved, alternatives considered, and proposed change.
+vLLM には誰でも貢献できます。大きな機能については、まず RFC（コメント募集）を提出してください。RFC を提出するには、[Issue](https://github.com/vllm-project/vllm/issues/new/choose) を作成し `RFC` テンプレートを選びます。
+RFC は設計文書に近いもので、動機・解決する課題・検討した代替案・提案する変更内容を議論します。
 
-Once you submit the RFC, please post it in the #contributors channel in vLLM Slack, and loop in area owners and committers for feedback.
-For high-interest features, the committers nominate a person to help with the RFC process and PR review. This makes sure someone is guiding you through the process. It is reflected as the "assignee" field in the RFC issue.
-If the assignee and lead maintainers find the feature to be contentious, the maintainer team aims to make decisions quickly after learning the details from everyone. This involves assigning a committer as the DRI (Directly Responsible Individual) to make the decision and shepherd the code contribution process.
+RFC を提出したら、vLLM Slack の #contributors チャンネルに投稿し、該当領域のオーナーやコミッターを巻き込んでフィードバックを求めてください。
+関心の高い機能については、コミッターが RFC のプロセスと PR レビューを支援する担当者を指名します。これにより、進め方を案内する人が必ず付きます。担当者は RFC の Issue の「assignee」欄に反映されます。
+担当者とリードメンテナーがその機能を議論の余地があると判断した場合、メンテナーチームは関係者から詳細を聞いたうえで速やかに意思決定を行います。この際、意思決定とコード貢献プロセスの取りまとめを行う DRI（直接責任者）としてコミッターが割り当てられます。
 
-For features that you intend to maintain, please feel free to add yourself in [`mergify.yml`](https://github.com/vllm-project/vllm/blob/main/.github/mergify.yml) to receive notifications and auto-assignment when the PRs touching the feature you are maintaining. Over time, the ownership will be evaluated and updated through the committers nomination and voting process.
+継続的に保守するつもりの機能については、[`mergify.yml`](https://github.com/vllm-project/vllm/blob/main/.github/mergify.yml) に自分を追加してください。担当する機能に触れる PR について、通知と自動アサインを受け取れます。オーナーシップは時間の経過とともに、コミッターの指名と投票のプロセスを通じて見直され、更新されます。
 
-## Adding New Models
+## 新しいモデルの追加 { #adding-new-models }
 
-If you use vLLM, we recommend you making the model work with vLLM by following the [model registration](../contributing/model/registration.md) process before you release it publicly.
+vLLM を使う場合、モデルを一般公開する前に[モデルの登録](../contributing/model/registration.md)のプロセスに従って、そのモデルが vLLM で動作するようにすることを推奨します。
 
-The vLLM team helps with new model architectures not supported by vLLM, especially models pushing architectural frontiers.
-Here's how the vLLM team works with model providers. The vLLM team includes all [committers](./committers.md) of the project. Model providers can exclude certain members but shouldn't, as this may harm release timelines due to missing expertise. Contact [project leads](./process.md) if you want to collaborate.
+vLLM チームは、vLLM がまだ対応していない新しいモデルアーキテクチャ、特にアーキテクチャの最前線を切り拓くモデルの対応を支援します。
+vLLM チームとモデル提供者の協働の進め方は次のとおりです。vLLM チームにはプロジェクトのすべての[コミッター](./committers.md)が含まれます。モデル提供者は特定のメンバーを除外できますが、専門知識が欠けることでリリース時期に影響しうるため推奨しません。協働を希望する場合は[プロジェクトリード](./process.md)に連絡してください。
 
-Once we establish the connection between the vLLM team and model provider:
+vLLM チームとモデル提供者の間で連絡体制が整うと、次のように進みます。
 
-- The vLLM team learns the model architecture and relevant changes, then plans which area owners to involve and what features to include.
-- The vLLM team creates a private communication channel (currently a Slack channel in the vLLM workspace) and a private fork within the vllm-project organization. The model provider team can invite others to the channel and repo.
-- Third parties like compute providers, hosted inference providers, hardware vendors, and other organizations often work with both the model provider and vLLM on model releases. We establish direct communication (with permission) or three-way communication as needed.
+- vLLM チームがモデルのアーキテクチャと関連する変更を把握し、どの領域のオーナーを巻き込むか、どの機能を含めるかを計画します。
+- vLLM チームが非公開の連絡チャンネル（現在は vLLM ワークスペースの Slack チャンネル）と、vllm-project 組織内の非公開フォークを作成します。モデル提供者のチームは、他のメンバーをチャンネルとリポジトリに招待できます。
+- 計算リソースの提供者、ホスティング型の推論事業者、ハードウェアベンダーなどの第三者が、モデルのリリースにおいてモデル提供者と vLLM の双方と協働することがよくあります。必要に応じて（許可を得たうえで）直接の連絡体制、または三者間の連絡体制を構築します。
 
-The vLLM team works with model providers on features, integrations, and release timelines. We work to meet release timelines, but engineering challenges like feature development, model accuracy alignment, and optimizations can cause delays.
+vLLM チームは、機能・統合・リリース時期についてモデル提供者と協働します。リリース時期に間に合うよう努めますが、機能開発・モデルの精度の一致・最適化といった技術的な課題により遅延が生じることがあります。
 
-The vLLM maintainers will not publicly share details about model architecture, release timelines, or upcoming releases. We maintain model weights on secure servers with security measures (though we can work with security reviews and testing without certification). We delete pre-release weights or artifacts upon request.
+vLLM のメンテナーは、モデルのアーキテクチャ・リリース時期・今後のリリースの詳細を公に共有しません。モデルの重みはセキュリティ対策を施した安全なサーバーで管理します（認証は受けていませんが、セキュリティレビューやテストには対応できます）。リリース前の重みや成果物は、要請があれば削除します。
 
-The vLLM team collaborates on marketing and promotional efforts for model releases. Model providers can use vLLM's trademark and logo in publications and materials.
+vLLM チームは、モデルのリリースに関するマーケティングや告知でも協力します。モデル提供者は、出版物や資料で vLLM の商標とロゴを使用できます。
 
-## Adding New Hardware
+## 新しいハードウェアの追加 { #adding-new-hardware }
 
-vLLM is designed as a platform for frontier model architectures and high-performance accelerators.
-For new hardware, follow the [hardware plugin](../design/plugin_system.md) system to add support.
-Use the platform plugin system to add hardware support.
-As hardware gains popularity, we help endorse it in our documentation and marketing materials.
-The vLLM GitHub organization can host hardware plugin repositories, especially for collaborative efforts among companies.
+vLLM は、最先端のモデルアーキテクチャと高性能なアクセラレータのためのプラットフォームとして設計されています。
+新しいハードウェアに対応するには、[ハードウェアプラグイン](../design/plugin_system.md)の仕組みに従ってください。
+ハードウェア対応の追加には、プラットフォームプラグインの仕組みを使います。
+そのハードウェアが普及してきた段階で、ドキュメントやマーケティング資料での紹介を支援します。
+vLLM の GitHub 組織では、特に複数企業による共同作業の場合、ハードウェアプラグインのリポジトリをホストできます。
 
-We rarely add new hardware to vLLM directly. Instead, we make existing hardware platforms modular to keep the vLLM core hardware-agnostic.
+vLLM 本体に新しいハードウェアを直接追加することはほとんどありません。代わりに、既存のハードウェアプラットフォームをモジュール化し、vLLM のコアをハードウェア非依存に保ちます。

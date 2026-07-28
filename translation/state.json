@@ -33,93 +33,129 @@
       "upstream_sha": "4342cc2a183802d9"
     },
     "cli/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "c7b13600660be158",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "c7b13600660be158"
     },
     "cli/bench/latency.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4a9076859ae87404",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "4a9076859ae87404"
     },
     "cli/bench/mm_processor.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "519eb3bab3171ac9",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "519eb3bab3171ac9"
     },
     "cli/bench/serve.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "143c6e8347871b41",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "143c6e8347871b41"
     },
     "cli/bench/sweep/plot.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4294fbc448cd91d2",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "4294fbc448cd91d2"
     },
     "cli/bench/sweep/plot_pareto.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "784cbd0fafd2ca1a",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "784cbd0fafd2ca1a"
     },
     "cli/bench/sweep/serve.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "b1c15c9921933f0f",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "b1c15c9921933f0f"
     },
     "cli/bench/sweep/serve_workload.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "eea798b02217417e",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "eea798b02217417e"
     },
     "cli/bench/throughput.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "f3689e3f8f49a798",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "f3689e3f8f49a798"
     },
     "cli/chat.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "3fa7e79da91da6c8",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "3fa7e79da91da6c8"
     },
     "cli/complete.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d9ede99a7f15453b",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "d9ede99a7f15453b"
     },
     "cli/json_tip.inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "dcd9e0230d756184",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "dcd9e0230d756184"
     },
     "cli/launch/render.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "48ad9a226d55c122",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "48ad9a226d55c122"
     },
     "cli/run-batch.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "8f31db9e48d05da6",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "8f31db9e48d05da6"
     },
     "cli/serve.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "a98a678ea21acd4e",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "a98a678ea21acd4e"
     },
     "community/contact_us.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "6abc6f474ee858e1",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "6abc6f474ee858e1"
     },
     "community/meetups.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "7d4ecff5912a4afc",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "7d4ecff5912a4afc"
     },
     "community/sponsors.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d88f4f471fb8bab6",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "d88f4f471fb8bab6"
     },
     "configuration/README.md": {
@@ -137,18 +173,24 @@
       "upstream_sha": "72dafb7a2e4b100e"
     },
     "configuration/engine_args.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "37e570c7addf971f",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "37e570c7addf971f"
     },
     "configuration/env_vars.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4cd1d5bdec7bb2bc",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "4cd1d5bdec7bb2bc"
     },
     "configuration/model_resolution.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "5e455f909942a3d0",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "5e455f909942a3d0"
     },
     "configuration/optimization.md": {
@@ -159,8 +201,10 @@
       "upstream_sha": "86ca9cde5064d129"
     },
     "configuration/serve_args.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "fcfa8185d671493c",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "fcfa8185d671493c"
     },
     "contributing/README.md": {
@@ -251,163 +295,227 @@
       "upstream_sha": "8619b2fa7b181a86"
     },
     "deployment/frameworks/anyscale.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "baf4a924be6ba2f9",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "baf4a924be6ba2f9"
     },
     "deployment/frameworks/anything-llm.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "6bd5ad7857b5abb0",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "6bd5ad7857b5abb0"
     },
     "deployment/frameworks/autogen.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "49813b49c1d038d9",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "49813b49c1d038d9"
     },
     "deployment/frameworks/bentoml.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "8bdf5836a8a43933",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "8bdf5836a8a43933"
     },
     "deployment/frameworks/cerebrium.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "385b1642a4f39e2b",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "385b1642a4f39e2b"
     },
     "deployment/frameworks/chatbox.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "8b7c7fe3ba659752",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "8b7c7fe3ba659752"
     },
     "deployment/frameworks/dify.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "48574b9d7337ee13",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "48574b9d7337ee13"
     },
     "deployment/frameworks/dstack.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "7b387d508e12b18f",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "7b387d508e12b18f"
     },
     "deployment/frameworks/haystack.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "3cb6a2237f4e6bf5",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "3cb6a2237f4e6bf5"
     },
     "deployment/frameworks/helm.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d196610c1daf6f64",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "d196610c1daf6f64"
     },
     "deployment/frameworks/hf_inference_endpoints.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d4250da49a6afc74",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "d4250da49a6afc74"
     },
     "deployment/frameworks/litellm.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "190fe68e89115d78",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "190fe68e89115d78"
     },
     "deployment/frameworks/lobe-chat.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "a4374ba6d17ae3d5",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "a4374ba6d17ae3d5"
     },
     "deployment/frameworks/lws.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "729c94be648e8d39",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "729c94be648e8d39"
     },
     "deployment/frameworks/modal.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "7e8110637f03454a",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "7e8110637f03454a"
     },
     "deployment/frameworks/open-webui.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "dc13605f120129b8",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "dc13605f120129b8"
     },
     "deployment/frameworks/retrieval_augmented_generation.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "9ce2addfe0380b93",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "9ce2addfe0380b93"
     },
     "deployment/frameworks/runpod.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "0e7f50ebbc5dcc5b",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "0e7f50ebbc5dcc5b"
     },
     "deployment/frameworks/skypilot.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "5f397f88eb09e5cf",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "5f397f88eb09e5cf"
     },
     "deployment/frameworks/streamlit.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "9b4a1f01cb04e574",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "9b4a1f01cb04e574"
     },
     "deployment/frameworks/triton.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "2c71e09226a35eab",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "2c71e09226a35eab"
     },
     "deployment/integrations/aibrix.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4b36288f0f22055c",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "4b36288f0f22055c"
     },
     "deployment/integrations/dynamo.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "e8f3ddd59dde1d8f",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "e8f3ddd59dde1d8f"
     },
     "deployment/integrations/kaito.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d1fc3bd06df7bc97",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "d1fc3bd06df7bc97"
     },
     "deployment/integrations/kserve.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1463b8d943c31b3b",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "1463b8d943c31b3b"
     },
     "deployment/integrations/kthena.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1a3b3e65c3a481f7",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "1a3b3e65c3a481f7"
     },
     "deployment/integrations/kubeai.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "af71bf2657a8397f",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "af71bf2657a8397f"
     },
     "deployment/integrations/kuberay.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "ca814f2da14c1eeb",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "ca814f2da14c1eeb"
     },
     "deployment/integrations/llamastack.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "8cef86a10bc71994",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "8cef86a10bc71994"
     },
     "deployment/integrations/llm-d.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "16c792730f00d00d",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "16c792730f00d00d"
     },
     "deployment/integrations/llmaz.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "7fd1dabaef71f75d",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "7fd1dabaef71f75d"
     },
     "deployment/integrations/production-stack.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "e7cb18308f860db8",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "e7cb18308f860db8"
     },
     "deployment/k8s.md": {
@@ -418,8 +526,10 @@
       "upstream_sha": "dc40f945f800f2c0"
     },
     "deployment/nginx.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "213b7c7c4455a235",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "213b7c7c4455a235"
     },
     "design/arch_overview.md": {
@@ -575,8 +685,10 @@
       "upstream_sha": "dc7a3717f0670b52"
     },
     "features/automatic_prefix_caching.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "20f69d906f052b69",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "20f69d906f052b69"
     },
     "features/batch_invariance.md": {
@@ -585,13 +697,17 @@
       "upstream_sha": "ebe506231f06503b"
     },
     "features/context_extension.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "3dc4a086bb028df6",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "3dc4a086bb028df6"
     },
     "features/custom_arguments.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "a42d402b98104f3c",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "a42d402b98104f3c"
     },
     "features/custom_logitsprocs.md": {
@@ -610,8 +726,10 @@
       "upstream_sha": "925d6b629de17495"
     },
     "features/index_cache.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "ce06dcccc9342215",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "ce06dcccc9342215"
     },
     "features/interleaved_thinking.md": {
@@ -677,13 +795,17 @@
       "upstream_sha": "acc6bb7b2d1e7bda"
     },
     "features/quantization/auto_awq.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "c1fc388274efdba3",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "c1fc388274efdba3"
     },
     "features/quantization/bnb.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "88001a41a119f178",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "88001a41a119f178"
     },
     "features/quantization/fp8_vit_attn.md": {
@@ -692,23 +814,31 @@
       "upstream_sha": "7f9d73231a152d8a"
     },
     "features/quantization/gguf.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d2de9c92ead49209",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "d2de9c92ead49209"
     },
     "features/quantization/gptqmodel.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "692edefe3ddd27eb",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "692edefe3ddd27eb"
     },
     "features/quantization/inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "5e2d466d39f16416",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "5e2d466d39f16416"
     },
     "features/quantization/llm_compressor/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "404672c2a77ff6e2",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "404672c2a77ff6e2"
     },
     "features/quantization/llm_compressor/fp8.md": {
@@ -732,8 +862,10 @@
       "upstream_sha": "05f407950c06a582"
     },
     "features/quantization/modelopt.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "0dd98d206c17c81a",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "0dd98d206c17c81a"
     },
     "features/quantization/online.md": {
@@ -752,8 +884,10 @@
       "upstream_sha": "12ccb5ba4f15aa29"
     },
     "features/quantization/torchao.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "be37c7fed4937392",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "be37c7fed4937392"
     },
     "features/reasoning_outputs.md": {
@@ -777,13 +911,17 @@
       "upstream_sha": "7f46f52add9ac487"
     },
     "features/speculative_decoding/dynamic_speculative_decoding.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "6fc3b6564089697f",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "6fc3b6564089697f"
     },
     "features/speculative_decoding/eagle.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "7492f3892f169135",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "7492f3892f169135"
     },
     "features/speculative_decoding/extract_hidden_states.md": {
@@ -792,33 +930,45 @@
       "upstream_sha": "381923f15317cb4b"
     },
     "features/speculative_decoding/mlp.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4ae425ff87d9bb31",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "4ae425ff87d9bb31"
     },
     "features/speculative_decoding/mtp.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "eae02c10ccb05901",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "eae02c10ccb05901"
     },
     "features/speculative_decoding/n_gram.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "343bc9cfb17011f6",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "343bc9cfb17011f6"
     },
     "features/speculative_decoding/parallel_draft_model.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "5d39b6a14586af98",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "5d39b6a14586af98"
     },
     "features/speculative_decoding/speculators.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "42a498ee9c4b9f81",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "42a498ee9c4b9f81"
     },
     "features/speculative_decoding/suffix.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "6585dc99d3a6b9a1",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "6585dc99d3a6b9a1"
     },
     "features/structured_outputs.md": {
@@ -871,8 +1021,10 @@
       "upstream_sha": "f785255f9ff6c780"
     },
     "getting_started/installation/gpu.cuda.inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "25f65fcb64e10515",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "25f65fcb64e10515"
     },
     "getting_started/installation/gpu.md": {
@@ -907,8 +1059,10 @@
       "upstream_sha": "cda0714d7ac9d356"
     },
     "governance/collaboration.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "36f23109a3c53cdc",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "36f23109a3c53cdc"
     },
     "governance/committers.md": {
@@ -1004,18 +1158,24 @@
       "upstream_sha": "d98ae69e11f196b9"
     },
     "serving/context_parallel_deployment.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "f549e37f350f4f48",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "f549e37f350f4f48"
     },
     "serving/data_parallel_deployment.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "bb4f301d950b3f19",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "bb4f301d950b3f19"
     },
     "serving/distributed_troubleshooting.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "256bdc415e859481",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "256bdc415e859481"
     },
     "serving/expert_parallel_deployment.md": {
@@ -1024,23 +1184,31 @@
       "upstream_sha": "35421111c5074d9c"
     },
     "serving/integrations/claude_code.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4d588123f97a3474",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "4d588123f97a3474"
     },
     "serving/integrations/codex.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "fdeb82b044577279",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "fdeb82b044577279"
     },
     "serving/integrations/langchain.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "440f1449e5928255",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "440f1449e5928255"
     },
     "serving/integrations/llamaindex.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "632469927696f101",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "632469927696f101"
     },
     "serving/offline_inference.md": {
@@ -1058,13 +1226,17 @@
       "upstream_sha": "1e7b8db27eb2397b"
     },
     "serving/online_serving/derenderer.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "3c365f93ccbc99d6",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "3c365f93ccbc99d6"
     },
     "serving/online_serving/generative_scoring.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "7f90d859b0a5b2b7",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "7f90d859b0a5b2b7"
     },
     "serving/online_serving/openai_compatible_server.md": {
@@ -1075,58 +1247,80 @@
       "upstream_sha": "8d261897ca52455f"
     },
     "serving/online_serving/renderer.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "24eb57e3ea4de134",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "24eb57e3ea4de134"
     },
     "serving/online_serving/speech_to_text.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "e0cabfac29ef94a2",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "e0cabfac29ef94a2"
     },
     "serving/parallelism_scaling.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "edd3998246b0060e",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "edd3998246b0060e"
     },
     "training/async_rl.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "c656ec1e1760928c",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "c656ec1e1760928c"
     },
     "training/layerwise.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "2ee315bff30b5525",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "2ee315bff30b5525"
     },
     "training/rlhf.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "75b8b0fbf12f7160",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "75b8b0fbf12f7160"
     },
     "training/trl.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "c94c0e0064049842",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "c94c0e0064049842"
     },
     "training/weight_transfer/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "2d810a960a2da73d",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "2d810a960a2da73d"
     },
     "training/weight_transfer/base.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d4bddf41ca1acf6f",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "d4bddf41ca1acf6f"
     },
     "training/weight_transfer/ipc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "3cfb30f71887295d",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "3cfb30f71887295d"
     },
     "training/weight_transfer/nccl.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "29bfa804ed3dbb23",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "29bfa804ed3dbb23"
     },
     "usage/README.md": {
@@ -1144,18 +1338,24 @@
       "upstream_sha": "dc0fe41b0861fbf3"
     },
     "usage/metrics.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "11b6f6609ecb9f78",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "11b6f6609ecb9f78"
     },
     "usage/reproducibility.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "9fdae4b7979a8d06",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "9fdae4b7979a8d06"
     },
     "usage/security.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "becabad8ad847047",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "becabad8ad847047"
     },
     "usage/troubleshooting.md": {
@@ -1166,8 +1366,10 @@
       "upstream_sha": "966b8aa6fde411af"
     },
     "usage/usage_stats.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "64abf26ed4a35f83",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "64abf26ed4a35f83"
     },
     "usage/v1_guide.md": {

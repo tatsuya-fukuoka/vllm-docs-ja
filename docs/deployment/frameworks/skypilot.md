@@ -1,27 +1,27 @@
-# SkyPilot
+# SkyPilot { #skypilot }
 
 <p align="center">
   <img src="https://imgur.com/yxtzPEu.png" alt="vLLM"/>
 </p>
 
-vLLM can be **run and scaled to multiple service replicas on clouds and Kubernetes** with [SkyPilot](https://github.com/skypilot-org/skypilot), an open-source framework for running LLMs on any cloud. More examples for various open models, such as Llama-3, Mixtral, etc., can be found in [SkyPilot AI gallery](https://skypilot.readthedocs.io/en/latest/gallery/index.html).
+任意のクラウドで LLM を動かすためのオープンソースフレームワーク [SkyPilot](https://github.com/skypilot-org/skypilot) を使うと、vLLM を**クラウドや Kubernetes 上で実行し、複数のサービスレプリカへスケールさせる**ことができます。Llama-3 や Mixtral などさまざまなオープンモデルの例は [SkyPilot AI gallery](https://skypilot.readthedocs.io/en/latest/gallery/index.html)（英語）にあります。
 
-## Prerequisites
+## 前提条件 { #prerequisites }
 
-- Go to the [HuggingFace model page](https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct) and request access to the model `meta-llama/Meta-Llama-3-8B-Instruct`.
-- Check that you have installed SkyPilot ([docs](https://skypilot.readthedocs.io/en/latest/getting-started/installation.html)).
-- Check that `sky check` shows clouds or Kubernetes are enabled.
+- [HuggingFace のモデルページ](https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct)で `meta-llama/Meta-Llama-3-8B-Instruct` へのアクセスを申請します。
+- SkyPilot がインストール済みであることを確認します（[ドキュメント](https://skypilot.readthedocs.io/en/latest/getting-started/installation.html)）。
+- `sky check` でクラウドまたは Kubernetes が有効になっていることを確認します。
 
 ```bash
 pip install skypilot-nightly
 sky check
 ```
 
-## Run on a single instance
+## 単一インスタンスで実行する { #run-on-a-single-instance }
 
-See the vLLM SkyPilot YAML for serving, [serving.yaml](https://github.com/skypilot-org/skypilot/blob/master/llm/vllm/serve.yaml).
+サービング用の vLLM SkyPilot YAML は [serving.yaml](https://github.com/skypilot-org/skypilot/blob/master/llm/vllm/serve.yaml) を参照してください。
 
-??? code "Yaml"
+??? code "YAML"
 
     ```yaml
     resources:
@@ -66,19 +66,19 @@ See the vLLM SkyPilot YAML for serving, [serving.yaml](https://github.com/skypil
         --stop-token-ids 128009,128001
     ```
 
-Start the serving the Llama-3 8B model on any of the candidate GPUs listed (L4, A10g, ...):
+候補として挙げた GPU（L4、A10g など）のいずれかで Llama-3 8B モデルのサービングを開始します。
 
 ```bash
 HF_TOKEN="your-huggingface-token" sky launch serving.yaml --env HF_TOKEN
 ```
 
-Check the output of the command. There will be a shareable gradio link (like the last line of the following). Open it in your browser to use the LLaMA model to do the text completion.
+コマンドの出力を確認してください。共有可能な gradio のリンク（次の出力の最終行のようなもの）が表示されます。ブラウザで開くと、LLaMA モデルでテキスト補完を試せます。
 
 ```console
 (task, pid=7431) Running on public URL: https://<gradio-hash>.gradio.live
 ```
 
-**Optional**: Serve the 70B model instead of the default 8B and use more GPU:
+**任意**: 既定の 8B ではなく 70B モデルをサービングし、より多くの GPU を使う場合:
 
 ```bash
 HF_TOKEN="your-huggingface-token" \
@@ -88,11 +88,11 @@ HF_TOKEN="your-huggingface-token" \
   --env MODEL_NAME=meta-llama/Meta-Llama-3-70B-Instruct
 ```
 
-## Scale up to multiple replicas
+## 複数レプリカへのスケールアップ { #scale-up-to-multiple-replicas }
 
-SkyPilot can scale up the service to multiple service replicas with built-in autoscaling, load-balancing and fault-tolerance. You can do it by adding a services section to the YAML file.
+SkyPilot は、組み込みのオートスケーリング・負荷分散・耐障害性の機能により、サービスを複数のレプリカへスケールできます。YAML ファイルに services セクションを追加するだけです。
 
-??? code "Yaml"
+??? code "YAML"
 
     ```yaml
     service:
@@ -108,7 +108,7 @@ SkyPilot can scale up the service to multiple service replicas with built-in aut
       max_completion_tokens: 1
     ```
 
-??? code "Yaml"
+??? code "YAML"
 
     ```yaml
     service:
@@ -154,7 +154,7 @@ SkyPilot can scale up the service to multiple service replicas with built-in aut
         2>&1 | tee api_server.log
     ```
 
-Start the serving the Llama-3 8B model on multiple replicas:
+複数レプリカで Llama-3 8B モデルのサービングを開始します。
 
 ```bash
 HF_TOKEN="your-huggingface-token" \
@@ -162,13 +162,13 @@ HF_TOKEN="your-huggingface-token" \
   --env HF_TOKEN
 ```
 
-Wait until the service is ready:
+サービスの準備が完了するまで待ちます。
 
 ```bash
 watch -n10 sky serve status vllm
 ```
 
-Example outputs:
+出力例:
 
 ```console
 Services
@@ -181,9 +181,9 @@ vllm          1   1        xx.yy.zz.121  18 mins ago  1x GCP([Spot]{'L4': 1})  R
 vllm          2   1        xx.yy.zz.245  18 mins ago  1x GCP([Spot]{'L4': 1})  READY   us-east4
 ```
 
-After the service is READY, you can find a single endpoint for the service and access the service with the endpoint:
+サービスが READY になると、サービス用の単一エンドポイントが得られ、そこからアクセスできます。
 
-??? console "Commands"
+??? console "コマンド"
 
     ```bash
     ENDPOINT=$(sky serve status --endpoint 8081 vllm)
@@ -205,7 +205,7 @@ After the service is READY, you can find a single endpoint for the service and a
       }'
     ```
 
-To enable autoscaling, you could replace the `replicas` with the following configs in `service`:
+オートスケーリングを有効にするには、`service` の `replicas` を次の設定に置き換えます。
 
 ```yaml
 service:
@@ -215,9 +215,9 @@ service:
     target_qps_per_replica: 2
 ```
 
-This will scale the service up to when the QPS exceeds 2 for each replica.
+これにより、各レプリカの QPS が 2 を超えたときにサービスがスケールアップします。
 
-??? code "Yaml"
+??? code "YAML"
 
     ```yaml
     service:
@@ -266,23 +266,23 @@ This will scale the service up to when the QPS exceeds 2 for each replica.
         2>&1 | tee api_server.log
     ```
 
-To update the service with the new config:
+新しい設定でサービスを更新するには次のようにします。
 
 ```bash
 HF_TOKEN="your-huggingface-token" sky serve update vllm serving.yaml --env HF_TOKEN
 ```
 
-To stop the service:
+サービスを停止するには次のようにします。
 
 ```bash
 sky serve down vllm
 ```
 
-### **Optional**: Connect a GUI to the endpoint
+### **任意**: エンドポイントに GUI を接続する { #optional-connect-a-gui-to-the-endpoint }
 
-It is also possible to access the Llama-3 service with a separate GUI frontend, so the user requests send to the GUI will be load-balanced across replicas.
+別途 GUI のフロントエンドから Llama-3 のサービスにアクセスすることもできます。GUI に送られたユーザーのリクエストは、レプリカ間で負荷分散されます。
 
-??? code "Yaml"
+??? code "YAML"
 
     ```yaml
     envs:
@@ -312,7 +312,7 @@ It is also possible to access the Llama-3 service with a separate GUI frontend, 
         --stop-token-ids 128009,128001 | tee ~/gradio.log
     ```
 
-1. Start the chat web UI:
+1. チャットの Web UI を起動します。
 
     ```bash
     sky launch \
@@ -320,7 +320,7 @@ It is also possible to access the Llama-3 service with a separate GUI frontend, 
       --env ENDPOINT=$(sky serve status --endpoint vllm)
     ```
 
-2. Then, we can access the GUI at the returned gradio link:
+2. 返された gradio のリンクから GUI にアクセスできます。
 
     ```console
     | INFO | stdout | Running on public URL: https://6141e84201ce0bb4ed.gradio.live

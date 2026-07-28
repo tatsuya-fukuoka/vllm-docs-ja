@@ -1,38 +1,38 @@
-# Parallelism and Scaling
+# 並列化とスケーリング { #parallelism-and-scaling }
 
-## Distributed inference strategies for a single-model replica
+## 単一モデルレプリカの分散推論戦略 { #distributed-inference-strategies-for-a-single-model-replica }
 
-To choose a distributed inference strategy for a single-model replica, use the following guidelines:
+単一モデルレプリカの分散推論戦略は、次の指針で選びます。
 
-- **Single GPU (no distributed inference):** if the model fits on a single GPU, distributed inference is probably unnecessary. Run inference on that GPU.
-- **Single-node multi-GPU using tensor parallel inference:** if the model is too large for a single GPU but fits on a single node with multiple GPUs, use *tensor parallelism*. For example, set `tensor_parallel_size=4` when using a node with 4 GPUs.
-- **Multi-node multi-GPU using tensor parallel and pipeline parallel inference:** if the model is too large for a single node, combine *tensor parallelism* with *pipeline parallelism*. Set `tensor_parallel_size` to the number of GPUs per node and `pipeline_parallel_size` to the number of nodes. For example, set `tensor_parallel_size=8` and `pipeline_parallel_size=2` when using 2 nodes with 8 GPUs per node.
+- **単一 GPU（分散推論なし）:** モデルが 1 台の GPU に収まるなら、分散推論はおそらく不要です。その GPU で推論してください。
+- **単一ノード・複数 GPU（テンソル並列）:** モデルが 1 台の GPU には大きすぎるが、複数 GPU を持つ 1 ノードには収まる場合は*テンソル並列*を使います。たとえば GPU 4 台のノードでは `tensor_parallel_size=4` を設定します。
+- **複数ノード・複数 GPU（テンソル並列＋パイプライン並列）:** モデルが 1 ノードに収まらない場合は、*テンソル並列*と*パイプライン並列*を組み合わせます。`tensor_parallel_size` にノードあたりの GPU 数、`pipeline_parallel_size` にノード数を設定します。たとえば 1 ノード 8 GPU × 2 ノードなら `tensor_parallel_size=8`、`pipeline_parallel_size=2` とします。
 
-Increase the number of GPUs and nodes until there is enough GPU memory for the model. Set `tensor_parallel_size` to the number of GPUs per node and `pipeline_parallel_size` to the number of nodes.
+モデルに十分な GPU メモリが確保できるまで、GPU 数とノード数を増やしてください。`tensor_parallel_size` にはノードあたりの GPU 数、`pipeline_parallel_size` にはノード数を設定します。
 
-After you provision sufficient resources to fit the model, run `vllm`. Look for log messages like:
+モデルが収まるだけのリソースを用意したら `vllm` を実行し、次のようなログメッセージを確認します。
 
 ```text
 INFO 07-23 13:56:04 [kv_cache_utils.py:775] GPU KV cache size: 643,232 tokens
 INFO 07-23 13:56:04 [kv_cache_utils.py:779] Maximum concurrency for 40,960 tokens per request: 15.70x
 ```
 
-The `GPU KV cache size` line reports the total number of tokens that can be stored in the GPU KV cache at once. The `Maximum concurrency` line provides an estimate of how many requests can be served concurrently if each request requires the specified number of tokens (40,960 in the example above). The tokens-per-request number is taken from the model configuration's maximum sequence length, `ModelConfig.max_model_len`. If these numbers are lower than your throughput requirements, add more GPUs or nodes to your cluster.
+`GPU KV cache size` の行は、GPU の KV キャッシュに一度に保存できるトークンの総数を示します。`Maximum concurrency` の行は、各リクエストが指定されたトークン数（上の例では 40,960）を必要とする場合に同時に処理できるリクエスト数の目安です。リクエストあたりのトークン数は、モデル設定の最大系列長 `ModelConfig.max_model_len` から取られます。これらの数値が必要なスループットに届かない場合は、クラスタに GPU やノードを追加してください。
 
-!!! note "Edge case: uneven GPU splits"
-    If the model fits within a single node but the GPU count doesn't evenly divide the model size, enable pipeline parallelism, which splits the model along layers and supports uneven splits. In this scenario, set `tensor_parallel_size=1` and `pipeline_parallel_size` to the number of GPUs. Furthermore, if the GPUs on the node do not have NVLINK interconnect (e.g. L40S), leverage pipeline parallelism instead of tensor parallelism for higher throughput and lower communication overhead.
+!!! note "特殊なケース: GPU 数で均等に割り切れない場合"
+    モデルが 1 ノードに収まるものの、GPU 数でモデルサイズを均等に割り切れない場合は、パイプライン並列を有効にしてください。層単位で分割するため不均等な分割にも対応できます。この場合は `tensor_parallel_size=1` とし、`pipeline_parallel_size` に GPU 数を設定します。また、ノードの GPU が NVLINK で接続されていない場合（L40S など）は、テンソル並列よりパイプライン並列を使うほうがスループットが高く、通信のオーバーヘッドも小さくなります。
 
-### Distributed serving of *Mixture of Experts* (*MoE*) models
+### *Mixture of Experts*（*MoE*）モデルの分散サービング { #distributed-serving-of-mixture-of-experts-moe-models }
 
-It's often advantageous to exploit the inherent parallelism of experts by using a separate parallelism strategy for the expert layers. vLLM supports large-scale deployment combining Data Parallel attention with Expert or Tensor Parallel MoE layers. For more information, see [Data Parallel Deployment](data_parallel_deployment.md).
+エキスパート層に別の並列化戦略を使い、エキスパートが本来持つ並列性を活かすと有利なことがよくあります。vLLM は、データ並列の Attention と、エキスパート並列またはテンソル並列の MoE 層を組み合わせた大規模なデプロイをサポートしています。詳細は[データ並列のデプロイ](data_parallel_deployment.md)を参照してください。
 
-## Single-node deployment
+## 単一ノードでのデプロイ { #single-node-deployment }
 
-vLLM supports distributed tensor-parallel and pipeline-parallel inference and serving. The implementation includes [Megatron-LM's tensor parallel algorithm](https://arxiv.org/pdf/1909.08053.pdf).
+vLLM は、テンソル並列とパイプライン並列による分散推論・サービングをサポートしています。実装には [Megatron-LM のテンソル並列アルゴリズム](https://arxiv.org/pdf/1909.08053.pdf)が含まれます。
 
-The default distributed runtimes are [Ray](https://github.com/ray-project/ray) for multi-node inference and native Python `multiprocessing` for single-node inference. You can override the defaults by setting `distributed_executor_backend` in the `LLM` class or `--distributed-executor-backend` in the API server. Use `mp` for `multiprocessing` or `ray` for Ray.
+既定の分散ランタイムは、複数ノードの推論では [Ray](https://github.com/ray-project/ray)、単一ノードの推論では Python 標準の `multiprocessing` です。`LLM` クラスの `distributed_executor_backend`、または API サーバーの `--distributed-executor-backend` で上書きできます。`multiprocessing` なら `mp`、Ray なら `ray` を指定します。
 
-For multi-GPU inference, set `tensor_parallel_size` in the `LLM` class to the desired GPU count. For example, to run inference on 4 GPUs:
+複数 GPU で推論するには、`LLM` クラスの `tensor_parallel_size` に使いたい GPU 数を設定します。たとえば 4 台の GPU で推論する場合:
 
 ```python
 from vllm import LLM
@@ -40,14 +40,14 @@ llm = LLM("facebook/opt-13b", tensor_parallel_size=4)
 output = llm.generate("San Francisco is a")
 ```
 
-For multi-GPU serving, include `--tensor-parallel-size` when starting the server. For example, to run the API server on 4 GPUs:
+複数 GPU でサービングするには、サーバー起動時に `--tensor-parallel-size` を指定します。たとえば 4 台の GPU で API サーバーを動かす場合:
 
 ```bash
 vllm serve facebook/opt-13b \
      --tensor-parallel-size 4
 ```
 
-To enable pipeline parallelism, add `--pipeline-parallel-size`. For example, to run the API server on 8 GPUs with pipeline parallelism and tensor parallelism:
+パイプライン並列を有効にするには `--pipeline-parallel-size` を追加します。たとえば 8 台の GPU でパイプライン並列とテンソル並列を併用して API サーバーを動かす場合:
 
 ```bash
 # Eight GPUs total
@@ -56,31 +56,31 @@ vllm serve gpt2 \
      --pipeline-parallel-size 2
 ```
 
-## Multi-node deployment
+## 複数ノードでのデプロイ { #multi-node-deployment }
 
-If a single node lacks sufficient GPUs to hold the model, deploy vLLM across multiple nodes. Ensure that every node provides an identical execution environment, including the model path and Python packages. Using container images is recommended because they provide a convenient way to keep environments consistent and to hide host heterogeneity.
+1 ノードの GPU ではモデルを保持できない場合は、複数ノードに vLLM をデプロイします。モデルのパスや Python パッケージを含め、すべてのノードで実行環境が同一になるようにしてください。環境を揃えやすく、ホスト間の差異も隠せるため、コンテナイメージの利用を推奨します。
 
-### What is Ray?
+### Ray とは { #what-is-ray }
 
-Ray is a distributed computing framework for scaling Python programs. Multi-node vLLM deployments can use Ray as the runtime engine.
+Ray は Python プログラムをスケールさせるための分散コンピューティングのフレームワークです。複数ノードの vLLM デプロイでは、Ray をランタイムエンジンとして利用できます。
 
-vLLM uses Ray to manage the distributed execution of tasks across multiple nodes and control where execution happens.
+vLLM は Ray を使って、複数ノードにまたがるタスクの分散実行を管理し、どこで実行するかを制御します。
 
-Ray also offers high-level APIs for large-scale [offline batch inference](https://docs.ray.io/en/latest/data/working-with-llms.html) and [online serving](https://docs.ray.io/en/latest/serve/llm) that can leverage vLLM as the engine. These APIs add production-grade fault tolerance, scaling, and distributed observability to vLLM workloads.
+Ray は、vLLM をエンジンとして利用できる大規模な[オフラインバッチ推論](https://docs.ray.io/en/latest/data/working-with-llms.html)や[オンラインサービング](https://docs.ray.io/en/latest/serve/llm)の高レベル API も提供しています。これらの API は、vLLM のワークロードに本番品質の耐障害性・スケーリング・分散環境の可観測性を追加します。
 
-Ray is an optional dependency. Install it explicitly before using Ray-based execution, for example:
+Ray は任意の依存パッケージです。Ray ベースの実行を使う前に、明示的にインストールしてください。
 
 ```bash
 pip install "ray[cgraph]"
 ```
 
-For details, see the [Ray documentation](https://docs.ray.io/en/latest/index.html).
+詳細は [Ray のドキュメント](https://docs.ray.io/en/latest/index.html)（英語）を参照してください。
 
-### Ray cluster setup with containers
+### コンテナによる Ray クラスタの構築 { #ray-cluster-setup-with-containers }
 
-The helper script [examples/ray_serving/run_cluster.sh](../../examples/ray_serving/run_cluster.sh) starts containers across nodes and initializes Ray. By default, the script runs Docker without administrative privileges, which prevents access to the GPU performance counters when profiling or tracing. To enable admin privileges, add the `--cap-add=CAP_SYS_ADMIN` flag to the Docker command.
+補助スクリプト [examples/ray_serving/run_cluster.sh](../../examples/ray_serving/run_cluster.sh) は、各ノードでコンテナを起動し Ray を初期化します。既定では管理者権限なしで Docker を実行するため、プロファイリングやトレース時に GPU のパフォーマンスカウンタにアクセスできません。管理者権限を有効にするには、Docker コマンドに `--cap-add=CAP_SYS_ADMIN` を追加してください。
 
-Choose one node as the head node and run:
+1 台をヘッドノードとして選び、次を実行します。
 
 ```bash
 bash run_cluster.sh \
@@ -91,7 +91,7 @@ bash run_cluster.sh \
                 -e VLLM_HOST_IP=<HEAD_NODE_IP>
 ```
 
-On each worker node, run:
+各ワーカーノードでは次を実行します。
 
 ```bash
 bash run_cluster.sh \
@@ -102,24 +102,24 @@ bash run_cluster.sh \
                 -e VLLM_HOST_IP=<WORKER_NODE_IP>
 ```
 
-Note that `VLLM_HOST_IP` is unique for each worker. Keep the shells running these commands open; closing any shell terminates the cluster. Ensure that all nodes can communicate with each other through their IP addresses.
+`VLLM_HOST_IP` はワーカーごとに異なる点に注意してください。これらのコマンドを実行したシェルは開いたままにしてください。閉じるとクラスタが終了します。すべてのノードが IP アドレスで相互に通信できることを確認してください。
 
-!!! warning "Network security"
-    For security, set `VLLM_HOST_IP` to an address on a private network segment. Traffic sent over this network is unencrypted, and the endpoints exchange data in a format that can be exploited to execute arbitrary code if an adversary gains network access. Ensure that untrusted parties cannot reach the network.
+!!! warning "ネットワークのセキュリティ"
+    セキュリティのため、`VLLM_HOST_IP` にはプライベートなネットワークセグメントのアドレスを設定してください。このネットワーク上の通信は暗号化されておらず、攻撃者がネットワークにアクセスできると任意コード実行に悪用されうる形式でデータをやり取りします。信頼できない相手がこのネットワークに到達できないようにしてください。
 
-From any node, enter a container and run `ray status` and `ray list nodes` to verify that Ray finds the expected number of nodes and GPUs.
-
-!!! tip
-    Alternatively, set up the Ray cluster using KubeRay. For more information, see [KubeRay vLLM documentation](https://docs.ray.io/en/latest/cluster/kubernetes/examples/rayserve-llm-example.html).
-
-### Running vLLM on a Ray cluster
+いずれかのノードでコンテナに入り、`ray status` と `ray list nodes` を実行して、Ray が想定どおりの数のノードと GPU を認識していることを確認してください。
 
 !!! tip
-    If Ray is running inside containers, run the commands in the remainder of this guide *inside the containers*, not on the host. To open a shell inside a container, connect to a node and use `docker exec -it <container_name> /bin/bash`.
+    KubeRay を使って Ray クラスタを構築することもできます。詳細は [KubeRay の vLLM ドキュメント](https://docs.ray.io/en/latest/cluster/kubernetes/examples/rayserve-llm-example.html)（英語）を参照してください。
 
-Once a Ray cluster is running, use vLLM as you would in a single-node setting. All resources across the Ray cluster are visible to vLLM, so a single `vllm` command on a single node is sufficient.
+### Ray クラスタ上での vLLM の実行 { #running-vllm-on-a-ray-cluster }
 
-The common practice is to set the tensor parallel size to the number of GPUs in each node, and the pipeline parallel size to the number of nodes. For example, if you have 16 GPUs across 2 nodes (8 GPUs per node), set the tensor parallel size to 8 and the pipeline parallel size to 2:
+!!! tip
+    Ray をコンテナ内で動かしている場合、このガイドの以降のコマンドはホストではなく*コンテナ内*で実行してください。コンテナ内でシェルを開くには、ノードに接続して `docker exec -it <container_name> /bin/bash` を使います。
+
+Ray クラスタが動き出したら、単一ノードの場合と同じように vLLM を使えます。クラスタ全体のリソースが vLLM から見えるため、1 台のノードで `vllm` コマンドを 1 回実行するだけで十分です。
+
+一般的には、テンソル並列サイズを各ノードの GPU 数、パイプライン並列サイズをノード数に設定します。たとえば 2 ノードに 16 台の GPU がある場合（1 ノードあたり 8 台）、テンソル並列サイズを 8、パイプライン並列サイズを 2 にします。
 
 ```bash
 vllm serve /path/to/the/model/in/the/container \
@@ -128,7 +128,7 @@ vllm serve /path/to/the/model/in/the/container \
     --distributed-executor-backend ray
 ```
 
-Alternatively, you can set `tensor_parallel_size` to the total number of GPUs in the cluster:
+あるいは、`tensor_parallel_size` にクラスタ全体の GPU 数を設定することもできます。
 
 ```bash
 vllm serve /path/to/the/model/in/the/container \
@@ -136,11 +136,11 @@ vllm serve /path/to/the/model/in/the/container \
      --distributed-executor-backend ray
 ```
 
-### Running vLLM with MultiProcessing
+### multiprocessing による vLLM の実行 { #running-vllm-with-multiprocessing }
 
-Besides Ray, Multi-node vLLM deployments can also use `multiprocessing` as the runtime engine. Here's an example to deploy model across 2 nodes (8 GPUs per node) with `tp_size=8` and `pp_size=2`.
+複数ノードの vLLM デプロイでは、Ray のほかに `multiprocessing` をランタイムエンジンとして使うこともできます。以下は、2 ノード（1 ノードあたり 8 GPU）に `tp_size=8`、`pp_size=2` でモデルをデプロイする例です。
 
-Choose one node as the head node and run:
+1 台をヘッドノードとして選び、次を実行します。
 
 ```bash
 vllm serve /path/to/the/model/in/the/container \
@@ -149,7 +149,7 @@ vllm serve /path/to/the/model/in/the/container \
   --master-addr <HEAD_NODE_IP>
 ```
 
-On the other worker node, run:
+もう一方のワーカーノードでは次を実行します。
 
 ```bash
 vllm serve /path/to/the/model/in/the/container \
@@ -158,23 +158,23 @@ vllm serve /path/to/the/model/in/the/container \
   --master-addr <HEAD_NODE_IP> --headless
 ```
 
-## Optimizing network communication for tensor parallelism
+## テンソル並列のためのネットワーク通信の最適化 { #optimizing-network-communication-for-tensor-parallelism }
 
-Efficient tensor parallelism requires fast internode communication, preferably through high-speed network adapters such as InfiniBand.
-To set up the cluster to use InfiniBand, append additional arguments like `--privileged -e NCCL_IB_HCA=mlx5` to the
-[examples/ray_serving/run_cluster.sh](../../examples/ray_serving/run_cluster.sh) helper script.
-Contact your system administrator for more information about the required flags.
+テンソル並列を効率よく動かすには、ノード間の高速な通信が必要です。InfiniBand のような高速ネットワークアダプタが望ましいです。
+InfiniBand を使うようクラスタを構成するには、補助スクリプト
+[examples/ray_serving/run_cluster.sh](../../examples/ray_serving/run_cluster.sh) に `--privileged -e NCCL_IB_HCA=mlx5` のような引数を追加してください。
+必要なフラグの詳細はシステム管理者に問い合わせてください。
 
-## Enabling GPUDirect RDMA
+## GPUDirect RDMA を有効にする { #enabling-gpudirect-rdma }
 
-GPUDirect RDMA (Remote Direct Memory Access) is an NVIDIA technology that allows network adapters to directly access GPU memory, bypassing the CPU and system memory. This direct access reduces latency and CPU overhead, which is beneficial for large data transfers between GPUs across nodes.
+GPUDirect RDMA（Remote Direct Memory Access）は、ネットワークアダプタが CPU とシステムメモリを介さずに GPU メモリへ直接アクセスできる NVIDIA の技術です。この直接アクセスによりレイテンシと CPU のオーバーヘッドが減るため、ノードをまたぐ GPU 間の大きなデータ転送に有効です。
 
-To enable GPUDirect RDMA with vLLM, configure the following settings:
+vLLM で GPUDirect RDMA を有効にするには、次の設定を行います。
 
-- `IPC_LOCK` security context: add the `IPC_LOCK` capability to the container's security context to lock memory pages and prevent swapping to disk.
-- Shared memory with `/dev/shm`: mount `/dev/shm` in the pod spec to provide shared memory for interprocess communication (IPC).
+- `IPC_LOCK` のセキュリティコンテキスト: メモリページをロックしてディスクへのスワップを防ぐため、コンテナのセキュリティコンテキストに `IPC_LOCK` ケーパビリティを追加します。
+- `/dev/shm` による共有メモリ: プロセス間通信 (IPC) 用の共有メモリを確保するため、Pod の spec で `/dev/shm` をマウントします。
 
-If you use Docker, set up the container as follows:
+Docker を使う場合は、次のようにコンテナを設定します。
 
 ```bash
 docker run --gpus all \
@@ -184,7 +184,7 @@ docker run --gpus all \
     vllm/vllm-openai
 ```
 
-If you use Kubernetes, set up the pod spec as follows:
+Kubernetes を使う場合は、次のように Pod の spec を設定します。
 
 ```yaml
 ...
@@ -210,17 +210,17 @@ spec:
 ...
 ```
 
-!!! tip "Confirm GPUDirect RDMA operation"
-    To confirm your InfiniBand card is using GPUDirect RDMA, run vLLM with detailed NCCL logs: `NCCL_DEBUG=TRACE vllm serve ...`.
+!!! tip "GPUDirect RDMA の動作確認"
+    InfiniBand カードが GPUDirect RDMA を使っているか確認するには、NCCL の詳細ログを有効にして vLLM を実行します: `NCCL_DEBUG=TRACE vllm serve ...`。
 
-    Then look for the NCCL version and the network used.
+    そのうえで、NCCL のバージョンと使用されたネットワークを確認します。
 
-    - If you find `[send] via NET/IB/GDRDMA` in the logs, then NCCL is using InfiniBand with GPUDirect RDMA, which *is* efficient.
-    - If you find `[send] via NET/Socket` in the logs, NCCL used a raw TCP socket, which *is not* efficient for cross-node tensor parallelism. 
+    - ログに `[send] via NET/IB/GDRDMA` があれば、NCCL は GPUDirect RDMA 付きの InfiniBand を使っており、効率的です。
+    - ログに `[send] via NET/Socket` があれば、NCCL は生の TCP ソケットを使っており、ノードをまたぐテンソル並列には効率的ではありません。 
 
-!!! tip "Pre-download Hugging Face models"
-    If you use Hugging Face models, downloading the model before starting vLLM is recommended. Download the model on every node to the same path, or store the model on a distributed file system accessible by all nodes. Then pass the path to the model in place of the repository ID. Otherwise, supply a Hugging Face token by appending `-e HF_TOKEN=<TOKEN>` to `run_cluster.sh`.
+!!! tip "Hugging Face のモデルを事前にダウンロードする"
+    Hugging Face のモデルを使う場合は、vLLM を起動する前にモデルをダウンロードしておくことを推奨します。すべてのノードで同じパスにダウンロードするか、全ノードからアクセスできる分散ファイルシステムに置いてください。そのうえで、リポジトリ ID の代わりにモデルのパスを指定します。そうしない場合は、`run_cluster.sh` に `-e HF_TOKEN=<TOKEN>` を追加して Hugging Face のトークンを渡してください。
 
-## Troubleshooting distributed deployments
+## 分散デプロイのトラブルシューティング { #troubleshooting-distributed-deployments }
 
-For information about distributed debugging, see [Troubleshooting distributed deployments](distributed_troubleshooting.md).
+分散環境のデバッグについては[分散デプロイのトラブルシューティング](distributed_troubleshooting.md)を参照してください。

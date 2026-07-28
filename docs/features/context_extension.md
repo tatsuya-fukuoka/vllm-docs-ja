@@ -1,26 +1,26 @@
-# Context Extension
+# コンテキスト長の拡張 { #context-extension }
 
 !!! note
-    The `--rope-scaling` parameter used in older versions of vLLM is no longer supported. Please use the `--hf-overrides` method with `rope_parameters` instead.
-This directory contains examples for extending the context length of models using vLLM.
+    旧バージョンの vLLM で使われていた `--rope-scaling` パラメータはサポートされなくなりました。代わりに `--hf-overrides` で `rope_parameters` を指定してください。
+ここでは、vLLM でモデルのコンテキスト長を拡張する例を紹介します。
 
-## Offline Inference Example
+## オフライン推論の例 { #offline-inference-example }
 
-The [`context_extension.py`](../../examples/features/context_extension/context_extension_offline.py) script demonstrates how to extend the context length of a Qwen model using the YARN method (rope_parameters) and run a simple chat example.
+[`context_extension.py`](../../examples/features/context_extension/context_extension_offline.py) のスクリプトは、YARN の手法（rope_parameters）で Qwen モデルのコンテキスト長を拡張し、簡単なチャットを実行する例です。
 
-### Usage
+### 使い方 { #usage }
 
 ```bash
 python examples/features/context_extension/context_extension_offline.py
 ```
 
-## OpenAI Online Method
+## OpenAI 互換のオンライン API を使う方法 { #openai-online-method }
 
-You can also use vLLM's OpenAI-compatible API to serve models with extended context length.
+vLLM の OpenAI 互換 API を使って、コンテキスト長を拡張したモデルをサービングすることもできます。
 
-### Usage
+### 使い方 { #usage_1 }
 
-Run the vLLM server with the following command to extend the context length using YARN:
+YARN でコンテキスト長を拡張するには、次のコマンドで vLLM サーバーを起動します。
 
 ```bash
 vllm serve Qwen/Qwen3-0.6B \
@@ -28,9 +28,9 @@ vllm serve Qwen/Qwen3-0.6B \
   --max-model-len 131072
 ```
 
-### Client Example
+### クライアントの例 { #client-example }
 
-After starting the server, you can use the OpenAI Python client to interact with it:
+サーバーを起動したら、OpenAI の Python クライアントからやり取りできます。
 
 ```python
 from openai import OpenAI
@@ -54,17 +54,17 @@ response = client.chat.completions.create(
 print(response.choices[0].message.content)
 ```
 
-### Key Parameters
+### 主なパラメータ { #key-parameters }
 
-The available parameters depend on the `rope_type` you choose. For detailed information about all supported RoPE types and their specific parameters, please refer to the [Hugging Face Transformers RoPE documentation](https://huggingface.co/docs/transformers/main/en/internal/rope_utils#transformers.RopeParameters).
+指定できるパラメータは選んだ `rope_type` によって異なります。サポートされる RoPE の種類とそれぞれのパラメータの詳細は、[Hugging Face Transformers の RoPE のドキュメント](https://huggingface.co/docs/transformers/main/en/internal/rope_utils#transformers.RopeParameters)（英語）を参照してください。
 
-Common parameters include:
+よく使うパラメータ:
 
-- `rope_type`: The type of RoPE implementation (e.g., "yarn", "linear", "dynamic")
-- `factor`: The factor by which to extend the context length
-- `original_max_position_embeddings`: The original maximum position embeddings of the model
+- `rope_type`: RoPE の実装の種類（`"yarn"`、`"linear"`、`"dynamic"` など）
+- `factor`: コンテキスト長を何倍に拡張するか
+- `original_max_position_embeddings`: モデル本来の最大位置埋め込み数
 
-The following parameters are specific to vLLM:
+次のパラメータは vLLM 固有のものです。
 
-- `max_model_len`: The new maximum sequence length after extension (original * factor).
-  Used for KV cache pre‑allocation and request limit at serving time.
+- `max_model_len`: 拡張後の最大系列長（元の長さ × factor）。
+  KV キャッシュの事前確保と、サービング時のリクエストの上限に使われます。

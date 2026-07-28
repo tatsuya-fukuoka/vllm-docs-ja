@@ -1,5 +1,5 @@
-# AIBrix
+# AIBrix { #aibrix }
 
-[AIBrix](https://github.com/vllm-project/aibrix) is a cloud-native control plane that integrates with vLLM to simplify Kubernetes deployment, scaling, routing, and LoRA adapter management for large language model inference.
+[AIBrix](https://github.com/vllm-project/aibrix) は vLLM と統合されたクラウドネイティブのコントロールプレーンで、大規模言語モデルの推論における Kubernetes へのデプロイ、スケーリング、ルーティング、LoRA アダプタの管理を簡単にします。
 
-For installation and usage instructions, please refer to the [AIBrix documentation](https://aibrix.readthedocs.io/).
+インストールと使い方は [AIBrix のドキュメント](https://aibrix.readthedocs.io/)（英語）を参照してください。

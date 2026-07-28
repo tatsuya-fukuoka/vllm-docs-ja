@@ -1,43 +1,43 @@
-# Intel Quantization Support
+# Intel の量子化サポート { #intel-quantization-support }
 
-[AutoRound](https://github.com/intel/auto-round) is Intel’s advanced quantization algorithm designed for large language models(LLMs). It produces highly efficient **INT2, INT3, INT4, INT8, MXFP8, MXFP4, NVFP4**, and **GGUF** quantized models, balancing accuracy and inference performance. AutoRound is also part of the [Intel® Neural Compressor](https://github.com/intel/neural-compressor). For a deeper introduction, see the [AutoRound step-by-step guide](https://github.com/intel/auto-round/blob/main/docs/step_by_step.md).
+[AutoRound](https://github.com/intel/auto-round) は、大規模言語モデル (LLM) 向けに設計された Intel の高度な量子化アルゴリズムです。**INT2・INT3・INT4・INT8・MXFP8・MXFP4・NVFP4**、および **GGUF** の効率的な量子化モデルを生成し、精度と推論性能のバランスを取ります。AutoRound は [Intel® Neural Compressor](https://github.com/intel/neural-compressor) の一部でもあります。詳しい紹介は [AutoRound の手順ガイド](https://github.com/intel/auto-round/blob/main/docs/step_by_step.md)（英語）を参照してください。
 
-## Key Features
+## 主な機能 { #key-features }
 
-✅ Superior Accuracy Delivers strong performance even at 2–3 bits [example models](https://huggingface.co/collections/OPEA/2-3-bits)
+✅ 高い精度。2〜3 ビットでも良好な性能を発揮します（[モデルの例](https://huggingface.co/collections/OPEA/2-3-bits)）
 
-✅ Fast Mixed `Bits`/`Dtypes` Scheme Generation Automatically configure in minutes
+✅ `Bits` / `Dtypes` の混合スキームを高速に生成。数分で自動設定できます
 
-✅ Support for exporting **AutoRound, AutoAWQ, AutoGPTQ, and GGUF** formats
+✅ **AutoRound・AutoAWQ・AutoGPTQ・GGUF** 形式でのエクスポートに対応
 
-✅ **10+ vision-language models (VLMs)** are supported
+✅ **10 種類以上の視覚言語モデル (VLM)** に対応
 
-✅ **Per-layer mixed-bit quantization** for fine-grained control
+✅ 細かな制御のための**層ごとの混合ビット量子化**
 
-✅ **RTN (Round-To-Nearest) mode** for quick quantization with slight accuracy loss
+✅ わずかな精度低下と引き換えに素早く量子化できる **RTN（最近接丸め）モード**
 
-✅ **Multiple quantization recipes**: best, base, and light
+✅ **複数の量子化レシピ**: best・base・light
 
-✅ Advanced utilities such as immediate packing and support for **10+ backends**
+✅ 即時パッキングなどの高度なユーティリティと、**10 種類以上のバックエンド**への対応
 
-## Supported Recipes on Intel Platforms
+## Intel プラットフォームで対応するレシピ { #supported-recipes-on-intel-platforms }
 
-On Intel platforms, AutoRound recipes are being enabled progressively by format and hardware. Currently, vLLM supports:
+Intel のプラットフォームでは、AutoRound のレシピは形式とハードウェアごとに段階的に対応が進んでいます。現時点で vLLM が対応しているのは次のとおりです。
 
-- **`W4A16`**: weight-only, 4-bit weights with 16-bit activations
-- **`W8A16`**: weight-only, 8-bit weights with 16-bit activations
+- **`W4A16`**: 重みのみの量子化。4 ビットの重みと 16 ビットのアクティベーション
+- **`W8A16`**: 重みのみの量子化。8 ビットの重みと 16 ビットのアクティベーション
 
-Additional recipes and formats will be supported in future releases.
+その他のレシピと形式は今後のリリースで対応予定です。
 
-## Quantizing a Model
+## モデルを量子化する { #quantizing-a-model }
 
-### Installation
+### インストール { #installation }
 
 ```bash
 uv pip install auto-round
 ```
 
-### Quantize with CLI
+### CLI で量子化する { #quantize-with-cli }
 
 ```bash
 auto-round \
@@ -47,7 +47,7 @@ auto-round \
     --output_dir ./tmp_autoround
 ```
 
-### Quantize with Python API
+### Python API で量子化する { #quantize-with-python-api }
 
 ```python
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -67,7 +67,7 @@ output_dir = "./tmp_autoround"
 autoround.quantize_and_save(output_dir, format="auto_round")
 ```
 
-## Deploying AutoRound Quantized Models in vLLM
+## AutoRound で量子化したモデルを vLLM でデプロイする { #deploying-autoround-quantized-models-in-vllm }
 
 ```bash
 vllm serve Intel/DeepSeek-R1-0528-Qwen3-8B-int4-AutoRound \
@@ -75,7 +75,7 @@ vllm serve Intel/DeepSeek-R1-0528-Qwen3-8B-int4-AutoRound \
     --max-model-len 4096
 ```
 
-## Evaluating the Quantized Model with vLLM
+## 量子化したモデルを vLLM で評価する { #evaluating-the-quantized-model-with-vllm }
 
 ```bash
 lm_eval --model vllm \

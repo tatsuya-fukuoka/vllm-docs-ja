@@ -1,21 +1,21 @@
-# LWS
+# LWS { #lws }
 
-LeaderWorkerSet (LWS) is a Kubernetes API that aims to address common deployment patterns of AI/ML inference workloads.
-A major use case is for multi-host/multi-node distributed inference.
+LeaderWorkerSet (LWS) は、AI/ML の推論ワークロードでよく使われるデプロイのパターンに対応するための Kubernetes API です。
+主なユースケースは、複数ホスト・複数ノードにまたがる分散推論です。
 
-vLLM can be deployed with [LWS](https://github.com/kubernetes-sigs/lws) on Kubernetes for distributed model serving.
+vLLM は Kubernetes 上で [LWS](https://github.com/kubernetes-sigs/lws) と組み合わせてデプロイでき、分散モデルサービングを実現できます。
 
-## Prerequisites
+## 前提条件 { #prerequisites }
 
-- At least two Kubernetes nodes, each with 8 GPUs, are required.
-- Install LWS by following the instructions found [here](https://lws.sigs.k8s.io/docs/installation/).
+- それぞれ 8 台の GPU を備えた Kubernetes ノードが最低 2 台必要です。
+- [こちら](https://lws.sigs.k8s.io/docs/installation/)の手順に従って LWS をインストールします。
 
-## Deploy and Serve
+## デプロイとサービング { #deploy-and-serve }
 
-Deploy the following yaml file `lws.yaml` (we have examples that use multiprocessing or Ray):
+次の yaml ファイル `lws.yaml` をデプロイします（multiprocessing を使う例と Ray を使う例があります）。
 
 ??? code "lws.yaml"
-    === "Multiprocessing (default)"
+    === "Multiprocessing（既定）"
         ```yaml
         apiVersion: leaderworkerset.x-k8s.io/v1
         kind: LeaderWorkerSet
@@ -208,13 +208,13 @@ Deploy the following yaml file `lws.yaml` (we have examples that use multiproces
 kubectl apply -f lws.yaml
 ```
 
-Verify the status of the pods:
+Pod の状態を確認します。
 
 ```bash
 kubectl get pods
 ```
 
-Should get an output similar to this:
+次のような出力が得られるはずです。
 
 ```bash
 NAME       READY   STATUS    RESTARTS   AGE
@@ -222,15 +222,15 @@ vllm-0     1/1     Running   0          2s
 vllm-0-1   1/1     Running   0          2s
 ```
 
-Verify that the distributed tensor-parallel inference works:
+分散テンソル並列の推論が動作することを確認します。
 
-=== "Multiprocessing (default)"
+=== "Multiprocessing（既定）"
     ```bash
     kubectl logs vllm-0 | grep -i "Model loading"
     kubectl logs vllm-0-1 | grep -i "Model loading"
     ```
 
-    Should get something similar to this:
+    次のような出力が得られるはずです。
 
     POD 0 (PP Rank 0)
 
@@ -249,30 +249,30 @@ Verify that the distributed tensor-parallel inference works:
     kubectl logs vllm-0 | grep -i "Loading model weights took"
     ```
 
-    Should get something similar to this:
+    次のような出力が得られるはずです。
 
     ```text
     INFO 05-08 03:20:24 model_runner.py:173] Loading model weights took 0.1189 GB
     (RayWorkerWrapper pid=169, ip=10.20.0.197) INFO 05-08 03:20:28 model_runner.py:173] Loading model weights took 0.1189 GB
     ```
 
-## Access ClusterIP service
+## ClusterIP サービスへのアクセス { #access-clusterip-service }
 
 ```bash
 # Listen on port 8080 locally, forwarding to the targetPort of the service's port 8080 in a pod selected by the service
 kubectl port-forward svc/vllm-leader 8080:8080
 ```
 
-The output should be similar to the following:
+出力は次のようになるはずです。
 
 ```text
 Forwarding from 127.0.0.1:8080 -> 8080
 Forwarding from [::1]:8080 -> 8080
 ```
 
-## Serve the model
+## モデルをサービングする { #serve-the-model }
 
-Open another terminal and send a request
+別のターミナルを開いてリクエストを送ります。
 
 ```text
 curl http://localhost:8080/v1/completions \
@@ -285,9 +285,9 @@ curl http://localhost:8080/v1/completions \
 }'
 ```
 
-The output should be similar to the following
+出力は次のようになるはずです。
 
-??? console "Output"
+??? console "出力"
     ```text
     {
       "id": "cmpl-1bb34faba88b43f9862cfbfb2200949d",

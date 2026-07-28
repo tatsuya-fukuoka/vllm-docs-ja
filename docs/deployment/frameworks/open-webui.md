@@ -1,29 +1,27 @@
-# Open WebUI
+# Open WebUI { #open-webui }
 
-[Open WebUI](https://github.com/open-webui/open-webui) is an extensible, feature-rich,
-and user-friendly self-hosted AI platform designed to operate entirely offline.
-It supports various LLM runners like Ollama and OpenAI-compatible APIs,
-with built-in RAG capabilities, making it a powerful AI deployment solution.
+[Open WebUI](https://github.com/open-webui/open-webui) は、完全にオフラインで動作するように設計された、拡張性が高く機能豊富で使いやすいセルフホスト型の AI プラットフォームです。
+Ollama や OpenAI 互換 API など各種の LLM ランナーに対応し、RAG の機能も内蔵しているため、強力な AI のデプロイ手段になります。
 
-To get started with Open WebUI using vLLM, follow these steps:
+vLLM で Open WebUI を使い始めるには、次の手順に従ってください。
 
-1. Install the [Docker](https://docs.docker.com/engine/install/).
+1. [Docker](https://docs.docker.com/engine/install/) をインストールします。
 
-2. Start the vLLM server with a supported chat completion model:
+2. 対応するチャット補完モデルで vLLM サーバーを起動します。
 
     ```console
     vllm serve Qwen/Qwen3-0.6B-Chat
     ```
 
     !!! note
-        When starting the vLLM server, be sure to specify the host and port using the `--host` and `--port` flags.
-        For example:
+        vLLM サーバーを起動するときは、`--host` と `--port` フラグでホストとポートを必ず指定してください。
+        例:
 
         ```console
         vllm serve <model> --host 0.0.0.0 --port 8000
         ```
 
-3. Start the Open WebUI Docker container:
+3. Open WebUI の Docker コンテナを起動します。
 
     ```console
     docker run -d \
@@ -35,8 +33,8 @@ To get started with Open WebUI using vLLM, follow these steps:
         ghcr.io/open-webui/open-webui:main
     ```
 
-4. Open it in the browser: <http://open-webui-host:3000/>
+4. ブラウザで <http://open-webui-host:3000/> を開きます。
 
-    At the top of the page, you should see the model `Qwen/Qwen3-0.6B-Chat`.
+    ページ上部に `Qwen/Qwen3-0.6B-Chat` というモデル名が表示されるはずです。
 
     ![Web portal of model Qwen/Qwen3-0.6B-Chat](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/deployment/open_webui.png)

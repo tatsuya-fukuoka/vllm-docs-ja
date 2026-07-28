@@ -1,8 +1,8 @@
-# TorchAO
+# TorchAO { #torchao }
 
-TorchAO is an architecture optimization library for PyTorch, it provides high performance dtypes, optimization techniques and kernels for inference and training, featuring composability with native PyTorch features like torch.compile, FSDP etc.. Some benchmark numbers can be found [here](https://github.com/pytorch/ao/tree/main/torchao/quantization#benchmarks).
+TorchAO は PyTorch 向けのアーキテクチャ最適化ライブラリで、推論と学習のための高性能なデータ型・最適化手法・カーネルを提供します。torch.compile や FSDP といった PyTorch 標準の機能と組み合わせられる点が特徴です。ベンチマークの数値は[こちら](https://github.com/pytorch/ao/tree/main/torchao/quantization#benchmarks)（英語）にあります。
 
-We recommend installing the latest torchao nightly with
+最新の torchao の nightly を次の方法でインストールすることを推奨します。
 
 ```bash
 # Install the latest TorchAO nightly build
@@ -12,9 +12,9 @@ pip install \
     --index-url https://download.pytorch.org/whl/nightly/cu126
 ```
 
-## Quantizing HuggingFace Models
+## HuggingFace のモデルを量子化する { #quantizing-huggingface-models }
 
-You can quantize your own huggingface model with torchao, e.g. [transformers](https://huggingface.co/docs/transformers/main/en/quantization/torchao) and [diffusers](https://huggingface.co/docs/diffusers/en/quantization/torchao), and save the checkpoint to huggingface hub like [this](https://huggingface.co/jerryzh168/llama3-8b-int8wo) with the following example code:
+torchao を使えば、[transformers](https://huggingface.co/docs/transformers/main/en/quantization/torchao) や [diffusers](https://huggingface.co/docs/diffusers/en/quantization/torchao) のモデルを自分で量子化し、[このように](https://huggingface.co/jerryzh168/llama3-8b-int8wo) チェックポイントを Hugging Face Hub に保存できます。以下はそのコード例です。
 
 ??? code
 
@@ -40,4 +40,4 @@ You can quantize your own huggingface model with torchao, e.g. [transformers](ht
     quantized_model.push_to_hub(hub_repo, safe_serialization=False)
     ```
 
-Alternatively, you can use the [TorchAO Quantization space](https://huggingface.co/spaces/medmekk/TorchAO_Quantization) for quantizing models with a simple UI.
+あるいは、簡単な UI でモデルを量子化できる [TorchAO Quantization space](https://huggingface.co/spaces/medmekk/TorchAO_Quantization) も利用できます。

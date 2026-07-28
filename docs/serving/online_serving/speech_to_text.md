@@ -1,27 +1,27 @@
-# Speech to Text APIs
+# 音声認識 API { #speech-to-text-apis }
 
-## Transcriptions API
+## Transcriptions API { #transcriptions-api }
 
-Our Transcriptions API is compatible with [OpenAI's Transcriptions API](https://platform.openai.com/docs/api-reference/audio/createTranscription);
-you can use the [official OpenAI Python client](https://github.com/openai/openai-python) to interact with it.
+vLLM の Transcriptions API は [OpenAI の Transcriptions API](https://platform.openai.com/docs/api-reference/audio/createTranscription) と互換性があり、
+[公式の OpenAI Python クライアント](https://github.com/openai/openai-python)からやり取りできます。
 
 !!! note
-    To use the Transcriptions API, please install with extra audio dependencies using `pip install vllm[audio]`.
+    Transcriptions API を使うには、`pip install vllm[audio]` で音声関連の追加依存パッケージをインストールしてください。
 
-Code example: [examples/speech_to_text/openai/openai_transcription_client.py](../../../examples/speech_to_text/openai/openai_transcription_client.py)
+コード例: [examples/speech_to_text/openai/openai_transcription_client.py](../../../examples/speech_to_text/openai/openai_transcription_client.py)
 
-NOTE: beam search is currently supported in the transcriptions endpoint for encoder-decoder multimodal models, e.g., whisper, but highly inefficient as work for handling the encoder/decoder cache is actively ongoing. This is an active point of ongoing optimization and will be handled properly in the very near future.
+注意: transcriptions のエンドポイントでは、whisper などのエンコーダー・デコーダー型マルチモーダルモデルに対してビームサーチが利用できますが、エンコーダー / デコーダーのキャッシュの扱いが開発途上のため非常に非効率です。ここは現在最適化が進められており、近いうちに適切に対応される予定です。
 
-### API Enforced Limits
+### API で強制される上限 { #api-enforced-limits }
 
-Set the maximum audio file size (in MB) that VLLM will accept, via the
-`VLLM_MAX_AUDIO_CLIP_FILESIZE_MB` environment variable. Default is 25 MB.
+vLLM が受け付ける音声ファイルの最大サイズ（MB）は、環境変数
+`VLLM_MAX_AUDIO_CLIP_FILESIZE_MB` で設定します。既定は 25 MB です。
 
-### Uploading Audio Files
+### 音声ファイルのアップロード { #uploading-audio-files }
 
-The Transcriptions API supports uploading audio files in various formats including FLAC, MP3, MP4, MPEG, MPGA, M4A, OGG, WAV, and WEBM.
+Transcriptions API は、FLAC・MP3・MP4・MPEG・MPGA・M4A・OGG・WAV・WEBM など各種形式の音声ファイルのアップロードに対応しています。
 
-**Using OpenAI Python Client:**
+**OpenAI の Python クライアントを使う場合:**
 
 ??? code
 
@@ -45,7 +45,7 @@ The Transcriptions API supports uploading audio files in various formats includi
     print(transcription.text)
     ```
 
-**Using curl with multipart/form-data:**
+**curl で multipart/form-data を使う場合:**
 
 ??? code
 
@@ -58,20 +58,20 @@ The Transcriptions API supports uploading audio files in various formats includi
       -F "response_format=verbose_json"
     ```
 
-**Supported Parameters:**
+**サポートされるパラメータ:**
 
-- `file`: The audio file to transcribe (required)
-- `model`: The model to use for transcription (required)
-- `language`: The language code (e.g., "en", "zh") (optional)
-- `prompt`: Optional text to guide the transcription style (optional)
-- `response_format`: Format of the response ("json", "text") (optional)
-- `temperature`: Sampling temperature between 0 and 1 (optional)
+- `file`: 文字起こしする音声ファイル（必須）
+- `model`: 文字起こしに使うモデル（必須）
+- `language`: 言語コード（`"en"`、`"zh"` など）（任意）
+- `prompt`: 文字起こしのスタイルを誘導するテキスト（任意）
+- `response_format`: レスポンスの形式（`"json"`、`"text"`）（任意）
+- `temperature`: 0 から 1 の間のサンプリング temperature（任意）
 
-For the complete list of supported parameters including sampling parameters and vLLM extensions, see the [protocol definitions](https://github.com/vllm-project/vllm/blob/main/vllm/entrypoints/openai/protocol.py#L2182).
+サンプリングパラメータや vLLM の拡張を含む完全な一覧は、[プロトコルの定義](https://github.com/vllm-project/vllm/blob/main/vllm/entrypoints/openai/protocol.py#L2182)を参照してください。
 
-**Response Format:**
+**レスポンスの形式:**
 
-For `verbose_json` response format:
+`verbose_json` の場合のレスポンス:
 
 ??? code
 
@@ -96,11 +96,11 @@ For `verbose_json` response format:
       ]
     }
     ```
-Currently “verbose_json” response format doesn’t support no_speech_prob.
+現時点では、`verbose_json` のレスポンス形式は no_speech_prob に対応していません。
 
-### Extra Parameters
+### 追加パラメータ { #extra-parameters }
 
-The following [sampling parameters](https://docs.vllm.ai/en/v0.26.0/api/#inference-parameters) are supported.
+次の[サンプリングパラメータ](https://docs.vllm.ai/en/v0.26.0/api/#inference-parameters)がサポートされています。
 
 ??? code
 
@@ -108,7 +108,7 @@ The following [sampling parameters](https://docs.vllm.ai/en/v0.26.0/api/#inferen
     --8<-- "vllm/entrypoints/speech_to_text/transcription/protocol.py:transcription-sampling-params"
     ```
 
-The following extra parameters are supported:
+次の追加パラメータがサポートされています。
 
 ??? code
 
@@ -116,74 +116,74 @@ The following extra parameters are supported:
     --8<-- "vllm/entrypoints/speech_to_text/transcription/protocol.py:transcription-extra-params"
     ```
 
-## Translations API
+## Translations API { #translations-api }
 
-Our Translation API is compatible with [OpenAI's Translations API](https://platform.openai.com/docs/api-reference/audio/createTranslation);
-you can use the [official OpenAI Python client](https://github.com/openai/openai-python) to interact with it.
-Whisper models can translate audio from one of the 55 non-English supported languages into English.
-Please mind that the popular `openai/whisper-large-v3-turbo` model does not support translating.
+vLLM の Translation API は [OpenAI の Translations API](https://platform.openai.com/docs/api-reference/audio/createTranslation) と互換性があり、
+[公式の OpenAI Python クライアント](https://github.com/openai/openai-python)からやり取りできます。
+Whisper 系のモデルは、対応する 55 の非英語言語のいずれかの音声を英語に翻訳できます。
+よく使われる `openai/whisper-large-v3-turbo` は翻訳に対応していない点に注意してください。
 
 !!! note
-    To use the Translation API, please install with extra audio dependencies using `pip install vllm[audio]`.
+    Translation API を使うには、`pip install vllm[audio]` で音声関連の追加依存パッケージをインストールしてください。
 
-Code example: [examples/speech_to_text/openai/openai_translation_client.py](../../../examples/speech_to_text/openai/openai_translation_client.py)
+コード例: [examples/speech_to_text/openai/openai_translation_client.py](../../../examples/speech_to_text/openai/openai_translation_client.py)
 
-### Extra Parameters
+### 追加パラメータ { #extra-parameters_1 }
 
-The following [sampling parameters](https://docs.vllm.ai/en/v0.26.0/api/#inference-parameters) are supported.
+次の[サンプリングパラメータ](https://docs.vllm.ai/en/v0.26.0/api/#inference-parameters)がサポートされています。
 
 ```python
 --8<-- "vllm/entrypoints/speech_to_text/translation/protocol.py:translation-sampling-params"
 ```
 
-The following extra parameters are supported:
+次の追加パラメータがサポートされています。
 
 ```python
 --8<-- "vllm/entrypoints/speech_to_text/translation/protocol.py:translation-extra-params"
 ```
 
-## Realtime API
+## Realtime API { #realtime-api }
 
-The Realtime API provides WebSocket-based streaming audio transcription, allowing real-time speech-to-text as audio is being recorded.
+Realtime API は WebSocket ベースのストリーミング音声認識を提供し、録音しながらリアルタイムに文字起こしできます。
 
 !!! note
-    To use the Realtime API, please install with extra audio dependencies using `uv pip install vllm[audio]`.
+    Realtime API を使うには、`uv pip install vllm[audio]` で音声関連の追加依存パッケージをインストールしてください。
 
-### Audio Format
+### 音声の形式 { #audio-format }
 
-Audio must be sent as base64-encoded PCM16 audio at 16kHz sample rate, mono channel.
+音声は、サンプリングレート 16kHz・モノラルの PCM16 を base64 エンコードして送信する必要があります。
 
-### Protocol Overview
+### プロトコルの概要 { #protocol-overview }
 
-1. Client connects to `ws://host/v1/realtime`
-2. Server sends `session.created` event
-3. Client optionally sends `session.update` with model/params
-4. Client sends `input_audio_buffer.commit` when ready
-5. Client sends `input_audio_buffer.append` events with base64 PCM16 chunks
-6. Server sends `transcription.delta` events with incremental text
-7. Server sends `transcription.done` with final text + usage
-8. Repeat from step 5 for next utterance
-9. Optionally, client sends input_audio_buffer.commit with final=True
-    to signal audio input is finished. Useful when streaming audio files
+1. クライアントが `ws://host/v1/realtime` に接続する
+2. サーバーが `session.created` イベントを送る
+3. 必要に応じてクライアントがモデルやパラメータを含む `session.update` を送る
+4. 準備ができたらクライアントが `input_audio_buffer.commit` を送る
+5. クライアントが base64 の PCM16 チャンクを含む `input_audio_buffer.append` イベントを送る
+6. サーバーが逐次のテキストを含む `transcription.delta` イベントを送る
+7. サーバーが最終テキストと使用量を含む `transcription.done` を送る
+8. 次の発話については手順 5 から繰り返す
+9. 必要に応じて、クライアントが `final=True` を付けた input_audio_buffer.commit を送り、
+    音声入力の終了を伝える。音声ファイルをストリーミングする場合に便利
 
-### Client → Server Events
+### クライアント → サーバーのイベント { #client-server-events }
 
-| Event | Description |
+| イベント | 説明 |
 | ----- | ----------- |
-| `input_audio_buffer.append` | Send base64-encoded audio chunk: `{"type": "input_audio_buffer.append", "audio": "<base64>"}` |
-| `input_audio_buffer.commit` | Trigger transcription processing or end: `{"type": "input_audio_buffer.commit", "final": bool}` |
-| `session.update` | Configure session: `{"type": "session.update", "model": "model-name"}` |
+| `input_audio_buffer.append` | base64 エンコードした音声チャンクを送る: `{"type": "input_audio_buffer.append", "audio": "<base64>"}` |
+| `input_audio_buffer.commit` | 文字起こしの処理開始または終了を指示する: `{"type": "input_audio_buffer.commit", "final": bool}` |
+| `session.update` | セッションを設定する: `{"type": "session.update", "model": "model-name"}` |
 
-### Server → Client Events
+### サーバー → クライアントのイベント { #server-client-events }
 
-| Event | Description |
+| イベント | 説明 |
 | ----- | ----------- |
-| `session.created` | Connection established with session ID and timestamp |
-| `transcription.delta` | Incremental transcription text: `{"type": "transcription.delta", "delta": "text"}` |
-| `transcription.done` | Final transcription with usage stats |
-| `error` | Error notification with message and optional code |
+| `session.created` | セッション ID とタイムスタンプ付きで接続が確立された |
+| `transcription.delta` | 逐次の文字起こしテキスト: `{"type": "transcription.delta", "delta": "text"}` |
+| `transcription.done` | 使用量の統計を含む最終的な文字起こし |
+| `error` | メッセージと（任意で）コードを含むエラー通知 |
 
-#### Example Clients
+#### クライアントの例 { #example-clients }
 
-- [openai_realtime_client.py](https://github.com/vllm-project/vllm/tree/main/examples/speech_to_text/realtime/openai_realtime_client.py) - Upload and transcribe an audio file
-- [openai_realtime_microphone_client.py](https://github.com/vllm-project/vllm/tree/main/examples/speech_to_text/realtime/openai_realtime_microphone_client.py) - Gradio demo for live microphone transcription
+- [openai_realtime_client.py](https://github.com/vllm-project/vllm/tree/main/examples/speech_to_text/realtime/openai_realtime_client.py) - 音声ファイルをアップロードして文字起こしする
+- [openai_realtime_microphone_client.py](https://github.com/vllm-project/vllm/tree/main/examples/speech_to_text/realtime/openai_realtime_microphone_client.py) - マイク入力をライブで文字起こしする Gradio のデモ

@@ -1,430 +1,476 @@
-# Security
+# セキュリティ { #security }
 
-## Inter-Node Communication
+## ノード間通信 { #inter-node-communication }
 
-All communications between nodes in a multi-node vLLM deployment are **insecure by default** and must be protected by placing the nodes on an isolated network. This includes:
+複数ノードで vLLM をデプロイした場合、ノード間のすべての通信は**既定では保護されていません**。ノードを隔離されたネットワークに配置して保護する必要があります。対象は次のとおりです。
 
-1. PyTorch Distributed communications
-2. KV cache transfer communications
-3. Tensor, Pipeline, and Data parallel communications
+1. PyTorch Distributed の通信
+2. KV キャッシュ転送の通信
+3. テンソル並列・パイプライン並列・データ並列の通信
 
-### Configuration Options for Inter-Node Communications
+### ノード間通信の設定オプション { #configuration-options-for-inter-node-communications }
 
-The following options control internode communications in vLLM:
+vLLM のノード間通信は次のオプションで制御します。
 
-#### 1. **Environment Variables:**
+#### 1. **環境変数** { #1-environment-variables }
 
-- `VLLM_HOST_IP`: Sets the IP address for vLLM processes to communicate on
+- `VLLM_HOST_IP`: vLLM のプロセスが通信に使う IP アドレスを設定します
 
-#### 2. **KV Cache Transfer Configuration:**
+#### 2. **KV キャッシュ転送の設定** { #2-kv-cache-transfer-configuration }
 
-- `--kv-ip`: The IP address for KV cache transfer communications (default: 127.0.0.1)
-- `--kv-port`: The port for KV cache transfer communications (default: 14579)
+- `--kv-ip`: KV キャッシュ転送の通信に使う IP アドレス（既定: 127.0.0.1）
+- `--kv-port`: KV キャッシュ転送の通信に使うポート（既定: 14579）
 
-#### 3. **Data Parallel Configuration:**
+#### 3. **データ並列の設定** { #3-data-parallel-configuration }
 
-- `data_parallel_master_ip`: IP of the data parallel master (default: 127.0.0.1)
-- `data_parallel_master_port`: Port of the data parallel master (default: 29500)
+- `data_parallel_master_ip`: データ並列のマスターの IP（既定: 127.0.0.1）
+- `data_parallel_master_port`: データ並列のマスターのポート（既定: 29500）
 
-### Notes on PyTorch Distributed
+### PyTorch Distributed についての注意 { #notes-on-pytorch-distributed }
 
-vLLM uses PyTorch's distributed features for some internode communication. For
-detailed information about PyTorch Distributed security considerations, please
-refer to the [PyTorch Security
-Guide](https://github.com/pytorch/pytorch/security/policy#using-distributed-features).
+vLLM は一部のノード間通信に PyTorch の分散機能を使っています。PyTorch Distributed の
+セキュリティ上の考慮事項については [PyTorch のセキュリティガイド](https://github.com/pytorch/pytorch/security/policy#using-distributed-features)（英語）を参照してください。
 
-Key points from the PyTorch security guide:
+PyTorch のセキュリティガイドの要点:
 
-- PyTorch Distributed features are intended for internal communication only
-- They are not built for use in untrusted environments or networks
-- No authorization protocol is included for performance reasons
-- Messages are sent unencrypted
-- Connections are accepted from anywhere without checks
+- PyTorch Distributed の機能は内部通信のみを想定している
+- 信頼できない環境やネットワークでの利用は想定されていない
+- 性能上の理由から認可のプロトコルは含まれていない
+- メッセージは暗号化されずに送信される
+- どこからの接続でも検証なしに受け入れる
 
-## Security Recommendations
+## セキュリティ上の推奨事項 { #security-recommendations }
 
-### 1. **Network Isolation:**
+### 1. **ネットワークの分離** { #1-network-isolation }
 
-- Deploy vLLM nodes on a dedicated, isolated network
-- Use network segmentation to prevent unauthorized access
-- Implement appropriate firewall rules
+- vLLM のノードは専用の隔離されたネットワークにデプロイする
+- ネットワークセグメンテーションで不正アクセスを防ぐ
+- 適切なファイアウォールのルールを設定する
 
-### 2. **Configuration Best Practices:**
+### 2. **設定のベストプラクティス** { #2-configuration-best-practices }
 
-- Always set `VLLM_HOST_IP` to a specific IP address rather than using defaults
-- Configure firewalls to only allow necessary ports between nodes
+- `VLLM_HOST_IP` は既定値のままにせず、必ず具体的な IP アドレスを設定する
+- ノード間で必要なポートだけを許可するようファイアウォールを設定する
 
-### 3. **Access Control:**
+### 3. **アクセス制御** { #3-access-control }
 
-- Restrict physical and network access to the deployment environment
-- Implement proper authentication and authorization for management interfaces
-- Follow the principle of least privilege for all system components
+- デプロイ環境への物理的・ネットワーク的なアクセスを制限する
+- 管理用インターフェイスには適切な認証・認可を実装する
+- すべてのシステムコンポーネントで最小権限の原則に従う
 
-### 4. **Restrict Domains Access for Media URLs:**
+### 4. **メディア URL のドメインを制限する** { #4-restrict-domains-access-for-media-urls }
 
-Restrict domains that vLLM can access for media URLs by setting
-`--allowed-media-domains` to prevent Server-Side Request Forgery (SSRF) attacks.
-(e.g. `--allowed-media-domains upload.wikimedia.org github.com www.bogotobogo.com`)
+`--allowed-media-domains` を設定して、vLLM がメディア URL としてアクセスできるドメインを制限し、
+サーバーサイドリクエストフォージェリ (SSRF) 攻撃を防いでください。
+（例: `--allowed-media-domains upload.wikimedia.org github.com www.bogotobogo.com`）
 
-This protection applies to both the online serving API (multimodal inputs) and
-the **batch runner** (`vllm run-batch`), where `file_url` values in batch
-transcription/translation requests are validated against the same allowlist.
+この保護は、オンラインサービングの API（マルチモーダル入力）と**バッチランナー**（`vllm run-batch`）の
+両方に適用されます。バッチの文字起こし・翻訳リクエストに含まれる `file_url` も同じ許可リストで検証されます。
 
-Without domain restrictions, a malicious user could supply URLs that:
+ドメインを制限しない場合、悪意あるユーザーが次のような URL を指定できてしまいます。
 
-- **Target internal services**: Access internal network endpoints, cloud metadata
-  services (e.g. `169.254.169.254`), or other services not intended to be
-  publicly reachable (SSRF).
-- **Consume excessive resources**: Point to extremely large files or slow
-  endpoints, causing the server to download unbounded amounts of data and
-  exhausting memory, disk, or network bandwidth.
+- **内部サービスを狙う**: 内部ネットワークのエンドポイント、クラウドのメタデータサービス
+  （`169.254.169.254` など）、公開を意図していないサービスへのアクセス（SSRF）。
+- **過剰にリソースを消費させる**: 極端に大きなファイルや応答の遅いエンドポイントを指定し、
+  サーバーに際限なくデータをダウンロードさせて、メモリ・ディスク・ネットワーク帯域を枯渇させる。
 
-By explicitly allowlisting only the domains you expect media to come from, you
-significantly reduce the attack surface for these types of abuse.
+メディアの取得元として想定するドメインだけを明示的に許可することで、こうした悪用の
+攻撃面を大きく減らせます。
 
-Also, consider setting `VLLM_MEDIA_URL_ALLOW_REDIRECTS=0` to prevent HTTP
-redirects from being followed to bypass domain restrictions.
+また、ドメイン制限を回避するための HTTP リダイレクトを追わないよう、
+`VLLM_MEDIA_URL_ALLOW_REDIRECTS=0` の設定も検討してください。
 
-### 5. **Restrict Media Decode Sizes:**
+### 5. **メディアのデコードサイズを制限する** { #5-restrict-media-decode-sizes }
 
-Compressed media files can expand into gigabytes of memory during decoding. vLLM
-enforces decode-size limits to prevent out-of-memory denial of service:
+圧縮されたメディアファイルは、デコード時に数ギガバイトのメモリに展開されることがあります。
+vLLM はメモリ不足によるサービス妨害を防ぐため、デコードサイズの上限を設けています。
 
-| Environment Variable | Default | Description |
+| 環境変数 | 既定値 | 説明 |
 | --- | --- | --- |
-| `VLLM_MAX_IMAGE_PIXELS` | `178956970` (~179M pixels) | Maximum decoded image size in pixels. Images exceeding this are rejected before raster memory is allocated. Default matches PIL's built-in 2x decompression-bomb threshold (~680 MB for RGB). |
-| `VLLM_MAX_AUDIO_CLIP_FILESIZE_MB` | `25` | Maximum filesize in MB for a single audio file. |
-| `VLLM_MAX_AUDIO_DECODE_DURATION_S` | `600` | Maximum decoded audio duration in seconds. Prevents compressed audio from expanding into gigabytes of float32 PCM. |
+| `VLLM_MAX_IMAGE_PIXELS` | `178956970`（約 1 億 7900 万ピクセル） | デコード後の画像サイズの上限（ピクセル数）。これを超える画像は、ラスタ用のメモリを確保する前に拒否されます。既定値は PIL 組み込みの解凍爆弾しきい値の 2 倍（RGB で約 680 MB）に合わせています。 |
+| `VLLM_MAX_AUDIO_CLIP_FILESIZE_MB` | `25` | 音声ファイル 1 つあたりの最大サイズ（MB）。 |
+| `VLLM_MAX_AUDIO_DECODE_DURATION_S` | `600` | デコード後の音声の最大長（秒）。圧縮音声が数ギガバイトの float32 PCM に展開されるのを防ぎます。 |
 
-Setting any of these to `0` disables the corresponding limit. This is **not
-recommended** for deployments exposed to untrusted users, as it removes the
-protection against resource-exhaustion attacks.
+いずれも `0` にすると対応する制限が無効になります。信頼できないユーザーに公開する環境では、
+リソース枯渇攻撃への保護がなくなるため**推奨しません**。
 
-## Security and Firewalls: Protecting Exposed vLLM Systems
+## セキュリティとファイアウォール: 公開された vLLM の保護 { #security-and-firewalls-protecting-exposed-vllm-systems }
 
-While vLLM is designed to allow unsafe network services to be isolated to
-private networks, there are components—such as dependencies and underlying
-frameworks—that may open insecure services listening on all network interfaces,
-sometimes outside of vLLM's direct control.
+vLLM は、安全でないネットワークサービスをプライベートネットワークに隔離できるよう設計されていますが、
+依存パッケージや基盤フレームワークなど、vLLM が直接制御できないところで、すべてのネットワーク
+インターフェイスで待ち受ける安全でないサービスが開かれることがあります。
 
-A major concern is the use of `torch.distributed`, which vLLM leverages for
-distributed communication, including when using vLLM on a single host. When vLLM
-uses TCP initialization (see [PyTorch TCP Initialization
-documentation](https://docs.pytorch.org/docs/stable/distributed.html#tcp-initialization)),
-PyTorch creates a `TCPStore` that, by default, listens on all network
-interfaces. This means that unless additional protections are put in place,
-these services may be accessible to any host that can reach your machine via any
-network interface.
+特に大きな懸念は `torch.distributed` の利用です。vLLM は単一ホストでの実行時も含め、分散通信に
+これを利用しています。vLLM が TCP による初期化を行うと（[PyTorch の TCP 初期化のドキュメント](https://docs.pytorch.org/docs/stable/distributed.html#tcp-initialization)を参照）、
+PyTorch は既定ですべてのネットワークインターフェイスで待ち受ける `TCPStore` を作成します。
+つまり、追加の保護がなければ、いずれかのネットワークインターフェイス経由でマシンに到達できる
+ホストからこれらのサービスにアクセスできてしまいます。
 
-**From a PyTorch perspective, any use of `torch.distributed` should be
-considered insecure by default.** This is a known and intentional behavior from
-the PyTorch team.
+**PyTorch の観点では、`torch.distributed` の利用はすべて既定で安全でないと考えるべきです。**
+これは PyTorch チームが認識したうえで意図している挙動です。
 
-### Firewall Configuration Guidance
+### ファイアウォール設定の指針 { #firewall-configuration-guidance }
 
-The best way to protect your vLLM system is to carefully configure a firewall to
-expose only the minimum network surface area necessary. In most cases, this
-means:
+vLLM を保護する最善の方法は、ファイアウォールを丁寧に設定し、必要最小限のネットワーク面だけを
+公開することです。多くの場合、次のようになります。
 
-- **Block all incoming connections except to the TCP port the API server is
-listening on.**
+- **API サーバーが待ち受ける TCP ポート以外への着信接続をすべてブロックする。**
 
-- Ensure that ports used for internal communication (such as those for
-`torch.distributed` and KV cache transfer) are only accessible from trusted
-hosts or networks.
+- 内部通信に使うポート（`torch.distributed` や KV キャッシュ転送など）には、信頼できるホストや
+ネットワークからのみアクセスできるようにする。
 
-- Never expose these internal ports to the public internet or untrusted
-networks.
+- これらの内部ポートを、インターネットや信頼できないネットワークに絶対に公開しない。
 
-Consult your operating system or application platform documentation for specific
-firewall configuration instructions.
+具体的なファイアウォールの設定方法は、OS やアプリケーションプラットフォームのドキュメントを参照してください。
 
-## API Key Authentication Limitations
+## API キー認証の限界 { #api-key-authentication-limitations }
 
-### Overview
+### 概要 { #overview }
 
-The `--api-key` flag (or `VLLM_API_KEY` environment variable) provides authentication for vLLM's HTTP server, but **only for OpenAI-compatible API endpoints under the `/v1` path prefix**, and other similar `/v2`, `/inference` path prefix**. Many other sensitive endpoints are exposed on the same HTTP server without any authentication enforcement.
+`--api-key` フラグ（または環境変数 `VLLM_API_KEY`）は vLLM の HTTP サーバーに認証を提供しますが、
+**対象は `/v1` パス配下の OpenAI 互換 API エンドポイントと、同様に `/v2`・`/inference` のパス接頭辞に限られます**。
+機微な操作を伴う他の多くのエンドポイントは、同じ HTTP サーバー上で認証なしに公開されています。
 
-**Important:** Do not rely exclusively on `--api-key` for securing access to vLLM. Additional security measures are required for production deployments.
+**重要:** vLLM へのアクセス保護を `--api-key` だけに頼らないでください。本番環境では追加のセキュリティ対策が必要です。
 
-### Protected Endpoints (Require API Key)
+### 保護されるエンドポイント（API キーが必要） { #protected-endpoints-require-api-key }
 
-When `--api-key` is configured, the following `/v1` endpoints require Bearer token authentication:
+`--api-key` を設定すると、次の `/v1` エンドポイントは Bearer トークンによる認証が必要になります。
 
-- `/v1/models` - List available models
-- `/v1/chat/completions` - Chat completions
-- `/v1/chat/completions/batch` - Batch chat completions
-- `/v1/chat/completions/render` - Render chat completion requests
-- `/v1/chat/completions/derender` - Derender chat completion requests
-- `/v1/completions` - Text completions
-- `/v1/completions/render` - Render completion requests
-- `/v1/completions/derender` - Derender completion requests
-- `/v1/embeddings` - Generate embeddings
-- `/v1/audio/transcriptions` - Audio transcription
-- `/v1/audio/translations` - Audio translation
-- `/v1/messages` - Anthropic-compatible messages API
-- `/v1/messages/count_tokens` - Count tokens for Anthropic messages
-- `/v1/responses` - Create a response
-- `/v1/responses/{response_id}` - Retrieve a response
-- `/v1/responses/{response_id}/cancel` - Cancel a response
-- `/v1/score` - Scoring API
-- `/v1/rerank` - Reranking API
-- `/v1/load_lora_adapter` - Load a LoRA adapter (can alter model behavior; only available when `--enable-lora` is set and `VLLM_ALLOW_RUNTIME_LORA_UPDATING=True`)
-- `/v1/unload_lora_adapter` - Unload a LoRA adapter (can alter model behavior; only available when `--enable-lora` is set and `VLLM_ALLOW_RUNTIME_LORA_UPDATING=True`)
-- `/inference/v1/generate` - Generate completions
+- `/v1/models` - 利用可能なモデルの一覧
+- `/v1/chat/completions` - チャットの補完
+- `/v1/chat/completions/batch` - チャット補完のバッチ実行
+- `/v1/chat/completions/render` - チャット補完リクエストのレンダリング
+- `/v1/chat/completions/derender` - チャット補完リクエストのデレンダリング
+- `/v1/completions` - テキストの補完
+- `/v1/completions/render` - 補完リクエストのレンダリング
+- `/v1/completions/derender` - 補完リクエストのデレンダリング
+- `/v1/embeddings` - 埋め込みの生成
+- `/v1/audio/transcriptions` - 音声の文字起こし
+- `/v1/audio/translations` - 音声の翻訳
+- `/v1/messages` - Anthropic 互換の messages API
+- `/v1/messages/count_tokens` - Anthropic messages のトークン数カウント
+- `/v1/responses` - レスポンスの作成
+- `/v1/responses/{response_id}` - レスポンスの取得
+- `/v1/responses/{response_id}/cancel` - レスポンスのキャンセル
+- `/v1/score` - スコアリング API
+- `/v1/rerank` - リランキング API
+- `/v1/load_lora_adapter` - LoRA アダプタの読み込み（モデルの挙動を変えうる。`--enable-lora` と `VLLM_ALLOW_RUNTIME_LORA_UPDATING=True` が設定されている場合のみ利用可能）
+- `/v1/unload_lora_adapter` - LoRA アダプタの解放（モデルの挙動を変えうる。`--enable-lora` と `VLLM_ALLOW_RUNTIME_LORA_UPDATING=True` が設定されている場合のみ利用可能）
+- `/inference/v1/generate` - 補完の生成
 - `/v2/embed` - Cohere Embed API
 - `/v2/rerank` - Cohere Rerank API
 
-### Unprotected Endpoints (No API Key Required)
+### 保護されないエンドポイント（API キー不要） { #unprotected-endpoints-no-api-key-required }
 
-The following endpoints **do not require authentication** even when `--api-key` is configured:
+次のエンドポイントは、`--api-key` を設定していても**認証を必要としません**。
 
-**Inference endpoints:**
+**推論のエンドポイント:**
 
-- `/invocations` - SageMaker-compatible endpoint (routes to the same inference functions as `/v1` endpoints)
+- `/invocations` - SageMaker 互換のエンドポイント（`/v1` エンドポイントと同じ推論処理へ振り分けられます）
 - `/generative_scoring` - Generative scoring API
-- `/pooling` - Pooling API
-- `/classify` - Classification API
-- `/score` - Scoring API (non-`/v1` variant)
-- `/rerank` - Reranking API (non-`/v1` variant)
+- `/pooling` - プーリング API
+- `/classify` - 分類 API
+- `/score` - スコアリング API（`/v1` 以外の系統）
+- `/rerank` - リランキング API（`/v1` 以外の系統）
 
-**Operational control endpoints (only when `"generate"` task is supported):**
+**運用制御のエンドポイント（`"generate"` タスクをサポートする場合のみ）:**
 
-- `/pause` - Pause generation (causes denial of service)
-- `/resume` - Resume generation
-- `/is_paused` - Check if generation is paused
-- `/abort_requests` - Abort in-flight requests (causes loss of in-flight work)
-- `/scale_elastic_ep` - Trigger scaling operations
-- `/is_scaling_elastic_ep` - Check if scaling is in progress
-- `/init_weight_transfer_engine` - Initialize weight transfer engine for RLHF
-- `/update_weights` - Update model weights (can alter model behavior)
-- `/get_world_size` - Get distributed world size
-- `/abort_requests` - Abort in-flight requests (only when `--tokens-only` is also set)
+- `/pause` - 生成の一時停止（サービス停止状態になります）
+- `/resume` - 生成の再開
+- `/is_paused` - 生成が一時停止中かどうかの確認
+- `/abort_requests` - 実行中リクエストの中断（実行中の処理が失われます）
+- `/scale_elastic_ep` - スケーリング操作の実行
+- `/is_scaling_elastic_ep` - スケーリング中かどうかの確認
+- `/init_weight_transfer_engine` - RLHF 用の重み転送エンジンの初期化
+- `/update_weights` - モデルの重みの更新（モデルの挙動を変えうる）
+- `/get_world_size` - 分散実行の world size の取得
+- `/abort_requests` - 実行中リクエストの中断（`--tokens-only` も指定した場合のみ）
 
-**Utility endpoints:**
+**ユーティリティのエンドポイント:**
 
-- `/tokenize` - Tokenize text
-- `/detokenize` - Detokenize tokens
-- `/health` - Health check
-- `/ping` - SageMaker health check
-- `/version` - Version information
-- `/load` - Server load metrics
+- `/tokenize` - テキストのトークナイズ
+- `/detokenize` - トークンのデトークナイズ
+- `/health` - ヘルスチェック
+- `/ping` - SageMaker のヘルスチェック
+- `/version` - バージョン情報
+- `/load` - サーバー負荷のメトリクス
 
-**Tokenizer information endpoint (only when `--enable-tokenizer-info-endpoint` is set):**
+**トークナイザー情報のエンドポイント（`--enable-tokenizer-info-endpoint` を指定した場合のみ）:**
 
-This endpoint is **only available when the `--enable-tokenizer-info-endpoint` flag is set**. It may expose sensitive information such as chat templates and tokenizer configuration:
+このエンドポイントは **`--enable-tokenizer-info-endpoint` フラグを指定した場合にのみ利用できます**。
+チャットテンプレートやトークナイザーの設定など、機微な情報が露出する可能性があります。
 
-- `/tokenizer_info` - Get comprehensive tokenizer information including chat templates and configuration
+- `/tokenizer_info` - チャットテンプレートや設定を含む、トークナイザーの詳細情報の取得
 
-**Development endpoints (only when `VLLM_SERVER_DEV_MODE=1`):**
+**開発用のエンドポイント（`VLLM_SERVER_DEV_MODE=1` の場合のみ）:**
 
-These endpoints are **only available when the environment variable `VLLM_SERVER_DEV_MODE` is set to `1`**. They are intended for development and debugging purposes and should never be enabled in production:
+これらのエンドポイントは**環境変数 `VLLM_SERVER_DEV_MODE` が `1` の場合にのみ利用できます**。
+開発・デバッグ目的のものであり、本番環境では絶対に有効にしないでください。
 
-- `/server_info` - Get detailed server configuration
-- `/reset_prefix_cache` - Reset prefix cache (can disrupt service)
-- `/reset_mm_cache` - Reset multimodal cache (can disrupt service)
-- `/reset_encoder_cache` - Reset encoder cache (can disrupt service)
-- `/sleep` - Put engine to sleep (causes denial of service)
-- `/wake_up` - Wake engine from sleep
-- `/is_sleeping` - Check if engine is sleeping
-- `/collective_rpc` - Execute arbitrary RPC methods on the engine (extremely dangerous)
+- `/server_info` - サーバーの詳細な設定の取得
+- `/reset_prefix_cache` - プレフィックスキャッシュのリセット（サービスに影響する可能性があります）
+- `/reset_mm_cache` - マルチモーダルキャッシュのリセット（サービスに影響する可能性があります）
+- `/reset_encoder_cache` - エンコーダーキャッシュのリセット（サービスに影響する可能性があります）
+- `/sleep` - エンジンをスリープ状態にする（サービス停止状態になります）
+- `/wake_up` - スリープ状態からの復帰
+- `/is_sleeping` - エンジンがスリープ中かどうかの確認
+- `/collective_rpc` - エンジン上での任意の RPC メソッドの実行（極めて危険）
 
-**Profiler endpoints (only when profiling is enabled via `--profiler-config`):**
+**プロファイラのエンドポイント（`--profiler-config` でプロファイリングを有効にした場合のみ）:**
 
-These endpoints are only available when profiling is enabled and should only be used for local development:
+これらのエンドポイントはプロファイリングを有効にした場合にのみ利用でき、ローカル開発でのみ使うべきです。
 
-- `/start_profile` - Start PyTorch profiler
-- `/stop_profile` - Stop PyTorch profiler
+- `/start_profile` - PyTorch プロファイラの開始
+- `/stop_profile` - PyTorch プロファイラの停止
 
-**Note:** The `/invocations` endpoint is particularly concerning as it provides unauthenticated access to the same inference capabilities as the protected `/v1` endpoints.
+**注意:** 特に `/invocations` は、保護された `/v1` エンドポイントと同じ推論機能へ認証なしで
+アクセスできてしまうため、注意が必要です。
 
-### Security Implications
+### セキュリティ上の影響 { #security-implications }
 
-An attacker who can reach the vLLM HTTP server can:
+vLLM の HTTP サーバーに到達できる攻撃者は、次のことが可能です。
 
-1. **Bypass authentication** by using non-`/v1` endpoints like `/invocations`, `/inference/v1/generate`, `/generative_scoring`, `/pooling`, `/classify`, `/score`, or `/rerank` to run arbitrary inference without credentials
-2. **Cause denial of service** by calling `/pause`, `/scale_elastic_ep`, or `/abort_requests` without a token
-3. **Access operational controls** to manipulate server state (e.g., pausing generation, updating model weights via `/update_weights`)
-4. **If `--enable-tokenizer-info-endpoint` is set:** Access sensitive tokenizer configuration including chat templates, which may reveal prompt engineering strategies or other implementation details
-5. **If `VLLM_SERVER_DEV_MODE=1` is set:** Execute arbitrary RPC commands via `/collective_rpc`, reset caches, put the engine to sleep, and access detailed server configuration
+1. `/invocations`、`/inference/v1/generate`、`/generative_scoring`、`/pooling`、`/classify`、`/score`、`/rerank` など `/v1` 以外のエンドポイントを使って**認証を回避**し、資格情報なしで任意の推論を実行する
+2. トークンなしで `/pause`、`/scale_elastic_ep`、`/abort_requests` を呼び出して**サービス妨害を引き起こす**
+3. **運用制御にアクセス**してサーバーの状態を操作する（生成の一時停止、`/update_weights` によるモデル重みの更新など）
+4. **`--enable-tokenizer-info-endpoint` が設定されている場合:** チャットテンプレートを含むトークナイザー設定にアクセスし、プロンプト設計の戦略や実装の詳細を知る
+5. **`VLLM_SERVER_DEV_MODE=1` が設定されている場合:** `/collective_rpc` で任意の RPC コマンドを実行し、キャッシュをリセットし、エンジンをスリープさせ、サーバーの詳細な設定にアクセスする
 
-### Recommended Security Practices
+### 推奨されるセキュリティ対策 { #recommended-security-practices }
 
-#### 1. Minimize Exposed Endpoints
+#### 1. 公開するエンドポイントを最小化する { #1-minimize-exposed-endpoints }
 
-**CRITICAL:** Never set `VLLM_SERVER_DEV_MODE=1` in production environments. Development endpoints expose extremely dangerous functionality including:
+**重要:** 本番環境では `VLLM_SERVER_DEV_MODE=1` を絶対に設定しないでください。開発用エンドポイントは
+次のような極めて危険な機能を露出します。
 
-- Arbitrary RPC execution via `/collective_rpc`
-- Cache manipulation that can disrupt service
-- Detailed server configuration disclosure
+- `/collective_rpc` による任意の RPC 実行
+- サービスに影響しうるキャッシュ操作
+- サーバー設定の詳細な開示
 
-Similarly, never enable profiler endpoints in production.
+同様に、本番環境ではプロファイラのエンドポイントも有効にしないでください。
 
-**Be cautious with `--enable-tokenizer-info-endpoint`:** Only enable the `/tokenizer_info` endpoint if you need to expose tokenizer configuration information. This endpoint reveals chat templates and tokenizer settings that may contain sensitive implementation details or prompt engineering strategies.
+**`--enable-tokenizer-info-endpoint` の扱いには注意してください:** トークナイザーの設定情報を公開する
+必要がある場合にのみ `/tokenizer_info` を有効にしてください。このエンドポイントは、実装の詳細や
+プロンプト設計の戦略を含みうるチャットテンプレートとトークナイザー設定を露出します。
 
-#### 2. Deploy Behind a Reverse Proxy
+#### 2. リバースプロキシの背後にデプロイする { #2-deploy-behind-a-reverse-proxy }
 
-The most effective approach is to deploy vLLM behind a reverse proxy (such as nginx, Envoy, or a Kubernetes Gateway) that:
+もっとも効果的なのは、次のようなリバースプロキシ（nginx、Envoy、Kubernetes Gateway など）の
+背後に vLLM をデプロイすることです。
 
-- Explicitly allowlists only the endpoints you want to expose to end users
-- Blocks all other endpoints, including the unauthenticated inference and operational control endpoints
-- Implements additional authentication, rate limiting, and logging at the proxy layer
+- エンドユーザーに公開したいエンドポイントだけを明示的に許可する
+- 認証のない推論エンドポイントや運用制御のエンドポイントを含め、その他をすべてブロックする
+- プロキシ層で追加の認証・レート制限・ログ記録を実装する
 
-## Request Parameter Resource Limits
+## リクエストパラメータによるリソース制限 { #request-parameter-resource-limits }
 
-Certain API request parameters can have a large impact on resource consumption and may be abused to exhaust server resources. The `n` parameter in the `/v1/completions` and `/v1/chat/completions` endpoints controls how many independent output sequences are generated per request. A very large value causes the engine to allocate memory, CPU, and GPU time proportional to `n`, which can lead to out-of-memory conditions on the host and block the server from processing other requests.
+一部の API リクエストパラメータはリソース消費に大きく影響し、サーバーのリソースを枯渇させる目的で
+悪用されるおそれがあります。`/v1/completions` と `/v1/chat/completions` の `n` パラメータは、
+1 リクエストで生成する独立した出力系列の数を制御します。極端に大きな値を指定すると、エンジンは
+`n` に比例したメモリ・CPU・GPU 時間を確保するため、ホストのメモリ不足を招き、他のリクエストの
+処理を妨げる可能性があります。
 
-To mitigate this, vLLM enforces a configurable upper bound on the `n` parameter via the `VLLM_MAX_N_SEQUENCES` environment variable (default: **16384**). Requests exceeding this limit are rejected before reaching the engine.
+これを緩和するため、vLLM は環境変数 `VLLM_MAX_N_SEQUENCES`（既定: **16384**）で `n` の上限を
+設定できるようにしています。この上限を超えるリクエストは、エンジンに届く前に拒否されます。
 
-### Recommendations
+### 推奨事項 { #recommendations }
 
-- **Public-facing deployments:** Consider setting `VLLM_MAX_N_SEQUENCES` to a value appropriate for your workload (e.g., `64` or `128`) to limit the blast radius of a single request.
-- **Reverse proxy layer:** In addition to vLLM's built-in limit, consider enforcing request body validation and rate limiting at your reverse proxy to further constrain abusive payloads.
-- **Monitoring:** Monitor per-request resource consumption to detect anomalous patterns that may indicate abuse.
+- **一般公開する環境:** 1 リクエストの影響範囲を抑えるため、ワークロードに見合った値
+  （`64` や `128` など）を `VLLM_MAX_N_SEQUENCES` に設定することを検討してください。
+- **リバースプロキシ層:** vLLM 側の上限に加えて、リバースプロキシでリクエストボディの検証や
+  レート制限を行い、悪意あるペイロードをさらに制限することを検討してください。
+- **監視:** リクエストごとのリソース消費を監視し、悪用の兆候となる異常なパターンを検知してください。
 
-## Tool Server and MCP Security
+## ツールサーバーと MCP のセキュリティ { #tool-server-and-mcp-security }
 
-vLLM supports connecting to external tool servers via the `--tool-server` argument. This enables models to call tools through the Responses API (`/v1/responses`). Tool server support works with all models — it is not limited to specific model architectures.
+vLLM は `--tool-server` 引数で外部のツールサーバーに接続できます。これにより、モデルは
+Responses API (`/v1/responses`) を通じてツールを呼び出せます。ツールサーバーのサポートは
+すべてのモデルで機能し、特定のモデルアーキテクチャに限定されません。
 
-**Important:** No tool servers are enabled by default. They must be explicitly opted into via configuration.
+**重要:** ツールサーバーは既定では 1 つも有効になっていません。設定で明示的に有効にする必要があります。
 
-### Built-in Demo Tools (GPT-OSS)
+### 組み込みのデモ用ツール (GPT-OSS) { #built-in-demo-tools-gpt-oss }
 
-Passing `--tool-server demo` enables built-in demo tools that work with any model that supports tool calling. The tool implementations are not part of vLLM — they are provided by the separately installed [`gpt-oss`](https://github.com/openai/gpt-oss) package. vLLM provides thin wrappers that delegate to `gpt-oss`.
+`--tool-server demo` を指定すると、ツール呼び出しに対応した任意のモデルで使える組み込みのデモ用
+ツールが有効になります。ツールの実装は vLLM の一部ではなく、別途インストールする
+[`gpt-oss`](https://github.com/openai/gpt-oss) パッケージが提供します。vLLM は `gpt-oss` に処理を
+委譲する薄いラッパーを提供しているだけです。
 
-- **Code interpreter** (`python`): Python execution via Docker (via `gpt_oss.tools.python_docker`)
-- **Web browser** (`browser`): Search via Exa API, requires `EXA_API_KEY` (via `gpt_oss.tools.simple_browser`)
+- **コードインタプリタ** (`python`): Docker 経由の Python 実行（`gpt_oss.tools.python_docker`）
+- **Web ブラウザ** (`browser`): Exa API による検索。`EXA_API_KEY` が必要（`gpt_oss.tools.simple_browser`）
 
-#### Code Interpreter (Python Tool) Security Risks
+#### コードインタプリタ（Python ツール）のセキュリティリスク { #code-interpreter-python-tool-security-risks }
 
-The code interpreter executes model-generated code inside a Docker container. However, the container is **not configured with network isolation by default**. It inherits the host's Docker networking configuration (e.g., default bridge network or `--network=host`), which means:
+コードインタプリタは、モデルが生成したコードを Docker コンテナ内で実行します。ただし、この
+コンテナは**既定ではネットワークが分離されていません**。ホストの Docker のネットワーク設定
+（既定のブリッジネットワークや `--network=host` など）を引き継ぐため、次のような状況が起こりえます。
 
-- The container may be able to access the host network and LAN.
-- Internal services reachable from the container may be exploited via SSRF (Server-Side Request Forgery).
-- Cloud metadata services (e.g., `169.254.169.254`) may be accessible.
-- If vulnerable internal services (such as `torch.distributed` endpoints) are reachable from the container, this could be used to attack them.
+- コンテナからホストのネットワークや LAN にアクセスできる可能性がある。
+- コンテナから到達できる内部サービスが SSRF（サーバーサイドリクエストフォージェリ）で悪用される可能性がある。
+- クラウドのメタデータサービス（`169.254.169.254` など）にアクセスできる可能性がある。
+- `torch.distributed` のエンドポイントなど、脆弱な内部サービスにコンテナから到達できる場合、それらへの攻撃に使われる可能性がある。
 
-This is particularly concerning because the code being executed is generated by the model, which may be influenced by adversarial inputs (prompt injection).
+実行されるコードがモデルによって生成される、つまり敵対的な入力（プロンプトインジェクション）の
+影響を受けうるという点で、特に注意が必要です。
 
-#### Controlling Built-in Tool Availability
+#### 組み込みツールの有効・無効の制御 { #controlling-built-in-tool-availability }
 
-Built-in demo tools are controlled by two settings:
+組み込みのデモ用ツールは 2 つの設定で制御します。
 
-1. **`--tool-server demo`**: Enables the built-in demo tools (browser and Python code interpreter).
+1. **`--tool-server demo`**: 組み込みのデモ用ツール（ブラウザと Python コードインタプリタ）を有効にします。
 
-2. **`VLLM_GPT_OSS_SYSTEM_TOOL_MCP_LABELS`**: When built-in tools are requested via the `mcp` tool type in the Responses API, this comma-separated allowlist controls which tool labels are permitted. Valid values are:
-   - `container` - Container tool
-   - `code_interpreter` - Python code execution tool
-   - `web_search_preview` - Web search/browser tool
+2. **`VLLM_GPT_OSS_SYSTEM_TOOL_MCP_LABELS`**: Responses API の `mcp` ツールタイプ経由で組み込みツールが
+   要求されたとき、どのツールラベルを許可するかをカンマ区切りの許可リストで指定します。有効な値:
+   - `container` - コンテナツール
+   - `code_interpreter` - Python コード実行ツール
+   - `web_search_preview` - Web 検索・ブラウザツール
 
-   If this variable is not set or is empty, no built-in tools requested via MCP tool type will be enabled.
+   この変数が未設定または空の場合、MCP ツールタイプ経由で要求された組み込みツールは有効になりません。
 
-To disable the Python code interpreter specifically, omit `code_interpreter` from `VLLM_GPT_OSS_SYSTEM_TOOL_MCP_LABELS`.
+Python のコードインタプリタだけを無効にしたい場合は、`VLLM_GPT_OSS_SYSTEM_TOOL_MCP_LABELS` から
+`code_interpreter` を外してください。
 
-**Consider a custom implementation**: The GPT-OSS Python tool is a reference implementation. For production deployments, consider implementing a custom code execution sandbox with stricter isolation guarantees. See the [GPT-OSS documentation](https://github.com/openai/gpt-oss?tab=readme-ov-file#python) for guidance.
+**独自実装の検討**: GPT-OSS の Python ツールは参照実装です。本番環境では、より厳格な分離を保証する
+独自のコード実行サンドボックスの実装を検討してください。指針は [GPT-OSS のドキュメント](https://github.com/openai/gpt-oss?tab=readme-ov-file#python)（英語）を参照してください。
 
-## Dynamic LoRA Loading
+## LoRA の動的ロード { #dynamic-lora-loading }
 
-vLLM supports dynamically loading and unloading LoRA adapters at runtime via the `/v1/load_lora_adapter` and `/v1/unload_lora_adapter` API endpoints. This functionality is **not enabled by default** — it requires both `--enable-lora` and the environment variable `VLLM_ALLOW_RUNTIME_LORA_UPDATING=True` to be set.
+vLLM は `/v1/load_lora_adapter` と `/v1/unload_lora_adapter` の API エンドポイントを通じて、実行時に
+LoRA アダプタを動的にロード・アンロードできます。この機能は**既定では無効**で、`--enable-lora` と
+環境変数 `VLLM_ALLOW_RUNTIME_LORA_UPDATING=True` の両方を設定する必要があります。
 
-**Warning:** Dynamic LoRA loading is not a secure operation and should not be enabled in deployments exposed to untrusted clients. If you must enable dynamic LoRA loading, restrict access to the `/v1/load_lora_adapter` and `/v1/unload_lora_adapter` endpoints to trusted administrators only, using a reverse proxy or network-level access controls. Do not expose these endpoints to end users. For details on configuring LoRA adapters, see the [LoRA Adapters documentation](../features/lora.md).
+**警告:** LoRA の動的ロードは安全な操作ではなく、信頼できないクライアントに公開する環境では
+有効にすべきではありません。どうしても有効にする必要がある場合は、リバースプロキシや
+ネットワークレベルのアクセス制御を用いて、`/v1/load_lora_adapter` と `/v1/unload_lora_adapter` への
+アクセスを信頼できる管理者のみに制限してください。エンドユーザーには公開しないでください。
+LoRA アダプタの設定方法は [LoRA アダプタのドキュメント](../features/lora.md)を参照してください。
 
-## Endpoint Plugins
+## エンドポイントプラグイン { #endpoint-plugins }
 
-vLLM supports loading out-of-tree HTTP routes via the `vllm.endpoint_plugins` entry point group (see [Endpoint Plugins](../design/endpoint_plugins.md) for how to write one). An endpoint plugin can register arbitrary FastAPI routes, including routes that reach the engine via `EngineClient.collective_rpc`, so it must be treated as part of the server's trusted code base and not as sandboxed or reviewed input.
+vLLM は `vllm.endpoint_plugins` のエントリポイントグループを通じて、ツリー外の HTTP ルートを
+読み込めます（書き方は[エンドポイントプラグイン](../design/endpoint_plugins.md)を参照）。
+エンドポイントプラグインは任意の FastAPI ルートを登録でき、`EngineClient.collective_rpc` 経由で
+エンジンに到達するルートも登録できるため、サンドボックス化された入力ではなく、サーバーの
+信頼されたコードベースの一部として扱う必要があります。
 
-**Endpoint plugins are not loaded by default.** Unlike other vLLM plugin groups (`vllm.general_plugins`, `vllm.platform_plugins`, etc.), which load every discovered plugin unless `VLLM_PLUGINS` narrows the set, endpoint plugins load **none** unless `VLLM_PLUGINS` is set and explicitly names them. This mirrors the "off by default in production" posture used for development endpoints gated behind `VLLM_SERVER_DEV_MODE`. Both surfaces are only present when an operator has explicitly opted in.
+**エンドポイントプラグインは既定では読み込まれません。** 他の vLLM プラグイングループ
+（`vllm.general_plugins`、`vllm.platform_plugins` など）は `VLLM_PLUGINS` で絞り込まない限り
+発見したプラグインをすべて読み込みますが、エンドポイントプラグインは `VLLM_PLUGINS` で明示的に
+名前を指定しない限り**まったく読み込まれません**。これは `VLLM_SERVER_DEV_MODE` で保護された
+開発用エンドポイントと同じ「本番では既定で無効」という方針に沿ったものです。どちらの機能も、
+運用者が明示的に選択した場合にのみ現れます。
 
-### Recommended Security Practices
+### 推奨されるセキュリティ対策 { #recommended-security-practices_1 }
 
-1. **Only allowlist plugins you trust.** Set `VLLM_PLUGINS` to the exact plugin names you intend to run and never wildcard or copy an allowlist between deployments without reviewing what each named plugin does.
-2. **Audit routes before deploying.** A plugin's `attach_router` can add routes under any path, including ones that duplicate existing `/v1/*` paths. There is currently no route conflict enforcement (tracked as a follow-up to RFC [#46565](https://github.com/vllm-project/vllm/issues/46565)), so a malicious or buggy plugin can **shadow a core route** and silently replace its behavior. Prefer plugins that namespace their routes under a distinct prefix (e.g. `/plugins/<plugin-name>/...`) instead of reusing `/v1/...` and review `app.routes` after startup if you need certainty about what is actually being served.
-3. **Treat plugin routes like any other unauthenticated by default surface.** `--api-key` only protects the `/v1`, `/v2`, and `/inference` path prefixes (see [API Key Authentication Limitations](#api-key-authentication-limitations)). A plugin route outside those prefixes is unauthenticated unless the plugin implements its own authentication. Deploy behind a reverse proxy that allowlists only the plugin routes you intend to expose externally.
-4. **Remember the `vllm.general_plugins` pairing.** A plugin that also needs new engine side behavior ships that half separately via `vllm.general_plugins` which loads in every worker process under the default (load all unless restricted) posture. Allowlisting the endpoint plugin does not by itself restrict its paired engine side plugin. Need to review both.
+1. **信頼するプラグインだけを許可リストに入れる。** `VLLM_PLUGINS` には実行する意図のあるプラグイン名を正確に設定し、ワイルドカードを使ったり、各プラグインの内容を確認せずに許可リストを別環境からコピーしたりしないでください。
+2. **デプロイ前にルートを監査する。** プラグインの `attach_router` は、既存の `/v1/*` と重複するものを含め、任意のパスにルートを追加できます。現時点でルート衝突の検出は行われていないため（RFC [#46565](https://github.com/vllm-project/vllm/issues/46565) のフォローアップとして追跡中）、悪意ある、あるいはバグのあるプラグインが**コアのルートを覆い隠し**、その挙動を黙って置き換えてしまう可能性があります。`/v1/...` を再利用せず、独自の接頭辞（`/plugins/<plugin-name>/...` など）でルートを名前空間化するプラグインを選び、実際に何が提供されているか確実に把握したい場合は起動後に `app.routes` を確認してください。
+3. **プラグインのルートも「既定で認証なし」の面として扱う。** `--api-key` が保護するのは `/v1`、`/v2`、`/inference` のパス接頭辞だけです（[API キー認証の限界](#api-key-authentication-limitations)を参照）。これらの接頭辞の外にあるプラグインのルートは、プラグイン自身が認証を実装していない限り認証されません。外部に公開したいプラグインのルートだけを許可するリバースプロキシの背後にデプロイしてください。
+4. **`vllm.general_plugins` との対応関係に注意する。** エンジン側の新しい挙動も必要とするプラグインは、その半分を `vllm.general_plugins` として別途提供します。こちらは既定の方針（制限しない限りすべて読み込む）に従い、すべてのワーカープロセスで読み込まれます。エンドポイントプラグインを許可リストで制限しても、対になるエンジン側プラグインは制限されません。両方を確認する必要があります。
 
-## gRPC Interface
+## gRPC インターフェイス { #grpc-interface }
 
-vLLM provides an optional gRPC Generate service on a separate TCP port, enabled via the `--grpc-port` flag. When not specified, no gRPC server is started. The gRPC listener binds to the same host address as the HTTP server.
+vLLM は `--grpc-port` フラグで有効にできる、別 TCP ポートのオプションの gRPC Generate サービスを
+提供します。指定しない場合、gRPC サーバーは起動しません。gRPC のリスナーは HTTP サーバーと
+同じホストアドレスにバインドされます。
 
-**Warning:** The gRPC interface is **insecure by default** — it does not implement authentication, authorization, or encryption. It should be considered a private, internal interface intended for use only between co-located services within a trusted network. Do not expose the gRPC port to the public internet or untrusted clients. If you enable the gRPC interface, protect it via network-level access controls such as firewall rules, network segmentation, or deployment on an isolated private network.
+**警告:** gRPC インターフェイスは**既定で保護されていません**。認証・認可・暗号化のいずれも実装
+されていません。信頼されたネットワーク内で同居するサービス間でのみ使う、プライベートな内部
+インターフェイスとみなしてください。gRPC ポートをインターネットや信頼できないクライアントに
+公開しないでください。有効にする場合は、ファイアウォールのルール、ネットワークセグメンテーション、
+隔離されたプライベートネットワークへの配置など、ネットワークレベルのアクセス制御で保護してください。
 
-### Security Implications
+### セキュリティ上の影響 { #security-implications_1 }
 
-An attacker who can reach the gRPC port can:
+gRPC ポートに到達できる攻撃者は、次のことが可能です。
 
-1. **Run arbitrary inference** via the `Generate` and `GenerateStream` RPCs without any credentials
-2. **Consume GPU and compute resources** by submitting unbounded generation requests
-3. **Cause Denial of Service** by exploiting bugs in the gRPC interface that can crash vLLM.
+1. `Generate` と `GenerateStream` の RPC を使い、資格情報なしで**任意の推論を実行する**
+2. 際限のない生成リクエストを送りつけて **GPU と計算リソースを消費させる**
+3. gRPC インターフェイスのバグを突いて vLLM をクラッシュさせ、**サービス妨害を引き起こす**
 
-### Recommendations
+### 推奨事項 { #recommendations_1 }
 
-- Only enable `--grpc-port` when you have a specific need for gRPC-based inference
-- Ensure the gRPC port is only accessible from trusted hosts or services
-- Use firewall rules to block external access to the gRPC port
-- Consider deploying the gRPC interface on a dedicated internal network interface
+- gRPC による推論が明確に必要な場合にのみ `--grpc-port` を有効にする
+- gRPC ポートには信頼できるホストやサービスからのみアクセスできるようにする
+- ファイアウォールのルールで gRPC ポートへの外部アクセスをブロックする
+- gRPC インターフェイスを専用の内部ネットワークインターフェイスに配置することを検討する
 
-## Cache Directory Security
+## キャッシュディレクトリのセキュリティ { #cache-directory-security }
 
-vLLM assumes that its cache directories are **private and trusted**. Cache contents are loaded without cryptographic integrity verification, including formats that support arbitrary code execution. If an untrusted user or process can write to vLLM's cache directories, they may be able to crash vLLM or cause it to execute arbitrary code.
+vLLM は、キャッシュディレクトリが**プライベートかつ信頼できる**ことを前提としています。キャッシュの
+内容は暗号学的な完全性検証なしに読み込まれ、その中には任意コード実行が可能な形式も含まれます。
+信頼できないユーザーやプロセスが vLLM のキャッシュディレクトリに書き込めると、vLLM を
+クラッシュさせたり、任意のコードを実行させたりできる可能性があります。
 
-**Do not share vLLM cache directories with untrusted users or mount them from untrusted storage.** Treat the cache directory with the same care as the vLLM installation itself.
+**vLLM のキャッシュディレクトリを信頼できないユーザーと共有したり、信頼できないストレージから
+マウントしたりしないでください。** キャッシュディレクトリは vLLM のインストール自体と同じ注意を
+払って扱ってください。
 
-### Cache Directory Configuration
+### キャッシュディレクトリの設定 { #cache-directory-configuration }
 
-Most cache paths default to subdirectories under a single root. Changing `VLLM_CACHE_ROOT` changes the default location for all features that inherit from it. When `torch.compile` caching is enabled (the default), vLLM also redirects `TRITON_CACHE_DIR` into this tree. If compile caching is disabled, Triton falls back to its own default location (`~/.triton/cache`).
+ほとんどのキャッシュパスは単一のルート配下のサブディレクトリを既定値としています。
+`VLLM_CACHE_ROOT` を変更すると、そこから派生するすべての機能の既定の場所が変わります。
+`torch.compile` のキャッシュが有効な場合（既定）、vLLM は `TRITON_CACHE_DIR` もこのツリー内に
+向けます。コンパイルキャッシュを無効にした場合、Triton は自身の既定の場所（`~/.triton/cache`）に
+戻ります。
 
-| Environment Variable | Default | Description |
+| 環境変数 | 既定値 | 説明 |
 | --- | --- | --- |
-| `VLLM_CACHE_ROOT` | `~/.cache/vllm` | Base cache directory. Respects `XDG_CACHE_HOME` if set. All paths below inherit from this unless explicitly overridden. |
-| *(torch.compile)* | `$VLLM_CACHE_ROOT/torch_compile_cache/` | Compilation cache for AOT-compiled models, Inductor graphs, and Triton kernels. Controlled by `VLLM_DISABLE_COMPILE_CACHE` (set to `1` to disable). |
-| `VLLM_FLASHINFER_AUTOTUNE_CACHE_DIR` | `$VLLM_CACHE_ROOT/flashinfer_autotune_cache/<flashinfer-version>/<arch>/<cache-hash>/` | FlashInfer autotune config cache. |
-| `VLLM_ASSETS_CACHE` | `$VLLM_CACHE_ROOT/assets/` | Downloaded assets (e.g., tokenizer files). |
-| `VLLM_XLA_CACHE_PATH` | `$VLLM_CACHE_ROOT/xla_cache/` | XLA/TPU compilation cache. |
-| `VLLM_MEDIA_CACHE` | *(disabled)* | Optional cache for downloaded media (images, video, audio). Not enabled unless explicitly set. |
+| `VLLM_CACHE_ROOT` | `~/.cache/vllm` | キャッシュの基準ディレクトリ。設定されていれば `XDG_CACHE_HOME` を尊重します。明示的に上書きしない限り、以下のパスはすべてここから派生します。 |
+| *(torch.compile)* | `$VLLM_CACHE_ROOT/torch_compile_cache/` | AOT コンパイル済みモデル、Inductor のグラフ、Triton のカーネルのコンパイルキャッシュ。`VLLM_DISABLE_COMPILE_CACHE` で制御します（`1` で無効）。 |
+| `VLLM_FLASHINFER_AUTOTUNE_CACHE_DIR` | `$VLLM_CACHE_ROOT/flashinfer_autotune_cache/<flashinfer-version>/<arch>/<cache-hash>/` | FlashInfer のオートチューニング設定のキャッシュ。 |
+| `VLLM_ASSETS_CACHE` | `$VLLM_CACHE_ROOT/assets/` | ダウンロードしたアセット（トークナイザーのファイルなど）。 |
+| `VLLM_XLA_CACHE_PATH` | `$VLLM_CACHE_ROOT/xla_cache/` | XLA / TPU のコンパイルキャッシュ。 |
+| `VLLM_MEDIA_CACHE` | *(無効)* | ダウンロードしたメディア（画像・動画・音声）の任意のキャッシュ。明示的に設定しない限り有効になりません。 |
 
-### Recommendations
+### 推奨事項 { #recommendations_2 }
 
-- **Restrict file permissions** on `VLLM_CACHE_ROOT` (and any other cache directories used by dependencies, such as `~/.triton` if compile caching is disabled) so that only the vLLM process owner can read and write to them.
-- **Do not copy cache contents from untrusted sources.** If you distribute cache artifacts between environments, ensure they originate from a trusted build pipeline.
-- **Container deployments:** If mounting cache directories into containers, ensure the volume source is trusted.
+- `VLLM_CACHE_ROOT`（およびコンパイルキャッシュを無効にしている場合の `~/.triton` など、依存パッケージが使う他のキャッシュディレクトリ）の**ファイルパーミッションを制限**し、vLLM プロセスの所有者だけが読み書きできるようにする。
+- **信頼できない場所からキャッシュの内容をコピーしない。** 環境間でキャッシュの成果物を配布する場合は、信頼できるビルドパイプライン由来であることを確認してください。
+- **コンテナでのデプロイ:** キャッシュディレクトリをコンテナにマウントする場合は、ボリュームの元が信頼できることを確認してください。
 
-## FIPS Compatibility
+## FIPS 互換性 { #fips-compatibility }
 
-FIPS compliance depends on many factors, so a vLLM deployment is not automatically FIPS compliant. Recent changes have improved vLLM's *tolerance* of FIPS-enabled hosts — that is, avoiding crashes when non-approved algorithms are blocked — but tolerance is not the same as compliance. Whether a deployment satisfies FIPS requirements depends on the host operating system, the OpenSSL provider backing Python's `hashlib` and `ssl` modules, and which optional dependencies are installed.
+FIPS 準拠は多くの要因に左右されるため、vLLM のデプロイが自動的に FIPS 準拠になることはありません。
+近年の変更で、FIPS が有効なホストに対する vLLM の*耐性*は向上しました。つまり、承認されていない
+アルゴリズムがブロックされてもクラッシュしなくなりました。ただし耐性と準拠は別物です。デプロイが
+FIPS の要件を満たすかどうかは、ホスト OS、Python の `hashlib` と `ssl` を支える OpenSSL プロバイダ、
+インストールされている任意依存パッケージに依存します。
 
-### FIPS-relevant configuration
+### FIPS に関わる設定 { #fips-relevant-configuration }
 
-Operators running vLLM on FIPS-enabled hosts should select FIPS-approved algorithms via the following knobs:
+FIPS が有効なホストで vLLM を運用する場合、次の設定で FIPS 承認済みのアルゴリズムを選択してください。
 
-- **Multimodal input hashing** — `VLLM_MM_HASHER_ALGORITHM` defaults to `blake3`, which is not FIPS-approved. Set it to `sha256` or `sha512` in FIPS-enabled environments.
-- **Prefix-cache hashing** — set `--prefix-caching-hash-algo` (config field `prefix_caching_hash_algo`) to `sha256` or `sha256_cbor`. The `xxhash` and `xxhash_cbor` options are not FIPS-approved.
-- **TLS ciphers** — use `--ssl-ciphers` to restrict the API server's TLS handshake to FIPS-approved cipher suites that match your environment's policy.
+- **マルチモーダル入力のハッシュ** — `VLLM_MM_HASHER_ALGORITHM` の既定値は `blake3` で、FIPS 承認されていません。FIPS 環境では `sha256` または `sha512` を設定してください。
+- **プレフィックスキャッシュのハッシュ** — `--prefix-caching-hash-algo`（設定項目 `prefix_caching_hash_algo`）に `sha256` または `sha256_cbor` を設定してください。`xxhash` と `xxhash_cbor` は FIPS 承認されていません。
+- **TLS の暗号スイート** — `--ssl-ciphers` を使い、API サーバーの TLS ハンドシェイクを環境のポリシーに合った FIPS 承認済みの暗号スイートに制限してください。
 
-### Automatic fallback for non-security MD5 use
+### セキュリティ目的でない MD5 利用の自動フォールバック { #automatic-fallback-for-non-security-md5-use }
 
-vLLM uses MD5 in a few places to derive non-security cache keys (for example, configuration hashes). These call sites pass `usedforsecurity=False` and additionally fall back to SHA-256 when the underlying OpenSSL provider refuses MD5 outright (see `safe_hash()` in `vllm/utils/hashing.py`). No user action is required; this behavior is documented so that auditors and security reviewers can identify the MD5 references and understand their purpose.
+vLLM は、セキュリティ目的でないキャッシュキーの導出（設定のハッシュなど）に数箇所で MD5 を使って
+います。これらの呼び出しは `usedforsecurity=False` を渡し、さらに基盤の OpenSSL プロバイダが MD5 を
+完全に拒否する場合には SHA-256 にフォールバックします（`vllm/utils/hashing.py` の `safe_hash()` を参照）。
+利用者側の対応は不要ですが、監査担当やセキュリティレビュー担当が MD5 の参照箇所を特定し、その目的を
+理解できるようここに記載しています。
 
-### Dependencies that provide non-FIPS hash implementations
+### FIPS 非承認のハッシュ実装を提供する依存パッケージ { #dependencies-that-provide-non-fips-hash-implementations }
 
-Some dependencies expose hash implementations that are not FIPS-approved. vLLM only invokes them when the corresponding algorithm is selected, but operators with strict cryptographic controls may want to ensure the code paths are not exercised — and, where policy requires, that the packages themselves are absent:
+一部の依存パッケージは FIPS 承認されていないハッシュ実装を提供します。vLLM は該当するアルゴリズムが
+選択されたときにのみそれらを呼び出しますが、厳格な暗号統制を求められる運用者は、そのコードパスが
+実行されないこと、さらにポリシーによってはパッケージ自体が存在しないことを確認したい場合があります。
 
-- `blake3` — currently listed in `requirements/common.txt`, so a standard install pulls it in. It is imported lazily and only used when `VLLM_MM_HASHER_ALGORITHM=blake3` (the default). Setting `VLLM_MM_HASHER_ALGORITHM` to `sha256` or `sha512` is sufficient to keep the non-FIPS code path dormant. If your policy additionally forbids the package being present, uninstall it after `pip install` (`pip uninstall blake3`); vLLM will continue to function as long as `VLLM_MM_HASHER_ALGORITHM` is set to a non-blake3 value.
-- `xxhash` — a true optional dependency (not in `requirements/common.txt`). It is only imported when an `xxhash`-based prefix-cache algorithm is selected. Leave it uninstalled and select a `sha256`-based prefix-cache algorithm.
+- `blake3` — 現在 `requirements/common.txt` に含まれているため、通常のインストールで導入されます。遅延インポートされ、`VLLM_MM_HASHER_ALGORITHM=blake3`（既定）のときにのみ使われます。`VLLM_MM_HASHER_ALGORITHM` を `sha256` か `sha512` にすれば、FIPS 非承認のコードパスは実行されません。ポリシーがパッケージの存在自体を禁じている場合は、`pip install` 後に削除してください（`pip uninstall blake3`）。`VLLM_MM_HASHER_ALGORITHM` が blake3 以外であれば vLLM は問題なく動作します。
+- `xxhash` — 完全に任意の依存パッケージです（`requirements/common.txt` には含まれません）。`xxhash` ベースのプレフィックスキャッシュのアルゴリズムを選択したときにのみインポートされます。インストールせず、`sha256` ベースのアルゴリズムを選択してください。
 
-### Beyond hashing: other FIPS considerations
+### ハッシュ以外の FIPS 上の考慮事項 { #beyond-hashing-other-fips-considerations }
 
-Hashing is the area where vLLM has explicit FIPS-aware code, but a FIPS-compliant deployment depends on several factors that sit outside vLLM itself. Operators should evaluate the following with their platform and security teams:
+vLLM が FIPS を意識したコードを持つのはハッシュの領域ですが、FIPS 準拠のデプロイは vLLM の外側にある
+複数の要素に依存します。運用者はプラットフォームとセキュリティのチームとともに次を評価してください。
 
-- **Host crypto provider.** Python's `hashlib` and `ssl` modules are FIPS-aware only when Python is linked against a FIPS-validated OpenSSL (or equivalent) provider supplied by the host OS. vLLM inherits whatever provider the host configures — it does not bundle one.
-- **API server TLS.** TLS termination for the OpenAI-compatible API server uses the host's OpenSSL via Python's `ssl` module. Restrict the cipher suite with `--ssl-ciphers` to match your environment's FIPS policy, and ensure server certificates are issued with FIPS-approved algorithms and key sizes.
-- **Outbound HTTPS.** Model and asset downloads (for example, via `huggingface_hub`) use the same host TLS stack. The same provider/cipher considerations apply.
-- **Inter-node communication is unencrypted by default.** As described in [Inter-Node Communication](#inter-node-communication), PyTorch Distributed, KV-cache transfer, and data-parallel channels do not encrypt traffic. FIPS environments that require FIPS-approved cryptography for data in transit must provide that protection externally — for example, via an mTLS sidecar or IPsec terminated by a FIPS-validated module — since vLLM's internal channels cannot satisfy the requirement on their own. Network isolation alone is not cryptography and does not meet a "FIPS-approved cryptography for data in transit" requirement, though it remains a useful defense-in-depth measure.
-- **Dependencies that bundle their own OpenSSL.** Some Python wheels statically link OpenSSL builds that fail the kernel FIPS self-test on FIPS-enabled hosts (`FATAL FIPS SELFTEST FAILURE`). `opencv-python-headless` is a known example; other manylinux wheels may behave similarly. Audit your installed wheels for bundled crypto libraries when troubleshooting FIPS startup failures.
-- **Accelerator and ML libraries.** PyTorch, CUDA, cuDNN, NCCL, and similar components have their own crypto and FIPS posture independent of vLLM. NVIDIA publishes FIPS-validated builds for some libraries; vLLM does not pin to those builds, so selecting and validating them is the operator's responsibility.
-- **What is *not* a FIPS concern in vLLM.** Random number generation used for token sampling (Python/NumPy/PyTorch RNGs) is not a cryptographic use and is out of scope for FIPS. Pickled cache artifacts are a separate security concern covered under [Cache Directory Security](#cache-directory-security).
-
-In short: the configuration knobs above let vLLM avoid non-approved algorithms, and the automatic fallbacks let it run without crashing on FIPS-enabled hosts. End-to-end FIPS compliance, however, is a property of the full deployment — host OS, crypto provider, transitive dependencies, and network architecture — not of vLLM alone.
-
-## Reporting Security Vulnerabilities
-
-If you believe you have found a security vulnerability in vLLM, please report it following the project's security policy. For more information on how to report security issues and the project's security policy, please see the [vLLM Security Policy](https://github.com/vllm-project/vllm/blob/main/SECURITY.md).
+- **ホストの暗号プロバイダ。** Python の `hashlib` と `ssl` が FIPS を意識するのは、Python がホスト OS の提供する FIPS 検証済み OpenSSL（または同等品）にリンクされている場合だけです。vLLM はホストが設定したプロバイダをそのまま利用し、自前では同梱しません。
+- **API サーバーの TLS。** OpenAI 互換 API サーバーの TLS 終端は、Python の `ssl` モジュール経由でホストの OpenSSL を使います。環境の FIPS ポリシーに合わせて `--ssl-ciphers` で暗号スイートを制限し、サーバー証明書が FIPS 承認済みのアルゴリズムと鍵長で発行されていることを確認してください。
+- **外向きの HTTPS。** モデルやアセットのダウンロード（`huggingface_hub` 経由など）も同じホストの TLS スタックを使います。プロバイダと暗号スイートに関する考慮は同様です。
+- **ノード間通信は既定で暗号化されません。** [ノード間通信](#inter-node-communication)で述べたとおり、PyTorch Distributed、KV キャッシュ転送、データ並列の通信は暗号化されません。転送中データに FIPS 承認済みの暗号を要求する環境では、mTLS のサイドカーや FIPS 検証済みモジュールで終端する IPsec など、外部で保護を提供する必要があります。vLLM の内部チャネル単体ではこの要件を満たせません。ネットワークの分離は暗号ではないため「転送中データの FIPS 承認済み暗号」という要件は満たしませんが、多層防御としては有用です。
+- **独自の OpenSSL を同梱する依存パッケージ。** 一部の Python wheel は、FIPS が有効なホストでカーネルの FIPS セルフテストに失敗する OpenSSL を静的リンクしています（`FATAL FIPS SELFTEST FAILURE`）。`opencv-python-headless` は既知の例で、他の manylinux wheel も同様の挙動を示すことがあります。FIPS 環境での起動失敗を調査する際は、インストール済み wheel に暗号ライブラリが同梱されていないか確認してください。
+- **アクセラレータと ML ライブラリ。** PyTorch、CUDA、cuDNN、NCCL などのコンポーネントは、vLLM とは独立した暗号と FIPS の状況を持ちます。NVIDIA は一部のライブラリについて FIPS 検証済みビルドを公開していますが、vLLM はそれらに固定していないため、選定と検証は運用者の責任です。
+- **vLLM において FIPS の対象*外*であるもの。** トークンのサンプリングに使う乱数生成（Python / NumPy / PyTorch の RNG）は暗号用途ではないため、FIPS の対象外です。pickle 化されたキャッシュの成果物は別のセキュリティ上の論点であり、[キャッシュディレクトリのセキュリティ](#cache-directory-security)で扱っています。

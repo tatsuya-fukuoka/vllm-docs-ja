@@ -1,64 +1,64 @@
-# Async Reinforcement Learning
+# 非同期強化学習 { #async-reinforcement-learning }
 
-## Overview
+## 概要 { #overview }
 
-In a standard RL training loop, generation and training happen sequentially: the policy generates rollouts, then training runs on those rollouts, and the cycle repeats. During generation the training accelerators sit idle, and vice versa.
+通常の RL の学習ループでは、生成と学習が順番に実行されます。ポリシーがロールアウトを生成し、そのロールアウトで学習を行い、これを繰り返します。生成中は学習用のアクセラレータが遊び、学習中は生成用のアクセラレータが遊びます。
 
-The **one-off pipelining** approach separates the generation and training phases into two parallel coroutines, allowing the model to generate new samples while simultaneously training on previously generated data. This can lead to better GPU utilization and greater training throughput.
+**one-off パイプライン化**の手法では、生成と学習のフェーズを 2 つの並列なコルーチンに分離し、以前に生成したデータで学習しながら同時に新しいサンプルを生成できるようにします。これにより GPU の使用率とスループットが大きく向上します。
 
-However, this overlap introduces a complication: weights must be updated in the inference engine mid-flight, while requests may still be in progress.
+ただし、この重ね合わせには難しさがあります。リクエストの処理中に、推論エンジン側の重みを更新しなければならないためです。
 
-## The Pause and Resume API
+## pause / resume API { #the-pause-and-resume-api }
 
-To safely update weights while the inference engine is running, vLLM provides `pause_generation` and `resume_generation` methods. These let the trainer coordinate a clean window for weight synchronization without losing in-flight work.
+推論エンジンの実行中に安全に重みを更新できるよう、vLLM は `pause_generation` と `resume_generation` のメソッドを提供しています。これらを使うと、実行中のリクエストを失うことなく、重み同期のための安全な時間枠をトレーナー側で確保できます。
 
-### pause_generation
+### pause_generation { #pause_generation }
 
 ```python
 await engine.pause_generation(mode="keep", clear_cache=True)
 ```
 
-The `mode` parameter controls how in-flight requests are handled:
+`mode` パラメータは、実行中のリクエストの扱いを制御します。
 
-| Mode | Behavior |
+| モード | 挙動 |
 | ---- | -------- |
-| `"abort"` | Abort all in-flight requests immediately and return partial results (default) |
-| `"wait"` | Wait for all in-flight requests to finish before pausing |
-| `"keep"` | Freeze requests in the queue; they resume when `resume_generation` is called |
+| `"abort"` | 実行中のリクエストをすべて即座に中断し、部分的な結果を返す（既定） |
+| `"wait"` | 実行中のリクエストがすべて完了するのを待ってから一時停止する |
+| `"keep"` | リクエストをキューに凍結し、`resume_generation` の呼び出し時に再開する |
 
-The `clear_cache` parameter controls whether to clear the KV cache and prefix cache after pausing.
+`clear_cache` パラメータは、一時停止後に KV キャッシュとプレフィックスキャッシュをクリアするかどうかを制御します。
 
-### resume_generation
+### resume_generation { #resume_generation }
 
 ```python
 await engine.resume_generation()
 ```
 
-Resumes the scheduler after a pause. Any requests frozen with `mode="keep"` will continue generating.
+一時停止後にスケジューラを再開します。`mode="keep"` で凍結されたリクエストは生成を続けます。
 
-### HTTP Endpoints
+### HTTP エンドポイント { #http-endpoints }
 
-When using the vLLM HTTP server, the same functionality is available via:
+vLLM の HTTP サーバーを使う場合、同じ機能を次のエンドポイントから利用できます。
 
-- `POST /pause?mode=keep` - Pause generation
-- `POST /resume` - Resume generation
-- `POST /abort_requests` - Abort in-flight requests without pausing the scheduler (send `{}` to abort all, or `{"request_ids": [...]}`)
+- `POST /pause?mode=keep` - 生成を一時停止する
+- `POST /resume` - 生成を再開する
+- `POST /abort_requests` - スケジューラを止めずに実行中のリクエストを中断する（すべて中断するには `{}`、個別には `{"request_ids": [...]}` を送る）
 
-!!! note "Data Parallelism"
-    When using data parallelism with vLLM's **internal load balancer** (i.e. `data_parallel_backend="ray"`), pause and resume are handled automatically across all DP ranks -- a single call is sufficient. When using an **external load balancer** (i.e. multiple independent vLLM instances behind a proxy), you must send pause and resume requests to **every** engine instance individually before and after the weight update.
+!!! note "データ並列の場合"
+    vLLM の**内部ロードバランサー**（`data_parallel_backend="ray"`）を使ってデータ並列を行う場合、pause と resume はすべての DP ランクに対して自動的に処理されるため、1 回の呼び出しで十分です。**外部のロードバランサー**を使う場合は、各ランクに対して個別に呼び出す必要があります。
 
-## Typical Async RL Flow
+## 一般的な非同期 RL の流れ { #typical-async-rl-flow }
 
-A typical async RL loop with weight syncing looks like this:
+重み同期を伴う一般的な非同期 RL のループは次のようになります。
 
-1. Start generating rollouts from the current policy
-2. Once trainer has new weights to update to, pause generation with `mode="keep"`
-3. Sync the updated weights from the trainer to the inference engine (see [Weight Transfer](weight_transfer/README.md))
-4. Resume generation -- in-flight requests continue with the new weights
-5. Repeat
+1. 現在のポリシーでロールアウトの生成を開始する
+2. トレーナー側に新しい重みができたら、`mode="keep"` で生成を一時停止する
+3. 更新後の重みをトレーナーから推論エンジンへ同期する（[重み転送](weight_transfer/README.md)を参照）
+4. 生成を再開する。実行中のリクエストは新しい重みで続行される
+5. これを繰り返す
 
-The key insight is that requests paused with `mode="keep"` will produce tokens from the **old** weights before the pause and tokens from the **new** weights after resume. The `clear_cache` parameter controls whether the KV cache is invalidated during the pause. When `clear_cache=True`, previously cached key-value entries are discarded, so all tokens generated after resume will be computed entirely with the new weights. When `clear_cache=False`, existing KV cache entries are retained, meaning some tokens in context may still reflect the old weights (stale KV cache).
+重要な点は、`mode="keep"` で一時停止したリクエストは、停止前は**古い**重み、再開後は**新しい**重みからトークンを生成するということです。`clear_cache` パラメータは、KV キャッシュをクリアするかどうかを制御します。
 
-## Example
+## 例 { #example }
 
-The [async RLHF example](../../examples/rl/rlhf_async_new_apis.py) demonstrates this pattern with `vllm.AsyncLLMEngine`, NCCL weight transfer, and mid-flight pause/resume with validation.
+[非同期 RLHF の例](../../examples/rl/rlhf_async_new_apis.py)では、`vllm.AsyncLLMEngine`、NCCL による重み転送、実行中の pause / resume と検証を組み合わせたこのパターンを示しています。

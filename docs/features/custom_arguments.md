@@ -1,25 +1,25 @@
-# Custom Arguments
+# カスタム引数 { #custom-arguments }
 
-You can use vLLM *custom arguments* to pass in arguments which are not part of the vLLM `SamplingParams` and REST API specifications. Adding or removing a vLLM custom argument does not require recompiling vLLM, since the custom arguments are passed in as a dictionary.
+vLLM の*カスタム引数*を使うと、vLLM の `SamplingParams` や REST API の仕様に含まれない引数を渡せます。カスタム引数は辞書として渡されるため、追加や削除に vLLM の再コンパイルは不要です。
 
-Custom arguments can be useful if, for example, you want to use a [custom logits processor](./custom_logitsprocs.md) without modifying the vLLM source code.
+たとえば、vLLM のソースコードを変更せずに[独自の logits プロセッサ](./custom_logitsprocs.md)を使いたい場合に便利です。
 
 !!! note
-    Make sure your custom logits processor have implemented `validate_params` for custom arguments. Otherwise, invalid custom arguments can cause unexpected behaviour.
+    独自の logits プロセッサでは、カスタム引数に対する `validate_params` を必ず実装してください。実装しないと、不正なカスタム引数が予期しない動作を引き起こす可能性があります。
 
-## Offline Custom Arguments
+## オフラインでのカスタム引数 { #offline-custom-arguments }
 
-Custom arguments passed to `SamplingParams.extra_args` as a `dict` will be visible to any code which has access to `SamplingParams`:
+`SamplingParams.extra_args` に `dict` として渡したカスタム引数は、`SamplingParams` にアクセスできるあらゆるコードから参照できます。
 
 ``` python
 SamplingParams(extra_args={"your_custom_arg_name": 67})
 ```
 
-This allows arguments which are not already part of `SamplingParams` to be passed into `LLM` as part of a request.
+これにより、`SamplingParams` に含まれていない引数をリクエストの一部として `LLM` に渡せます。
 
-## Online Custom Arguments
+## オンラインでのカスタム引数 { #online-custom-arguments }
 
-The vLLM REST API allows custom arguments to be passed to the vLLM server via `vllm_xargs`. The example below integrates custom arguments into a vLLM REST API request:
+vLLM の REST API では、`vllm_xargs` を通じてカスタム引数を vLLM サーバーに渡せます。次の例は、REST API のリクエストにカスタム引数を組み込んだものです。
 
 ``` bash
 curl http://localhost:8000/v1/completions \
@@ -31,7 +31,7 @@ curl http://localhost:8000/v1/completions \
     }'
 ```
 
-Furthermore, OpenAI SDK users can access `vllm_xargs` via the `extra_body` argument:
+OpenAI の SDK を使う場合は、`extra_body` 引数から `vllm_xargs` を指定できます。
 
 ``` python
 batch = await client.completions.create(
@@ -46,4 +46,4 @@ batch = await client.completions.create(
 ```
 
 !!! note
-    `vllm_xargs` is assigned to `SamplingParams.extra_args` under the hood, so code which uses `SamplingParams.extra_args` is compatible with both offline and online scenarios.
+    `vllm_xargs` は内部的に `SamplingParams.extra_args` に代入されるため、`SamplingParams.extra_args` を使うコードはオフライン・オンラインの両方でそのまま動作します。

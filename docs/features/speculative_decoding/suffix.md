@@ -1,16 +1,16 @@
-# Suffix Decoding
+# Suffix デコーディング { #suffix-decoding }
 
-The following code configures vLLM to use speculative decoding where proposals are generated using Suffix Decoding ([technical report](https://arxiv.org/abs/2411.04975)).
+次のコードは、Suffix デコーディング（[技術レポート](https://arxiv.org/abs/2411.04975)）でドラフトを生成する投機的デコーディングを vLLM で使う設定です。
 
-Like n-gram, Suffix Decoding can generate draft tokens by pattern-matching using the last `n` generated tokens. Unlike n-gram, Suffix Decoding (1) can pattern-match against both the prompt and previous generations, (2) uses frequency counts to propose the most likely continuations, and (3) speculates an adaptive number of tokens for each request at each iteration to get better acceptance rates.
+n-gram と同様に、Suffix デコーディングは直近の `n` 個の生成トークンによるパターンマッチでドラフトトークンを生成できます。n-gram と異なる点は、(1) プロンプトと過去の生成の両方に対してパターンマッチできる、(2) 出現頻度をもとにもっとも可能性の高い続きを提案する、(3) 受理率を高めるため、リクエストごと・反復ごとに投機するトークン数を適応的に変える、という 3 点です。
 
-Suffix Decoding can achieve better performance for tasks with high repetition, such as code-editing, agentic loops (e.g. self-reflection, self-consistency), and RL rollouts.
+Suffix デコーディングは、コード編集、エージェントのループ（自己反省や自己整合性など）、RL のロールアウトなど、繰り返しの多いタスクで高い性能を発揮します。
 
-!!! tip "Install Arctic Inference"
-    Suffix Decoding requires [Arctic Inference](https://github.com/snowflakedb/ArcticInference). You can install it with `pip install arctic-inference`.
+!!! tip "Arctic Inference のインストール"
+    Suffix デコーディングには [Arctic Inference](https://github.com/snowflakedb/ArcticInference) が必要です。`pip install arctic-inference` でインストールできます。
 
-!!! tip "Suffix Decoding Speculative Tokens"
-    Suffix Decoding will speculate a dynamic number of tokens for each request at each decoding step, so the `num_speculative_tokens` configuration specifies the *maximum* number of speculative tokens. It is suggested to use a high number such as `16` or `32` (default).
+!!! tip "Suffix デコーディングの投機トークン数"
+    Suffix デコーディングは、デコードのステップごと・リクエストごとに投機するトークン数を動的に変えるため、`num_speculative_tokens` は投機トークン数の*上限*を指定します。`16` や `32`（既定）のような大きめの値を推奨します。
 
 ```python
 from vllm import LLM, SamplingParams

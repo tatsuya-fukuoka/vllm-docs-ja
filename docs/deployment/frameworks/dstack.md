@@ -1,19 +1,19 @@
-# dstack
+# dstack { #dstack }
 
 <p align="center">
     <img src="https://i.ibb.co/71kx6hW/vllm-dstack.png" alt="vLLM_plus_dstack"/>
 </p>
 
-vLLM can be run on a cloud based GPU machine with [dstack](https://dstack.ai/), an open-source framework for running LLMs on any cloud. This tutorial assumes that you have already configured credentials, gateway, and GPU quotas on your cloud environment.
+vLLM は、任意のクラウドで LLM を動かすためのオープンソースフレームワーク [dstack](https://dstack.ai/) を使って、クラウドの GPU マシン上で実行できます。このチュートリアルでは、クラウド環境の資格情報・ゲートウェイ・GPU クォータをすでに設定済みであることを前提とします。
 
-To install dstack client, run:
+dstack のクライアントをインストールするには次を実行します。
 
 ```bash
 pip install dstack[all]
 dstack server
 ```
 
-Next, to configure your dstack project, run:
+次に、dstack のプロジェクトを設定します。
 
 ```bash
 mkdir -p vllm-dstack
@@ -21,9 +21,9 @@ cd vllm-dstack
 dstack init
 ```
 
-Next, to provision a VM instance with LLM of your choice (`NousResearch/Llama-2-7b-chat-hf` for this example), create the following `serve.dstack.yml` file for the dstack `Service`:
+次に、任意の LLM（この例では `NousResearch/Llama-2-7b-chat-hf`）を載せた VM インスタンスを用意するため、dstack の `Service` 用に次の `serve.dstack.yml` を作成します。
 
-??? code "Config"
+??? code "設定"
 
     ```yaml
     type: service
@@ -43,9 +43,9 @@ Next, to provision a VM instance with LLM of your choice (`NousResearch/Llama-2-
         name: NousResearch/Llama-2-7b-chat-hf
     ```
 
-Then, run the following CLI for provisioning:
+そのうえで、次の CLI を実行してプロビジョニングします。
 
-??? console "Command"
+??? console "コマンド"
 
     ```console
     $ dstack run . -f serve.dstack.yml
@@ -74,7 +74,7 @@ Then, run the following CLI for provisioning:
     Service is published at ...
     ```
 
-After the provisioning, you can interact with the model by using the OpenAI SDK:
+プロビジョニングが終わったら、OpenAI の SDK からモデルとやり取りできます。
 
 ??? code
 
@@ -100,4 +100,4 @@ After the provisioning, you can interact with the model by using the OpenAI SDK:
     ```
 
 !!! note
-    dstack automatically handles authentication on the gateway using dstack's tokens. Meanwhile, if you don't want to configure a gateway, you can provision dstack `Task` instead of `Service`. The `Task` is for development purpose only. If you want to know more about hands-on materials how to serve vLLM using dstack, check out [this repository](https://github.com/dstackai/dstack-examples/tree/main/deployment/vllm)
+    dstack はゲートウェイでの認証を dstack のトークンで自動的に処理します。ゲートウェイを設定したくない場合は、`Service` の代わりに dstack の `Task` をプロビジョニングできます。`Task` は開発用途のみです。dstack で vLLM をサービングする実践的な資料は[このリポジトリ](https://github.com/dstackai/dstack-examples/tree/main/deployment/vllm)（英語）を参照してください。

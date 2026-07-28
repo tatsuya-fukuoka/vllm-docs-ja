@@ -1,5 +1,5 @@
-# Modal
+# Modal { #modal }
 
-vLLM can be run on cloud GPUs with [Modal](https://modal.com), a serverless computing platform designed for fast auto-scaling.
+vLLM は、高速なオートスケーリングのために設計されたサーバーレスコンピューティングのプラットフォーム [Modal](https://modal.com) のクラウド GPU 上で実行できます。
 
-For details on how to deploy vLLM on Modal, see [this tutorial in the Modal documentation](https://modal.com/docs/examples/vllm_inference).
+Modal に vLLM をデプロイする方法は、[Modal のドキュメントにあるチュートリアル](https://modal.com/docs/examples/vllm_inference)（英語）を参照してください。

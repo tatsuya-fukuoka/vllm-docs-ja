@@ -1,16 +1,16 @@
-# Renderer APIs
+# レンダラー API { #renderer-apis }
 
-Our renderer API is designed to disaggregate the render phase(preprocessing) and enable a token-in / token-out API server.
+vLLM のレンダラー API は、レンダリング（前処理）の工程を切り離し、トークン入力・トークン出力の API サーバーを実現するために設計されています。
 
-- GPU-less deployment of frontend: Allow preprocessing (tokenization, MM input processing) and postprocessing (detokenization, tool call parsing, reasoning parsing) to run without GPU.
-- Disaggregated tokenization: Support use cases such as llm-d, Dynamo, and custom frontends that need to leverage vLLM's preprocessing logic without running the full inference engine.
-- Tokens-in / tokens-out engine: Make the engine a pure token-in / token-out service, decoupled from request preprocessing.
+- フロントエンドの GPU レス化: 前処理（トークナイズ、マルチモーダル入力の処理）と後処理（デトークナイズ、ツール呼び出しの解析、reasoning の解析）を GPU なしで実行できます。
+- トークナイズの分離: llm-d、Dynamo、独自フロントエンドなど、推論エンジン全体を動かさずに vLLM の前処理ロジックだけを利用したいユースケースに対応します。
+- トークン入力・トークン出力のエンジン: エンジンをリクエストの前処理から切り離し、純粋なトークン入出力のサービスにします。
 
-## API Reference
+## API リファレンス { #api-reference }
 
 - [Completions Render API](renderer.md) (`/v1/completions/render`)
-    - Render completion requests
+    - completion リクエストをレンダリングします
 - [Chat Completions Render API](renderer.md) (`/v1/chat/completions/render`)
-    - Render chat completions
+    - chat completion をレンダリングします
 
-For the post processing counterpart that turns generated token IDs back into OpenAI compatible responses, see the [Derenderer APIs](derenderer.md).
+生成されたトークン ID を OpenAI 互換のレスポンスに戻す後処理側については、[デレンダラー API](derenderer.md) を参照してください。

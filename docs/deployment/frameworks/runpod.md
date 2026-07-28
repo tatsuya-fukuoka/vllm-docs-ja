@@ -1,15 +1,15 @@
-# RunPod
+# RunPod { #runpod }
 
-vLLM can be deployed on [RunPod](https://www.runpod.io/), a cloud GPU platform that provides on-demand and serverless GPU instances for AI inference workloads.
+vLLM は [RunPod](https://www.runpod.io/) 上にデプロイできます。RunPod は、AI 推論のワークロード向けにオンデマンドおよびサーバーレスの GPU インスタンスを提供するクラウド GPU プラットフォームです。
 
-## Prerequisites
+## 前提条件 { #prerequisites }
 
-- A RunPod account with GPU pod access
-- A GPU pod running a CUDA-compatible template (e.g., `runpod/pytorch`)
+- GPU Pod を利用できる RunPod のアカウント
+- CUDA 対応テンプレート（`runpod/pytorch` など）で動作する GPU Pod
 
-## Starting the Server
+## サーバーの起動 { #starting-the-server }
 
-SSH into your RunPod pod and launch the vLLM OpenAI-compatible server:
+RunPod の Pod に SSH で接続し、vLLM の OpenAI 互換サーバーを起動します。
 
 ```bash
 vllm serve <model-name> \
@@ -19,34 +19,34 @@ vllm serve <model-name> \
 
 !!! note
 
-    Use `--host 0.0.0.0` to bind to all interfaces so the server is reachable from outside the container.
+    コンテナの外からアクセスできるよう、`--host 0.0.0.0` ですべてのインターフェイスにバインドしてください。
 
-## Exposing Port 8000
+## ポート 8000 の公開 { #exposing-port-8000 }
 
-RunPod exposes HTTP services through its proxy. To make port 8000 accessible:
+RunPod はプロキシ経由で HTTP サービスを公開します。ポート 8000 にアクセスできるようにするには次の手順を行います。
 
-1. In the RunPod dashboard, navigate to your pod settings.
-2. Add `8000` to the list of exposed HTTP ports.
-3. After the pod restarts, RunPod provides a public URL in the format:
+1. RunPod のダッシュボードで Pod の設定を開きます。
+2. 公開する HTTP ポートの一覧に `8000` を追加します。
+3. Pod の再起動後、RunPod が次の形式の公開 URL を提供します。
 
     ```text
     https://<pod-id>-8000.proxy.runpod.net
     ```
 
-## Troubleshooting 502 Bad Gateway
+## 502 Bad Gateway のトラブルシューティング { #troubleshooting-502-bad-gateway }
 
-A `502 Bad Gateway` error from the RunPod proxy typically means the server is not yet listening. Common causes:
+RunPod のプロキシが返す `502 Bad Gateway` は、通常サーバーがまだ待ち受けていないことを意味します。よくある原因は次のとおりです。
 
-- **Model still loading** — Large models take time to download and load into GPU memory. Check the pod logs for progress.
-- **Wrong host binding** — Ensure you passed `--host 0.0.0.0`. Binding to `127.0.0.1` (the default) makes the server unreachable from the proxy.
-- **Port mismatch** — Verify the `--port` value matches the port exposed in the RunPod dashboard.
-- **Out of GPU memory** — The model may be too large for the allocated GPU. Check logs for CUDA OOM errors and consider using a larger instance or adding `--tensor-parallel-size` for multi-GPU pods.
+- **モデルの読み込み中** — 大きなモデルはダウンロードと GPU メモリへの読み込みに時間がかかります。Pod のログで進捗を確認してください。
+- **バインド先のホストが誤っている** — `--host 0.0.0.0` を指定したか確認してください。既定の `127.0.0.1` にバインドすると、プロキシからサーバーに到達できません。
+- **ポートの不一致** — `--port` の値が RunPod のダッシュボードで公開したポートと一致しているか確認してください。
+- **GPU メモリ不足** — 割り当てた GPU に対してモデルが大きすぎる可能性があります。ログに CUDA の OOM エラーがないか確認し、より大きなインスタンスを使うか、複数 GPU の Pod では `--tensor-parallel-size` の追加を検討してください。
 
-## Verifying the Deployment
+## デプロイの確認 { #verifying-the-deployment }
 
-Once the server is running, test it with a curl request:
+サーバーが起動したら、curl でリクエストを送って確認します。
 
-!!! console "Command"
+!!! console "コマンド"
 
     ```bash
     curl https://<pod-id>-8000.proxy.runpod.net/v1/chat/completions \
@@ -60,7 +60,7 @@ Once the server is running, test it with a curl request:
         }'
     ```
 
-!!! console "Response"
+!!! console "レスポンス"
 
     ```json
     {
@@ -79,7 +79,7 @@ Once the server is running, test it with a curl request:
     }
     ```
 
-You can also check the server health endpoint:
+サーバーのヘルスチェックのエンドポイントも確認できます。
 
 ```bash
 curl https://<pod-id>-8000.proxy.runpod.net/health

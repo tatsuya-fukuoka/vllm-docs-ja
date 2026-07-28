@@ -1,5 +1,5 @@
-# KAITO
+# KAITO { #kaito }
 
-[KAITO](https://kaito-project.github.io/kaito/docs/) is a Kubernetes operator that supports deploying and serving LLMs with vLLM. It offers managing large models via container images with built-in OpenAI-compatible inference, auto-provisioning GPU nodes and curated model presets.
+[KAITO](https://kaito-project.github.io/kaito/docs/) は、vLLM による LLM のデプロイとサービングに対応した Kubernetes オペレーターです。OpenAI 互換の推論を組み込んだコンテナイメージによる大規模モデルの管理、GPU ノードの自動プロビジョニング、厳選されたモデルのプリセットを提供します。
 
-Please refer to [quick start](https://kaito-project.github.io/kaito/docs/quick-start) for more details.
+詳細は[クイックスタート](https://kaito-project.github.io/kaito/docs/quick-start)（英語）を参照してください。
