@@ -1,25 +1,25 @@
-# Helm
+# Helm { #helm }
 
-A Helm chart to deploy vLLM for Kubernetes
+Kubernetes に vLLM をデプロイするための Helm チャートです。
 
-Helm is a package manager for Kubernetes. It helps automate the deployment of vLLM applications on Kubernetes. With Helm, you can deploy the same framework architecture with different configurations to multiple namespaces by overriding variable values.
+Helm は Kubernetes のパッケージマネージャーで、Kubernetes 上への vLLM アプリケーションのデプロイを自動化できます。変数の値を上書きすることで、同じ構成を異なる設定で複数の名前空間にデプロイできます。
 
-This guide will walk you through the process of deploying vLLM with Helm, including the necessary prerequisites, steps for Helm installation and documentation on architecture and values file.
+このガイドでは、前提条件、Helm でのインストール手順、アーキテクチャと values ファイルの説明を含め、Helm を使った vLLM のデプロイ手順を説明します。
 
-## Prerequisites
+## 前提条件 { #prerequisites }
 
-Before you begin, ensure that you have the following:
+始める前に、次が用意されていることを確認してください。
 
-- A running Kubernetes cluster
-- NVIDIA Kubernetes Device Plugin (`k8s-device-plugin`): This can be found at [https://github.com/NVIDIA/k8s-device-plugin](https://github.com/NVIDIA/k8s-device-plugin)
-- Available GPU resources in your cluster
-- (Optional) An S3 bucket or other storage with the model weights, if using automatic model download
+- 稼働中の Kubernetes クラスタ
+- NVIDIA Kubernetes Device Plugin (`k8s-device-plugin`): [https://github.com/NVIDIA/k8s-device-plugin](https://github.com/NVIDIA/k8s-device-plugin) から入手できます
+- クラスタ内で利用可能な GPU リソース
+- （任意）モデルの自動ダウンロードを使う場合は、モデルの重みを置いた S3 バケットなどのストレージ
 
-## Installing the chart
+## チャートのインストール { #installing-the-chart }
 
-This guide uses the Helm chart at [examples/deployment/chart-helm](../../../examples/deployment/chart-helm).
+このガイドでは [examples/deployment/chart-helm](../../../examples/deployment/chart-helm) の Helm チャートを使います。
 
-To install the chart with the release name `test-vllm`:
+リリース名 `test-vllm` でチャートをインストールするには次のようにします。
 
 ```bash
 helm upgrade --install --create-namespace \
@@ -31,26 +31,26 @@ helm upgrade --install --create-namespace \
   --set secrets.s3accesskey=$SECRET_KEY
 ```
 
-## Uninstalling the chart
+## チャートのアンインストール { #uninstalling-the-chart }
 
-To uninstall the `test-vllm` deployment:
+`test-vllm` のデプロイをアンインストールするには次のようにします。
 
 ```bash
 helm uninstall test-vllm --namespace=ns-vllm
 ```
 
-The command removes all the Kubernetes components associated with the
-chart **including persistent volumes** and deletes the release.
+このコマンドは、チャートに関連するすべての Kubernetes コンポーネント（**永続ボリュームを含む**）を削除し、
+リリースを削除します。
 
-## Architecture
+## アーキテクチャ { #architecture }
 
 ![helm deployment architecture](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/deployment/architecture_helm_deployment.png)
 
-## Values
+## 設定値 { #values }
 
-The following table describes configurable parameters of the chart in `values.yaml`:
+次の表は、`values.yaml` で設定できるチャートのパラメータです。
 
-| Key | Type | Default | Description |
+| キー | 型 | 既定値 | 説明 |
 | --- | ---- | ------- | ----------- |
 | autoscaling | object | {"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80} | Autoscaling configuration |
 | autoscaling.enabled | bool | false | Enable autoscaling |

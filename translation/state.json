@@ -358,13 +358,17 @@
       "upstream_sha": "3cb6a2237f4e6bf5"
     },
     "deployment/frameworks/helm.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d196610c1daf6f64",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "d196610c1daf6f64"
     },
     "deployment/frameworks/hf_inference_endpoints.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d4250da49a6afc74",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "d4250da49a6afc74"
     },
     "deployment/frameworks/litellm.md": {
@@ -382,8 +386,10 @@
       "upstream_sha": "a4374ba6d17ae3d5"
     },
     "deployment/frameworks/lws.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "729c94be648e8d39",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "729c94be648e8d39"
     },
     "deployment/frameworks/modal.md": {
@@ -415,8 +421,10 @@
       "upstream_sha": "0e7f50ebbc5dcc5b"
     },
     "deployment/frameworks/skypilot.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "5f397f88eb09e5cf",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "5f397f88eb09e5cf"
     },
     "deployment/frameworks/streamlit.md": {
@@ -462,8 +470,10 @@
       "upstream_sha": "1463b8d943c31b3b"
     },
     "deployment/integrations/kthena.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1a3b3e65c3a481f7",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "1a3b3e65c3a481f7"
     },
     "deployment/integrations/kubeai.md": {
@@ -502,8 +512,10 @@
       "upstream_sha": "7fd1dabaef71f75d"
     },
     "deployment/integrations/production-stack.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "e7cb18308f860db8",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "e7cb18308f860db8"
     },
     "deployment/k8s.md": {
