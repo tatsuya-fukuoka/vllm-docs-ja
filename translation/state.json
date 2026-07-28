@@ -13,8 +13,10 @@
       "upstream_sha": "87681113461ee554"
     },
     "benchmarking/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "ed089f4555bbb97f",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "ed089f4555bbb97f"
     },
     "benchmarking/cli.md": {
@@ -233,8 +235,10 @@
       "upstream_sha": "9d5902603fa78088"
     },
     "contributing/dockerfile/dockerfile.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "736222b63a7ecb34",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "736222b63a7ecb34"
     },
     "contributing/editing-agent-instructions.md": {
@@ -248,8 +252,10 @@
       "upstream_sha": "5b373fd64f025ab4"
     },
     "contributing/model/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "8c5645c1355e6f3d",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "8c5645c1355e6f3d"
     },
     "contributing/model/basic.md": {
@@ -263,8 +269,10 @@
       "upstream_sha": "b6b54873fc73278b"
     },
     "contributing/model/registration.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "8f44d34b939009d3",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "8f44d34b939009d3"
     },
     "contributing/model/tests.md": {
@@ -1076,13 +1084,17 @@
       "upstream_sha": "304b81305ba6e324"
     },
     "models/extensions/fastsafetensor.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "08c9412ad070064b",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "08c9412ad070064b"
     },
     "models/extensions/instanttensor.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "fcff94d6512d632e",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "fcff94d6512d632e"
     },
     "models/extensions/runai_model_streamer.md": {

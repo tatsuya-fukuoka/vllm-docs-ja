@@ -1,6 +1,6 @@
-Loading model weights with fastsafetensors
+fastsafetensors によるモデル重みの読み込み
 ===================================================================
 
-Using fastsafetensors library enables loading model weights to GPU memory by leveraging GPU direct storage. See [their GitHub repository](https://github.com/foundation-model-stack/fastsafetensors) for more details.
+fastsafetensors ライブラリを使うと、GPU Direct Storage を活用してモデルの重みを GPU メモリへ直接読み込めます。詳細は[こちらの GitHub リポジトリ](https://github.com/foundation-model-stack/fastsafetensors)（英語）を参照してください。
 
-To enable this feature, use the `--load-format fastsafetensors` command-line argument
+この機能を有効にするには、コマンドライン引数 `--load-format fastsafetensors` を指定します。

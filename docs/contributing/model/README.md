@@ -1,23 +1,23 @@
-# Summary
+# 概要 { #summary }
 
 !!! important
-    Many decoder language models can now be automatically loaded using the [Transformers modeling backend](../../models/supported_models.md#transformers) without having to implement them in vLLM. See if `vllm serve <model>` works first!
+    多くのデコーダー型の言語モデルは、vLLM に実装しなくても [Transformers モデリングバックエンド](../../models/supported_models.md#transformers)で自動的に読み込めるようになりました。まずは `vllm serve <model>` が動くか試してみてください。
 
-vLLM models are specialized [PyTorch](https://pytorch.org/) models that take advantage of various [features](../../features/README.md#compatibility-matrix) to optimize their performance.
+vLLM のモデルは、性能を最適化するためのさまざまな[機能](../../features/README.md#compatibility-matrix)を活用する、特殊化された [PyTorch](https://pytorch.org/) のモデルです。
 
-The complexity of integrating a model into vLLM depends heavily on the model's architecture.
-The process is considerably straightforward if the model shares a similar architecture with an existing model in vLLM.
-However, this can be more complex for models that include new operators (e.g., a new attention mechanism).
+モデルを vLLM に統合する難しさは、そのモデルのアーキテクチャに大きく依存します。
+vLLM の既存モデルと似たアーキテクチャであれば、作業はかなり簡単です。
+一方、新しい演算子（新しい Attention の機構など）を含むモデルでは複雑になります。
 
-Read through these pages for a step-by-step guide:
+手順ごとのガイドは次のページを参照してください。
 
-- [Basic Model](basic.md)
-- [Registering a Model](registration.md)
-- [Unit Testing](tests.md)
-- [Multi-Modal Support](multimodal.md)
-- [Speech-to-Text Support](transcription.md)
+- [基本的なモデル](basic.md)
+- [モデルの登録](registration.md)
+- [ユニットテスト](tests.md)
+- [マルチモーダル対応](multimodal.md)
+- [音声認識対応](transcription.md)
 
 !!! tip
-    If you are encountering issues while integrating your model into vLLM, feel free to open a [GitHub issue](https://github.com/vllm-project/vllm/issues)
-    or ask on our [developer slack](https://slack.vllm.ai).
-    We will be happy to help you out!
+    モデルの統合で問題が起きた場合は、遠慮なく [GitHub の Issue](https://github.com/vllm-project/vllm/issues) を作成するか、
+    [開発者向け Slack](https://slack.vllm.ai) で質問してください。
+    喜んでお手伝いします。

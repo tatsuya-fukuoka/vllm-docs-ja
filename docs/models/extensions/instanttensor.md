@@ -1,31 +1,31 @@
-# Loading Model Weights with InstantTensor
+# InstantTensor によるモデル重みの読み込み { #loading-model-weights-with-instanttensor }
 
-InstantTensor accelerates loading Safetensors weights on CUDA devices through distributed loading, pipelined prefetching, and direct I/O. InstantTensor also supports GDS (GPUDirect Storage) when available.
-For more details, see the [InstantTensor GitHub repository](https://github.com/scitix/InstantTensor).
+InstantTensor は、分散読み込み・パイプライン化されたプリフェッチ・ダイレクト I/O によって、CUDA デバイス上での Safetensors 形式の重みの読み込みを高速化します。利用可能な環境では GDS（GPUDirect Storage）にも対応します。
+詳細は [InstantTensor の GitHub リポジトリ](https://github.com/scitix/InstantTensor)（英語）を参照してください。
 
-## Installation
+## インストール { #installation }
 
 ```bash
 pip install instanttensor
 ```
 
-## Use InstantTensor in vLLM
+## vLLM で InstantTensor を使う { #use-instanttensor-in-vllm }
 
-Add `--load-format instanttensor` as a command-line argument.
+コマンドライン引数に `--load-format instanttensor` を追加します。
 
-For example:
+例:
 
 ```bash
 vllm serve Qwen/Qwen2.5-0.5B --load-format instanttensor
 ```
 
-## Benchmarks
+## ベンチマーク { #benchmarks }
 
-| Model | GPU | Backend | Load Time (s) | Throughput (GB/s) | Speedup |
+| モデル | GPU | バックエンド | 読み込み時間 (秒) | スループット (GB/s) | 高速化率 |
 | --- | ---: | --- | ---: | ---: | --- |
 | Qwen3-30B-A3B | 1*H200 | Safetensors | 57.4 | 1.1 | 1x |
 | Qwen3-30B-A3B | 1*H200 | InstantTensor | 1.77 | 35 | <span style="color: green">**32.4x**</span> |
 | DeepSeek-R1 | 8*H200 | Safetensors | 160 | 4.3 | 1x |
 | DeepSeek-R1 | 8*H200 | InstantTensor | 15.3 | 45 | <span style="color: green">**10.5x**</span> |
 
-For the full benchmark results, see <https://github.com/scitix/InstantTensor/blob/main/docs/benchmark.md>.
+完全なベンチマーク結果は <https://github.com/scitix/InstantTensor/blob/main/docs/benchmark.md>（英語）を参照してください。

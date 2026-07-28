@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **122 ページ**を翻訳済みです（54.0%）。
+全 226 ページ中 **128 ページ**を翻訳済みです（56.6%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -12,25 +12,26 @@
 | セクション | 翻訳済み | 要更新 | 未翻訳 | 合計 |
 | --- | ---: | ---: | ---: | ---: |
 | トップページ | 1 | 0 | 0 | 1 |
-| ベンチマーク | 0 | 0 | 4 | 4 |
+| ベンチマーク | 1 | 0 | 3 | 4 |
 | CLI リファレンス | 15 | 0 | 0 | 15 |
 | コミュニティ | 3 | 0 | 0 | 3 |
 | 設定 | 7 | 0 | 0 | 7 |
-| 開発者ガイド | 0 | 0 | 16 | 16 |
+| 開発者ガイド | 3 | 0 | 13 | 16 |
 | デプロイ | 35 | 0 | 0 | 35 |
 | 設計ドキュメント | 0 | 0 | 29 | 29 |
 | 機能 | 23 | 0 | 29 | 52 |
 | はじめに | 5 | 0 | 8 | 13 |
 | ガバナンス | 1 | 0 | 2 | 3 |
-| モデル | 1 | 0 | 15 | 16 |
+| モデル | 3 | 0 | 13 | 16 |
 | 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **122** | **0** | **104** | **226** |
+| **合計** | **128** | **0** | **98** | **226** |
 
 ## 翻訳済みのページ
 
 - `README.md`
+- `benchmarking/README.md`
 - `cli/README.md`
 - `cli/bench/latency.md`
 - `cli/bench/mm_processor.md`
@@ -56,6 +57,9 @@
 - `configuration/model_resolution.md`
 - `configuration/optimization.md`
 - `configuration/serve_args.md`
+- `contributing/dockerfile/dockerfile.md`
+- `contributing/model/README.md`
+- `contributing/model/registration.md`
 - `deployment/docker.md`
 - `deployment/frameworks/anyscale.md`
 - `deployment/frameworks/anything-llm.md`
@@ -120,6 +124,8 @@
 - `getting_started/installation/python_env_setup.inc.md`
 - `getting_started/quickstart.md`
 - `governance/collaboration.md`
+- `models/extensions/fastsafetensor.md`
+- `models/extensions/instanttensor.md`
 - `models/generative_models.md`
 - `serving/context_parallel_deployment.md`
 - `serving/data_parallel_deployment.md`
