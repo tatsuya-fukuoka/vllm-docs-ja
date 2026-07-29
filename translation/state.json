@@ -676,8 +676,10 @@
       "upstream_sha": "5021358e3e200fd8"
     },
     "design/metrics.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "38aea80bdc173518",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "38aea80bdc173518"
     },
     "design/mm_processing.md": {

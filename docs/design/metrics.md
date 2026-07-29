@@ -1,73 +1,72 @@
-# Metrics
+# メトリクス { #metrics }
 
-vLLM exposes a rich set of metrics to support observability and capacity planning for the V1 engine.
+vLLM は、V1 エンジンの可観測性とキャパシティプランニングを支えるため、豊富なメトリクスを公開しています。
 
-## Objectives
+## 目的 { #objectives }
 
-- Provide comprehensive coverage of engine and request level metrics to aid production monitoring.
-- Prioritize Prometheus integrations, as this is what we expect to be used in production environments.
-- Offer logging support (i.e. printing metrics to the info log) for ad-hoc testing, debugging, development, and exploratory use cases.
+- 本番環境の監視に役立つよう、エンジンレベルとリクエストレベルのメトリクスを網羅的に提供すること。
+- 本番環境で使われると想定されるため、Prometheus との統合を優先すること。
+- 場当たり的なテスト、デバッグ、開発、試行的な用途のために、ログ出力（メトリクスを info ログへ出力する）もサポートすること。
 
-## Background
+## 背景 { #background }
 
-Metrics in vLLM can be categorized as follows:
+vLLM のメトリクスは次のように分類できます。
 
-1. Server-level metrics: Global metrics that track the state and performance of the LLM engine. These are typically exposed as Gauges or Counters in Prometheus.
-2. Request-level metrics: Metrics that track the characteristics (e.g. size and timing) of individual requests. These are typically exposed as Histograms in Prometheus and are often the SLOs that an SRE monitoring vLLM will be tracking.
+1. サーバーレベルのメトリクス: LLM エンジンの状態と性能を追跡するグローバルなメトリクスです。通常、Prometheus では Gauge または Counter として公開されます。
+2. リクエストレベルのメトリクス: 個々のリクエストの特性（サイズやタイミングなど）を追跡するメトリクスです。通常、Prometheus では Histogram として公開され、vLLM を監視する SRE が追跡する SLO になることが多いものです。
 
-The mental model is that server-level metrics help explain the values of request-level metrics.
+サーバーレベルのメトリクスがリクエストレベルのメトリクスの値を説明する、というのが基本的な考え方です。
 
-### Metrics Overview
+### メトリクスの概要 { #metrics-overview }
 
-### v1 Metrics
+### v1 のメトリクス { #v1-metrics }
 
-In v1, an extensive set of metrics are exposed via a Prometheus-compatible `/metrics` endpoint using the `vllm:` prefix, for example:
+v1 では、`vllm:` プレフィックスを用いた Prometheus 互換の `/metrics` エンドポイント経由で、幅広いメトリクスが公開されます。例:
 
-- `vllm:num_requests_running` (Gauge) - Number of requests currently running.
-- `vllm:kv_cache_usage_perc` (Gauge) - Fraction of used KV cache blocks (0–1).
-- `vllm:prefix_cache_queries` (Counter) - Number of prefix cache queries.
-- `vllm:prefix_cache_hits` (Counter) - Number of prefix cache hits.
-- `vllm:prompt_tokens_total` (Counter) - Total number of prompt tokens processed.
-- `vllm:generation_tokens_total` (Counter) - Total number of generated tokens.
-- `vllm:request_success_total` (Counter) - Number of finished requests (by finish reason).
-- `vllm:request_prompt_tokens` (Histogram) - Histogram of input prompt token counts.
-- `vllm:request_generation_tokens` (Histogram) - Histogram of generation token counts.
-- `vllm:time_to_first_token_seconds` (Histogram) - Time to first token (TTFT).
-- `vllm:inter_token_latency_seconds` (Histogram) - Inter-token latency.
-- `vllm:e2e_request_latency_seconds` (Histogram) - End-to-end request latency.
-- `vllm:request_prefill_time_seconds` (Histogram) - Request prefill time.
-- `vllm:request_decode_time_seconds` (Histogram) - Request decode time.
+- `vllm:num_requests_running`（Gauge）- 現在実行中のリクエスト数。
+- `vllm:kv_cache_usage_perc`（Gauge）- 使用中の KV キャッシュブロックの割合（0〜1）。
+- `vllm:prefix_cache_queries`（Counter）- プレフィックスキャッシュへの問い合わせ回数。
+- `vllm:prefix_cache_hits`（Counter）- プレフィックスキャッシュのヒット数。
+- `vllm:prompt_tokens_total`（Counter）- 処理したプロンプトトークンの総数。
+- `vllm:generation_tokens_total`（Counter）- 生成したトークンの総数。
+- `vllm:request_success_total`（Counter）- 完了したリクエスト数（完了理由別）。
+- `vllm:request_prompt_tokens`（Histogram）- 入力プロンプトのトークン数のヒストグラム。
+- `vllm:request_generation_tokens`（Histogram）- 生成トークン数のヒストグラム。
+- `vllm:time_to_first_token_seconds`（Histogram）- 最初のトークンまでの時間（TTFT）。
+- `vllm:inter_token_latency_seconds`（Histogram）- トークン間レイテンシ。
+- `vllm:e2e_request_latency_seconds`（Histogram）- エンドツーエンドのリクエストレイテンシ。
+- `vllm:request_prefill_time_seconds`（Histogram）- リクエストのプレフィル時間。
+- `vllm:request_decode_time_seconds`（Histogram）- リクエストのデコード時間。
 
-These are documented under [Inferencing and Serving -> Production Metrics](../usage/metrics.md).
+これらは [推論とサービング -> 本番向けメトリクス](../usage/metrics.md)に記載されています。
 
-### Grafana Dashboard
+### Grafana ダッシュボード { #grafana-dashboard }
 
-vLLM also provides [a reference example](https://docs.vllm.ai/en/v0.26.0/examples/observability/prometheus_grafana/) for how to collect and store these metrics using Prometheus and visualize them using a Grafana dashboard.
+vLLM は、これらのメトリクスを Prometheus で収集・保存し、Grafana ダッシュボードで可視化する方法の[リファレンス例](https://docs.vllm.ai/en/v0.26.0/examples/observability/prometheus_grafana/)も提供しています。
 
-The subset of metrics exposed in the Grafana dashboard gives us an indication of which metrics are especially important:
+Grafana ダッシュボードで公開されているメトリクスの一部を見ると、とくに重要なメトリクスが分かります。
 
-- `vllm:e2e_request_latency_seconds_bucket` - End to end request latency measured in seconds.
-- `vllm:prompt_tokens` - Prompt tokens.
-- `vllm:generation_tokens` - Generation tokens.
-- `vllm:inter_token_latency_seconds` - Inter-token latency (Time Per Output Token, TPOT) in seconds.
-- `vllm:time_to_first_token_seconds` - Time to First Token (TTFT) latency in seconds.
-- `vllm:num_requests_running` (also, `_swapped` and `_waiting`) - Number of requests in the RUNNING, WAITING, and SWAPPED states.
-- `vllm:kv_cache_usage_perc` - Percentage of used cache blocks by vLLM.
-- `vllm:request_prompt_tokens` - Request prompt length.
-- `vllm:request_generation_tokens` - Request generation length.
-- `vllm:request_success` - Number of finished requests by their finish reason: either an EOS token was generated or the max sequence length was reached.
-- `vllm:request_queue_time_seconds` - Queue time.
-- `vllm:request_prefill_time_seconds` - Requests prefill time.
-- `vllm:request_decode_time_seconds` - Requests decode time.
-- `vllm:request_max_num_generation_tokens` - Max generation tokens in a sequence group.
+- `vllm:e2e_request_latency_seconds_bucket` - 秒単位のエンドツーエンドのリクエストレイテンシ。
+- `vllm:prompt_tokens` - プロンプトトークン。
+- `vllm:generation_tokens` - 生成トークン。
+- `vllm:inter_token_latency_seconds` - 秒単位のトークン間レイテンシ（出力トークンあたりの時間、TPOT）。
+- `vllm:time_to_first_token_seconds` - 秒単位の最初のトークンまでのレイテンシ（TTFT）。
+- `vllm:num_requests_running`（`_swapped` と `_waiting` も）- RUNNING、WAITING、SWAPPED の各状態にあるリクエスト数。
+- `vllm:kv_cache_usage_perc` - vLLM が使用中のキャッシュブロックの割合。
+- `vllm:request_prompt_tokens` - リクエストのプロンプト長。
+- `vllm:request_generation_tokens` - リクエストの生成長。
+- `vllm:request_success` - 完了理由（EOS トークンの生成、または最大シーケンス長への到達）別の完了リクエスト数。
+- `vllm:request_queue_time_seconds` - キュー滞在時間。
+- `vllm:request_prefill_time_seconds` - リクエストのプレフィル時間。
+- `vllm:request_decode_time_seconds` - リクエストのデコード時間。
 
-See [the PR which added this Dashboard](https://github.com/vllm-project/vllm/pull/2316) for interesting and useful background on the choices made here.
+ここでの選択の背景については、[このダッシュボードを追加した PR](https://github.com/vllm-project/vllm/pull/2316) が興味深く参考になります。
 
-### Prometheus Client Library
+### Prometheus クライアントライブラリ { #prometheus-client-library }
 
-Prometheus support was initially added [using the aioprometheus library](https://github.com/vllm-project/vllm/pull/1890), but a switch was made quickly to [prometheus_client](https://github.com/vllm-project/vllm/pull/2730). The rationale is discussed in both linked PRs.
+Prometheus のサポートは当初 [aioprometheus ライブラリを使って](https://github.com/vllm-project/vllm/pull/1890)追加されましたが、ほどなく [prometheus_client](https://github.com/vllm-project/vllm/pull/2730) へ切り替えられました。その理由は、いずれのリンク先の PR でも議論されています。
 
-During those migrations we briefly lost a `MetricsMiddleware` to track HTTP metrics, but this was reinstated [using prometheus_fastapi_instrumentator](https://github.com/vllm-project/vllm/pull/15657):
+これらの移行の途中で HTTP メトリクスを追跡する `MetricsMiddleware` が一時的に失われましたが、[prometheus_fastapi_instrumentator を使って](https://github.com/vllm-project/vllm/pull/15657)復活しました。
 
 ```bash
 $ curl http://0.0.0.0:8000/metrics 2>/dev/null  | grep -P '^http_(?!.*(_bucket|_created|_sum)).*'
@@ -78,15 +77,15 @@ http_request_duration_highr_seconds_count 201.0
 http_request_duration_seconds_count{handler="/v1/completions",method="POST"} 201.0
 ```
 
-### Multi-process Mode
+### マルチプロセスモード { #multi-process-mode }
 
-Historically, metrics were collected in the engine core process and multiprocess mode was used to make them available in the API server process. See <https://github.com/vllm-project/vllm/pull/7279>.
+歴史的には、メトリクスはエンジンコアのプロセスで収集され、API サーバーのプロセスでそれを利用可能にするためにマルチプロセスモードが使われていました。<https://github.com/vllm-project/vllm/pull/7279> を参照してください。
 
-More recently, metrics are collected in the API server process and multiprocess mode is only used when `--api-server-count > 1`. See <https://github.com/vllm-project/vllm/pull/17546> and details on [API server scale-out](../serving/data_parallel_deployment.md#internal-load-balancing).
+より最近では、メトリクスは API サーバーのプロセスで収集され、マルチプロセスモードが使われるのは `--api-server-count > 1` の場合のみです。<https://github.com/vllm-project/vllm/pull/17546> と [API サーバーのスケールアウト](../serving/data_parallel_deployment.md#internal-load-balancing)の詳細を参照してください。
 
-### Built in Python/Process Metrics
+### 組み込みの Python / プロセスのメトリクス { #built-in-pythonprocess-metrics }
 
-The following metrics are supported by default by `prometheus_client`, but they are not exposed when multiprocess mode is used:
+次のメトリクスは `prometheus_client` が既定でサポートしていますが、マルチプロセスモードでは公開されません。
 
 - `python_gc_objects_collected_total`
 - `python_gc_objects_uncollectable_total`
@@ -99,15 +98,15 @@ The following metrics are supported by default by `prometheus_client`, but they 
 - `process_open_fds`
 - `process_max_fds`
 
-Therefore, these metrics are unavailable when `--api-server-count > 1`. It's questionable how relevant these are since they do not aggregate these stats for all processes that make up a vLLM instance.
+したがって、`--api-server-count > 1` の場合これらのメトリクスは利用できません。vLLM インスタンスを構成するすべてのプロセスにわたって統計を集約するわけではないため、これらがどれほど有用かは疑問の余地があります。
 
-## Metrics Design
+## メトリクスの設計 { #metrics-design }
 
-The ["Even Better Observability"](https://github.com/vllm-project/vllm/issues/3616) feature where was where much of the metrics design was planned. For example, see where [a detailed roadmap was laid out](https://github.com/vllm-project/vllm/issues/3616#issuecomment-2030858781).
+メトリクス設計の多くは [「Even Better Observability」](https://github.com/vllm-project/vllm/issues/3616)の機能として計画されました。たとえば、[詳細なロードマップが示された箇所](https://github.com/vllm-project/vllm/issues/3616#issuecomment-2030858781)を参照してください。
 
-### Legacy PRs
+### 過去の PR { #legacy-prs }
 
-To help understand the background to the metrics design, here are some of the relevant PRs which added the original, now legacy, metrics:
+メトリクス設計の背景を理解する助けとして、当初の（現在はレガシーとなった）メトリクスを追加した主な PR を挙げます。
 
 - <https://github.com/vllm-project/vllm/pull/1890>
 - <https://github.com/vllm-project/vllm/pull/2316>
@@ -115,9 +114,9 @@ To help understand the background to the metrics design, here are some of the re
 - <https://github.com/vllm-project/vllm/pull/4464>
 - <https://github.com/vllm-project/vllm/pull/7279>
 
-### Metrics Implementation PRs
+### メトリクス実装の PR { #metrics-implementation-prs }
 
-For background, here are the relevant PRs relating to the metrics implementation <https://github.com/vllm-project/vllm/issues/10582>:
+背景として、メトリクスの実装（<https://github.com/vllm-project/vllm/issues/10582>）に関連する PR を挙げます。
 
 - <https://github.com/vllm-project/vllm/pull/11962>
 - <https://github.com/vllm-project/vllm/pull/11973>
@@ -131,192 +130,119 @@ For background, here are the relevant PRs relating to the metrics implementation
 - <https://github.com/vllm-project/vllm/pull/12592>
 - <https://github.com/vllm-project/vllm/pull/12644>
 
-### Metrics Collection
+### メトリクスの収集 { #metrics-collection }
 
-In v1, we wish to move computation and overhead out of the engine core
-process to minimize the time between each forward pass.
+v1 では、forward pass 同士の間隔を最小化するため、計算とオーバーヘッドをエンジンコアのプロセスの外へ移したいと考えています。
 
-The overall idea of V1 EngineCore design is:
+V1 の EngineCore 設計の全体的な考え方は次のとおりです。
 
-- EngineCore is the inner loop. Performance is most critical here
-- AsyncLLM is the outer loop. This is overlapped with GPU execution
-  (ideally), so this is where any "overheads" should be if
-  possible. So AsyncLLM.output_handler_loop is the ideal place for the
-  metrics bookkeeping if possible.
+- EngineCore は内側のループです。ここでは性能が最も重要です。
+- AsyncLLM は外側のループです。これは（理想的には）GPU の実行とオーバーラップするため、可能な限り「オーバーヘッド」はここに置くべきです。したがって、可能であれば AsyncLLM.output_handler_loop がメトリクス管理の理想的な場所です。
 
-We will achieve this by collecting metrics in the frontend API server,
-and base these metrics on information we can glean from the
-`EngineCoreOutputs` returned by the engine core process to the
-frontend.
+これを実現するため、メトリクスはフロントエンドの API サーバーで収集し、エンジンコアのプロセスがフロントエンドへ返す `EngineCoreOutputs` から得られる情報にもとづくものにします。
 
-### Interval Calculations
+### 時間間隔の計算 { #interval-calculations }
 
-Many of our metrics are the time interval between various events in
-the processing of a request. It is best practice to use timestamps
-based on "monotonic time" (`time.monotonic()`) rather than "wall-clock
-time" (`time.time()`) to calculate intervals as the former is
-unaffected by system clock changes (e.g. from NTP).
+vLLM のメトリクスの多くは、リクエスト処理における各種イベント間の時間間隔です。間隔の計算には、「壁時計時刻」（`time.time()`）ではなく「単調時刻」（`time.monotonic()`）にもとづくタイムスタンプを使うのが定石です。前者は（NTP などによる）システムクロックの変更の影響を受けないためです。
 
-It's also important to note that monotonic clocks differ between
-processes - each process has its own reference point. So it is
-meaningless to compare monotonic timestamps from different processes.
+また、単調クロックはプロセスごとに異なる（各プロセスが独自の基準点を持つ）点も重要です。したがって、異なるプロセスの単調タイムスタンプ同士を比較しても意味がありません。
 
-Therefore, in order to calculate an interval, we must compare two
-monotonic timestamps from the same process.
+そのため、間隔を計算するには、同じプロセスの 2 つの単調タイムスタンプを比較する必要があります。
 
-### Scheduler Stats
+### スケジューラの統計 { #scheduler-stats }
 
-The engine core process will collect some key statistics from the
-scheduler - e.g. the number of requests that were scheduled or waiting
-after the last scheduler pass - and include those statistics in
-`EngineCoreOutputs`.
+エンジンコアのプロセスは、スケジューラからいくつかの主要な統計（直近のスケジューラパスの後にスケジュールされた、あるいは待機中のリクエスト数など）を収集し、それらを `EngineCoreOutputs` に含めます。
 
-### Engine Core Events
+### エンジンコアのイベント { #engine-core-events }
 
-The engine core will also record the timestamp of certain per-request
-events so that the frontend can calculate the interval between these
-events.
+エンジンコアは、フロントエンドがイベント間の間隔を計算できるよう、リクエストごとの特定のイベントのタイムスタンプも記録します。
 
-The events are:
+イベントは次のとおりです。
 
-- `QUEUED` - when the request was received by the engine core and
-  added to the scheduler queue.
-- `SCHEDULED` - when the request was first scheduled for execution.
-- `PREEMPTED` - the request has been put back in the waiting queue
-  in order to make room for other requests to complete. It will be
-  re-scheduled in future and re-start its prefill phase.
-- `NEW_TOKENS` - when the output included in `EngineCoreOutput` was
-  generated. Since this is common to all requests in a given
-  iteration, we use a single timestamp on `EngineCoreOutputs` to
-  record this event.
+- `QUEUED` - リクエストがエンジンコアに受け取られ、スケジューラのキューに追加された時点。
+- `SCHEDULED` - リクエストが最初に実行のためスケジュールされた時点。
+- `PREEMPTED` - 他のリクエストを完了させる余地を作るため、リクエストが待機キューへ戻された時点。将来的に再スケジュールされ、プレフィルのフェーズをやり直します。
+- `NEW_TOKENS` - `EngineCoreOutput` に含まれる出力が生成された時点。これはある反復におけるすべてのリクエストに共通するため、このイベントの記録には `EngineCoreOutputs` 上の単一のタイムスタンプを使います。
 
-And the calculated intervals are:
+そして計算される間隔は次のとおりです。
 
-- Queue interval - between `QUEUED` and most recent `SCHEDULED`.
-- Prefill interval - between most recent `SCHEDULED` and the subsequent
-  first `NEW_TOKENS`.
-- Decode interval - between first (after the most recent `SCHEDULED`) and
-  last `NEW_TOKENS`.
-- Inference interval - between most recent `SCHEDULED` and last `NEW_TOKENS`.
-- Inter-token interval - between successive `NEW_TOKENS`.
+- キュー間隔 - `QUEUED` から直近の `SCHEDULED` まで。
+- プレフィル間隔 - 直近の `SCHEDULED` から、それに続く最初の `NEW_TOKENS` まで。
+- デコード間隔 - （直近の `SCHEDULED` 以降の）最初の `NEW_TOKENS` から最後の `NEW_TOKENS` まで。
+- 推論間隔 - 直近の `SCHEDULED` から最後の `NEW_TOKENS` まで。
+- トークン間の間隔 - 連続する `NEW_TOKENS` のあいだ。
 
-Put another way:
+言い換えると次のようになります。
 
-![Interval calculations - common case](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/metrics/intervals-1.png)
+![時間間隔の計算 - 通常のケース](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/metrics/intervals-1.png)
 
-We explored the possibility of having the frontend calculate these
-intervals using the timing of events visible by the frontend. However,
-the frontend does not have visibility into the timing of the `QUEUED`
-and `SCHEDULED` events and, since we need to calculate intervals based
-on monotonic timestamps from the same process ... we need the engine
-core to record timestamps for all of these events.
+フロントエンドから見えるイベントのタイミングを使って、フロントエンド側でこれらの間隔を計算する可能性も検討しました。しかし、フロントエンドは `QUEUED` と `SCHEDULED` のイベントのタイミングを把握できず、また間隔は同じプロセスの単調タイムスタンプにもとづいて計算する必要があるため、これらすべてのイベントのタイムスタンプはエンジンコアが記録する必要があります。
 
-#### Interval Calculations vs Preemptions
+#### 時間間隔の計算とプリエンプション { #interval-calculations-vs-preemptions }
 
-When a preemption occurs during decode, since any already generated
-tokens are reused, we consider the preemption as affecting the
-inter-token, decode, and inference intervals.
+デコード中にプリエンプションが発生した場合、すでに生成されたトークンは再利用されるため、プリエンプションはトークン間・デコード・推論の各間隔に影響するものとみなします。
 
-![Interval calculations - preempted decode](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/metrics/intervals-2.png)
+![時間間隔の計算 - デコード中のプリエンプション](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/metrics/intervals-2.png)
 
-When a preemption occurs during prefill (assuming such an event
-is possible), we consider the preemption as affecting the
-time-to-first-token and prefill intervals.
+プレフィル中にプリエンプションが発生した場合（そうしたことが起こり得ると仮定して）、プリエンプションは TTFT とプレフィルの間隔に影響するものとみなします。
 
-![Interval calculations - preempted prefill](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/metrics/intervals-3.png)
+![時間間隔の計算 - プレフィル中のプリエンプション](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/metrics/intervals-3.png)
 
-### Frontend Stats Collection
+### フロントエンドでの統計収集 { #frontend-stats-collection }
 
-As the frontend processes a single `EngineCoreOutputs` - i.e. the
-output from a single engine core iteration - it collects various
-statistics relating to that iteration:
+フロントエンドは 1 つの `EngineCoreOutputs`（すなわちエンジンコアの 1 回の反復の出力）を処理する際、その反復に関する各種統計を収集します。
 
-- The total number of new tokens generated in this iteration.
-- The total number of prompt tokens processed by the prefills that
-  completed in this iteration.
-- The queue intervals for any requests that were scheduled in this
-  iteration.
-- The prefill intervals for any requests that completed prefill in
-  this iteration.
-- The inter-token intervals (Time Per Output Token, TPOT), for all
-  requests included in this iteration.
-- The Time-To-First-Token (TTFT) for any requests that completed
-  prefill in this iteration. However, we calculate this interval
-  relative to when the request was first received by the frontend
-  (`arrival_time`) in order to account for input processing time.
-  Currently `arrival_time` starts when tokenization begins.
+- この反復で新たに生成されたトークンの総数。
+- この反復で完了したプレフィルが処理したプロンプトトークンの総数。
+- この反復でスケジュールされたリクエストのキュー間隔。
+- この反復でプレフィルが完了したリクエストのプレフィル間隔。
+- この反復に含まれるすべてのリクエストのトークン間の間隔（出力トークンあたりの時間、TPOT）。
+- この反復でプレフィルが完了したリクエストの TTFT（最初のトークンまでの時間）。ただし、入力処理の時間も含めるため、この間隔はフロントエンドがリクエストを最初に受け取った時点（`arrival_time`）を基準に計算します。現在、`arrival_time` はトークナイズの開始時点から始まります。
 
-For any requests that were completed in a given iteration, we also
-record:
+ある反復で完了したリクエストについては、次も記録します。
 
-- The inference and decode intervals - relative to the scheduled and
-  first token events, as described above.
-- End-to-end latency - the interval between frontend `arrival_time`
-  and the frontend receiving the final token.
+- 推論間隔とデコード間隔 - 上記のとおり、スケジュールと最初のトークンのイベントを基準にしたもの。
+- エンドツーエンドのレイテンシ - フロントエンドの `arrival_time` から、フロントエンドが最後のトークンを受け取るまでの間隔。
 
-### KV Cache Residency Metrics
+### KV キャッシュの滞在時間メトリクス { #kv-cache-residency-metrics }
 
-We also emit a set of histograms that describe how long sampled KV cache
-blocks stay resident and how often they are reused. Sampling
-(`--kv-cache-metrics-sample`) keeps the overhead tiny; when a block is
-chosen we record:
+サンプリングされた KV キャッシュブロックがどれだけ滞在し、どれだけ再利用されるかを示す一連のヒストグラムも出力します。サンプリング（`--kv-cache-metrics-sample`）によりオーバーヘッドはごくわずかに抑えられます。ブロックが選ばれると、次を記録します。
 
-- `lifetime` – allocation ⟶ eviction
-- `idle before eviction` – last touch ⟶ eviction
-- `reuse gaps` – the pauses between touches when the block gets reused
+- `lifetime` – 確保 ⟶ 追い出し
+- `idle before eviction` – 最後のアクセス ⟶ 追い出し
+- `reuse gaps` – ブロックが再利用される際のアクセス間の間隔
 
-Those map directly to the Prometheus metrics:
+これらは Prometheus のメトリクスに直接対応します。
 
-- `vllm:kv_block_lifetime_seconds` – how long each sampled block exists.
-- `vllm:kv_block_idle_before_evict_seconds` – idle tail after the final access.
-- `vllm:kv_block_reuse_gap_seconds` – time between consecutive touches.
+- `vllm:kv_block_lifetime_seconds` – サンプリングされた各ブロックが存在した時間。
+- `vllm:kv_block_idle_before_evict_seconds` – 最後のアクセス以降のアイドル時間。
+- `vllm:kv_block_reuse_gap_seconds` – 連続するアクセスのあいだの時間。
 
-The engine core only ships raw eviction events via `SchedulerStats`; the
-frontend drains them, turns them into Prometheus observations, and also
-exposes the same data through `LLM.get_metrics()` when logging is on.
-Looking at lifetime and idle time on one chart makes it easy to spot
-stranded cache or workloads that pin prompts for a long decode.
+エンジンコアは `SchedulerStats` を通じて生の追い出しイベントを送るだけで、フロントエンドがそれを取り出して Prometheus の観測値に変換し、ログ出力が有効な場合は `LLM.get_metrics()` からも同じデータを公開します。lifetime とアイドル時間を 1 つのチャートで見ると、放置されたキャッシュや、長いデコードのあいだプロンプトを保持し続けるワークロードを見つけやすくなります。
 
-### Metrics Publishing - Logging
+### メトリクスの公開 - ログ { #metrics-publishing-logging }
 
-The `LoggingStatLogger` metrics publisher outputs a log `INFO` message
-every 5 seconds with some key metrics:
+`LoggingStatLogger` のメトリクス公開機能は、5 秒ごとに主要なメトリクスを含む `INFO` レベルのログメッセージを出力します。
 
-- The current number of running/waiting requests
-- The current GPU cache usage
-- The number of prompt tokens processed per second over the past 5
-  seconds
-- The number of new tokens generated per second over the past 5
-  seconds
-- The prefix cache hit rate over the most recent 1k kv-cache block queries
+- 現在の実行中 / 待機中のリクエスト数
+- 現在の GPU キャッシュ使用量
+- 直近 5 秒間の 1 秒あたりの処理済みプロンプトトークン数
+- 直近 5 秒間の 1 秒あたりの新規生成トークン数
+- 直近 1000 回の KV キャッシュブロックの問い合わせにおけるプレフィックスキャッシュのヒット率
 
-### Metrics Publishing - Prometheus
+### メトリクスの公開 - Prometheus { #metrics-publishing-prometheus }
 
-The `PrometheusStatLogger` metrics publisher makes the metrics
-available via a `/metrics` HTTP endpoint in a Prometheus-compatible
-format. A Prometheus instance can then be configured to poll this
-endpoint (e.g. every second) and record the values in its time-series
-database. Prometheus is often used via Grafana, allowing these metrics
-to be graphed over time.
+`PrometheusStatLogger` のメトリクス公開機能は、Prometheus 互換の形式で `/metrics` の HTTP エンドポイントを通じてメトリクスを利用可能にします。Prometheus のインスタンスは、このエンドポイントを（たとえば 1 秒ごとに）ポーリングして値を時系列データベースへ記録するよう設定できます。Prometheus は Grafana と組み合わせて使われることが多く、これらのメトリクスを時系列でグラフ化できます。
 
-Prometheus supports the following metric types:
+Prometheus は次のメトリクス種別をサポートします。
 
-- Counter: a value that will increase over time, never reducing, and
-  generally reset to zero when the vLLM instance restarts. For
-  example, the number of tokens generated over the lifetime of the
-  instance.
-- Gauge: a value that goes up and down, for example the number of
-  requests currently scheduled for execution.
-- Histogram: a count of metric samples, recorded in buckets. For
-  example, the number of requests whose TTFT was <1ms, <5ms, <10ms,
-  <20ms, and so on.
+- Counter: 時間とともに増加し、減ることはなく、vLLM インスタンスの再起動時に一般にゼロへリセットされる値です。たとえば、インスタンスの稼働期間中に生成されたトークン数です。
+- Gauge: 増減する値です。たとえば、現在実行のためにスケジュールされているリクエスト数です。
+- Histogram: バケットごとに記録されたメトリクスのサンプル数です。たとえば、TTFT が 1ms 未満、5ms 未満、10ms 未満、20ms 未満……だったリクエスト数です。
 
-Prometheus metrics can also be labelled, allowing metrics to be
-combined according to matching labels. In vLLM, we add a `model_name`
-label to every metric which includes the name of the model served by
-that instance.
+Prometheus のメトリクスにはラベルを付けることもでき、一致するラベルに応じてメトリクスを組み合わせられます。vLLM では、すべてのメトリクスに、そのインスタンスがサービングしているモデル名を含む `model_name` ラベルを付けています。
 
-Example output:
+出力例:
 
 ```bash
 $ curl http://0.0.0.0:8000/metrics
@@ -348,21 +274,14 @@ vllm:time_to_first_token_seconds_count{model_name="meta-llama/Llama-3.1-8B-Instr
 ```
 
 !!! note
-    The choice of histogram buckets to be most useful to users
-    across a broad set of use cases is not straightforward and will
-    require refinement over time.
+    幅広いユースケースにわたって利用者にとって最も有用なヒストグラムのバケットを
+    選ぶのは簡単ではなく、時間をかけて改善していく必要があります。
 
-### Cache Config Info
+### キャッシュ設定の情報 { #cache-config-info }
 
-`prometheus_client` has support for
-[Info metrics](https://prometheus.github.io/client_python/instrumenting/info/)
-which are equivalent to a `Gauge` whose value is permanently set to 1,
-but exposes interesting key/value pair information via labels. This is
-used for information about an instance that does not change - so it
-only needs to be observed at startup - and allows comparing across
-instances in Prometheus.
+`prometheus_client` は [Info メトリクス](https://prometheus.github.io/client_python/instrumenting/info/)をサポートしています。これは値が常に 1 に設定された `Gauge` に相当しますが、ラベルを通じて有用なキー / 値の情報を公開します。これは、変化しないインスタンスの情報（したがって起動時に一度観測すればよい情報）に使われ、Prometheus 上でインスタンス間の比較を可能にします。
 
-We use this concept for the `vllm:cache_config_info` metric:
+vLLM ではこの考え方を `vllm:cache_config_info` メトリクスに使っています。
 
 ```text
 # HELP vllm:cache_config_info Information of the LLMEngine CacheConfig
@@ -370,113 +289,76 @@ We use this concept for the `vllm:cache_config_info` metric:
 vllm:cache_config_info{block_size="16",cache_dtype="auto",calculate_kv_scales="False",cpu_offload_gb="0",enable_prefix_caching="False",gpu_memory_utilization="0.9",...} 1.0
 ```
 
-However, `prometheus_client` has
-[never supported Info metrics in multiprocessing mode](https://github.com/prometheus/client_python/pull/300) -
-for [unclear reasons](gh-pr:7279#discussion_r1710417152). We
-simply use a `Gauge` metric set to 1 and
-`multiprocess_mode="mostrecent"` instead.
+ただし `prometheus_client` は、[不明確な理由](gh-pr:7279#discussion_r1710417152)により、
+[マルチプロセスモードでの Info メトリクスを一度もサポートしたことがありません](https://github.com/prometheus/client_python/pull/300)。
+そこで vLLM では代わりに、値を 1 に設定し `multiprocess_mode="mostrecent"` とした `Gauge` メトリクスを単純に使っています。
 
-### LoRA Metrics
+### LoRA のメトリクス { #lora-metrics }
 
-The `vllm:lora_requests_info` `Gauge` is somewhat similar, except the
-value is the current wall-clock time, and is updated every iteration.
+`vllm:lora_requests_info` の `Gauge` もこれに似ていますが、値が現在の壁時計時刻であり、反復ごとに更新される点が異なります。
 
-The label names used are:
+使われるラベル名は次のとおりです。
 
-- `running_lora_adapters`: a per-adapter count of the number requests
-  running using that adapter, formatted as a comma-separated string.
-- `waiting_lora_adapters`: similar, except counting requests that are
-  waiting to be scheduled.
-- `max_lora` - the static "max number of LoRAs in a single batch."
-  configuration.
+- `running_lora_adapters`: そのアダプタを使って実行中のリクエスト数をアダプタごとに数えたもので、カンマ区切りの文字列として整形されます。
+- `waiting_lora_adapters`: 同様ですが、スケジュール待ちのリクエストを数えます。
+- `max_lora` - 「単一バッチ内の LoRA の最大数」という静的な設定値。
 
-Encoding a running/waiting counts for multiple adapters in a
-comma-separated string seems quite misguided - we could use labels to
-distinguish between per-adapter counts. This should be revisited.
+複数アダプタの実行中 / 待機中の件数をカンマ区切りの文字列にエンコードするのは、かなり筋の悪い方法に見えます。アダプタごとの件数の区別にはラベルを使えるはずで、これは見直すべきです。
 
-Note that `multiprocess_mode="livemostrecent"` is used - the most
-recent metric is used, but only from currently running processes.
+`multiprocess_mode="livemostrecent"` が使われている点に注意してください。最新のメトリクスが使われますが、現在実行中のプロセスのものに限られます。
 
-This was added in <https://github.com/vllm-project/vllm/pull/9477> and there is
-[at least one known user](https://github.com/kubernetes-sigs/gateway-api-inference-extension/pull/54).
-If we revisit this design and deprecate the old metric, we should
-coordinate with downstream users so they can migrate before the removal.
+これは <https://github.com/vllm-project/vllm/pull/9477> で追加され、[少なくとも 1 つの既知の利用者](https://github.com/kubernetes-sigs/gateway-api-inference-extension/pull/54)がいます。
+この設計を見直して古いメトリクスを非推奨にする場合は、削除前に移行できるよう下流の利用者と調整すべきです。
 
-### Prefix Cache metrics
+### プレフィックスキャッシュのメトリクス { #prefix-cache-metrics }
 
-The discussion in <https://github.com/vllm-project/vllm/issues/10582> about adding prefix cache metrics yielded
-some interesting points which may be relevant to how we approach
-future metrics.
+プレフィックスキャッシュのメトリクス追加に関する <https://github.com/vllm-project/vllm/issues/10582> の議論からは、今後のメトリクスへの取り組み方にも関わる興味深い論点が得られました。
 
-Every time the prefix cache is queried, we record the number of tokens
-queried and the number of queried tokens present in the cache
-(i.e. hits).
+プレフィックスキャッシュに問い合わせるたびに、問い合わせたトークン数と、そのうちキャッシュに存在したトークン数（すなわちヒット数）を記録します。
 
-However, the metric of interest is the hit rate - i.e. the number of
-hits per query.
+しかし、関心があるのはヒット率、つまり問い合わせあたりのヒット数です。
 
-In the case of logging, we expect the user is best served by
-calculating the hit rate over a fixed number of the most recent
-queries (the interval is fixed to 1k most recent queries for now).
+ログ出力の場合、直近の一定件数の問い合わせにわたってヒット率を計算するのが利用者にとって最も有用だと考えています（現時点では直近 1000 件に固定されています）。
 
-In the case of Prometheus though, we should take advantage of the
-time-series nature of Prometheus and allow the user to calculate the
-hit rate over an interval of their choosing. For example, a PromQL
-query to calculate the hit interval of the past 5 minutes:
+一方 Prometheus の場合は、その時系列としての性質を活かし、利用者が任意の区間でヒット率を計算できるようにすべきです。たとえば、直近 5 分間のヒット率を計算する PromQL クエリは次のようになります。
 
 ```text
 rate(cache_query_hit[5m]) / rate(cache_query_total[5m])
 ```
 
-To achieve this, we should record the queries and hits as counters in
-Prometheus, rather than recording the hit rate as a gauge.
+これを実現するには、ヒット率を gauge として記録するのではなく、問い合わせ数とヒット数を Prometheus の counter として記録すべきです。
 
-## Deprecated Metrics
+## 非推奨のメトリクス { #deprecated-metrics }
 
-### How To Deprecate
+### 非推奨化の進め方 { #how-to-deprecate }
 
-Deprecating metrics shouldn't be taken lightly. Users may not notice a
-metric has been deprecated, and may be quite inconvenienced when it is
-suddenly (from their perspective) when it is removed, even if there is
-an equivalent metric for them to use.
+メトリクスの非推奨化を軽々しく行うべきではありません。利用者はメトリクスが非推奨になったことに気づかないかもしれず、代替となる同等のメトリクスがあったとしても、（利用者から見れば）突然削除されると大きな不便を被る可能性があります。
 
-As an example, see how `vllm:avg_prompt_throughput_toks_per_s` was
-[deprecated](https://github.com/vllm-project/vllm/pull/2764) (with a comment in the code),
-[removed](https://github.com/vllm-project/vllm/pull/12383), and then [noticed by a user](https://github.com/vllm-project/vllm/issues/13218).
+例として、`vllm:avg_prompt_throughput_toks_per_s` が（コード中のコメント付きで）[非推奨になり](https://github.com/vllm-project/vllm/pull/2764)、[削除され](https://github.com/vllm-project/vllm/pull/12383)、その後[利用者に気づかれた](https://github.com/vllm-project/vllm/issues/13218)経緯を参照してください。
 
-In general:
+一般に次のようにすべきです。
 
-1. We should be cautious about deprecating metrics, especially since
-   it can be hard to predict the user impact.
-2. We should include a prominent deprecation notice in the help string
-   that is included in the `/metrics' output.
-3. We should list deprecated metrics in user-facing documentation and
-   release notes.
-4. We should consider hiding deprecated metrics behind a CLI argument
-   in order to give administrators
-   [an escape hatch](https://kubernetes.io/docs/concepts/cluster-administration/system-metrics/#show-hidden-metrics)
-   for some time before deleting them.
+1. とくに利用者への影響を予測しにくいことから、メトリクスの非推奨化には慎重であるべきです。
+2. `/metrics` の出力に含まれるヘルプ文字列に、目立つ形で非推奨の告知を含めるべきです。
+3. 非推奨のメトリクスは、利用者向けのドキュメントとリリースノートに列挙すべきです。
+4. 削除するまでのあいだ管理者に[逃げ道](https://kubernetes.io/docs/concepts/cluster-administration/system-metrics/#show-hidden-metrics)を与えるため、非推奨のメトリクスを CLI 引数の背後に隠すことを検討すべきです。
 
-See the [deprecation policy](../contributing/deprecation_policy.md) for
-the project-wide deprecation policy.
+プロジェクト全体の非推奨化ポリシーについては[非推奨化ポリシー](../contributing/deprecation_policy.md)を参照してください。
 
-### Unimplemented - `vllm:tokens_total`
+### 未実装 - `vllm:tokens_total` { #unimplemented-vllmtokens_total }
 
-Added by <https://github.com/vllm-project/vllm/pull/4464>, but apparently never implemented. This can just be
-removed.
+<https://github.com/vllm-project/vllm/pull/4464> で追加されましたが、実装されないままのようです。これは単に削除して構いません。
 
-### Duplicated - Queue Time
+### 重複 - キュー滞在時間 { #duplicated-queue-time }
 
-The `vllm:time_in_queue_requests` Histogram metric was added by
-<https://github.com/vllm-project/vllm/pull/9659> and its calculation is:
+`vllm:time_in_queue_requests` の Histogram メトリクスは <https://github.com/vllm-project/vllm/pull/9659> で追加され、その計算は次のとおりです。
 
 ```python
     self.metrics.first_scheduled_time = now
     self.metrics.time_in_queue = now - self.metrics.arrival_time
 ```
 
-Two weeks later, <https://github.com/vllm-project/vllm/pull/4464> added `vllm:request_queue_time_seconds` leaving
-us with:
+その 2 週間後、<https://github.com/vllm-project/vllm/pull/4464> が `vllm:request_queue_time_seconds` を追加し、次のような状態になりました。
 
 ```python
 if seq_group.is_finished():
@@ -491,168 +373,115 @@ if seq_group.is_finished():
             seq_group.metrics.time_in_queue)
 ```
 
-This seems duplicative, and one of them should be removed. The latter
-is used by the Grafana dashboard, so we should deprecate or remove the
-former.
+これは重複しており、どちらか一方は削除すべきです。後者は Grafana ダッシュボードで使われているため、前者を非推奨にするか削除すべきです。
 
-### Prefix Cache Hit Rate
+### プレフィックスキャッシュのヒット率 { #prefix-cache-hit-rate }
 
-See above - we now expose 'queries' and 'hits' counters rather than a
-'hit rate' gauge.
+前述のとおり、現在は「ヒット率」の gauge ではなく「問い合わせ数」と「ヒット数」の counter を公開しています。
 
-### KV Cache Offloading
+### KV キャッシュのオフロード { #kv-cache-offloading }
 
-Two legacy metrics relate to a "swapped" preemption mode that is no
-longer relevant in v1:
+レガシーのメトリクスのうち 2 つは、v1 ではもはや関係のない「swapped」なプリエンプションモードに関するものです。
 
 - `vllm:num_requests_swapped`
 - `vllm:cpu_cache_usage_perc`
 
-In this mode, when a request was preempted (e.g. to make room in KV
-cache to complete other requests), kv cache blocks were swapped out to
-CPU memory. The `--swap-space` flag has been removed as this feature
-is no longer used in V1.
+このモードでは、リクエストがプリエンプトされたとき（他のリクエストを完了させるために KV キャッシュに空きを作る場合など）、KV キャッシュのブロックが CPU メモリへスワップアウトされていました。V1 ではこの機能が使われなくなったため、`--swap-space` フラグは削除されました。
 
-Historically, [vLLM has long supported beam search](https://github.com/vllm-project/vllm/issues/6226). The
-SequenceGroup encapsulated the idea of N Sequences which
-all shared the same prompt kv blocks. This enabled KV cache block
-sharing between requests, and copy-on-write to do branching. CPU
-swapping was intended for these beam search like cases.
+歴史的に、[vLLM は長らくビームサーチをサポートしてきました](https://github.com/vllm-project/vllm/issues/6226)。SequenceGroup は、同じプロンプトの KV ブロックを共有する N 個の Sequence という考え方をカプセル化したものでした。これによりリクエスト間で KV キャッシュブロックを共有し、コピーオンライトで分岐できました。CPU へのスワップは、こうしたビームサーチのようなケースを想定したものでした。
 
-Later, the concept of prefix caching was introduced, which allowed KV
-cache blocks to be shared implicitly. This proved to be a better
-option than CPU swapping since blocks can be evicted slowly on demand
-and the part of the prompt that was evicted can be recomputed.
+その後、KV キャッシュブロックを暗黙的に共有できるようにするプレフィックスキャッシュの概念が導入されました。ブロックは必要に応じて徐々に追い出せ、追い出されたプロンプトの部分は再計算できるため、これは CPU へのスワップより優れた選択肢であることが分かりました。
 
-SequenceGroup was removed in V1, although a replacement will be
-required for "parallel sampling" (`n>1`).
-[Beam search was moved out of the core](https://github.com/vllm-project/vllm/issues/8306). There was a
-lot of complex code for a very uncommon feature.
+SequenceGroup は V1 で削除されましたが、「並列サンプリング」（`n>1`）のためには代替が必要になります。[ビームサーチはコアの外へ移されました](https://github.com/vllm-project/vllm/issues/8306)。ごく限られた用途の機能に対して、複雑なコードが多く存在していました。
 
-In V1, with prefix caching being better (zero over head) and therefore
-on by default, the preemption and recompute strategy should work
-better.
+V1 では、プレフィックスキャッシュがより優れており（オーバーヘッドがゼロ）既定で有効になっているため、プリエンプションと再計算の戦略はより良く機能するはずです。
 
-## Future Work
+## 今後の作業 { #future-work }
 
-### Parallel Sampling
+### 並列サンプリング { #parallel-sampling }
 
-Some legacy metrics are only relevant in the context of "parallel
-sampling". This is where the `n` parameter in a request is used to
-request multiple completions from the same prompt.
+レガシーのメトリクスの一部は「並列サンプリング」の文脈でのみ意味を持ちます。これは、リクエストの `n` パラメータを使って同じプロンプトから複数の補完を要求する場合です。
 
-As part of adding parallel sampling support in <https://github.com/vllm-project/vllm/pull/10980>, we should
-also add these metrics.
+<https://github.com/vllm-project/vllm/pull/10980> で並列サンプリングのサポートを追加する一環として、これらのメトリクスも追加すべきです。
 
-- `vllm:request_params_n` (Histogram)
+- `vllm:request_params_n`（Histogram）
 
-  Observes the value of the 'n' parameter of every finished request.
+  完了した各リクエストの 'n' パラメータの値を観測します。
 
-- `vllm:request_max_num_generation_tokens` (Histogram)
+- `vllm:request_max_num_generation_tokens`（Histogram）
 
-  Observes the maximum output length of all sequences in every finished
-  sequence group. In the absence of parallel sampling, this is
-  equivalent to `vllm:request_generation_tokens`.
+  完了した各シーケンスグループ内の全シーケンスの最大出力長を観測します。並列サンプリングがない場合、これは `vllm:request_generation_tokens` と等価です。
 
-### Speculative Decoding
+### 投機的デコーディング { #speculative-decoding }
 
-Some legacy metrics are specific to "speculative decoding". This is where
-we generate candidate tokens using a faster, approximate method or
-model and then validate those tokens with the larger model.
+レガシーのメトリクスの一部は「投機的デコーディング」に固有のものです。これは、より高速で近似的な手法やモデルで候補トークンを生成し、それらをより大きなモデルで検証する方式です。
 
-- `vllm:spec_decode_draft_acceptance_rate` (Gauge)
-- `vllm:spec_decode_efficiency` (Gauge)
-- `vllm:spec_decode_num_accepted_tokens` (Counter)
-- `vllm:spec_decode_num_draft_tokens` (Counter)
-- `vllm:spec_decode_num_emitted_tokens` (Counter)
+- `vllm:spec_decode_draft_acceptance_rate`（Gauge）
+- `vllm:spec_decode_efficiency`（Gauge）
+- `vllm:spec_decode_num_accepted_tokens`（Counter）
+- `vllm:spec_decode_num_draft_tokens`（Counter）
+- `vllm:spec_decode_num_emitted_tokens`（Counter）
 
-There is a PR under review (<https://github.com/vllm-project/vllm/pull/12193>) to add "prompt lookup (ngram)"
-speculative decoding to v1. Other techniques will follow. We should
-revisit these metrics in this context.
+v1 に「prompt lookup（ngram）」の投機的デコーディングを追加する PR（<https://github.com/vllm-project/vllm/pull/12193>）がレビュー中です。他の手法も続く予定です。この文脈でこれらのメトリクスを見直すべきです。
 
 !!! note
-    We should probably expose acceptance rate as separate accepted
-    and draft counters, like we do for prefix caching hit rate. Efficiency
-    likely also needs similar treatment.
+    プレフィックスキャッシュのヒット率と同様に、受理率も受理数とドラフト数の
+    別々の counter として公開すべきでしょう。efficiency についても
+    同様の扱いが必要と思われます。
 
-### Autoscaling and Load-balancing
+### オートスケーリングと負荷分散 { #autoscaling-and-load-balancing }
 
-A common use case for our metrics is to support automated scaling of
-vLLM instances.
+vLLM のメトリクスのよくあるユースケースの 1 つは、vLLM インスタンスの自動スケーリングを支えることです。
 
-For related discussion from the
-[Kubernetes Serving Working Group](https://github.com/kubernetes/community/tree/master/wg-serving),
-see:
+[Kubernetes Serving Working Group](https://github.com/kubernetes/community/tree/master/wg-serving) の関連する議論としては、次を参照してください。
 
 - [Standardizing Large Model Server Metrics in Kubernetes](https://docs.google.com/document/d/1SpSp1E6moa4HSrJnS4x3NpLuj88sMXr2tbofKlzTZpk)
 - [Benchmarking LLM Workloads for Performance Evaluation and Autoscaling in Kubernetes](https://docs.google.com/document/d/1k4Q4X14hW4vftElIuYGDu5KDe2LtV1XammoG-Xi3bbQ)
 - [Inference Perf](https://github.com/kubernetes-sigs/wg-serving/tree/main/proposals/013-inference-perf)
 - <https://github.com/vllm-project/vllm/issues/5041> and <https://github.com/vllm-project/vllm/pull/12726>.
 
-This is a non-trivial topic. Consider this comment from Rob:
+これは簡単な話ではありません。Rob の次のコメントを見てみましょう。
 
 > I think this metric should focus on trying to estimate what the max
 > concurrency that will cause the average request length > queries per
 > second ... since this is really what will "saturate" the server.
 
-A clear goal is that we should expose the metrics required to detect
-this saturation point, so administrators can implement auto-scaling
-rules based on those. However, in order to do so, we need to have a
-clear view on how an administrator (and automated monitoring system)
-should judge an instance as approaching saturation:
+明確な目標は、管理者がそれにもとづいて自動スケーリングのルールを実装できるよう、この飽和点を検出するために必要なメトリクスを公開することです。ただしそのためには、管理者（および自動監視システム）がインスタンスが飽和に近づいていることをどう判断すべきか、明確な見通しが必要です。
 
 > To identify, what is the saturation point for model server compute
 > (the inflection point where we cannot get more throughput with a
 > higher request rate, but start to incur additional latency) so we
 > can autoscale effectively?
 
-### Metric Naming
+### メトリクスの命名 { #metric-naming }
 
-Our approach to naming metrics probably deserves to be revisited:
+メトリクスの命名方針は、おそらく見直す価値があります。
 
-1. The use of colons in metric names seems contrary to
-   ["colons are reserved for user defined recording rules"](https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
-2. Most of our metrics follow the convention of ending with units, but
-   not all do.
-3. Some of our metric names end with `_total`:
+1. メトリクス名にコロンを使うのは、[「コロンはユーザー定義の recording rule のために予約されている」](https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels)という方針に反しているように見えます。
+2. ほとんどのメトリクスは末尾に単位を付ける慣例に従っていますが、すべてではありません。
+3. 一部のメトリクス名は `_total` で終わります。
 
-    If there is a suffix of `_total` on the metric name, it will be removed. When
-    exposing the time series for counter, a `_total` suffix will be added. This is
-    for compatibility between OpenMetrics and the Prometheus text format, as OpenMetrics
-    requires the `_total` suffix.
+    メトリクス名に `_total` のサフィックスがある場合、それは取り除かれます。counter の時系列を公開する際には `_total` のサフィックスが付加されます。これは、OpenMetrics が `_total` のサフィックスを要求するため、OpenMetrics と Prometheus のテキスト形式のあいだの互換性を保つためです。
 
-### Adding More Metrics
+### メトリクスの追加 { #adding-more-metrics }
 
-There is no shortage of ideas for new metrics:
+新しいメトリクスのアイデアには事欠きません。
 
-- Examples from other projects like
-  [TGI](https://github.com/IBM/text-generation-inference?tab=readme-ov-file#metrics)
-- Proposals arising from specific use cases, like the Kubernetes
-  auto-scaling topic above
-- Proposals that might arise out of standardisation efforts like
-  [OpenTelemetry Semantic Conventions for Gen AI](https://github.com/open-telemetry/semantic-conventions/tree/main/docs/gen-ai).
+- [TGI](https://github.com/IBM/text-generation-inference?tab=readme-ov-file#metrics) のような他プロジェクトの例
+- 上記の Kubernetes による自動スケーリングのような、特定のユースケースから生じる提案
+- [OpenTelemetry の生成 AI 向けセマンティック規約](https://github.com/open-telemetry/semantic-conventions/tree/main/docs/gen-ai)のような標準化の取り組みから生じ得る提案
 
-We should be cautious in our approach to adding new metrics. While
-metrics are often relatively straightforward to add:
+新しいメトリクスの追加には慎重であるべきです。メトリクスの追加は比較的簡単なことが多い一方で、次の点があります。
 
-1. They can be difficult to remove - see the section on deprecation
-   above.
-2. They can have a meaningful performance impact when enabled. And
-   metrics are usually of very limited use unless they can be enabled
-   by default and in production.
-3. They have an impact on development and maintenance of the
-   project. Every metric added over time has made this effort more
-   time-consuming, and perhaps not all metrics justify this ongoing
-   investment in their maintenance.
+1. 削除するのは難しいことがあります。上記の非推奨化の節を参照してください。
+2. 有効にすると無視できない性能への影響が生じ得ます。またメトリクスは、既定かつ本番で有効にできない限り、有用性がかなり限られます。
+3. プロジェクトの開発と保守に影響します。これまでに追加されてきたメトリクスは、その都度この労力を増やしてきました。すべてのメトリクスが、その継続的な保守コストに見合うとは限らないかもしれません。
 
-## Tracing - OpenTelemetry
+## トレーシング - OpenTelemetry { #tracing-opentelemetry }
 
-Metrics provide an aggregated view over time of the system's
-performance and health. Tracing, on the other hand, tracks individual
-requests as they move through different services and components. Both
-fall under the more general heading of "Observability".
+メトリクスは、システムの性能と健全性に関する時系列の集約されたビューを提供します。一方トレーシングは、個々のリクエストが異なるサービスやコンポーネントを通過する様子を追跡します。どちらも、より一般的な「可観測性」という見出しの下に位置づけられます。
 
-vLLM has support for OpenTelemetry tracing:
+vLLM は OpenTelemetry のトレーシングをサポートしています。
 
 - Added by <https://github.com/vllm-project/vllm/pull/4687> and reinstated by <https://github.com/vllm-project/vllm/pull/20372>
 - Configured with `--oltp-traces-endpoint` and `--collect-detailed-traces`
@@ -661,32 +490,24 @@ vLLM has support for OpenTelemetry tracing:
 - [Blog post](https://medium.com/@ronen.schaffer/follow-the-trail-supercharging-vllm-with-opentelemetry-distributed-tracing-aa655229b46f)
 - [IBM product docs](https://www.ibm.com/docs/en/instana-observability/current?topic=mgaa-monitoring-large-language-models-llms-vllm-public-preview)
 
-OpenTelemetry has a
-[Gen AI Working Group](https://github.com/open-telemetry/community/blob/main/projects/gen-ai.md).
+OpenTelemetry には [Gen AI Working Group](https://github.com/open-telemetry/community/blob/main/projects/gen-ai.md) があります。
 
-Since metrics is a big enough topic on its own, we consider the topic
-of tracing to be quite separate from metrics.
+メトリクスだけでも十分に大きなテーマであるため、トレーシングについてはメトリクスとはかなり別のテーマとして扱います。
 
-### OpenTelemetry Model Forward vs Execute Time
+### OpenTelemetry のモデル forward 時間と execute 時間 { #opentelemetry-model-forward-vs-execute-time }
 
-The current implementation exposes the following two metrics:
+現在の実装では、次の 2 つのメトリクスを公開しています。
 
-- `vllm:model_forward_time_milliseconds` (Histogram) - The time spent
-  in the model forward pass when this request was in the batch.
-- `vllm:model_execute_time_milliseconds` (Histogram) - The time spent
-  in the model execute function. This will include model forward,
-  block/sync across workers, cpu-gpu sync time and sampling time.
+- `vllm:model_forward_time_milliseconds`（Histogram）- そのリクエストがバッチに含まれていたときの、モデルの forward pass に費やされた時間。
+- `vllm:model_execute_time_milliseconds`（Histogram）- モデルの execute 関数に費やされた時間。モデルの forward、ワーカー間のブロック / 同期、CPU-GPU の同期時間、サンプリング時間を含みます。
 
-These metrics are only enabled when OpenTelemetry tracing is enabled
-and if `--collect-detailed-traces=all/model/worker` is used. The
-documentation for this option states:
+これらのメトリクスは、OpenTelemetry のトレーシングが有効で、かつ `--collect-detailed-traces=all/model/worker` が指定された場合にのみ有効になります。このオプションのドキュメントには次のように記載されています。
 
 > collect detailed traces for the specified modules. This involves
 > use of possibly costly and or blocking operations and hence might
 > have a performance impact.
 
-The metrics were added by <https://github.com/vllm-project/vllm/pull/7089> and show up in an OpenTelemetry trace
-as:
+これらのメトリクスは <https://github.com/vllm-project/vllm/pull/7089> で追加され、OpenTelemetry のトレースには次のように現れます。
 
 ```text
 -> gen_ai.latency.time_in_scheduler: Double(0.017550230026245117)
@@ -694,9 +515,6 @@ as:
 -> gen_ai.latency.time_in_model_execute: Double(3.6468167304992676)
 ```
 
-We already have `inference_time` and `decode_time` metrics, so the
-question is whether there are sufficiently common use cases for the
-higher-resolution timings to justify the overhead.
+すでに `inference_time` と `decode_time` のメトリクスがあるため、より細かい粒度の計測がオーバーヘッドに見合うほど一般的なユースケースがあるかどうかが論点になります。
 
-Since we are going to treat the question of OpenTelemetry support
-separately, we will include these particular metrics under that topic.
+OpenTelemetry のサポートについては別テーマとして扱うため、これらのメトリクスもそのテーマの中に含めることにします。
