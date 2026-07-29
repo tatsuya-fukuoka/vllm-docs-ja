@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **184 ページ**を翻訳済みです（81.4%）。
+全 226 ページ中 **185 ページ**を翻訳済みです（81.9%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -19,14 +19,14 @@
 | 開発者ガイド | 12 | 0 | 4 | 16 |
 | デプロイ | 35 | 0 | 0 | 35 |
 | 設計ドキュメント | 13 | 0 | 16 | 29 |
-| 機能 | 41 | 0 | 11 | 52 |
+| 機能 | 42 | 0 | 10 | 52 |
 | はじめに | 9 | 0 | 4 | 13 |
 | ガバナンス | 3 | 0 | 0 | 3 |
 | モデル | 12 | 0 | 4 | 16 |
 | 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **184** | **0** | **42** | **226** |
+| **合計** | **185** | **0** | **41** | **226** |
 
 ## 翻訳済みのページ
 
@@ -128,6 +128,7 @@
 - `features/index_cache.md`
 - `features/interleaved_thinking.md`
 - `features/mooncake_connector_usage.md`
+- `features/mooncake_store_connector_usage.md`
 - `features/nixl_connector_compatibility.md`
 - `features/per_request_metrics.md`
 - `features/prompt_embeds.md`
