@@ -1,52 +1,54 @@
-# CustomOp
+# CustomOp { #customop }
 
-`CustomOp` is an abstract class used for dispatching the forward method of various operations to the appropriate backend. It also offers a mechanism for both vLLM and OOT (Out-Of-Tree) plugins to register their custom operations.
+`CustomOp` は、さまざまな演算の forward メソッドを適切なバックエンドへディスパッチするための抽象クラスです。vLLM と OOT（Out-Of-Tree）プラグインの双方が、独自の演算を登録するための仕組みも提供します。
 
-This document will introduce how CustomOp works in vLLM and how to implement a new `CustomOp`.
+このドキュメントでは、vLLM における CustomOp の仕組みと、新しい `CustomOp` の実装方法を説明します。
 
-## How CustomOp Works in vLLM
+## vLLM における CustomOp の仕組み { #how-customop-works-in-vllm }
 
-`CustomOp` manages two dictionaries of all custom ops (i.e., op classes, indexed by registered name) in its class, for vLLM and OOT plugins respectively.
+`CustomOp` はクラス内で、すべてのカスタム op（登録名で索引される op クラス）の辞書を、vLLM 用と OOT プラグイン用の 2 つ管理しています。
 
-We can use `@CustomOp.register("op_name")` to register an op class to the `CustomOp` system. After this, the `op_name` and its class will be added into the `op_registry` dictionary. In addition, We can also register an OOT op by `@CustomOp.register_oot("op_name")`. We will introduce this mechanism in detail later.
+`@CustomOp.register("op_name")` を使って、op クラスを `CustomOp` の仕組みに登録できます。これにより、`op_name` とそのクラスが `op_registry` の辞書に追加されます。さらに、`@CustomOp.register_oot("op_name")` によって OOT の op を登録することもできます。この仕組みについては後ほど詳しく説明します。
 
-When a `CustomOp` is called (i.e., call its `forward()` method), if it is enabled (i.e., with `--compilation_config.custom_ops '["+op_name"]'`), it will automatically dispatch the forward method to the appropriate backend according to `current_platform`. Otherwise (i.e., it is disabled), it will only call the `forward_native()` method to use PyTorch-native implementation of this forward method.
+`CustomOp` が呼び出される（つまり `forward()` メソッドが呼ばれる）とき、それが有効であれば（つまり `--compilation_config.custom_ops '["+op_name"]'` が指定されていれば）、`current_platform` に応じて forward メソッドを適切なバックエンドへ自動的にディスパッチします。無効な場合は、`forward_native()` メソッドのみを呼び出し、この forward メソッドの PyTorch ネイティブ実装を使います。
 
-- **CPU platform:** dispatch to `forward_cpu()`.
-- **CUDA platform:** dispatch to `forward_cuda()`.
-- **ROCm platform:** dispatch to `forward_hip()`. If `forward_hip()` is not implemented, it will use `forward_cuda()` as a fallback.
-- **XPU platform:** dispatch to `forward_xpu()`.
-- **TPU platform:** dispatch to `forward_tpu()`.
-- **OOT platform:** dispatch to `forward_oot()`. This will only be called on OOT platforms.
-- **Default:** dispatch to `forward_native()` as a final fallback for all platforms.
-
-!!! note
-    Note that the dispatching logic might not be absolute because of class inheritance. Derived class might override the behavior.
-
-Furthermore, vLLM decides whether to enable or disable a `CustomOp` based on `compilation_config.custom_ops`. To be specific, if a `CustomOp` is not registered in `compilation_config.custom_ops` (i.e., uses the default config), it will be enabled if `compilation_config.custom_ops` contains `all`, or will be disabled if it contains `none`.
+- **CPU プラットフォーム:** `forward_cpu()` にディスパッチします。
+- **CUDA プラットフォーム:** `forward_cuda()` にディスパッチします。
+- **ROCm プラットフォーム:** `forward_hip()` にディスパッチします。`forward_hip()` が実装されていない場合は、`forward_cuda()` にフォールバックします。
+- **XPU プラットフォーム:** `forward_xpu()` にディスパッチします。
+- **TPU プラットフォーム:** `forward_tpu()` にディスパッチします。
+- **OOT プラットフォーム:** `forward_oot()` にディスパッチします。これは OOT プラットフォームでのみ呼ばれます。
+- **既定:** すべてのプラットフォームにおける最終的なフォールバックとして `forward_native()` にディスパッチします。
 
 !!! note
-    Note that `all` and `none` cannot coexist in `compilation_config.custom_ops`.
+    クラスの継承により、このディスパッチのロジックが絶対とは限らない点に注意してください。派生クラスが挙動を上書きすることがあります。
 
-By default, if `compilation_config.backend == "inductor"` and `compilation_config.mode != CompilationMode.NONE`, a `none` will be appended into `compilation_config.custom_ops`, otherwise a `all` will be appended. In other words, this means `CustomOp` will be disabled in some platforms (i.e., those use `inductor` as default backend for `torch.compile`) when running with torch compile mode. In this case, Inductor generates (fused) Triton kernels for those disabled custom ops.
+さらに vLLM は、`compilation_config.custom_ops` にもとづいて `CustomOp` を有効にするか無効にするかを決定します。具体的には、`CustomOp` が `compilation_config.custom_ops` に登録されていない場合（つまり既定の設定を使う場合）、`compilation_config.custom_ops` に `all` が含まれていれば有効になり、`none` が含まれていれば無効になります。
 
 !!! note
-    For multi-modal models, vLLM has enforced the enabling of some custom ops to use device-specific deep-optimized kernels for better performance in ViT part, such as `MMEncoderAttention` and `ApplyRotaryEmb`. We can also pass a `enforce_enable=True` param to the `__init__()` method of the `CustomOp` to enforce enable itself at object-level.
+    `compilation_config.custom_ops` に `all` と `none` を同時に指定することはできません。
 
-    Note that this `enforce_enable` mechanism will be removed after we add a separate `compilation_config` for multi-modal part.
+既定では、`compilation_config.backend == "inductor"` かつ `compilation_config.mode != CompilationMode.NONE` の場合は `compilation_config.custom_ops` に `none` が追加され、そうでない場合は `all` が追加されます。言い換えると、torch compile モードで実行する場合、一部のプラットフォーム（`torch.compile` の既定バックエンドとして `inductor` を使うもの）では `CustomOp` が無効になります。この場合、無効化されたカスタム op について Inductor が（融合された）Triton カーネルを生成します。
 
-## How to Customise Your Configuration for CustomOp
+!!! note
+    マルチモーダルモデルでは、ViT 部分の性能を高めるためにデバイス固有の高度に最適化されたカーネルを使えるよう、
+    vLLM は `MMEncoderAttention` や `ApplyRotaryEmb` など一部のカスタム op の有効化を強制しています。
+    `CustomOp` の `__init__()` メソッドに `enforce_enable=True` を渡すことで、オブジェクト単位で強制的に有効化することもできます。
 
-vLLM also offers fine-grained control over which custom ops to enable or disable for users, by manually passing a `--compilation_config.custom_ops '["..."]'` when launching a server.
+    なお、この `enforce_enable` の仕組みは、マルチモーダル部分に独立した `compilation_config` を追加したあとに削除される予定です。
 
-For example:
+## CustomOp の設定をカスタマイズする方法 { #how-to-customise-your-configuration-for-customop }
 
-- Use `--compilation_config.custom_ops '["all"]'` to enable all custom ops.
-- Use `--compilation_config.custom_ops '["none"]'` to disable all custom ops.
-- Use `--compilation_config.custom_ops '["all,-op1"]'` to enable all custom ops except op1 (i.e., prefixed with a `-` means "disable").
-- Use `--compilation_config.custom_ops '["none,+op1,+op2"]'` to only enable op1 and op2 (i.e., prefixed with a `+` means "enable").
+vLLM は、サーバー起動時に `--compilation_config.custom_ops '["..."]'` を手動で渡すことで、どのカスタム op を有効 / 無効にするかを細かく制御する手段も提供しています。
 
-## Types of Supported CustomOp in vLLM
+例:
+
+- `--compilation_config.custom_ops '["all"]'` — すべてのカスタム op を有効にします。
+- `--compilation_config.custom_ops '["none"]'` — すべてのカスタム op を無効にします。
+- `--compilation_config.custom_ops '["all,-op1"]'` — op1 を除くすべてのカスタム op を有効にします（`-` を前置すると「無効」の意味）。
+- `--compilation_config.custom_ops '["none,+op1,+op2"]'` — op1 と op2 のみを有効にします（`+` を前置すると「有効」の意味）。
+
+## vLLM がサポートする CustomOp の種類 { #types-of-supported-customop-in-vllm }
 
 **1. Attention:**
 
@@ -55,7 +57,7 @@ For example:
 
 ```
 
-**2. Activation:**
+**2. 活性化関数:**
 
 ```python
 --8<-- "vllm/model_executor/layers/activation.py:silu_and_mul"
@@ -89,7 +91,7 @@ For example:
 --8<-- "vllm/model_executor/layers/conv.py:conv3d"
 ```
 
-**4. Embedding:**
+**4. 埋め込み:**
 
 ```python
 --8<-- "vllm/model_executor/layers/vocab_parallel_embedding.py:vocab_parallel_embedding"
@@ -141,7 +143,7 @@ For example:
 --8<-- "vllm/model_executor/layers/fused_moe/router/grouped_topk_router.py:grouped_topk"
 ```
 
-**9. Norm:**
+**9. 正規化:**
 
 ```python
 --8<-- "vllm/model_executor/layers/layernorm.py:rms_norm"
@@ -151,13 +153,13 @@ For example:
 --8<-- "vllm/model_executor/layers/layernorm.py:gemma_rms_norm"
 ```
 
-**10. Quantization:**
+**10. 量子化:**
 
 ```python
 --8<-- "vllm/model_executor/layers/quantization/input_quant_fp8.py:quant_fp8"
 ```
 
-**11. Rope:**
+**11. RoPE:**
 
 ```python
 --8<-- "vllm/model_executor/layers/rotary_embedding/base.py:rotary_embedding"
@@ -167,7 +169,7 @@ For example:
 --8<-- "vllm/model_executor/layers/rotary_embedding/common.py:apply_rotary_emb"
 ```
 
-**12. Encoder:**
+**12. エンコーダ:**
 
 ```python
 --8<-- "vllm/model_executor/models/deepencoder2.py:qwen2_decoder"
@@ -177,19 +179,19 @@ For example:
 --8<-- "vllm/model_executor/models/deepencoder.py:rel_pos_attention"
 ```
 
-## Guidelines for Implementing a New CustomOp
+## 新しい CustomOp を実装する際の指針 { #guidelines-for-implementing-a-new-customop }
 
-### Implement a New CustomOp in vLLM
+### vLLM で新しい CustomOp を実装する { #implement-a-new-customop-in-vllm }
 
-This part is a tutorial of how to implement a New `CustomOp` in vLLM.
+ここでは、vLLM で新しい `CustomOp` を実装する方法を説明します。
 
-Steps:
+手順:
 
-1. Implement a new op class, which extends from `CustomOp` base class.
-2. Add the `@CustomOp.register("op_name")` decorator on this op class to register it into `CustomOp` system.
-3. Implement different `forward_xxx()` method according to your needs.
+1. `CustomOp` 基底クラスを継承した新しい op クラスを実装します。
+2. その op クラスに `@CustomOp.register("op_name")` デコレータを付け、`CustomOp` の仕組みに登録します。
+3. 必要に応じて各種の `forward_xxx()` メソッドを実装します。
 
-Taking `MMEncoderAttention` as an example:
+`MMEncoderAttention` を例に説明します。
 
 ??? code
 
@@ -260,22 +262,21 @@ Taking `MMEncoderAttention` as an example:
             # Call PALLAS implementation...
     ```
 
-### Register a New CustomOp in OOT Device Plugins
+### OOT デバイスプラグインで新しい CustomOp を登録する { #register-a-new-customop-in-oot-device-plugins }
 
-Currently, thanks to [vLLM's hardware-plugin mechanism](./plugin_system.md), there are various OOT device plugins emerging out to enable vLLM seamlessly runs on different hardwares. You can also find more details about this mechanism at [Introducing vLLM Hardware Plugin, Best Practice from Ascend NPU](https://blog.vllm.ai/2025/05/12/hardware-plugin.html).
+現在、[vLLM のハードウェアプラグインの仕組み](./plugin_system.md)のおかげで、vLLM をさまざまなハードウェア上でシームレスに動かすための OOT デバイスプラグインが数多く登場しています。この仕組みの詳細は [Introducing vLLM Hardware Plugin, Best Practice from Ascend NPU](https://blog.vllm.ai/2025/05/12/hardware-plugin.html) でも紹介されています。
 
-- **Official device plugins:** [vllm-ascend](https://github.com/vllm-project/vllm-ascend) (for Huawei Ascend NPU), [vllm-spyre](https://github.com/vllm-project/vllm-spyre)
-(for Spyre), [vllm-gaudi](https://github.com/vllm-project/vllm-gaudi) (for Intel Gaudi), [vllm-neuron](https://github.com/vllm-project/vllm-neuron) (for AWS Neuron), [vllm-meta](https://github.com/vllm-project/vllm-metal) (for Apple Silicon), etc.
-- **Non-official device plugins:** [vllm-metax](https://github.com/MetaX-MACA/vLLM-metax) (for MetaX GPU), [vllm-kunlun](https://github.com/baidu/vLLM-Kunlun) (for Baidu Kunlun XPU), [vllm-musa](https://github.com/MooreThreads/vllm-musa) (for Moore Threads GPU), etc.
+- **公式のデバイスプラグイン:** [vllm-ascend](https://github.com/vllm-project/vllm-ascend)（Huawei Ascend NPU 向け）、[vllm-spyre](https://github.com/vllm-project/vllm-spyre)（Spyre 向け）、[vllm-gaudi](https://github.com/vllm-project/vllm-gaudi)（Intel Gaudi 向け）、[vllm-neuron](https://github.com/vllm-project/vllm-neuron)（AWS Neuron 向け）、[vllm-meta](https://github.com/vllm-project/vllm-metal)（Apple Silicon 向け）など。
+- **非公式のデバイスプラグイン:** [vllm-metax](https://github.com/MetaX-MACA/vLLM-metax)（MetaX GPU 向け）、[vllm-kunlun](https://github.com/baidu/vLLM-Kunlun)（Baidu Kunlun XPU 向け）、[vllm-musa](https://github.com/MooreThreads/vllm-musa)（Moore Threads GPU 向け）など。
 
-In this case, `CustomOp` can enable these hardware manufacturers to seamlessly replace vLLM's operations with their deep-optimized kernels for specific devices at runtime, by just registering an OOT `CustomOp` and implementing the `forward_oot()` method.
+このとき `CustomOp` を使えば、これらのハードウェアベンダーは OOT の `CustomOp` を登録して `forward_oot()` メソッドを実装するだけで、vLLM の演算を実行時にデバイス固有の高度に最適化されたカーネルへシームレスに置き換えられます。
 
-Now, this part will show you how to register an OOT `CustomOp` for a device plugin.
+ここからは、デバイスプラグイン向けに OOT の `CustomOp` を登録する方法を説明します。
 
-Taking `MMEncoderAttention` as an example:
+`MMEncoderAttention` を例に説明します。
 
-1. Implement a `CustomMMEncoderAttention` class which extends from `MMEncoderAttention` and implement its `forward_oot()` method.
-2. Register your `CustomMMEncoderAttention` into vLLM to replace `MMEncoderAttention`.
+1. `MMEncoderAttention` を継承した `CustomMMEncoderAttention` クラスを実装し、その `forward_oot()` メソッドを実装します。
+2. `MMEncoderAttention` を置き換えるために、`CustomMMEncoderAttention` を vLLM に登録します。
 
 ??? code
 
@@ -295,11 +296,11 @@ Taking `MMEncoderAttention` as an example:
             ...
     ```
 
-In this case, a new item `{"MMEncoderAttention": CustomMMEncoderAttention}` will be added into `op_registry_oot`. When initializing a `MMEncoderAttention` op object, if the class name (i.e., `MMEncoderAttention`) is contained in the keys of `op_registry_oot`, vLLM will replace it with our registered class (i.e., `CustomMMEncoderAttention`) and instantiate it.
+この場合、`op_registry_oot` に新しい項目 `{"MMEncoderAttention": CustomMMEncoderAttention}` が追加されます。`MMEncoderAttention` の op オブジェクトを初期化する際、そのクラス名（`MMEncoderAttention`）が `op_registry_oot` のキーに含まれていれば、vLLM はそれを登録済みのクラス（`CustomMMEncoderAttention`）に置き換えてインスタンス化します。
 
-After that, when this `MMEncoderAttention` op is called, your `forward_oot()` will be called if it is enabled. Thus, you will get expected performance on your hardwares without directly modify vLLM.
+以降、この `MMEncoderAttention` の op が呼ばれると、それが有効であれば自分の `forward_oot()` が呼ばれます。これにより、vLLM を直接変更することなく、自分のハードウェア上で期待どおりの性能を得られます。
 
-In addition, you can also register all your `CustomOp` at one place for better management.
+さらに、管理しやすくするため、すべての `CustomOp` を 1 か所でまとめて登録することもできます。
 
 ??? code
 
