@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **169 ページ**を翻訳済みです（74.8%）。
+全 226 ページ中 **171 ページ**を翻訳済みです（75.7%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -21,12 +21,12 @@
 | 設計ドキュメント | 8 | 0 | 21 | 29 |
 | 機能 | 40 | 0 | 12 | 52 |
 | はじめに | 5 | 0 | 8 | 13 |
-| ガバナンス | 1 | 0 | 2 | 3 |
+| ガバナンス | 3 | 0 | 0 | 3 |
 | モデル | 10 | 0 | 6 | 16 |
 | 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **169** | **0** | **57** | **226** |
+| **合計** | **171** | **0** | **55** | **226** |
 
 ## 翻訳済みのページ
 
@@ -158,6 +158,8 @@
 - `getting_started/installation/python_env_setup.inc.md`
 - `getting_started/quickstart.md`
 - `governance/collaboration.md`
+- `governance/committers.md`
+- `governance/process.md`
 - `models/extensions/fastsafetensor.md`
 - `models/extensions/instanttensor.md`
 - `models/extensions/runai_model_streamer.md`

@@ -1,192 +1,187 @@
-# Committers
+# コミッター { #committers }
 
-This document lists the current committers of the vLLM project and the core areas they maintain.
-Committers have write access to the vLLM repository and are responsible for reviewing and merging PRs.
-You can also refer to the [CODEOWNERS](https://github.com/vllm-project/vllm/blob/main/.github/CODEOWNERS) file for concrete file-level ownership and reviewers. Both this documents and the CODEOWNERS file are living documents and they complement each other.
+このドキュメントでは、vLLM プロジェクトの現在のコミッターと、各自が担当する主要領域を一覧にしています。コミッターは vLLM リポジトリへの書き込み権限を持ち、PR のレビューとマージを担当します。ファイル単位の具体的なオーナーシップとレビュアーについては、[CODEOWNERS](https://github.com/vllm-project/vllm/blob/main/.github/CODEOWNERS) ファイルも参照してください。このドキュメントと CODEOWNERS ファイルはどちらも生きたドキュメントであり、互いを補完しています。
 
-## Active Committers
+## 現役のコミッター { #active-committers }
 
-We try to summarize each committer's role in vLLM in a few words. In general, vLLM committers cover a wide range of areas and help each other in the maintenance process.
-Please refer to the later section about Area Owners for exact component ownership details.
-Sorted alphabetically by GitHub handle:
+各コミッターの vLLM における役割を数語でまとめています。一般に、vLLM のコミッターは幅広い領域をカバーし、メンテナンスの過程で互いに助け合っています。コンポーネントごとの正確な担当については、後述の「領域オーナー」のセクションを参照してください。GitHub ハンドルのアルファベット順に並べています。
 
 - [@22quinn](https://github.com/22quinn): RL API
-- [@aarnphm](https://github.com/aarnphm): Structured output
-- [@alexm-redhat](https://github.com/alexm-redhat): Performance
-- [@ApostaC](https://github.com/ApostaC): Connectors, offloading
-- [@bbrowning](https://github.com/bbrowning): Tool use and reasoning parser
-- [@benchislett](https://github.com/benchislett): Engine core and spec decode
-- [@bigPYJ1151](https://github.com/bigPYJ1151): Intel CPU/XPU integration
-- [@BugenZhao](https://github.com/BugenZhao): Rust frontend
-- [@chaunceyjiang](https://github.com/chaunceyjiang): Tool use and reasoning parser
-- [@DarkLight1337](https://github.com/DarkLight1337): Multimodality, API server
-- [@esmeetu](https://github.com/esmeetu): developer marketing, community
-- [@dllehr-amd](https://github.com/dllehr-amd): AMD integration
-- [@heheda12345](https://github.com/heheda12345): Hybrid memory allocator
-- [@hmellor](https://github.com/hmellor): Hugging Face integration, documentation
-- [@houseroad](https://github.com/houseroad): Engine core and Llama models
-- [@Isotr0py](https://github.com/Isotr0py): Multimodality, new model support
-- [@jeejeelee](https://github.com/jeejeelee): LoRA, new model support
-- [@jikunshang](https://github.com/jikunshang): Intel CPU/XPU integration
-- [@khluu](https://github.com/khluu): CI infrastructure
-- [@KuntaiDu](https://github.com/KuntaiDu): KV Connector
-- [@LucasWilkinson](https://github.com/LucasWilkinson): Kernels and performance
-- [@luccafong](https://github.com/luccafong): Llama models, speculative decoding, distributed
-- [@markmc](https://github.com/markmc): Observability
-- [@MatthewBonanni](https://github.com/MatthewBonanni): Kernels and performance
-- [@mgoin](https://github.com/mgoin): Quantization and performance
-- [@NickLucche](https://github.com/NickLucche): KV connector
-- [@njhill](https://github.com/njhill): Distributed, API server, engine core
-- [@noooop](https://github.com/noooop): Pooling models
-- [@patrickvonplaten](https://github.com/patrickvonplaten): Mistral models, new model support
-- [@pavanimajety](https://github.com/pavanimajety): NVIDIA GPU integration
-- [@ProExpertProg](https://github.com/ProExpertProg): Compilation, startup UX
-- [@robertgshaw2-redhat](https://github.com/robertgshaw2-redhat): Core, distributed, disagg
-- [@ruisearch42](https://github.com/ruisearch42): Pipeline parallelism, Ray Support
-- [@russellb](https://github.com/russellb): Structured output, engine core, security
-- [@sfeng33](https://github.com/sfeng33): Tool use and reasoning parser
-- [@sighingnow](https://github.com/sighingnow): Qwen models, new model support
-- [@simon-mo](https://github.com/simon-mo): Project lead, API entrypoints, community
-- [@tdoublep](https://github.com/tdoublep): State space models
-- [@tjtanaa](https://github.com/tjtanaa): AMD GPU integration
-- [@tlrmchlsmth](https://github.com/tlrmchlsmth): Kernels and performance, distributed, disagg
-- [@WoosukKwon](https://github.com/WoosukKwon): Project lead, engine core
-- [@yaochengji](https://github.com/yaochengji): TPU integration
-- [@yeqcharlotte](https://github.com/yeqcharlotte): Benchmark, Llama models
-- [@yewentao256](https://github.com/yewentao256): Kernels and performance
-- [@Yikun](https://github.com/Yikun): Pluggable hardware interface
-- [@youkaichao](https://github.com/youkaichao): Project lead, distributed, compile, community
-- [@ywang96](https://github.com/ywang96): Multimodality, benchmarks
-- [@zhuohan123](https://github.com/zhuohan123): Project lead, RL integration, numerics
-- [@zou3519](https://github.com/zou3519): Compilation
-- [@BoyuanFeng](https://github.com/BoyuanFeng): Compilation, CUDAGraph
-- [@xuechendi](https://github.com/xuechendi): Intel CPU/XPU integration, KV connector
+- [@aarnphm](https://github.com/aarnphm): 構造化出力
+- [@alexm-redhat](https://github.com/alexm-redhat): 性能
+- [@ApostaC](https://github.com/ApostaC): コネクタ、オフロード
+- [@bbrowning](https://github.com/bbrowning): ツール利用と推論パーサー
+- [@benchislett](https://github.com/benchislett): エンジンコア、投機的デコーディング
+- [@bigPYJ1151](https://github.com/bigPYJ1151): Intel CPU/XPU の統合
+- [@BugenZhao](https://github.com/BugenZhao): Rust フロントエンド
+- [@chaunceyjiang](https://github.com/chaunceyjiang): ツール利用と推論パーサー
+- [@DarkLight1337](https://github.com/DarkLight1337): マルチモーダル、API サーバー
+- [@esmeetu](https://github.com/esmeetu): 開発者向けマーケティング、コミュニティ
+- [@dllehr-amd](https://github.com/dllehr-amd): AMD の統合
+- [@heheda12345](https://github.com/heheda12345): ハイブリッドメモリアロケータ
+- [@hmellor](https://github.com/hmellor): Hugging Face の統合、ドキュメント
+- [@houseroad](https://github.com/houseroad): エンジンコア、Llama モデル
+- [@Isotr0py](https://github.com/Isotr0py): マルチモーダル、新規モデル対応
+- [@jeejeelee](https://github.com/jeejeelee): LoRA、新規モデル対応
+- [@jikunshang](https://github.com/jikunshang): Intel CPU/XPU の統合
+- [@khluu](https://github.com/khluu): CI 基盤
+- [@KuntaiDu](https://github.com/KuntaiDu): KV コネクタ
+- [@LucasWilkinson](https://github.com/LucasWilkinson): カーネルと性能
+- [@luccafong](https://github.com/luccafong): Llama モデル、投機的デコーディング、分散
+- [@markmc](https://github.com/markmc): オブザーバビリティ
+- [@MatthewBonanni](https://github.com/MatthewBonanni): カーネルと性能
+- [@mgoin](https://github.com/mgoin): 量子化と性能
+- [@NickLucche](https://github.com/NickLucche): KV コネクタ
+- [@njhill](https://github.com/njhill): 分散、API サーバー、エンジンコア
+- [@noooop](https://github.com/noooop): プーリングモデル
+- [@patrickvonplaten](https://github.com/patrickvonplaten): Mistral モデル、新規モデル対応
+- [@pavanimajety](https://github.com/pavanimajety): NVIDIA GPU の統合
+- [@ProExpertProg](https://github.com/ProExpertProg): コンパイル、起動時の UX
+- [@robertgshaw2-redhat](https://github.com/robertgshaw2-redhat): コア、分散、分離配置
+- [@ruisearch42](https://github.com/ruisearch42): パイプライン並列、Ray 対応
+- [@russellb](https://github.com/russellb): 構造化出力、エンジンコア、セキュリティ
+- [@sfeng33](https://github.com/sfeng33): ツール利用と推論パーサー
+- [@sighingnow](https://github.com/sighingnow): Qwen モデル、新規モデル対応
+- [@simon-mo](https://github.com/simon-mo): プロジェクトリード、API エントリポイント、コミュニティ
+- [@tdoublep](https://github.com/tdoublep): 状態空間モデル
+- [@tjtanaa](https://github.com/tjtanaa): AMD GPU の統合
+- [@tlrmchlsmth](https://github.com/tlrmchlsmth): カーネルと性能、分散、分離配置
+- [@WoosukKwon](https://github.com/WoosukKwon): プロジェクトリード、エンジンコア
+- [@yaochengji](https://github.com/yaochengji): TPU の統合
+- [@yeqcharlotte](https://github.com/yeqcharlotte): ベンチマーク、Llama モデル
+- [@yewentao256](https://github.com/yewentao256): カーネルと性能
+- [@Yikun](https://github.com/Yikun): 差し替え可能なハードウェアインターフェース
+- [@youkaichao](https://github.com/youkaichao): プロジェクトリード、分散、コンパイル、コミュニティ
+- [@ywang96](https://github.com/ywang96): マルチモーダル、ベンチマーク
+- [@zhuohan123](https://github.com/zhuohan123): プロジェクトリード、RL 統合、数値計算
+- [@zou3519](https://github.com/zou3519): コンパイル
+- [@BoyuanFeng](https://github.com/BoyuanFeng): コンパイル、CUDA graph
+- [@xuechendi](https://github.com/xuechendi): Intel CPU/XPU の統合、KV コネクタ
 
-### Emeritus Committers
+### 名誉コミッター { #emeritus-committers }
 
-Committers who have contributed to vLLM significantly in the past (thank you!) but no longer active:
+過去に vLLM へ大きく貢献してくれた（ありがとうございます）ものの、現在は活動していないコミッターです。
 
-- [@andoorve](https://github.com/andoorve): Pipeline parallelism
-- [@cadedaniel](https://github.com/cadedaniel): Speculative decoding
-- [@comaniac](https://github.com/comaniac): KV cache management, pipeline parallelism
-- [@LiuXiaoxuanPKU](https://github.com/LiuXiaoxuanPKU): Speculative decoding
+- [@andoorve](https://github.com/andoorve): パイプライン並列
+- [@cadedaniel](https://github.com/cadedaniel): 投機的デコーディング
+- [@comaniac](https://github.com/comaniac): KV キャッシュ管理、パイプライン並列
+- [@LiuXiaoxuanPKU](https://github.com/LiuXiaoxuanPKU): 投機的デコーディング
 - [@pcmoritz](https://github.com/pcmoritz): MoE
-- [@rkooo567](https://github.com/rkooo567): Chunked prefill
-- [@sroy745](https://github.com/sroy745): Speculative decoding
-- [@Yard1](https://github.com/Yard1): kernels and performance
-- [@zhisbug](https://github.com/zhisbug): Arctic models, distributed
+- [@rkooo567](https://github.com/rkooo567): チャンク化プレフィル
+- [@sroy745](https://github.com/sroy745): 投機的デコーディング
+- [@Yard1](https://github.com/Yard1): カーネルと性能
+- [@zhisbug](https://github.com/zhisbug): Arctic モデル、分散
 
-## Area Owners
+## 領域オーナー { #area-owners }
 
-This section breaks down the active committers by vLLM components and lists the area owners.
-If you have PRs touching the area, please feel free to ping the area owner for review.
+このセクションでは、現役コミッターを vLLM のコンポーネント別に整理し、各領域のオーナーを示します。その領域に触れる PR がある場合は、遠慮なく領域オーナーにレビューを依頼してください。
 
-### Engine Core
+### エンジンコア { #engine-core }
 
-- Scheduler: the core vLLM engine loop scheduling requests to next batch
+- スケジューラ: 次のバッチにリクエストを割り当てる vLLM エンジンの中核ループ
     - @WoosukKwon, @robertgshaw2-redhat, @njhill, @heheda12345
-- KV Cache Manager: memory management layer within scheduler maintaining KV cache logical block data
+- KV キャッシュマネージャー: KV キャッシュの論理ブロックデータを管理する、スケジューラ内のメモリ管理層
     - @heheda12345, @WoosukKwon
-- AsyncLLM: the zmq based protocol hosting engine core and making it accessible for entrypoints
+- AsyncLLM: エンジンコアをホストし、エントリポイントから利用できるようにする ZMQ ベースのプロトコル
     - @robertgshaw2-redhat, @njhill, @russellb
-- ModelRunner, Executor, Worker: the abstractions for engine wrapping model implementation
+- ModelRunner / Executor / Worker: モデル実装をラップするエンジン側の抽象
     - @WoosukKwon, @tlrmchlsmth, @heheda12345, @LucasWilkinson, @ProExpertProg, @MatthewBonanni
-- KV Connector: Connector interface and implementation for KV cache offload and transfer
+- KV コネクタ: KV キャッシュのオフロードと転送のためのコネクタのインターフェースと実装
     - @robertgshaw2-redhat, @njhill, @KuntaiDu, @NickLucche, @ApostaC
-- Distributed, Parallelism, Process Management: Process launchers managing each worker, and assign them to the right DP/TP/PP/EP ranks
+- 分散 / 並列 / プロセス管理: 各ワーカーを管理し、適切な DP/TP/PP/EP のランクに割り当てるプロセスランチャー
     - @youkaichao, @njhill, @WoosukKwon, @ruisearch42
-- Collectives: the usage of nccl and other communication libraries/kernels
+- 集団通信: NCCL などの通信ライブラリ / カーネルの利用
     - @tlrmchlsmth, @youkaichao
-- Multimodality engine and memory management: core scheduling and memory management concerning vision, audio, and video inputs.
+- マルチモーダルのエンジンとメモリ管理: 画像・音声・動画の入力に関わるスケジューリングとメモリ管理
     - @ywang96, @DarkLight1337
 
-### Model Implementations
+### モデル実装 { #model-implementations }
 
-- Model Interface: The `nn.Module` interface and implementation for various models
+- モデルインターフェース: 各種モデルの `nn.Module` インターフェースと実装
     - @zhuohan123, @mgoin, @simon-mo, @houseroad, @ywang96 (multimodality), @jeejeelee (lora)
-- Logits Processors / Sampler: The provided sampler class and pluggable logits processors
+- Logits Processor / Sampler: 提供されるサンプラークラスと差し替え可能な logits processor
     - @njhill, @houseroad, @22quinn
-- Custom Layers: Utility layers in vLLM such as rotary embedding and rms norms
+- カスタム層: rotary embedding や RMS norm など、vLLM のユーティリティ層
     - @ProExpertProg
-- Attention: Attention interface for paged attention
+- Attention: paged attention のための Attention インターフェース
     - @WoosukKwon, @LucasWilkinson, @heheda12345, @MatthewBonanni
-- FusedMoE: FusedMoE kernel, Modular kernel framework, EPLB
+- FusedMoE: FusedMoE カーネル、モジュラーカーネルのフレームワーク、EPLB
     - @tlrmchlsmth
-- Quantization: Various quantization config, weight loading, and kernel.
+- 量子化: 各種の量子化設定、重みの読み込み、カーネル
     - @mgoin, @Isotr0py, @yewentao256
-- Custom quantized GEMM kernels (cutlass_scaled_mm, marlin, machete)
+- カスタムの量子化 GEMM カーネル（cutlass_scaled_mm、marlin、machete）
     - @tlrmchlsmth, @LucasWilkinson
-- Multi-modal Input Processing: Components that load and process image/video/audio data into feature tensors
+- マルチモーダル入力の処理: 画像 / 動画 / 音声のデータを読み込み、特徴テンソルに変換するコンポーネント
     - @DarkLight1337, @ywang96, @Isotr0py
-- torch compile: The torch.compile integration in vLLM, custom passes & transformations
+- torch compile: vLLM における torch.compile の統合、カスタムパスと変換
     - @ProExpertProg, @zou3519, @youkaichao, @BoyuanFeng
-- State space models: The state space models implementation in vLLM
+- 状態空間モデル: vLLM における状態空間モデルの実装
     - @tdoublep, @tlrmchlsmth
-- Reasoning and tool calling parsers
+- 推論およびツール呼び出しのパーサー
     - @chaunceyjiang, @aarnphm, @sfeng33, @bbrowning
 
-### Entrypoints
+### エントリポイント { #entrypoints }
 
-- LLM Class: The LLM class for offline inference
+- LLM クラス: オフライン推論のための LLM クラス
     - @DarkLight1337
-- API Server: The OpenAI-compatible API server
+- API サーバー: OpenAI 互換の API サーバー
     - @DarkLight1337, @njhill, @aarnphm, @simon-mo, @heheda12345 (Responses API)
-- Rust Frontend: The experimental API server in Rust
+- Rust フロントエンド: Rust による実験的な API サーバー
     - @BugenZhao, @njhill
-- Batch Runner: The OpenAI-compatible batch runner
+- バッチランナー: OpenAI 互換のバッチランナー
     - @simon-mo
 
-### Features
+### 機能 { #features }
 
-- Spec Decode: Covers model definition, attention, sampler, and scheduler related to n-grams, EAGLE, and MTP.
+- 投機的デコーディング: n-gram、EAGLE、MTP に関わるモデル定義、Attention、サンプラー、スケジューラ
     - @WoosukKwon, @benchislett, @luccafong, @MatthewBonanni
-- Structured Output: The structured output implementation
+- 構造化出力: 構造化出力の実装
     - @russellb, @aarnphm
-- RL: The RL related features such as collective rpc, sleep mode, etc.
+- RL: collective rpc やスリープモードなど、RL 関連の機能
     - @youkaichao, @zhuohan123, @22quinn
 - LoRA: @jeejeelee
-- Observability: Metrics and Logging
+- オブザーバビリティ: メトリクスとロギング
     - @markmc, @robertgshaw2-redhat, @simon-mo
 
-### Code Base
+### コードベース { #code-base }
 
-- Config: Configuration registration and parsing
+- 設定: 設定の登録と解析
     - @hmellor
-- Documentation: @hmellor, @DarkLight1337, @simon-mo
-- Benchmarks: @ywang96, @simon-mo
-- CI, Build, Release Process: @khluu, @njhill, @simon-mo
-- Security: @russellb
+- ドキュメント: @hmellor, @DarkLight1337, @simon-mo
+- ベンチマーク: @ywang96, @simon-mo
+- CI・ビルド・リリースプロセス: @khluu, @njhill, @simon-mo
+- セキュリティ: @russellb
 
-### External Kernels Integration
+### 外部カーネルの統合 { #external-kernels-integration }
 
 - FlashAttention: @LucasWilkinson, @MatthewBonanni
 - FlashInfer: @LucasWilkinson, @mgoin, @WoosukKwon, @MatthewBonanni
-- Blackwell Kernels: @mgoin, @yewentao256
+- Blackwell 向けカーネル: @mgoin, @yewentao256
 - DeepEP/DeepGEMM: @mgoin, @yewentao256
 
-### Integrations
+### 各種統合 { #integrations }
 
 - Hugging Face: @hmellor, @Isotr0py
 - Ray: @ruisearch42
 - NIXL: @robertgshaw2-redhat, @NickLucche
 
-### Collaboration with Model Vendors
+### モデルベンダーとの協業 { #collaboration-with-model-vendors }
 
 - gpt-oss: @heheda12345, @simon-mo, @zhuohan123
 - Llama: @luccafong
 - Qwen: @sighingnow
 - Mistral: @patrickvonplaten
 
-### Hardware
+### ハードウェア { #hardware }
 
-- Plugin Interface: @youkaichao, @Yikun
+- プラグインインターフェース: @youkaichao, @Yikun
 - NVIDIA GPU: @pavanimajety
 - AMD GPU: @gshtras, @tjtanaa
 - Intel CPU/GPU: @jikunshang, @bigPYJ1151, @xuechendi
 - Google TPU: @yaochengji
 
-### Ecosystem Projects
+### エコシステムのプロジェクト { #ecosystem-projects }
 
-- Ascend NPU: [@wangxiyuan](https://github.com/wangxiyuan) and [see more details](https://vllm-ascend.readthedocs.io/en/latest/community/contributors.html#maintainers)
-- Intel Gaudi HPU [@xuechendi](https://github.com/xuechendi) and [@kzawora-intel](https://github.com/kzawora-intel)
-- Semantic Router: [@xunzhuo](https://github.com/xunzhuo), [@rootfs](https://github.com/rootfs) and [see more details](https://vllm-semantic-router.com/community/team)
+- Ascend NPU: [@wangxiyuan](https://github.com/wangxiyuan)、[詳細はこちら](https://vllm-ascend.readthedocs.io/en/latest/community/contributors.html#maintainers)
+- Intel Gaudi HPU: [@xuechendi](https://github.com/xuechendi)、[@kzawora-intel](https://github.com/kzawora-intel)
+- Semantic Router: [@xunzhuo](https://github.com/xunzhuo)、[@rootfs](https://github.com/rootfs)、[詳細はこちら](https://vllm-semantic-router.com/community/team)

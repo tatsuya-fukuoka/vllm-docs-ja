@@ -1142,13 +1142,17 @@
       "upstream_sha": "36f23109a3c53cdc"
     },
     "governance/committers.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1bb588417e52f223",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "1bb588417e52f223"
     },
     "governance/process.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "304b81305ba6e324",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "304b81305ba6e324"
     },
     "models/extensions/fastsafetensor.md": {

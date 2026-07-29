@@ -1,33 +1,33 @@
-# Governance Process
+# ガバナンスのプロセス { #governance-process }
 
-vLLM's success comes from our strong open source community. We favor informal, meritocratic norms over formal policies. This document clarifies our governance philosophy and practices.
+vLLM の成功は、強力なオープンソースコミュニティによって支えられています。私たちは形式的な方針よりも、非公式で実力主義的な規範を重視します。このドキュメントでは、私たちのガバナンスの考え方と実践を説明します。
 
-## Values
+## 価値観 { #values }
 
-vLLM aims to be the fastest and easiest-to-use LLM inference and serving engine. We stay current with advances, enable innovation, and support diverse models, modalities, and hardware.
+vLLM は、最も高速で最も使いやすい LLM の推論・サービングエンジンであることを目指しています。最新の進歩を取り入れ、イノベーションを可能にし、多様なモデル・モダリティ・ハードウェアをサポートします。
 
-### Design Values
+### 設計上の価値観 { #design-values }
 
-1. **Top performance**: System performance is our top priority. We monitor overheads, optimize kernels, and publish benchmarks. We never leave performance on the table.
-2. **Ease of use**: vLLM must be simple to install, configure, and operate. We provide clear documentation, fast startup, clean logs, helpful error messages, and monitoring guides. Many users fork our code or study it deeply, so we keep it readable and modular.
-3. **Wide coverage**: vLLM supports frontier models and high-performance accelerators. We make it easy to add new models and hardware. vLLM + PyTorch form a simple interface that avoids complexity.
-4. **Production ready**: vLLM runs 24/7 in production. It must be easy to operate and monitor for health issues.
-5. **Extensibility**: vLLM serves as fundamental LLM infrastructure. Our codebase cannot cover every use case, so we design for easy forking and customization.
+1. **卓越した性能**: システム性能を最優先します。オーバーヘッドを監視し、カーネルを最適化し、ベンチマークを公開します。性能を取りこぼしたままにはしません。
+2. **使いやすさ**: vLLM はインストール・設定・運用が簡単でなければなりません。分かりやすいドキュメント、速い起動、見やすいログ、有用なエラーメッセージ、監視のガイドを提供します。多くのユーザーが私たちのコードをフォークしたり深く読み込んだりするため、読みやすくモジュール化された状態を保ちます。
+3. **幅広い対応**: vLLM は最先端のモデルと高性能なアクセラレータをサポートします。新しいモデルやハードウェアを簡単に追加できるようにしています。vLLM と PyTorch は、複雑さを避けたシンプルなインターフェースを形作ります。
+4. **本番運用に耐えること**: vLLM は本番環境で 24 時間 365 日稼働します。運用しやすく、健全性の問題を監視しやすくなければなりません。
+5. **拡張性**: vLLM は LLM の基盤インフラとして機能します。私たちのコードベースがすべてのユースケースを網羅することはできないため、フォークやカスタマイズがしやすいように設計しています。
 
-### Collaboration Values
+### 協働における価値観 { #collaboration-values }
 
-1. **Tightly Knit and Fast-Moving**: Our maintainer team is aligned on vision, philosophy, and roadmap. We work closely to unblock each other and move quickly.
-2. **Individual Merit**: No one buys their way into governance. Committer status belongs to individuals, not companies. We reward contribution, maintenance, and project stewardship.
+1. **緊密で素早い動き**: メンテナーチームはビジョン・哲学・ロードマップを共有しています。互いのブロッカーを取り除きながら密に連携し、素早く動きます。
+2. **個人の実績**: ガバナンスへの参加をお金で買うことはできません。コミッターの地位は企業ではなく個人に帰属します。私たちは貢献・メンテナンス・プロジェクトへの責任ある関与を評価します。
 
-## Project Maintainers
+## プロジェクトのメンテナー { #project-maintainers }
 
-Maintainers form a hierarchy based on sustained, high-quality contributions and alignment with our design philosophy.
+メンテナーは、継続的で質の高い貢献と、私たちの設計哲学との整合性にもとづく階層を形成しています。
 
-### Core Maintainers
+### コアメンテナー { #core-maintainers }
 
-Core Maintainers function like a project planning and decision making committee. In other convention, they might be called a Technical Steering Committee (TSC). In vLLM vocabulary, they are often known as "Project Leads". They meet weekly to coordinate roadmap priorities and allocate engineering resources.
+コアメンテナーは、プロジェクトの計画と意思決定を行う委員会のような役割を担います。他の慣習では技術運営委員会（TSC: Technical Steering Committee）と呼ばれることもあります。vLLM の用語では「プロジェクトリード」と呼ばれることが多いです。彼らは毎週集まり、ロードマップの優先順位を調整し、エンジニアリングリソースを配分します。
 
-**Project Leads:**
+**プロジェクトリード:**
 
 - Woosuk Kwon ([@WoosukKwon](https://github.com/WoosukKwon))
 - Zhuohan Li ([@zhuohan123](https://github.com/zhuohan123))
@@ -42,16 +42,16 @@ Core Maintainers function like a project planning and decision making committee.
 - Ye (Charlotte) Qi ([@yeqcharlotte](https://github.com/yeqcharlotte))
 - Yihua Cheng ([@ApostaC](https://github.com/ApostaC))
 
-**Responsibilities:**
+**責務:**
 
-- Author quarterly roadmap and responsible for each development effort.
-- Making major changes to the technical direction or scope of vLLM and vLLM projects.
-- Defining the project's release strategy.
-- Work with model providers, hardware vendors, and key users of vLLM to ensure the project is on the right track.
+- 四半期ごとのロードマップを執筆し、各開発の取り組みに責任を持つ。
+- vLLM および vLLM 関連プロジェクトの技術的方向性やスコープに関する大きな変更を行う。
+- プロジェクトのリリース戦略を定める。
+- モデル提供者、ハードウェアベンダー、vLLM の主要ユーザーと連携し、プロジェクトが正しい方向に進むようにする。
 
-### Lead Maintainers
+### リードメンテナー { #lead-maintainers }
 
-While Core maintainers assume the day-to-day responsibilities of the project, Lead maintainers are responsible for the overall direction and strategy of the project. The following committee currently shares this role with divided responsibilities:
+コアメンテナーがプロジェクトの日々の責務を担うのに対し、リードメンテナーはプロジェクト全体の方向性と戦略に責任を持ちます。現在、次の委員会が責務を分担しながらこの役割を担っています。
 
 - Woosuk Kwon ([@WoosukKwon](https://github.com/WoosukKwon))
 - Zhuohan Li ([@zhuohan123](https://github.com/zhuohan123))
@@ -59,103 +59,103 @@ While Core maintainers assume the day-to-day responsibilities of the project, Le
 - Kaichao You ([@youkaichao](https://github.com/youkaichao))
 - Robert Shaw ([@robertgshaw2-redhat](https://github.com/robertgshaw2-redhat))
 
-**Responsibilities:**
+**責務:**
 
-- Making decisions where consensus among core maintainers cannot be reached.
-- Adopting changes to the project's technical governance.
-- Organizing the voting process for new committers.
+- コアメンテナーの間で合意に至らない場合に意思決定を行う。
+- プロジェクトの技術ガバナンスの変更を採択する。
+- 新しいコミッターの投票プロセスを取りまとめる。
 
-### Committers and Area Owners
+### コミッターと領域オーナー { #committers-and-area-owners }
 
-Committers have write access and merge rights. They typically have deep expertise in specific areas and help the community.
+コミッターは書き込み権限とマージ権限を持ちます。多くの場合、特定の領域に深い専門性を持ち、コミュニティを支援します。
 
-**Responsibilities:**
+**責務:**
 
-- Reviewing PRs and providing feedback.
-- Addressing issues and questions from the community.
-- Own specific areas of the codebase and development efforts: reviewing PRs, addressing issues, answering questions, improving documentation.
+- PR をレビューし、フィードバックを提供する。
+- コミュニティからの issue や質問に対応する。
+- コードベースと開発の取り組みのうち特定の領域を担当する: PR のレビュー、issue への対応、質問への回答、ドキュメントの改善。
 
-Specially, committers are almost all area owners. They author subsystems, review PRs, refactor code, monitor tests, and ensure compatibility with other areas. All area owners are committers with deep expertise in that area, but not all committers own areas.
+特に、コミッターはほぼ全員が領域オーナーでもあります。サブシステムを設計・実装し、PR をレビューし、コードをリファクタリングし、テストを監視し、他の領域との互換性を担保します。すべての領域オーナーは、その領域に深い専門性を持つコミッターですが、すべてのコミッターが領域を担当しているわけではありません。
 
-For a full list of committers and their respective areas, see the [committers](./committers.md) page.
+コミッターと担当領域の完全な一覧は、[コミッター](./committers.md)のページを参照してください。
 
-#### Committer Proposal Process
+#### コミッターの推薦プロセス { #committer-proposal-process }
 
-Any committer can nominate candidates via our private committer mailing list. The process runs as follows:
+どのコミッターも、非公開のコミッター用メーリングリストを通じて候補者を推薦できます。プロセスは次のとおりです。
 
-1. **Nominate**: A committer sends email to the committer group to nominate a candidate, highlighting the candidate’s contributions (e.g., links to PRs, reviews, RFCs, issues, benchmarks, and adoption evidence) and how they map to the standards below.
-2. **Discuss and vote**: The committer group discusses the nomination, votes, and voices concerns if needed. Shared concerns can stop the process. For concerns, the group discusses clear criteria for the person to be nominated again. Most cases are decided by consensus; in contentious cases, the lead maintainers resolve conflicts and make the decision.
-3. **Feedback period**: After a two-week feedback period (allowing time for any last input or concerns), if no blocking concerns arise and the nominator confirms with lead maintainer group to move forward (via the mailing list or committers slack channel), the nominator sends an invitation to the candidate asking them to open a PR to update their code ownership (e.g., CODEOWNERS and committers list).
-4. **Permissions and onboarding**: In parallel, the lead maintainers assign the necessary permissions in GitHub and add the new member to the committer mailing list, the committer-only Slack channel, and other communications channels as appropriate.
-5. **Finalize**: Once the CODEOWNERS/committer PR is ready and permissions are in place, the PR is merged and the new committer is welcomed.
+1. **推薦**: コミッターがコミッターグループにメールを送り、候補者を推薦します。その際、候補者の貢献（PR、レビュー、RFC、issue、ベンチマーク、採用実績へのリンクなど）と、それが後述の基準にどう合致するかを示します。
+2. **議論と投票**: コミッターグループが推薦について議論し、投票し、必要に応じて懸念を表明します。共有された懸念によってプロセスが止まることもあります。懸念がある場合、グループは再度推薦されるための明確な基準を議論します。ほとんどのケースは合意によって決まりますが、意見が割れる場合はリードメンテナーが対立を解消し、決定を下します。
+3. **フィードバック期間**: 2 週間のフィードバック期間（最後の意見や懸念を出す時間）を経て、ブロックとなる懸念がなく、推薦者がリードメンテナーグループに（メーリングリストまたはコミッターの Slack チャンネルで）前に進めることを確認したら、推薦者は候補者に招待を送り、コードオーナーシップ（CODEOWNERS やコミッター一覧など）を更新する PR を作成するよう依頼します。
+4. **権限付与とオンボーディング**: 並行して、リードメンテナーが GitHub 上で必要な権限を付与し、新しいメンバーをコミッター用メーリングリスト、コミッター専用の Slack チャンネル、その他適切なコミュニケーションチャンネルに追加します。
+5. **確定**: CODEOWNERS / コミッター一覧の PR が準備でき、権限も付与されたら、PR がマージされ、新しいコミッターを迎えます。
 
-Committership is highly selective and merit based. The selection criteria requires:
+コミッターの選出は非常に厳選され、実績にもとづきます。選考基準は次のとおりです。
 
-- **Area expertise**: leading design/implementation of core subsystems, material performance or reliability improvements adopted project‑wide, or accepted RFCs that shape technical direction.
-- **Sustained contributions**: high‑quality merged contributions and reviews across releases, responsiveness to feedback, and stewardship of code health.
-- **Community leadership**: mentoring contributors, triaging issues, improving docs, and elevating project standards.
+- **領域の専門性**: 中核サブシステムの設計 / 実装を主導していること、プロジェクト全体で採用された実質的な性能・信頼性の改善、あるいは技術的方向性を形作る採択済みの RFC。
+- **継続的な貢献**: リリースをまたぐ質の高いマージ済み貢献とレビュー、フィードバックへの応答性、コードの健全性への責任ある関与。
+- **コミュニティにおけるリーダーシップ**: 貢献者のメンタリング、issue のトリアージ、ドキュメントの改善、プロジェクト水準の向上。
 
-To further illustrate, a committer typically satisfies at least two of the following accomplishment patterns:
+さらに具体的には、コミッターは通常、次の実績パターンのうち少なくとも 2 つを満たしています。
 
-- Author of an accepted RFC or design that materially shaped project direction
-- Measurable, widely adopted performance or reliability improvement in core paths
-- Long‑term ownership of a subsystem with demonstrable quality and stability gains
-- Significant cross‑project compatibility or ecosystem enablement work (models, hardware, tooling)
+- プロジェクトの方向性を実質的に形作った、採択済みの RFC または設計の執筆
+- 中核部分における、測定可能で広く採用された性能または信頼性の改善
+- あるサブシステムの長期的な担当と、実証可能な品質・安定性の向上
+- プロジェクト横断の互換性、あるいはエコシステム（モデル、ハードウェア、ツール）を可能にする重要な取り組み
 
-While there isn't a quantitative bar, past committers have:
+定量的な基準があるわけではありませんが、これまでのコミッターは次のような実績を持っています。
 
-- Submitted approximately 30+ PRs of substantial quality and scope
-- Provided high-quality reviews of approximately 10+ substantial external contributor PRs
-- Addressed multiple issues and questions from the community in issues/forums/Slack
-- Led concentrated efforts on RFCs and their implementation, or significant performance or reliability improvements adopted project‑wide
+- 質と規模の点で相当な PR をおよそ 30 件以上提出している
+- 外部貢献者による相当な PR をおよそ 10 件以上、質の高いレビューで支援している
+- issue、フォーラム、Slack でコミュニティからの多数の issue や質問に対応している
+- RFC とその実装、あるいはプロジェクト全体で採用された重要な性能・信頼性の改善を集中的に主導している
 
-### Working Groups
+### ワーキンググループ { #working-groups }
 
-vLLM runs informal working groups such as CI, CI infrastructure, torch compile, and startup UX. These can be loosely tracked via `#sig-` (or `#feat-`) channels in vLLM Slack. Some groups have regular sync meetings.
+vLLM では、CI、CI 基盤、torch compile、起動時の UX などの非公式なワーキンググループが活動しています。これらは vLLM Slack の `#sig-`（または `#feat-`）チャンネルでゆるやかに追えます。定期的な同期ミーティングを行っているグループもあります。
 
-### Advisory Board
+### アドバイザリーボード { #advisory-board }
 
-vLLM project leads consult with an informal advisory board that is composed of model providers, hardware vendors, and ecosystem partners. This manifests as a collaboration channel in Slack and frequent communications.
+vLLM のプロジェクトリードは、モデル提供者、ハードウェアベンダー、エコシステムのパートナーからなる非公式のアドバイザリーボードに相談しています。これは Slack のコラボレーションチャンネルと頻繁なやり取りという形で実現されています。
 
-## Process
+## プロセス { #process }
 
-### Project Roadmap
+### プロジェクトのロードマップ { #project-roadmap }
 
-Project Leads publish quarterly roadmaps as GitHub issues. These clarify current priorities. Unlisted topics aren't excluded but may get less review attention. See [https://roadmap.vllm.ai/](https://roadmap.vllm.ai/).
+プロジェクトリードは、四半期ごとのロードマップを GitHub issue として公開します。これにより現在の優先事項が明確になります。記載のないトピックが除外されるわけではありませんが、レビューの注目度は下がる可能性があります。[https://roadmap.vllm.ai/](https://roadmap.vllm.ai/) を参照してください。
 
-### Decision Making
+### 意思決定 { #decision-making }
 
-We make technical decisions in Slack and GitHub using RFCs and design docs. Discussion may happen elsewhere, but we maintain public records of significant changes: problem statements, rationale, and alternatives considered.
+技術的な意思決定は、RFC や設計ドキュメントを用いて Slack と GitHub 上で行います。議論が別の場所で行われることもありますが、重要な変更については、問題設定・根拠・検討した代替案といった公開記録を残します。
 
-### Merging Code
+### コードのマージ { #merging-code }
 
-Contributors and maintainers often collaborate closely on code changes, especially within organizations or specific areas. Maintainers should give others appropriate review opportunities based on change significance.
+貢献者とメンテナーは、特に同じ組織内や特定の領域において、コード変更で密に協働することがよくあります。メンテナーは、変更の重要度に応じて他の人にも適切なレビュー機会を与えるべきです。
 
-PRs requires at least one committer review and approval. If the code is covered by CODEOWNERS, the PR should be reviewed by the CODEOWNERS. There are cases where the code is trivial or hotfix, the PR can be merged by the lead maintainers directly.
+PR には最低 1 名のコミッターによるレビューと承認が必要です。コードが CODEOWNERS の対象であれば、その CODEOWNERS がレビューすべきです。コードが些細な場合やホットフィックスの場合は、リードメンテナーが直接マージすることもあります。
 
-In case where CI didn't pass due to the failure is not related to the PR, the PR can be merged by the lead maintainers using "force merge" option that overrides the CI checks.
+PR とは無関係な原因で CI が通らなかった場合、リードメンテナーが CI チェックを上書きする「force merge」オプションを使って PR をマージできます。
 
-### AI Assisted Contributions
+### AI を活用した貢献 { #ai-assisted-contributions }
 
-AI tools can accelerate development, but contributors remain fully responsible for all code they submit. Like the Developer Certificate of Origin, this policy centers on accountability: contributors must believe they have the right to submit their contribution under vLLM's open source license, regardless of how the code was created.
+AI ツールは開発を加速できますが、提出したコードのすべてについて貢献者が全面的に責任を負います。Developer Certificate of Origin と同様に、この方針の中心にあるのは説明責任です。コードがどのように作られたかにかかわらず、貢献者は自分の貢献を vLLM のオープンソースライセンスのもとで提出する権利があると確信していなければなりません。
 
-All AI-assisted contributions must meet the same quality, testing, and review standards as any other code. Contributors must review and understand AI-generated code before submission—just make sure it is good code:
+AI を活用した貢献も、他のコードとまったく同じ品質・テスト・レビューの基準を満たす必要があります。貢献者は提出前に AI が生成したコードをレビューし、理解しなければなりません。要は、良いコードであることを確認してください。
 
-- Do not submit "pure agent" PRs. The human submitter is responsible for reviewing all changed lines, validating behavior end-to-end, and running relevant tests.
-- Attribution preserves legal clarity and community trust. Contributors must disclose AI assistance in pull requests and mark commits with appropriate trailers (e.g. `Co-authored-by:`).
-- Avoid one-off "busywork" PRs (single typo, isolated style cleanup, one mutable default fix, etc.). Bundle mechanical cleanups into a clear, systematic scope.
+- 「純粋なエージェント任せ」の PR を提出しないでください。変更されたすべての行をレビューし、エンドツーエンドで挙動を検証し、関連するテストを実行するのは人間の提出者の責任です。
+- 帰属表示は法的な明確さとコミュニティの信頼を保ちます。貢献者は PR で AI の支援を受けたことを開示し、コミットに適切なトレーラー（`Co-authored-by:` など）を付ける必要があります。
+- 単発の「作業のための作業」的な PR（タイポ 1 件、局所的なスタイル修正、可変デフォルト引数 1 件の修正など）は避けてください。機械的な整理は、明確で体系的な範囲にまとめてください。
 
 !!! warning
-    These topics are outlined for agents in [AGENTS.md](../../AGENTS.md) with instructions for how to autonomously implement them.
+    これらのトピックは、エージェント向けに [AGENTS.md](../../AGENTS.md) でも整理されており、自律的に実施するための指示が記載されています。
 
-### Slack
+### Slack { #slack }
 
-Contributors are encouraged to join `#pr-reviews` and `#contributors` channels.
+貢献者は `#pr-reviews` と `#contributors` のチャンネルへの参加を推奨されます。
 
-There are `#sig-` and `#feat-` channels for discussion and coordination around specific topics.
+特定のトピックに関する議論と調整のために `#sig-` と `#feat-` のチャンネルがあります。
 
-The project maintainer group also uses a private channel for high-bandwidth collaboration.
+プロジェクトのメンテナーグループは、密度の高い協働のために非公開チャンネルも使っています。
 
-### Meetings
+### ミーティング { #meetings }
 
-We hold weekly contributor syncs with standup-style updates on progress, blockers, and plans. You can refer to the notes [standup.vllm.ai](https://standup.vllm.ai) for joining instructions.
+進捗・ブロッカー・計画についてスタンドアップ形式で共有する、週次の貢献者同期ミーティングを行っています。参加方法は [standup.vllm.ai](https://standup.vllm.ai) のノートを参照してください。
