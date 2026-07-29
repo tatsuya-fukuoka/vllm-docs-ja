@@ -1,79 +1,52 @@
-# `torch.compile` integration
+# `torch.compile` の統合 { #torchcompile-integration }
 
-In vLLM's V1 architecture, `torch.compile` is enabled by default and is a critical part of the framework. This document gives a simple walk-through example to show how to understand the `torch.compile` usage.
+vLLM の V1 アーキテクチャでは `torch.compile` が既定で有効になっており、フレームワークの重要な構成要素です。このドキュメントでは、`torch.compile` の使われ方を理解するための簡単な例を順を追って説明します。
 
-Throughout the example, we will run a common Llama model, and turn on debug level logging to show all the details. The command to be used is `VLLM_LOGGING_LEVEL=DEBUG vllm serve meta-llama/Llama-3.2-1B`.
+例を通して、一般的な Llama モデルを実行し、詳細をすべて表示するためにデバッグレベルのログを有効にします。使用するコマンドは `VLLM_LOGGING_LEVEL=DEBUG vllm serve meta-llama/Llama-3.2-1B` です。
 
 !!! note
-    For more information and the latest progress of `torch.compile` integration, see this [Blog Post](https://blog.vllm.ai/2025/08/20/torch-compile.html).
+    `torch.compile` の統合に関する詳細と最新の進捗については、この[ブログ記事](https://blog.vllm.ai/2025/08/20/torch-compile.html)を参照してください。
 
-## Compilation Cache
+## コンパイルキャッシュ { #compilation-cache }
 
-In the very verbose logs, we can see:
+非常に詳細なログには、次のような行が見られます。
 
 ```console
 INFO 03-07 03:06:55 [backends.py:409] Using cache directory: ~/.cache/vllm/torch_compile_cache/1517964802/rank_0_0 for vLLM's torch.compile
 ```
 
-vLLM will take all the available factors into consideration, and decide a directory to store all the compilation artifact. This means, you can directly copy the whole `~/.cache/vllm/torch_compile_cache` directory in your deployment scenario to save a great amount of compilation time, and hence accelerating the starting time of the vLLM instance.
+vLLM は利用可能なすべての要素を考慮して、コンパイル成果物を保存するディレクトリを決定します。つまり、デプロイ時に `~/.cache/vllm/torch_compile_cache` ディレクトリ全体をそのままコピーすれば、大幅にコンパイル時間を節約でき、vLLM インスタンスの起動を高速化できます。
 
-The factors considered include:
+考慮される要素は次のとおりです。
 
-- All the related configs (see the `compute_hash` functions in their respective configs in the [config folder](../../vllm/config))
-- PyTorch configs (see the `compute_hash` functions in the [compiler_interface.py](../../vllm/compilation/compiler_interface.py))
-- The model's forward function and the relevant functions called by the forward function (see below)
+- 関連するすべての設定（[config フォルダ](../../vllm/config)内の各設定にある `compute_hash` 関数を参照）
+- PyTorch の設定（[compiler_interface.py](../../vllm/compilation/compiler_interface.py) の `compute_hash` 関数を参照）
+- モデルの forward 関数と、forward 関数から呼ばれる関連関数（下記参照）
 
-With all these factors taken into consideration, usually we can guarantee that the cache is safe to use, and will not cause any unexpected behavior. Therefore, the cache is enabled by default. If you want to debug the compilation process, or if you suspect the cache is causing some issues, you can disable it by setting the environment variable `VLLM_DISABLE_COMPILE_CACHE=1`.
+これらの要素をすべて考慮しているため、通常はキャッシュを安全に利用でき、予期しない挙動が起きることはありません。そのため、キャッシュは既定で有効です。コンパイル処理をデバッグしたい場合や、キャッシュが何らかの問題を引き起こしていると疑われる場合は、環境変数 `VLLM_DISABLE_COMPILE_CACHE=1` を設定して無効にできます。
 
-A unique aspect of vLLM's `torch.compile` integration, is that we guarantee all the compilation finishes before we serve any requests. No requests will trigger new compilations. Otherwise, the engine would be blocked on that request, and the response time will have unexpected spikes.
+vLLM の `torch.compile` 統合に特有の点として、リクエストを受け付ける前にすべてのコンパイルが完了することが保証されています。リクエストが新たなコンパイルを引き起こすことはありません。そうでなければ、エンジンがそのリクエストでブロックされ、応答時間に予期しないスパイクが生じてしまいます。
 
-By default, the cache saves compiled artifacts as binary files. If you would like to interact with the generated code for debugging purposes, set the field `compile_cache_save_format=unpacked` in the compilation config, or omit this and set the env variable `VLLM_COMPILE_CACHE_SAVE_FORMAT=unpacked`.
+既定では、キャッシュはコンパイル成果物をバイナリファイルとして保存します。デバッグのために生成されたコードを直接扱いたい場合は、コンパイル設定の `compile_cache_save_format=unpacked` フィールドを設定するか、これを省略して環境変数 `VLLM_COMPILE_CACHE_SAVE_FORMAT=unpacked` を設定してください。
 
-## Dynamic shapes and vllm guard dropping
+## 動的形状と vLLM における guard の削除 { #dynamic-shapes-and-vllm-guard-dropping }
 
-`torch.compile` is designed to guard on dynamic shapes with no hesitation
-when needed. This contradicts with vLLM's `torch.compile` approach of
-dropping the guards since many of those guards could be material.
+`torch.compile` は、必要に応じてためらいなく動的形状に guard をかけるよう設計されています。これは、そうした guard の多くが実質的な意味を持ちうるにもかかわらず guard を削除する、という vLLM の `torch.compile` の方針と相反します。
 
-`torch.compile` provides two kinds of dynamic shapes: `backed` and `unbacked`.
-`torch.compile` guards on `backed` dynamic shapes and does not provide a
-guarantee that no guards will be added to them. User code, dynamo,
-inductor, and autograd all can add guards. Moreover, for 0/1
-specializations, backed symbols are specialized unconditionally to 0, 1,
-or >=2 even without encountering a branching on those ranges.
+`torch.compile` は 2 種類の動的形状、`backed` と `unbacked` を提供します。
+`torch.compile` は `backed` の動的形状に guard をかけ、guard が追加されないことを保証しません。ユーザーコード、dynamo、inductor、autograd のいずれもが guard を追加し得ます。さらに 0/1 特殊化については、その範囲で分岐に遭遇していなくても、backed のシンボルは無条件に 0、1、あるいは 2 以上へ特殊化されます。
 
-On the contrary, `unbacked` dynamic shapes are guaranteed not to be guarded
-on and are not 0/1 specialized. However, there is a possibility of
-throwing a data dependent error when a branch that requires their value is
-encountered and no explicit unbacked handling is defined. The framework is
-converging to a state where it won't throw DDE but rather pick general
-paths. One downside of using unbacked is missed optimization opportunities
-due to either perf bugs or picking general paths, also using a fixed
-non-example input-based hint (this will be fixed soon with override_hint
-API). An example of picking general paths is assuming input not contiguous
-in functions call contiguous() and reshape() when can't be symbolically proven
-with a change of introducing a clone.
+一方 `unbacked` の動的形状は、guard がかけられないことが保証され、0/1 特殊化もされません。ただし、その値を必要とする分岐に遭遇し、unbacked に対する明示的な処理が定義されていない場合、データ依存エラー（DDE）が送出される可能性があります。フレームワークは、DDE を送出せずに汎用的な経路を選ぶ方向へ収束しつつあります。unbacked を使う欠点としては、性能上のバグや汎用経路の選択によって最適化の機会を逃すこと、また例に依らない固定のヒントを使うこと（これは override_hint API により近く修正される予定です）が挙げられます。汎用経路を選ぶ例としては、シンボリックに証明できない場合に contiguous() や reshape() を呼ぶ関数で入力が連続でないと仮定し、clone を導入する変更を行うことが挙げられます。
 
-`backed_size_oblivious` is a flag that enables treating backed symbols as
-unbacked wherever explicit handling for unbacked is defined. With this
-mode, 0/1 specializations are mostly avoided in framework code and the
-default 0/1 specialization does not happen. However, there is still no
-guarantee that torch.compile won't guard, especially due to user code or
-custom passes. `backed_size_oblivious` is experimental in PyTorch compile
-and could be deprecated. That said, it's a safer option to use than
-`backed` and the probability of reducing performance is lower than
-`unbacked`.
+`backed_size_oblivious` は、unbacked に対する明示的な処理が定義されている箇所で backed のシンボルを unbacked として扱うためのフラグです。このモードでは、フレームワークのコード内で 0/1 特殊化がおおむね回避され、既定の 0/1 特殊化も行われません。ただし、とくにユーザーコードやカスタムパスに起因して torch.compile が guard をかけないという保証は依然としてありません。`backed_size_oblivious` は PyTorch compile では実験的であり、非推奨になる可能性があります。とはいえ `backed` より安全な選択肢であり、性能が落ちる確率は `unbacked` より低くなります。
 
-### Configuring Dynamic Shapes
+### 動的形状の設定 { #configuring-dynamic-shapes }
 
-The `DynamicShapesConfig` allows you to control the dynamic shapes behavior by
-setting the `type` field. You can choose between three modes:
-`BACKED`(default), `UNBACKED` , and `BACKED_SIZE_OBLIVIOUS`.
+`DynamicShapesConfig` の `type` フィールドを設定することで、動的形状の挙動を制御できます。`BACKED`（既定）、`UNBACKED`、`BACKED_SIZE_OBLIVIOUS` の 3 つのモードから選べます。
 
-#### Offline Inference Example (Using LLM class)
+#### オフライン推論の例（LLM クラスを使う場合） { #offline-inference-example-using-llm-class }
 
-When using the `LLM` class for offline inference, you can configure dynamic
-shapes through the `compilation_config` parameter:
+オフライン推論で `LLM` クラスを使う場合、動的形状は `compilation_config` パラメータで設定できます。
 
 ```python
 from vllm import LLM, SamplingParams
@@ -105,10 +78,9 @@ sampling_params = SamplingParams(temperature=0.8, top_p=0.95)
 outputs = llm.generate(prompts, sampling_params)
 ```
 
-#### Online Serving Example (Using vllm serve)
+#### オンラインサービングの例（vllm serve を使う場合） { #online-serving-example-using-vllm-serve }
 
-When using `vllm serve` for online serving, you can configure dynamic shapes
-through the `--compilation-config` flag:
+オンラインサービングで `vllm serve` を使う場合、動的形状は `--compilation-config` フラグで設定できます。
 
 ```bash
 # Example: Using unbacked
@@ -120,23 +92,19 @@ vllm serve meta-llama/Llama-3.2-1B \
 vllm serve meta-llama/Llama-3.2-1B -cc.dynamic_shapes_config.type=unbacked
 ```
 
-#### Choosing the Right Mode
+#### 適切なモードの選び方 { #choosing-the-right-mode }
 
-- **BACKED** (default): Use when you're willing to accept potential unsafe dropping of guards
-for maximal performance. Guard could be unsoundly added and then ignored.
+- **BACKED**（既定）: 最大の性能を得るために、安全でない可能性のある guard の削除を受け入れられる場合に使います。guard が不健全に追加されたうえで無視されることがあります。
 
-- **UNBACKED**  Use when you need the strongest guarantee against guards.
-  This is the most conservative option but may miss some optimization opportunities.
+- **UNBACKED**: guard に対する最も強い保証が必要な場合に使います。最も保守的な選択肢ですが、一部の最適化の機会を逃す可能性があります。
 
-- **BACKED_SIZE_OBLIVIOUS**: Use when you want a balance between avoiding guards
-  and performance. This experimental mode is safer than BACKED but still not as
-  conservative as UNBACKED.
+- **BACKED_SIZE_OBLIVIOUS**: guard の回避と性能のバランスを取りたい場合に使います。この実験的なモードは BACKED より安全ですが、UNBACKED ほど保守的ではありません。
 
-## Python Code Compilation
+## Python コードのコンパイル { #python-code-compilation }
 
-In the very verbose logs, we can see:
+非常に詳細なログには、次のような行が見られます。
 
-??? console "Logs"
+??? console "ログ"
 
       ```text
       DEBUG 03-07 03:06:52 [decorators.py:203] Start compiling function <code object forward at 0x7f08acf40c90, file "xxx/vllm/model_executor/models/llama.py", line 339>
@@ -160,28 +128,28 @@ In the very verbose logs, we can see:
       DEBUG 03-07 03:07:07 [wrapper.py:105] Dynamo transformed code saved to ~/.cache/vllm/torch_compile_cache/1517964802/rank_0_0/transformed_code.py
       ```
 
-This is about the Python code compilation, i.e. graph capture by Dynamo. It tries to trace the function with code `xxx/vllm/model_executor/models/llama.py:339`, which is the `forward` function of the model we compile. During the forward pass, there are also other functions called and inlined by Dynamo, as shown by the logs, including some PyTorch functions from `xxx/torch/nn/modules/module.py` (used by PyTorch `nn.Module`, because module attribute access will trigger a function call), some communication / attention / activation functions from vLLM. All the traced files will be considered when we decide the cache directory to use. This way, any code change in the above files will trigger compilation cache miss, and therefore recompilation.
+これは Python コードのコンパイル、すなわち Dynamo によるグラフキャプチャに関するものです。`xxx/vllm/model_executor/models/llama.py:339` のコードを持つ関数、つまりコンパイル対象モデルの `forward` 関数のトレースを試みます。forward pass の途中では、ログに示されているように、Dynamo によって呼び出され、インライン化される他の関数もあります。これには `xxx/torch/nn/modules/module.py` の PyTorch の関数（PyTorch の `nn.Module` が使うもので、モジュールの属性アクセスが関数呼び出しを引き起こすため）や、vLLM の通信 / attention / 活性化関数などが含まれます。トレースされたファイルはすべて、使用するキャッシュディレクトリの決定時に考慮されます。したがって、これらのファイルのコードを変更するとコンパイルキャッシュがミスし、再コンパイルが行われます。
 
-The result of the Dynamo compilation, is a new function stored in `~/.cache/vllm/torch_compile_cache/1517964802/rank_0_0/transformed_code.py`. Usually, this function unpacks tensors from the module, and then pass it to the traced computation graph. The computation graph is stored in `~/.cache/vllm/torch_compile_cache/1517964802/rank_0_0/computation_graph.py`.
+Dynamo によるコンパイルの結果は、`~/.cache/vllm/torch_compile_cache/1517964802/rank_0_0/transformed_code.py` に保存される新しい関数です。通常この関数は、モジュールからテンソルを取り出し、トレースされた計算グラフに渡します。計算グラフは `~/.cache/vllm/torch_compile_cache/1517964802/rank_0_0/computation_graph.py` に保存されます。
 
-## Computation Graph Processing
+## 計算グラフの処理 { #computation-graph-processing }
 
-The computation graph has shape annotations for every tensor. The inputs are input ids, position ids, weights and buffers from the model, and the outputs are the final hidden states. Note that lm head projection and sampling operations are not considered in the graph.
+計算グラフには、すべてのテンソルに形状の注釈が付いています。入力は input id、position id、モデルの重みとバッファで、出力は最終的な hidden states です。lm head の射影とサンプリング処理はグラフに含まれない点に注意してください。
 
-Most of the inputs to the computation graph has static shape, since they are model weights and buffers, and will not change during the lifetime of the model. Only the input ids and position ids have symbolic shapes, i.e. the shape can change from batch to batch. However, they will share the same symbolic shapes. That is to say, the only changing size to the computation graph, is the batch size (number of tokens processed in the current forward pass).
+計算グラフへの入力のほとんどは静的な形状を持ちます。モデルの重みとバッファであり、モデルの生存期間中に変化しないためです。シンボリックな形状を持つのは input id と position id だけで、これらはバッチごとに形状が変わり得ます。ただし、両者は同じシンボリック形状を共有します。つまり、計算グラフにおいて変化するサイズはバッチサイズ（現在の forward pass で処理されるトークン数）だけです。
 
-The attention operation is complicated, and it needs to interact with kv caches, with complicated shapes. Fortunately, the output of the attention operation just share the same shape as the input query of the attention operation. Therefore, we wrap the whole attention operation into a PyTorch custom op `torch.ops.vllm.unified_attention_with_output`, so that Dynamo will not try to inspect any of the internal operations. This way, although attention operation is complicated, we can still capture the model's computation graph as a full-graph, from Dynamo's perspective.
+attention の処理は複雑で、複雑な形状を持つ KV キャッシュとやり取りする必要があります。幸いなことに、attention の出力は attention の入力 query と同じ形状を持ちます。そこで attention の処理全体を PyTorch のカスタム op `torch.ops.vllm.unified_attention_with_output` にラップし、Dynamo が内部の処理を検査しないようにしています。こうすることで、attention の処理は複雑であっても、Dynamo から見ればモデルの計算グラフをフルグラフとしてキャプチャできます。
 
-The computation graph is further split into pieces, by the `splitting_ops` (usually this is the attention operation). Therefore, in the `~/.cache/vllm/torch_compile_cache/1517964802/rank_0_0/computation_graph.py` file, we can see lots of submodules, each submodule is a piece of graph after splitting:
+計算グラフはさらに `splitting_ops`（通常は attention の処理）によって断片に分割されます。そのため `~/.cache/vllm/torch_compile_cache/1517964802/rank_0_0/computation_graph.py` ファイルには多数のサブモジュールが見られ、各サブモジュールが分割後のグラフの断片に相当します。
 
-- Attention operation itself is a submodule.
-- The part of computation graph, from one attention operation to the next attention operation, is a submodule.
+- attention の処理自体が 1 つのサブモジュールです。
+- ある attention から次の attention までの計算グラフの部分が 1 つのサブモジュールです。
 
-Every submodule can be identified by its index, and will be processed individually.
+各サブモジュールはインデックスで識別でき、個別に処理されます。
 
-## Computation Graph Compilation
+## 計算グラフのコンパイル { #computation-graph-compilation }
 
-In the very verbose logs, we can also see:
+非常に詳細なログには、次のような行も見られます。
 
 ```console
 DEBUG 03-07 03:52:37 [backends.py:134] store the 0-th graph for shape None from inductor via handle ('fpegyiq3v3wzjzphd45wkflpabggdbjpylgr7tta4hj6uplstsiw', '~/.cache/vllm/torch_compile_cache/1517964802/rank_0_0/inductor_cache/iw/ciwzrk3ittdqatuzwonnajywvno3llvjcs2vfdldzwzozn3zi3iy.py')
@@ -191,34 +159,34 @@ DEBUG 03-07 03:52:45 [backends.py:134] store the 15-th graph for shape None from
 DEBUG 03-07 03:52:45 [backends.py:134] store the 16-th graph for shape None from inductor via handle ('fvj3ccoi7m34f3dnr4itmu55mmun44l5xymwhrjlwisylsk7q6jy', '~/.cache/vllm/torch_compile_cache/1517964802/rank_0_0/inductor_cache/tf/ctfftkglj7b4lcttq5cymx6cew372uoauupqn6ldsvpiucavqcjc.py')
 ```
 
-This means the first piece of computation graph (with shape `None` for symbolic shape) is compiled by Inductor (with a key `fpegyiq3v3wzjzphd45wkflpabggdbjpylgr7tta4hj6uplstsiw`). The compiled kernel is stored in  `~/.cache/vllm/torch_compile_cache/1517964802/rank_0_0/inductor_cache/iw/ciwzrk3ittdqatuzwonnajywvno3llvjcs2vfdldzwzozn3zi3iy.py`. You can open the file to see what is the code Inductor finally runs.
+これは、計算グラフの最初の断片（シンボリック形状を表す形状 `None`）が Inductor によってコンパイルされたこと（キーは `fpegyiq3v3wzjzphd45wkflpabggdbjpylgr7tta4hj6uplstsiw`）を意味します。コンパイル済みカーネルは `~/.cache/vllm/torch_compile_cache/1517964802/rank_0_0/inductor_cache/iw/ciwzrk3ittdqatuzwonnajywvno3llvjcs2vfdldzwzozn3zi3iy.py` に保存されます。このファイルを開けば、Inductor が最終的に実行するコードを確認できます。
 
-One more detail: you can see that the 1-th graph and the 15-th graph have the same key, while the 0-th graph and the 16-th graph are different. This is expected, since we split the graph by the attention op, we get 3 unique subgraphs:
+もう 1 つの細かい点として、1 番目のグラフと 15 番目のグラフは同じキーを持ちますが、0 番目と 16 番目のグラフは異なることが分かります。これは想定どおりです。グラフを attention op で分割するため、次の 3 種類のサブグラフが得られます。
 
-- the first layer before attention
-- every middle layer, from one attention operation to the next attention operation
-- the final layer after attention
+- attention より前の最初の層
+- ある attention から次の attention までの中間の各層
+- attention より後の最後の層
 
-If we already have the cache directory (e.g. run the same code for the second time), we will see the following logs:
+すでにキャッシュディレクトリが存在する場合（同じコードを 2 回目に実行する場合など）、次のようなログが表示されます。
 
 ```console
 DEBUG 03-07 04:00:45 [backends.py:86] Directly load the 0-th graph for shape None from inductor via handle ('fpegyiq3v3wzjzphd45wkflpabggdbjpylgr7tta4hj6uplstsiw', '~/.cache/vllm/torch_compile_cache/1517964802/rank_0_0/inductor_cache/iw/ciwzrk3ittdqatuzwonnajywvno3llvjcs2vfdldzwzozn3zi3iy.py')
 ```
 
-This time, Inductor compilation is completely bypassed, and we will load from disk to read the compilation artifact we get from the last time.
+この場合、Inductor によるコンパイルは完全にスキップされ、前回得られたコンパイル成果物をディスクから読み込みます。
 
-The above example just uses Inductor to compile for a general shape (i.e. symbolic shape). We can also use Inductor to compile for some of the specific shapes, for example:
+上記の例では、Inductor は汎用的な形状（すなわちシンボリック形状）向けにコンパイルしているだけです。特定の形状向けにコンパイルさせることもできます。例:
 
 ```bash
 vllm serve meta-llama/Llama-3.2-1B \
   --compilation_config '{"compile_sizes": [1, 2, 4, 8]}'
 ```
 
-Then it will also compile a specific kernel just for batch size `1, 2, 4, 8`. At this time, all of the shapes in the computation graph are static and known, and we will turn on auto-tuning to tune for max performance. This can be slow when you run it for the first time, but the next time you run it, we can directly bypass the tuning and run the tuned kernel.
+この場合、バッチサイズ `1, 2, 4, 8` 専用のカーネルもコンパイルされます。このとき、計算グラフ内のすべての形状が静的かつ既知になるため、最大の性能を目指してオートチューニングが有効になります。初回の実行は時間がかかることがありますが、次回以降はチューニングを省略して、チューニング済みのカーネルを直接実行できます。
 
-When all the shapes are known, `torch.compile` can compare different configs, and often find some better configs to run the kernel. For example, we can see the following log:
+すべての形状が既知であれば、`torch.compile` は複数の設定を比較でき、カーネルを実行するためのより良い設定を見つけられることがよくあります。たとえば、次のようなログが表示されます。
 
-??? console "Logs"
+??? console "ログ"
 
     ```
     AUTOTUNE mm(8x2048, 2048x3072)
@@ -235,27 +203,27 @@ When all the shapes are known, `torch.compile` can compare different configs, an
     SingleProcess AUTOTUNE benchmarking takes 2.0428 seconds and 7.5727 seconds precompiling
     ```
 
-It means, for a matrix multiplication with shape `8x2048x3072`, `torch.compile` tries triton template with various configs, and it is much faster than the default code (which dispatches to cublas library).
+これは、形状 `8x2048x3072` の行列積に対して `torch.compile` がさまざまな設定の triton テンプレートを試し、既定のコード（cublas ライブラリへディスパッチするもの）よりはるかに高速になったことを意味します。
 
-Unfortunately, because auto-tuning takes quite a long time (from seconds to minutes, depending on the model size and the batch size), even though it can be cached for later use, for the sake of user-friendliness, we turn it off by default. If you want to have max performance, it is recommended to try it, by compiling specific shapes.
+残念ながらオートチューニングにはかなりの時間がかかるため（モデルサイズとバッチサイズにもよりますが、数秒から数分）、後で使えるようキャッシュできるとはいえ、使いやすさを優先して既定では無効にしています。最大の性能を求める場合は、特定の形状をコンパイルして試してみることを推奨します。
 
-## Cudagraph Capture
+## CUDA graph のキャプチャ { #cudagraph-capture }
 
-vLLM's V1 architecture uses piecewise cudagraph that aligns with the piecewise compilation. The full computation graph is split as mentioned above, and we only capture the cudagraph for the piece of graph between attention operations (including the first graph before any attention operation, and the last graph after all the attention operation). This is based on a common observation: computation between attentions are usually token-wise and easy to deal with for cudagraph; while the attention operation is non-trivial to be cudagraph compatible. Thus, by running the attention operation in eager mode while the rest operations in cudagraph, we keep the flexibility of the attention operation.
+vLLM の V1 アーキテクチャは、区分的（piecewise）コンパイルに合わせた区分的 CUDA graph を使います。計算グラフ全体は前述のように分割され、attention のあいだのグラフ断片（最初の attention より前のグラフと、すべての attention より後の最後のグラフを含む）についてのみ CUDA graph をキャプチャします。これは一般的な観察にもとづいています。attention 間の計算は通常トークン単位で、CUDA graph にとって扱いやすい一方、attention の処理を CUDA graph 互換にするのは簡単ではありません。そこで attention を eager モードで実行し、それ以外の処理を CUDA graph 内で実行することで、attention の柔軟性を保っています。
 
-The piecewise cudagraph also has fine-grained memory management. The purpose is to only exclude the attention kernel from cudagraph, while keeping all the rest modules and the memory allocation operations in the cudagraph. This is why the attention operation in V1 has the output tensor as the input of the attention.
+区分的 CUDA graph には、きめ細かいメモリ管理も備わっています。その目的は、CUDA graph から attention カーネルだけを除外し、それ以外のモジュールとメモリ確保処理はすべて CUDA graph 内に保つことです。V1 で attention の処理が出力テンソルを attention の入力として受け取っているのは、このためです。
 
-The cudagraphs are captured and managed by the compiler backend, and replayed when the batch size has corresponding cudagraph captured. The caller of the model (model runner) only needs to make sure it manages the input buffers correctly. All of the intermediate buffers are managed automatically by the compiler backend.
+CUDA graph はコンパイラのバックエンドがキャプチャ・管理し、対応する CUDA graph がキャプチャ済みのバッチサイズのときに再生されます。モデルの呼び出し側（model runner）は、入力バッファを正しく管理することだけを保証すればよく、中間バッファはすべてコンパイラのバックエンドが自動的に管理します。
 
-By default, vLLM will try to determine a set of sizes to capture cudagraph. You can also override it using the config `cudagraph_capture_sizes`:
+既定では、vLLM は CUDA graph をキャプチャするサイズの集合を自動的に決定します。設定 `cudagraph_capture_sizes` で上書きすることもできます。
 
 ```bash
 vllm serve meta-llama/Llama-3.2-1B \
   --compilation-config '{"cudagraph_capture_sizes": [1, 2, 4, 8]}'
 ```
 
-Then it will only capture cudagraph for the specified sizes. It can be useful to have fine-grained control over the cudagraph capture.
+この場合、指定したサイズについてのみ CUDA graph がキャプチャされます。CUDA graph のキャプチャを細かく制御したい場合に便利です。
 
-### Full Cudagraph capture
+### フル CUDA graph のキャプチャ { #full-cudagraph-capture }
 
-It is possible to include attention as part of the cudagraph if using an attention backend that is cudagraph compatible. This can improve performance in some cases such as decode speed for smaller models or MOEs. See [CUDA Graphs](cuda_graphs.md) for more details.
+CUDA graph 互換の attention バックエンドを使っている場合は、attention も CUDA graph に含められます。小さめのモデルや MoE のデコード速度など、場合によっては性能が向上します。詳細は [CUDA Graphs](cuda_graphs.md) を参照してください。

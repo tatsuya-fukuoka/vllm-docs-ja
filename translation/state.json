@@ -739,8 +739,10 @@
       "upstream_sha": "67ee4e2b7bc23d40"
     },
     "design/torch_compile.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "45cb6b8664e99261",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "45cb6b8664e99261"
     },
     "design/torch_compile_multimodal.md": {
