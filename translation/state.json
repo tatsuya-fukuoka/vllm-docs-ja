@@ -759,8 +759,10 @@
       "upstream_sha": "c22709b9b2b6133a"
     },
     "design/vllm_ir.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "18948afec175985f",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "18948afec175985f"
     },
     "features/README.md": {
