@@ -1175,8 +1175,10 @@
       "upstream_sha": "1bcf504d2c28d4f1"
     },
     "getting_started/installation/gpu.rocm.inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "82a8fbed3d0b03e8",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "82a8fbed3d0b03e8"
     },
     "getting_started/installation/gpu.xpu.inc.md": {

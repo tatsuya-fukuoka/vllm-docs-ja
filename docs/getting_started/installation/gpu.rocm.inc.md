@@ -1,55 +1,55 @@
 <!-- markdownlint-disable MD041 MD051 -->
 --8<-- [start:installation]
 
-vLLM supports AMD GPUs with ROCm 6.3 or above. Pre-built wheels are available for ROCm 7.0 and ROCm 7.2.1.
+vLLM は ROCm 6.3 以降の AMD GPU をサポートします。ビルド済み wheel は ROCm 7.0 と ROCm 7.2.1 向けに提供されています。
 
-#### Prebuilt Wheels
+#### ビルド済み wheel
 
-| ROCm Variant | Python Version | ROCm Version | glibc Requirement | Supported Versions |
+| ROCm バリアント | Python バージョン | ROCm バージョン | glibc 要件 | 対応バージョン |
 | ------------ | -------------- | ------------ | ----------------- | ------------------ |
-| `rocm700` | 3.12 | 7.0 | >= 2.35 | `0.14.0` to `0.18.0` |
-| `rocm721` | 3.12 | 7.2.1 | >= 2.35 | Nightly releases after commit `171775f306a333a9cf105bfd533bf3e113d401d9` |
+| `rocm700` | 3.12 | 7.0 | >= 2.35 | `0.14.0` 〜 `0.18.0` |
+| `rocm721` | 3.12 | 7.2.1 | >= 2.35 | コミット `171775f306a333a9cf105bfd533bf3e113d401d9` 以降の nightly リリース |
 
 --8<-- [end:installation]
 --8<-- [start:requirements]
 
-- GPU: MI200s (gfx90a), MI300 (gfx942), MI350 (gfx950), Radeon RX 7900 series (gfx1100/1101), Radeon RX 9000 series (gfx1200/1201), Ryzen AI MAX / AI 300 Series (gfx1151/1150)
-- ROCm 6.3 or above
-    - MI350 requires ROCm 7.0 or above
-    - Ryzen AI MAX / AI 300 Series requires ROCm 7.0.2 or above
+- GPU: MI200 シリーズ（gfx90a）、MI300（gfx942）、MI350（gfx950）、Radeon RX 7900 シリーズ（gfx1100/1101）、Radeon RX 9000 シリーズ（gfx1200/1201）、Ryzen AI MAX / AI 300 シリーズ（gfx1151/1150）
+- ROCm 6.3 以降
+    - MI350 には ROCm 7.0 以降が必要です
+    - Ryzen AI MAX / AI 300 シリーズには ROCm 7.0.2 以降が必要です
 
 --8<-- [end:requirements]
 --8<-- [start:set-up-using-python]
 
-The vLLM wheel bundles PyTorch and all required dependencies, and you should use the included PyTorch for compatibility. Because vLLM compiles many ROCm kernels to ensure a validated, high‑performance stack, the resulting binaries may not be compatible with other ROCm or PyTorch builds.
-If you need a different ROCm version or want to use an existing PyTorch installation, you’ll need to build vLLM from source.  See [below](#build-wheel-from-source) for more details.
+vLLM の wheel には PyTorch と必要な依存関係がすべて同梱されており、互換性のためには同梱の PyTorch を使うべきです。vLLM は検証済みで高性能なスタックを実現するために多数の ROCm カーネルをコンパイルするため、生成されるバイナリは他の ROCm や PyTorch のビルドと互換でない場合があります。
+別の ROCm バージョンが必要な場合や、既存の PyTorch インストールを使いたい場合は、vLLM をソースからビルドする必要があります。詳細は[以下](#build-wheel-from-source)を参照してください。
 
 --8<-- [end:set-up-using-python]
 --8<-- [start:pre-built-wheels]
 
-!!! warning "Python 3.12 required for ROCm wheels"
+!!! warning "ROCm 版 wheel には Python 3.12 が必要です"
 
-    ROCm pre-built wheels are only available for **Python 3.12**. If you are using a different Python version (e.g. 3.11 or 3.13), the installer **will silently fall back** to the CUDA wheel from PyPI, which will fail on AMD GPUs with errors like `libcudart.so: cannot open shared object file`.
+    ROCm のビルド済み wheel は **Python 3.12** 向けのみ提供されています。別の Python バージョン（3.11 や 3.13 など）を使っている場合、インストーラは**警告なく** PyPI の CUDA 版 wheel にフォールバックし、AMD GPU では `libcudart.so: cannot open shared object file` のようなエラーで失敗します。
 
-    To check your Python version: `python3 --version`
+    Python のバージョンは `python3 --version` で確認できます。
 
-    If you need Python 3.12, you can create an isolated environment with `uv`:
+    Python 3.12 が必要な場合は、`uv` で隔離された環境を作成できます。
 
     ```bash
     uv venv --python 3.12 --seed --managed-python
     source .venv/bin/activate
     ```
 
-To install the latest version of vLLM for Python 3.12, ROCm 7.0 and `glibc >= 2.35`.
+Python 3.12、ROCm 7.0、`glibc >= 2.35` の環境に最新版の vLLM をインストールするには次のようにします。
 
 ```bash
 uv pip install vllm --extra-index-url https://wheels.vllm.ai/rocm/ --upgrade
 ```
 
 !!! tip
-    You can find out about which ROCm version the latest vLLM supports by checking the `vllm` package in index in extra-index-url <https://wheels.vllm.ai/rocm/> at [https://wheels.vllm.ai/rocm/vllm](https://wheels.vllm.ai/rocm/vllm) .
+    最新の vLLM がどの ROCm バージョンをサポートしているかは、extra-index-url <https://wheels.vllm.ai/rocm/> のインデックスにある `vllm` パッケージ（[https://wheels.vllm.ai/rocm/vllm](https://wheels.vllm.ai/rocm/vllm)）で確認できます。
 
-    Another approach is that you can use this following commands to automatically extract the wheel variants:
+    別の方法として、次のコマンドで wheel のバリアントを自動的に抽出することもできます。
 
     ```bash
     # automatically extract the available rocm variant
@@ -63,7 +63,7 @@ uv pip install vllm --extra-index-url https://wheels.vllm.ai/rocm/ --upgrade
     echo $VLLM_VERSION
     ```
 
-To install a specific version and ROCm variant of vLLM wheel.
+特定のバージョンと ROCm バリアントの vLLM wheel をインストールするには次のようにします。
 
 ```bash
 # version without the `v`
@@ -73,23 +73,23 @@ uv pip install vllm==${VLLM_VERSION} --extra-index-url https://wheels.vllm.ai/ro
 uv pip install vllm==0.18.0 --extra-index-url https://wheels.vllm.ai/rocm/0.18.0/rocm700
 ```
 
-!!! warning "Caveats for using `pip`"
+!!! warning "`pip` を使う場合の注意点"
 
-    We recommend leveraging `uv` to install the vLLM wheel. Using `pip` to install from custom indices is cumbersome because `pip` combines packages from `--extra-index-url` and the default index, choosing only the latest version. This makes it difficult to install a wheel from a custom index unless exact versions of all packages are specified. In contrast, `uv` gives the extra index [higher priority than the default index](https://docs.astral.sh/uv/pip/compatibility/#packages-that-exist-on-multiple-indexes).
+    vLLM の wheel のインストールには `uv` の利用を推奨します。`pip` はカスタムインデックスからのインストールが煩雑です。`pip` は `--extra-index-url` と既定のインデックスのパッケージをまとめて扱い、最新バージョンのみを選ぶためです。そのため、すべてのパッケージの正確なバージョンを指定しない限り、カスタムインデックスから wheel をインストールするのは困難です。これに対して `uv` は、追加インデックスに[既定のインデックスより高い優先度](https://docs.astral.sh/uv/pip/compatibility/#packages-that-exist-on-multiple-indexes)を与えます。
 
-    If you insist on using `pip`, you need to specify the exact vLLM version in the package name and provide the custom index URL `https://wheels.vllm.ai/rocm/${VLLM_VERSION}/${VLLM_ROCM_VARIANT}` via `--extra-index-url`.
+    どうしても `pip` を使いたい場合は、パッケージ名で vLLM のバージョンを正確に指定し、`--extra-index-url` でカスタムインデックス URL `https://wheels.vllm.ai/rocm/${VLLM_VERSION}/${VLLM_ROCM_VARIANT}` を指定する必要があります。
 
     ```bash
     pip install vllm==0.18.0+rocm700 --extra-index-url https://wheels.vllm.ai/rocm/0.18.0/rocm700
     ```
 
-#### Install the latest code
+#### 最新のコードをインストールする
 
-LLM inference is a fast-evolving field, and the latest code may contain bug fixes, performance improvements, and new features that are not released yet. To allow users to try the latest code without waiting for the next release, vLLM provides wheels for every commit since commit `171775f306a333a9cf105bfd533bf3e113d401d9` on <https://wheels.vllm.ai/rocm/nightly/>. The custom index to be used is `https://wheels.vllm.ai/rocm/nightly/${VLLM_ROCM_VARIANT}`
+LLM 推論は急速に進化している分野であり、最新のコードには未リリースのバグ修正・性能改善・新機能が含まれている場合があります。次のリリースを待たずに最新のコードを試せるよう、vLLM はコミット `171775f306a333a9cf105bfd533bf3e113d401d9` 以降のすべてのコミットについて、<https://wheels.vllm.ai/rocm/nightly/> で wheel を提供しています。使用するカスタムインデックスは `https://wheels.vllm.ai/rocm/nightly/${VLLM_ROCM_VARIANT}` です。
 
-**NOTE:** The first ROCm Variant that supports nightly wheel is ROCm 7.2.1
+**注:** nightly の wheel をサポートする最初の ROCm バリアントは ROCm 7.2.1 です。
 
-To install from latest nightly index, run:
+最新の nightly インデックスからインストールするには、次を実行します。
 
 ```bash
 # automatically extract the available rocm variant
@@ -104,9 +104,9 @@ uv pip install --pre vllm \
     --index-strategy unsafe-best-match
 ```
 
-##### Install specific revisions
+##### 特定のリビジョンをインストールする
 
-If you want to access the wheels for previous commits (e.g. to bisect the behavior change, performance regression), you can specify the commit hash in the URL, example:
+過去のコミットの wheel を利用したい場合（挙動の変化や性能リグレッションを二分探索するときなど）は、URL にコミットハッシュを指定できます。例:
 
 ```bash
 export VLLM_COMMIT=5b8c30d62b754b575e043ce2fc0dcbf8a64f6306
@@ -127,11 +127,11 @@ uv pip install vllm==${VLLM_VERSION} \
   --index-strategy unsafe-best-match
 ```
 
-!!! warning "`pip` caveat"
+!!! warning "`pip` に関する注意点"
 
-    Using `pip` to install from nightly indices is _not supported_, because `pip` combines packages from `--extra-index-url` and the default index, choosing only the latest version, which makes it difficult to install a development version prior to the released version. In contrast, `uv` gives the extra index [higher priority than the default index](https://docs.astral.sh/uv/pip/compatibility/#packages-that-exist-on-multiple-indexes).
+    nightly インデックスからのインストールに `pip` を使うことは_サポートされていません_。`pip` は `--extra-index-url` と既定のインデックスのパッケージをまとめて扱い、最新バージョンのみを選ぶため、リリース版より前の開発版をインストールするのが困難だからです。これに対して `uv` は、追加インデックスに[既定のインデックスより高い優先度](https://docs.astral.sh/uv/pip/compatibility/#packages-that-exist-on-multiple-indexes)を与えます。
 
-    If you insist on using `pip`, you need to specify the exact vLLM version in the package name and provide the custom index URL (which can be obtained from the web page).
+    どうしても `pip` を使いたい場合は、パッケージ名で vLLM のバージョンを正確に指定し、カスタムインデックス URL（Web ページから取得できます）を指定する必要があります。
 
     ```bash
     export VLLM_COMMIT=5b8c30d62b754b575e043ce2fc0dcbf8a64f6306
@@ -155,16 +155,16 @@ uv pip install vllm==${VLLM_VERSION} \
 --8<-- [start:build-wheel-from-source]
 
 !!! tip
-    - If you found that the following installation step does not work for you, please refer to [docker/Dockerfile.rocm_base](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.rocm_base). Dockerfile is a form of installation steps.
+    - 以下のインストール手順がうまくいかない場合は、[docker/Dockerfile.rocm_base](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.rocm_base) を参照してください。Dockerfile もインストール手順の一形態です。
 
-0. Install prerequisites (skip if you are already in an environment/docker with the following installed):
+0. 前提条件をインストールします（以下がインストール済みの環境 / Docker をすでに使っている場合はスキップしてください）。
 
     - [ROCm](https://rocm.docs.amd.com/en/latest/deploy/linux/index.html)
     - [PyTorch](https://pytorch.org/)
 
-    For installing PyTorch, you can start from a fresh docker image, e.g, `rocm/pytorch:rocm7.0_ubuntu22.04_py3.10_pytorch_release_2.8.0`, `rocm/pytorch-nightly`. If you are using docker image, you can skip to Step 3.
+    PyTorch のインストールは、`rocm/pytorch:rocm7.0_ubuntu22.04_py3.10_pytorch_release_2.8.0` や `rocm/pytorch-nightly` などのまっさらな Docker イメージから始められます。Docker イメージを使う場合は、ステップ 3 まで飛ばして構いません。
 
-    Alternatively, you can install PyTorch using PyTorch wheels. You can check PyTorch installation guide in PyTorch [Getting Started](https://pytorch.org/get-started/locally/). Example:
+    あるいは、PyTorch の wheel を使ってインストールすることもできます。手順は PyTorch の [Getting Started](https://pytorch.org/get-started/locally/) を参照してください。例:
 
     ```bash
     # Install PyTorch
@@ -172,9 +172,9 @@ uv pip install vllm==${VLLM_VERSION} \
     pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/nightly/rocm7.0
     ```
 
-1. Install [Triton for ROCm](https://github.com/ROCm/triton.git)
+1. [ROCm 向け Triton](https://github.com/ROCm/triton.git) をインストールします。
 
-    Install ROCm's Triton following the instructions from [ROCm/triton](https://github.com/ROCm/triton.git)
+    [ROCm/triton](https://github.com/ROCm/triton.git) の手順に従って ROCm 版 Triton をインストールします。
 
     ```bash
     python3 -m pip install ninja cmake wheel pybind11
@@ -189,14 +189,14 @@ uv pip install vllm==${VLLM_VERSION} \
     ```
 
     !!! note
-        - The validated `$TRITON_BRANCH` can be found in the [docker/Dockerfile.rocm_base](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.rocm_base).
-        - If you see HTTP issue related to downloading packages during building triton, please try again as the HTTP error is intermittent.
+        - 検証済みの `$TRITON_BRANCH` は [docker/Dockerfile.rocm_base](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.rocm_base) で確認できます。
+        - triton のビルド中にパッケージのダウンロードに関する HTTP エラーが出た場合は、一時的なものなので再試行してください。
 
-2. Optionally, if you choose to use CK flash attention, you can install [flash attention for ROCm](https://github.com/Dao-AILab/flash-attention.git)
+2. 任意: CK flash attention を使う場合は、[ROCm 向け flash attention](https://github.com/Dao-AILab/flash-attention.git) をインストールできます。
 
-    Install ROCm's flash attention (v2.8.0) following the instructions from [ROCm/flash-attention](https://github.com/Dao-AILab/flash-attention#amd-rocm-support)
+    [ROCm/flash-attention](https://github.com/Dao-AILab/flash-attention#amd-rocm-support) の手順に従って ROCm 版 flash attention（v2.8.0）をインストールします。
 
-    For example, for ROCm 7.0, suppose your gfx arch is `gfx942`. To get your gfx architecture, run `rocminfo |grep gfx`.
+    たとえば ROCm 7.0 で、gfx アーキテクチャが `gfx942` の場合は次のようにします。gfx アーキテクチャは `rocminfo |grep gfx` で確認できます。
 
     ```bash
     git clone https://github.com/Dao-AILab/flash-attention.git
@@ -209,9 +209,9 @@ uv pip install vllm==${VLLM_VERSION} \
     ```
 
     !!! note
-        - The validated `$FA_BRANCH` can be found in the [docker/Dockerfile.rocm_base](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.rocm_base).
+        - 検証済みの `$FA_BRANCH` は [docker/Dockerfile.rocm_base](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.rocm_base) で確認できます。
 
-3. Optionally, if you choose to build AITER yourself to use a certain branch or commit, you can build AITER using the following steps:
+3. 任意: 特定のブランチやコミットを使うために AITER を自分でビルドする場合は、次の手順でビルドできます。
 
     ```bash
     python3 -m pip uninstall -y aiter
@@ -223,10 +223,10 @@ uv pip install vllm==${VLLM_VERSION} \
     ```
 
     !!! note
-        - You will need to config the `$AITER_BRANCH_OR_COMMIT` for your purpose.
-        - The validated `$AITER_BRANCH_OR_COMMIT` can be found in the [docker/Dockerfile.rocm_base](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.rocm_base).
+        - 目的に応じて `$AITER_BRANCH_OR_COMMIT` を設定する必要があります。
+        - 検証済みの `$AITER_BRANCH_OR_COMMIT` は [docker/Dockerfile.rocm_base](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.rocm_base) で確認できます。
 
-4. Optionally, if you want to use MORI for EP or PD disaggregation, you can install [MORI](https://github.com/ROCm/mori) using the following steps:
+4. 任意: EP や PD 分離のために MORI を使いたい場合は、次の手順で [MORI](https://github.com/ROCm/mori) をインストールできます。
 
     ```bash
     git clone https://github.com/ROCm/mori.git
@@ -237,12 +237,12 @@ uv pip install vllm==${VLLM_VERSION} \
     ```
 
     !!! note
-        - You will need to config the `$MORI_BRANCH_OR_COMMIT` for your purpose.
-        - The validated `$MORI_BRANCH_OR_COMMIT` can be found in the [docker/Dockerfile.rocm_base](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.rocm_base).
+        - 目的に応じて `$MORI_BRANCH_OR_COMMIT` を設定する必要があります。
+        - 検証済みの `$MORI_BRANCH_OR_COMMIT` は [docker/Dockerfile.rocm_base](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.rocm_base) で確認できます。
 
-5. Build vLLM. For example, vLLM on ROCM 7.0 can be built with the following steps:
+5. vLLM をビルドします。たとえば ROCm 7.0 上の vLLM は次の手順でビルドできます。
 
-    ???+ console "Commands"
+    ???+ console "コマンド"
 
         ```bash
         pip install --upgrade pip
@@ -266,23 +266,23 @@ uv pip install vllm==${VLLM_VERSION} \
         python3 setup.py develop
         ```
 
-    This may take 5-10 minutes. Currently, `pip install .` does not work for ROCm when installing vLLM from source.
+    これには 5〜10 分ほどかかることがあります。現時点では、ROCm 環境でソースから vLLM をインストールする際に `pip install .` は動作しません。
 
     !!! tip
-        - The ROCm version of PyTorch, ideally, should match the ROCm driver version.
+        - PyTorch の ROCm バージョンは、理想的には ROCm ドライバのバージョンと一致させるべきです。
 
 !!! tip
-    - For MI300x (gfx942) users, to achieve optimal performance, please refer to [MI300x tuning guide](https://rocm.docs.amd.com/en/latest/how-to/tuning-guides/mi300x/index.html) for performance optimization and tuning tips on system and workflow level.
-      For vLLM, please refer to [vLLM performance optimization](https://rocm.docs.amd.com/en/latest/how-to/rocm-for-ai/inference-optimization/vllm-optimization.html).
+    - MI300x（gfx942）を使う場合、最適な性能を得るために、システムやワークフローレベルの性能最適化とチューニングのヒントについては [MI300x チューニングガイド](https://rocm.docs.amd.com/en/latest/how-to/tuning-guides/mi300x/index.html)を参照してください。
+      vLLM については [vLLM の性能最適化](https://rocm.docs.amd.com/en/latest/how-to/rocm-for-ai/inference-optimization/vllm-optimization.html)を参照してください。
 
 --8<-- [end:build-wheel-from-source]
 --8<-- [start:pre-built-images]
 
-vLLM offers official Docker images for deployment.
-The images can be used to run OpenAI compatible server and are available on Docker Hub as [vllm/vllm-openai-rocm](https://hub.docker.com/r/vllm/vllm-openai-rocm/tags).
+vLLM はデプロイ向けの公式 Docker イメージを提供しています。
+これらのイメージは OpenAI 互換サーバーの実行に使え、Docker Hub の [vllm/vllm-openai-rocm](https://hub.docker.com/r/vllm/vllm-openai-rocm/tags) から入手できます。
 
-- `vllm/vllm-openai-rocm:latest` — stable release
-- `vllm/vllm-openai-rocm:nightly` — preview build from the latest development branch, use this if you want the latest features and fixes
+- `vllm/vllm-openai-rocm:latest` — 安定版リリース
+- `vllm/vllm-openai-rocm:nightly` — 最新の開発ブランチからのプレビュービルド。最新の機能や修正が必要な場合はこちらを使ってください
 
 ```bash
 docker run --rm \
@@ -299,9 +299,9 @@ docker run --rm \
     --model Qwen/Qwen3-0.6B
 ```
 
-To use the docker image as base for development, you can launch it in interactive session through overriding the entrypoint.
+開発のベースとしてこの Docker イメージを使う場合、エントリポイントを上書きして対話セッションで起動できます。
 
-???+ console "Commands"
+???+ console "コマンド"
     ```bash
     docker run --rm -it \
         --group-add=video \
@@ -317,31 +317,29 @@ To use the docker image as base for development, you can launch it in interactiv
         vllm/vllm-openai-rocm:<tag>
     ```
 
-#### Use AMD's Docker Images (Deprecated)
+#### AMD の Docker イメージを使う（非推奨）
 
-!!! warning "Deprecated"
-    AMD's Docker images (`rocm/vllm` and `rocm/vllm-dev`) are deprecated in favor of the official vLLM Docker images above (`vllm/vllm-openai-rocm`). Please migrate to the official images.
+!!! warning "非推奨"
+    AMD の Docker イメージ（`rocm/vllm` および `rocm/vllm-dev`）は、上記の vLLM 公式 Docker イメージ（`vllm/vllm-openai-rocm`）に置き換えられ非推奨となりました。公式イメージへ移行してください。
 
-Prior to January 20th, 2026 when the official docker images became available on [upstream vLLM docker hub](https://hub.docker.com/v2/repositories/vllm/vllm-openai-rocm/tags/), the [AMD Infinity hub for vLLM](https://hub.docker.com/r/rocm/vllm/tags) offered a prebuilt, optimized
-docker image designed for validating inference performance on the AMD Instinct MI300X™ accelerator.
-AMD also offered nightly prebuilt docker image from [Docker Hub](https://hub.docker.com/r/rocm/vllm-dev), which has vLLM and all its dependencies installed. The entrypoint of this docker image is `/bin/bash` (different from the vLLM's Official Docker Image).
+公式 Docker イメージが[上流の vLLM Docker Hub](https://hub.docker.com/v2/repositories/vllm/vllm-openai-rocm/tags/) で提供されるようになった 2026 年 1 月 20 日より前は、[AMD Infinity hub for vLLM](https://hub.docker.com/r/rocm/vllm/tags) が、AMD Instinct MI300X™ アクセラレータ上での推論性能の検証を目的とした、ビルド済みで最適化された Docker イメージを提供していました。
+AMD は [Docker Hub](https://hub.docker.com/r/rocm/vllm-dev) で nightly のビルド済み Docker イメージも提供しており、vLLM とその依存関係がすべてインストールされています。この Docker イメージのエントリポイントは `/bin/bash` です（vLLM の公式 Docker イメージとは異なります）。
 
 !!! tip
-    Please check [LLM inference performance validation on AMD Instinct MI300X](https://rocm.docs.amd.com/en/latest/how-to/performance-validation/mi300x/vllm-benchmark.html)
-    for instructions on how to use this prebuilt docker image.
+    このビルド済み Docker イメージの使い方は、[AMD Instinct MI300X における LLM 推論性能の検証](https://rocm.docs.amd.com/en/latest/how-to/performance-validation/mi300x/vllm-benchmark.html)を参照してください。
 
 --8<-- [end:pre-built-images]
 --8<-- [start:build-image-from-source]
 
-You can build and run vLLM from source via the provided [docker/Dockerfile.rocm](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.rocm).
+同梱の [docker/Dockerfile.rocm](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.rocm) を使って、ソースから vLLM をビルドして実行できます。
 
-??? info "(Optional) Build an image with ROCm software stack"
+??? info "（任意）ROCm ソフトウェアスタック入りのイメージをビルドする"
 
-    Build a docker image from [docker/Dockerfile.rocm_base](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.rocm_base) which setup ROCm software stack needed by the vLLM.
-    **This step is optional as this rocm_base image is usually prebuilt and store at [Docker Hub](https://hub.docker.com/r/rocm/vllm-dev) under tag `rocm/vllm-dev:base` to speed up user experience.**
-    If you choose to build this rocm_base image yourself, the steps are as follows.
+    vLLM が必要とする ROCm ソフトウェアスタックをセットアップする [docker/Dockerfile.rocm_base](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.rocm_base) から Docker イメージをビルドします。
+    **この rocm_base イメージは通常ビルド済みで、利用体験を高速化するため [Docker Hub](https://hub.docker.com/r/rocm/vllm-dev) にタグ `rocm/vllm-dev:base` として置かれているため、このステップは任意です。**
+    自分で rocm_base イメージをビルドする場合の手順は次のとおりです。
 
-    It is important that the user kicks off the docker build using buildkit. Either the user put `DOCKER_BUILDKIT=1` as environment variable when calling docker build command, or the user needs to set up buildkit in the docker daemon configuration `/etc/docker/daemon.json` as follows and restart the daemon:
+    Docker のビルドは buildkit で開始することが重要です。docker build コマンドの実行時に環境変数 `DOCKER_BUILDKIT=1` を指定するか、Docker デーモンの設定 `/etc/docker/daemon.json` で次のように buildkit を有効にしてデーモンを再起動してください。
 
     ```json
     {
@@ -351,7 +349,7 @@ You can build and run vLLM from source via the provided [docker/Dockerfile.rocm]
     }
     ```
 
-    To build vllm on ROCm 7.0 for MI200 and MI300 series, you can use the default:
+    MI200 / MI300 シリーズ向けに ROCm 7.0 上で vLLM をビルドするには、既定の設定を使えます。
 
     ```bash
     DOCKER_BUILDKIT=1 docker build \
@@ -359,8 +357,8 @@ You can build and run vLLM from source via the provided [docker/Dockerfile.rocm]
         -t rocm/vllm-dev:base .
     ```
 
-First, build a docker image from [docker/Dockerfile.rocm](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.rocm) and launch a docker container from the image.
-It is important that the user kicks off the docker build using buildkit. Either the user put `DOCKER_BUILDKIT=1` as environment variable when calling docker build command, or the user needs to set up buildkit in the docker daemon configuration /etc/docker/daemon.json as follows and restart the daemon:
+まず、[docker/Dockerfile.rocm](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.rocm) から Docker イメージをビルドし、そのイメージからコンテナを起動します。
+Docker のビルドは buildkit で開始することが重要です。docker build コマンドの実行時に環境変数 `DOCKER_BUILDKIT=1` を指定するか、Docker デーモンの設定 /etc/docker/daemon.json で次のように buildkit を有効にしてデーモンを再起動してください。
 
 ```json
 {
@@ -370,21 +368,21 @@ It is important that the user kicks off the docker build using buildkit. Either 
 }
 ```
 
-[docker/Dockerfile.rocm](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.rocm) uses ROCm 7.0 by default, but also supports ROCm 5.7, 6.0, 6.1, 6.2, 6.3, and 6.4, in older vLLM branches.
-It provides flexibility to customize the build of docker image using the following arguments:
+[docker/Dockerfile.rocm](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.rocm) は既定で ROCm 7.0 を使いますが、古い vLLM のブランチでは ROCm 5.7、6.0、6.1、6.2、6.3、6.4 もサポートします。
+次の引数で Docker イメージのビルドを柔軟にカスタマイズできます。
 
-- `BASE_IMAGE`: specifies the base image used when running `docker build`. The default value `rocm/vllm-dev:base` is an image published and maintained by AMD. It is being built using [docker/Dockerfile.rocm_base](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.rocm_base)
-- `ARG_PYTORCH_ROCM_ARCH`: Allows to override the gfx architecture values from the base docker image
+- `BASE_IMAGE`: `docker build` 実行時に使うベースイメージを指定します。既定値の `rocm/vllm-dev:base` は AMD が公開・保守しているイメージで、[docker/Dockerfile.rocm_base](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.rocm_base) を使ってビルドされています。
+- `ARG_PYTORCH_ROCM_ARCH`: ベースの Docker イメージの gfx アーキテクチャの値を上書きできます。
 
-Their values can be passed in when running `docker build` with `--build-arg` options.
+これらの値は、`docker build` 実行時に `--build-arg` オプションで渡せます。
 
-To build vllm on ROCm 7.0 for MI200 and MI300 series, you can use the default (which build a docker image with `vllm serve` as entrypoint):
+MI200 / MI300 シリーズ向けに ROCm 7.0 上で vLLM をビルドするには、既定の設定を使えます（`vllm serve` をエントリポイントとする Docker イメージがビルドされます）。
 
 ```bash
 DOCKER_BUILDKIT=1 docker build -f docker/Dockerfile.rocm -t vllm/vllm-openai-rocm .
 ```
 
-To run vLLM with the custom-built Docker image:
+独自にビルドした Docker イメージで vLLM を実行するには次のようにします。
 
 ```bash
 docker run --rm \
@@ -400,11 +398,11 @@ docker run --rm \
     vllm/vllm-openai-rocm <args...>
 ```
 
-The argument `vllm/vllm-openai-rocm` specifies the image to run, and should be replaced with the name of the custom-built image (the `-t` tag from the build command).
+引数 `vllm/vllm-openai-rocm` は実行するイメージを指定するもので、独自にビルドしたイメージ名（ビルドコマンドの `-t` タグ）に置き換えてください。
 
-To use the docker image as base for development, you can launch it in interactive session through overriding the entrypoint.
+開発のベースとしてこの Docker イメージを使う場合、エントリポイントを上書きして対話セッションで起動できます。
 
-???+ console "Commands"
+???+ console "コマンド"
     ```bash
     docker run --rm -it \
         --group-add=video \
@@ -423,6 +421,6 @@ To use the docker image as base for development, you can launch it in interactiv
 --8<-- [end:build-image-from-source]
 --8<-- [start:supported-features]
 
-See [Feature x Hardware](../../features/README.md#feature-x-hardware) compatibility matrix for feature support information.
+機能のサポート状況については、[機能 × ハードウェア](../../features/README.md#feature-x-hardware)の互換性マトリクスを参照してください。
 
 --8<-- [end:supported-features]
