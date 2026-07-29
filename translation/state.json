@@ -1204,8 +1204,10 @@
       "upstream_sha": "1d253b9157a86c9f"
     },
     "models/pooling_models/reward.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "577d78450c5847c1",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "577d78450c5847c1"
     },
     "models/pooling_models/scoring.md": {
@@ -1219,13 +1221,17 @@
       "upstream_sha": "7c76c707919a2b1c"
     },
     "models/pooling_models/token_classify.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "b97cde96f41921e3",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "b97cde96f41921e3"
     },
     "models/pooling_models/token_embed.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "66955944d8aaa343",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "66955944d8aaa343"
     },
     "models/supported_models.md": {
