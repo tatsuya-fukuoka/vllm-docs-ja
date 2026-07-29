@@ -1,16 +1,16 @@
 <!-- markdownlint-disable MD041 MD051 -->
 --8<-- [start:installation]
 
-vLLM supports basic model inferencing and serving on x86 CPU platform, with data types FP32, FP16 and BF16.
+vLLM は x86 CPU プラットフォーム上での基本的なモデル推論とサービングに対応しており、データ型は FP32、FP16、BF16 をサポートします。
 
 --8<-- [end:installation]
 --8<-- [start:requirements]
 
 - OS: Linux
-- CPU flags: `avx512f` (Recommended), `avx2` (Limited features)
+- CPU フラグ: `avx512f`（推奨）、`avx2`（機能が制限されます）
 
 !!! tip
-    Use `lscpu` to check the CPU flags.
+    CPU フラグの確認には `lscpu` を使います。
 
 --8<-- [end:requirements]
 --8<-- [start:set-up-using-python]
@@ -18,7 +18,7 @@ vLLM supports basic model inferencing and serving on x86 CPU platform, with data
 --8<-- [end:set-up-using-python]
 --8<-- [start:pre-built-wheels]
 
-Pre-built vLLM wheels for x86 with AVX512/AVX2 are available since version 0.17.0. To install release wheels:
+AVX512 / AVX2 対応の x86 向けビルド済み vLLM wheel は、バージョン 0.17.0 以降で提供されています。リリース版の wheel をインストールするには次のようにします。
 
 ```bash
 export VLLM_VERSION=$(curl -s https://api.github.com/repos/vllm-project/vllm/releases/latest | jq -r .tag_name | sed 's/^v//')
@@ -32,8 +32,8 @@ uv pip install https://github.com/vllm-project/vllm/releases/download/v${VLLM_VE
     # use pip
     pip install https://github.com/vllm-project/vllm/releases/download/v${VLLM_VERSION}/vllm-${VLLM_VERSION}+cpu-cp38-abi3-manylinux_2_34_x86_64.whl --extra-index-url https://download.pytorch.org/whl/cpu
     ```
-!!! warning "set `LD_PRELOAD`"
-    Before use vLLM CPU installed via wheels, make sure TCMalloc and Intel OpenMP are installed and added to `LD_PRELOAD`:
+!!! warning "`LD_PRELOAD` を設定する"
+    wheel からインストールした vLLM CPU を使う前に、TCMalloc と Intel OpenMP がインストールされ、`LD_PRELOAD` に追加されていることを確認してください。
     ```bash
     # install TCMalloc, Intel OpenMP is installed with vLLM CPU
     sudo apt-get install -y --no-install-recommends libtcmalloc-minimal4
@@ -48,17 +48,17 @@ uv pip install https://github.com/vllm-project/vllm/releases/download/v${VLLM_VE
     export LD_PRELOAD="$TC_PATH:$IOMP_PATH:$LD_PRELOAD"
     ```
 
-#### Install the latest code
+#### 最新のコードをインストールする
 
-To install the wheel built from the latest main branch:
+最新の main ブランチからビルドされた wheel をインストールするには次のようにします。
 
 ```bash
 uv pip install vllm --extra-index-url https://wheels.vllm.ai/nightly/cpu --index-strategy first-index --torch-backend cpu
 ```
 
-#### Install specific revisions
+#### 特定のリビジョンをインストールする
 
-If you want to access the wheels for previous commits (e.g. to bisect the behavior change, performance regression), you can specify the commit hash in the URL:
+過去のコミットの wheel を利用したい場合（挙動の変化や性能リグレッションを二分探索するときなど）は、URL にコミットハッシュを指定できます。
 
 ```bash
 export VLLM_COMMIT=730bd35378bf2a5b56b6d3a45be28b3092d26519 # use full commit hash from the main branch
@@ -68,7 +68,7 @@ uv pip install vllm --extra-index-url https://wheels.vllm.ai/${VLLM_COMMIT}/cpu 
 --8<-- [end:pre-built-wheels]
 --8<-- [start:build-wheel-from-source]
 
-Install recommended compiler. We recommend to use `gcc/g++ >= 12.3.0` as the default compiler to avoid potential problems. For example, on Ubuntu 22.4, you can run:
+推奨コンパイラをインストールします。問題を避けるため、既定のコンパイラとして `gcc/g++ >= 12.3.0` を使うことを推奨します。たとえば Ubuntu 22.4 では次のように実行します。
 
 ```bash
 sudo apt-get update -y
@@ -78,14 +78,14 @@ sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 10 --slave /
 
 --8<-- "docs/getting_started/installation/python_env_setup.inc.md"
 
-Clone the vLLM project:
+vLLM プロジェクトをクローンします。
 
 ```bash
 git clone https://github.com/vllm-project/vllm.git vllm_source
 cd vllm_source
 ```
 
-Install the required dependencies:
+必要な依存関係をインストールします。
 
 ```bash
 uv pip install -r requirements/build/cpu.txt --torch-backend cpu --index-strategy unsafe-best-match
@@ -99,19 +99,19 @@ uv pip install -r requirements/cpu.txt --torch-backend cpu --index-strategy unsa
     pip install -v -r requirements/cpu.txt --extra-index-url https://download.pytorch.org/whl/cpu
     ```
 
-Build and install vLLM:
+vLLM をビルドしてインストールします。
 
 ```bash
 VLLM_TARGET_DEVICE=cpu uv pip install . --no-build-isolation
 ```
 
-If you want to develop vLLM, install it in editable mode instead.
+vLLM を開発したい場合は、代わりに editable モードでインストールします。
 
 ```bash
 VLLM_TARGET_DEVICE=cpu python3 setup.py develop
 ```
 
-Optionally, build a portable wheel which you can then install elsewhere:
+必要に応じて、別の環境でもインストールできるポータブルな wheel をビルドできます。
 
 ```bash
 VLLM_TARGET_DEVICE=cpu uv build --wheel --no-build-isolation
@@ -130,8 +130,8 @@ uv pip install dist/*.whl
     pip install dist/*.whl
     ```
 
-!!! warning "set `LD_PRELOAD`"
-    Before use vLLM CPU installed via wheels, make sure TCMalloc and Intel OpenMP are installed and added to `LD_PRELOAD`:
+!!! warning "`LD_PRELOAD` を設定する"
+    wheel からインストールした vLLM CPU を使う前に、TCMalloc と Intel OpenMP がインストールされ、`LD_PRELOAD` に追加されていることを確認してください。
     ```bash
     # install TCMalloc, Intel OpenMP is installed with vLLM CPU
     sudo apt-get install -y --no-install-recommends libtcmalloc-minimal4
@@ -146,11 +146,11 @@ uv pip install dist/*.whl
     export LD_PRELOAD="$TC_PATH:$IOMP_PATH:$LD_PRELOAD"
     ```
 
-!!! example "Troubleshooting"
-    - **NumPy ≥2.0 error**: Downgrade using `pip install "numpy<2.0"`.
-    - **CMake picks up CUDA**: Add `CMAKE_DISABLE_FIND_PACKAGE_CUDA=ON` to prevent CUDA detection during CPU builds, even if CUDA is installed.
-    - `AMD` requires at least 4th gen processors (Zen 4/Genoa) or higher to support [AVX512](https://www.phoronix.com/review/amd-zen4-avx512) to run vLLM on CPU.
-    - If you receive an error such as: `Could not find a version that satisfies the requirement torch==X.Y.Z+cpu+cpu`, consider updating [pyproject.toml](https://github.com/vllm-project/vllm/blob/main/pyproject.toml) to help pip resolve the dependency.
+!!! example "トラブルシューティング"
+    - **NumPy 2.0 以上でのエラー**: `pip install "numpy<2.0"` でダウングレードしてください。
+    - **CMake が CUDA を検出してしまう**: CUDA がインストールされていても CPU ビルド時に CUDA を検出しないよう、`CMAKE_DISABLE_FIND_PACKAGE_CUDA=ON` を追加してください。
+    - `AMD` で CPU 上の vLLM を動かすには、[AVX512](https://www.phoronix.com/review/amd-zen4-avx512) をサポートする第 4 世代（Zen 4 / Genoa）以降のプロセッサが必要です。
+    - `Could not find a version that satisfies the requirement torch==X.Y.Z+cpu+cpu` のようなエラーが出る場合は、pip が依存関係を解決できるよう [pyproject.toml](https://github.com/vllm-project/vllm/blob/main/pyproject.toml) の更新を検討してください。
     ```toml title="pyproject.toml"
     [build-system]
     requires = [
@@ -163,22 +163,22 @@ uv pip install dist/*.whl
 --8<-- [end:build-wheel-from-source]
 --8<-- [start:pre-built-images]
 
-You can pull the latest available CPU image from Docker Hub:
+Docker Hub から最新の CPU 向けイメージを取得できます。
 
 ```bash
 docker pull vllm/vllm-openai-cpu:latest-x86_64
 ```
 
-To pull an image for a specific vLLM version:
+特定の vLLM バージョンのイメージを取得するには次のようにします。
 
 ```bash
 export VLLM_VERSION=$(curl -s https://api.github.com/repos/vllm-project/vllm/releases/latest | jq -r .tag_name | sed 's/^v//')
 docker pull vllm/vllm-openai-cpu:v${VLLM_VERSION}-x86_64
 ```
 
-All available image tags are here: [https://hub.docker.com/r/vllm/vllm-openai-cpu/tags](https://hub.docker.com/r/vllm/vllm-openai-cpu/tags)
+利用可能なイメージタグの一覧は [https://hub.docker.com/r/vllm/vllm-openai-cpu/tags](https://hub.docker.com/r/vllm/vllm-openai-cpu/tags) にあります。
 
-You can run these images via:
+これらのイメージは次のように実行できます。
 
 ```bash
 docker run \
@@ -191,7 +191,7 @@ docker run \
 --8<-- [end:pre-built-images]
 --8<-- [start:build-image-from-source]
 
-#### Building for your target CPU
+#### 対象 CPU 向けにビルドする
 
 ```bash
 docker build -f docker/Dockerfile.cpu \
@@ -200,9 +200,9 @@ docker build -f docker/Dockerfile.cpu \
         --target vllm-openai .
 ```
 
-#### Building with AMD Zen optimizations
+#### AMD Zen 最適化を有効にしてビルドする
 
-For AMD Zen 4 / Zen 5 hosts (`linux/amd64` only), use the `vllm-openai-zen` target. It extends the default `vllm-openai` image and adds `zentorch` via the `vllm[zen]` extra so `ZenCpuPlatform` auto-activates at runtime:
+AMD Zen 4 / Zen 5 のホスト（`linux/amd64` のみ）では、`vllm-openai-zen` ターゲットを使います。これは既定の `vllm-openai` イメージを拡張し、`vllm[zen]` エクストラ経由で `zentorch` を追加するもので、実行時に `ZenCpuPlatform` が自動で有効になります。
 
 ```bash
 docker build -f docker/Dockerfile.cpu \
@@ -210,9 +210,9 @@ docker build -f docker/Dockerfile.cpu \
         --target vllm-openai-zen .
 ```
 
-The resulting image accepts the same arguments and environment variables as `vllm-openai` (see [Launching the OpenAI server](#launching-the-openai-server) below); no extra flag is needed to engage Zen optimizations. See [AMD Zen optimizations](cpu.md#amd-zen-optimizations) for runtime behavior and the supported-dtype caveats.
+生成されるイメージは `vllm-openai` と同じ引数・環境変数を受け付けます（下記の [OpenAI サーバーを起動する](#launching-the-openai-server) を参照）。Zen 最適化を有効にするための追加フラグは不要です。実行時の挙動とサポートされる dtype の注意点については [AMD Zen 最適化](cpu.md#amd-zen-optimizations) を参照してください。
 
-#### Launching the OpenAI server {#launching-the-openai-server}
+#### OpenAI サーバーを起動する {#launching-the-openai-server}
 
 ```bash
 docker run --rm \
@@ -230,33 +230,33 @@ docker run --rm \
 --8<-- [end:build-image-from-source]
 --8<-- [start:amd-zen-optimizations]
 
-On AMD Zen CPUs, vLLM auto-selects `ZenCpuPlatform` (a subclass of `CpuPlatform`) which dispatches linear layers through [`zentorch`](https://github.com/amd/ZenDNN-pytorch-plugin)'s ZenDNN-optimized kernels. See the FAQ entry [How do I enable AMD Zen optimizations?](#how-do-i-enable-amd-zen-optimizations) for the install command.
+AMD Zen CPU では、vLLM は `ZenCpuPlatform`（`CpuPlatform` のサブクラス）を自動的に選択し、線形層を [`zentorch`](https://github.com/amd/ZenDNN-pytorch-plugin) の ZenDNN 最適化カーネル経由でディスパッチします。インストールコマンドについては FAQ の [AMD Zen 最適化を有効にするには？](#how-do-i-enable-amd-zen-optimizations) を参照してください。
 
-### Detection rules
+### 判定ルール
 
-`ZenCpuPlatform` is selected when **all** of the following hold:
+`ZenCpuPlatform` は、次の条件が**すべて**満たされる場合に選択されます。
 
-- vLLM is built for CPU
-- `/proc/cpuinfo` reports `AuthenticAMD` and `avx512`
-- `import zentorch` succeeds
+- vLLM が CPU 向けにビルドされている
+- `/proc/cpuinfo` が `AuthenticAMD` と `avx512` を報告する
+- `import zentorch` が成功する
 
-Otherwise, vLLM falls back to the default `CpuPlatform` (oneDNN / sgl-kernel paths).
+それ以外の場合、vLLM は既定の `CpuPlatform`（oneDNN / sgl-kernel の経路）にフォールバックします。
 
-### Supported dtypes
+### サポートされる dtype
 
-`float16` is **not** supported on `ZenCpuPlatform`. `ZenCpuPlatform.supported_dtypes` advertises only `bfloat16` and `float32`, so models declared with `torch_dtype=float16` are auto-downcast to `bfloat16` at load time with the standard `"Your device 'cpu' doesn't support torch.float16. Falling back to torch.bfloat16 for compatibility."` warning emitted from `vllm/config/model.py`.
+`ZenCpuPlatform` では `float16` は**サポートされません**。`ZenCpuPlatform.supported_dtypes` が公開するのは `bfloat16` と `float32` のみです。そのため `torch_dtype=float16` と宣言されたモデルは、ロード時に自動的に `bfloat16` へダウンキャストされ、`vllm/config/model.py` から `"Your device 'cpu' doesn't support torch.float16. Falling back to torch.bfloat16 for compatibility."` という標準の警告が出力されます。
 
-### Environment variables
+### 環境変数
 
-- `VLLM_ZENTORCH_WEIGHT_PREPACK` (default `1`): eagerly prepacks linear weights into ZenDNN's blocked layout at model load time, eliminating per-inference layout conversion overhead. Set to `0` to disable.
+- `VLLM_ZENTORCH_WEIGHT_PREPACK`（既定値 `1`）: モデルのロード時に線形層の重みを ZenDNN のブロック化レイアウトへ先読みで prepack し、推論ごとのレイアウト変換のオーバーヘッドをなくします。無効にするには `0` を設定します。
 
 ### Docker
 
-The `vllm-openai-zen` Docker target (in `docker/Dockerfile.cpu`) extends the default `vllm-openai` image with `vllm[zen]`. Build it with `docker build -f docker/Dockerfile.cpu --target vllm-openai-zen .` — see [Building with AMD Zen optimizations](#building-with-amd-zen-optimizations) for the full command and run instructions.
+`vllm-openai-zen` の Docker ターゲット（`docker/Dockerfile.cpu` 内）は、既定の `vllm-openai` イメージを `vllm[zen]` で拡張したものです。`docker build -f docker/Dockerfile.cpu --target vllm-openai-zen .` でビルドします。完全なコマンドと実行手順は [AMD Zen 最適化を有効にしてビルドする](#building-with-amd-zen-optimizations) を参照してください。
 
-### Reference
+### 参考
 
-For the design rationale, see [RFC #35089: In-Tree AMD Zen CPU Backend via zentorch](https://github.com/vllm-project/vllm/issues/35089).
+設計の背景については [RFC #35089: In-Tree AMD Zen CPU Backend via zentorch](https://github.com/vllm-project/vllm/issues/35089) を参照してください。
 
 --8<-- [end:amd-zen-optimizations]
 --8<-- [start:extra-information]

@@ -1116,8 +1116,10 @@
       "upstream_sha": "00e3ec14d5de01fb"
     },
     "getting_started/installation/cpu.arm.inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "16ebc96db92b6881",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "16ebc96db92b6881"
     },
     "getting_started/installation/cpu.md": {
@@ -1133,8 +1135,10 @@
       "upstream_sha": "954250d563d7a40b"
     },
     "getting_started/installation/cpu.x86.inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "c5b646e00e86b9c9",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "c5b646e00e86b9c9"
     },
     "getting_started/installation/gpu.apple.inc.md": {

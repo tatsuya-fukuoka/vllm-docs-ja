@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **198 ページ**を翻訳済みです（87.6%）。
+全 226 ページ中 **200 ページ**を翻訳済みです（88.5%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -20,13 +20,13 @@
 | デプロイ | 35 | 0 | 0 | 35 |
 | 設計ドキュメント | 18 | 0 | 11 | 29 |
 | 機能 | 46 | 0 | 6 | 52 |
-| はじめに | 9 | 0 | 4 | 13 |
+| はじめに | 11 | 0 | 2 | 13 |
 | ガバナンス | 3 | 0 | 0 | 3 |
 | モデル | 12 | 0 | 4 | 16 |
 | 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **198** | **0** | **28** | **226** |
+| **合計** | **200** | **0** | **26** | **226** |
 
 ## 翻訳済みのページ
 
@@ -175,7 +175,9 @@
 - `features/structured_outputs.md`
 - `getting_started/installation/README.md`
 - `getting_started/installation/cpu.apple.inc.md`
+- `getting_started/installation/cpu.arm.inc.md`
 - `getting_started/installation/cpu.s390x.inc.md`
+- `getting_started/installation/cpu.x86.inc.md`
 - `getting_started/installation/gpu.apple.inc.md`
 - `getting_started/installation/gpu.cuda.inc.md`
 - `getting_started/installation/gpu.md`
