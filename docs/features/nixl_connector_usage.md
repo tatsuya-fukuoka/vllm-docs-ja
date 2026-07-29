@@ -1,33 +1,33 @@
-# NixlConnector Usage Guide
+# NixlConnector 利用ガイド { #nixlconnector-usage-guide }
 
-NixlConnector is a high-performance KV cache transfer connector for vLLM's disaggregated prefilling feature. It provides fully asynchronous send/receive operations using the NIXL library for efficient cross-process KV cache transfer.
+NixlConnector は、vLLM のプレフィル分離機能向けの高性能な KV キャッシュ転送コネクタです。NIXL ライブラリを使い、完全に非同期な送受信でプロセス間の KV キャッシュ転送を効率的に行います。
 
-For feature compatibility details (supported model architectures, TP configurations, and feature interactions), see the [NixlConnector Compatibility Matrix](nixl_connector_compatibility.md).
+機能の互換性の詳細（サポートされるモデルアーキテクチャ、TP 構成、機能同士の相互作用）については、[NixlConnector 互換性マトリクス](nixl_connector_compatibility.md)を参照してください。
 
-## Prerequisites
+## 前提条件 { #prerequisites }
 
-### Installation
+### インストール { #installation }
 
-Install the NIXL library: `uv pip install nixl`, as a quick start on Nvidia platform.
+NVIDIA プラットフォームで手早く始めるには、NIXL ライブラリをインストールします: `uv pip install nixl`
 
-- Refer to [NIXL official repository](https://github.com/ai-dynamo/nixl) for more installation instructions
-- The specified required NIXL version can be found in [requirements/kv_connectors.txt](../../requirements/kv_connectors.txt) and other relevant config files
+- インストール手順の詳細は [NIXL 公式リポジトリ](https://github.com/ai-dynamo/nixl)を参照してください
+- 必要な NIXL のバージョンは [requirements/kv_connectors.txt](../../requirements/kv_connectors.txt) やその他の関連する設定ファイルで確認できます
 
-For ROCm platform, the [ROCm docker file](../../docker/Dockerfile.rocm) includes RIXL and ucx already.
+ROCm プラットフォームでは、[ROCm の Dockerfile](../../docker/Dockerfile.rocm) にすでに RIXL と ucx が含まれています。
 
-- Refer to [RIXL official repository](https://github.com/rocm/rixl) for more information
-- The supportive libraries for RIXL can be found in [requirements/kv_connectors_rocm.txt](../../requirements/kv_connectors_rocm.txt)
-- In the future we may remove RIXL from docker image file and users will be able to install from pre-compiled binary packages
+- 詳細は [RIXL 公式リポジトリ](https://github.com/rocm/rixl)を参照してください
+- RIXL がサポートするライブラリは [requirements/kv_connectors_rocm.txt](../../requirements/kv_connectors_rocm.txt) で確認できます
+- 将来的には Docker イメージから RIXL を外し、コンパイル済みのバイナリパッケージからインストールできるようにする可能性があります
 
-For non-cuda platform, please install nixl with ucx build from source, instructed as below.
+CUDA 以外のプラットフォームでは、以下の手順に従い ucx をソースからビルドして nixl をインストールしてください。
 
 ```bash
 python tools/install_nixl_from_source_ubuntu.py
 ```
 
-### Transport Configuration
+### トランスポートの設定 { #transport-configuration }
 
-NixlConnector uses NIXL library for underlying communication, which supports multiple transport backends. UCX (Unified Communication X) is the primary default transport library used by NIXL. Configure transport environment variables:
+NixlConnector は下位の通信に NIXL ライブラリを使い、複数のトランスポートバックエンドをサポートします。NIXL が使う既定の主要トランスポートライブラリは UCX（Unified Communication X）です。トランスポートの環境変数は次のように設定します。
 
 ```bash
 # Example UCX configuration, adjust according to your environment
@@ -36,15 +36,15 @@ export UCX_NET_DEVICES=all  # or specify network devices like "mlx5_0:1,mlx5_1:1
 ```
 
 !!! tip
-    When using UCX as the transport backend, NCCL environment variables (like `NCCL_IB_HCA`, `NCCL_SOCKET_IFNAME`) are not applicable to NixlConnector, so configure UCX-specific environment variables instead of NCCL variables.
+    トランスポートバックエンドとして UCX を使う場合、NCCL の環境変数（`NCCL_IB_HCA`、`NCCL_SOCKET_IFNAME` など）は NixlConnector には適用されません。NCCL の変数ではなく UCX 固有の環境変数を設定してください。
 
-#### Selecting a NIXL transport backend (plugin)
+#### NIXL のトランスポートバックエンド（プラグイン）の選択 { #selecting-a-nixl-transport-backend-plugin }
 
-NixlConnector can use different NIXL transport backends (plugins). By default, NixlConnector uses UCX as the transport backend.
+NixlConnector は異なる NIXL のトランスポートバックエンド（プラグイン）を利用できます。既定では UCX がトランスポートバックエンドとして使われます。
 
-To select a different backend, set `kv_connector_extra_config.backends` in `--kv-transfer-config`.
+別のバックエンドを選択するには、`--kv-transfer-config` で `kv_connector_extra_config.backends` を設定します。
 
-### Example: using LIBFABRIC backend
+### 例: LIBFABRIC バックエンドを使う { #example-using-libfabric-backend }
 
 ```bash
 vllm serve <MODEL> \
@@ -55,7 +55,7 @@ vllm serve <MODEL> \
   }'
 ```
 
-You can also pass JSON keys individually using dotted arguments, and you can append list elements using `+`:
+ドット記法の引数で JSON のキーを個別に渡すこともできます。また、`+` を使ってリストに要素を追加できます。
 
 ```bash
 vllm serve <MODEL> \
@@ -65,13 +65,13 @@ vllm serve <MODEL> \
 ```
 
 !!! note
-    Backend availability depends on how NIXL was built and what plugins are present in your environment. Refer to the [NIXL repository](https://github.com/ai-dynamo/nixl) for available backends and build instructions.
+    利用できるバックエンドは、NIXL のビルド方法と環境に存在するプラグインによって決まります。利用可能なバックエンドとビルド手順は [NIXL リポジトリ](https://github.com/ai-dynamo/nixl)を参照してください。
 
-## Basic Usage (on the same host)
+## 基本的な使い方（同一ホスト上） { #basic-usage-on-the-same-host }
 
-### Producer (Prefiller) Configuration
+### プロデューサ（プレフィル側）の設定 { #producer-prefiller-configuration }
 
-Start a prefiller instance that produces KV caches
+KV キャッシュを生成するプレフィルのインスタンスを起動します。
 
 ```bash
 # 1st GPU as prefiller
@@ -84,9 +84,9 @@ vllm serve Qwen/Qwen3-0.6B \
   --kv-transfer-config '{"kv_connector":"NixlConnector","kv_role":"kv_producer","kv_load_failure_policy":"fail"}'
 ```
 
-### Consumer (Decoder) Configuration
+### コンシューマ（デコード側）の設定 { #consumer-decoder-configuration }
 
-Start a decoder instance that consumes KV caches:
+KV キャッシュを消費するデコードのインスタンスを起動します。
 
 ```bash
 # 2nd GPU as decoder
@@ -99,9 +99,9 @@ vllm serve Qwen/Qwen3-0.6B \
   --kv-transfer-config '{"kv_connector":"NixlConnector","kv_role":"kv_consumer","kv_load_failure_policy":"fail"}'
 ```
 
-### Proxy Server
+### プロキシサーバー { #proxy-server }
 
-Use a proxy server to route requests between prefiller and decoder:
+プレフィル側とデコード側のあいだでリクエストをルーティングするために、プロキシサーバーを使います。
 
 ```bash
 python tests/v1/kv_connector/nixl_integration/toy_proxy_server.py \
@@ -112,37 +112,37 @@ python tests/v1/kv_connector/nixl_integration/toy_proxy_server.py \
   --decoder-ports 8200
 ```
 
-## Environment Variables
+## 環境変数 { #environment-variables }
 
-- `VLLM_NIXL_SIDE_CHANNEL_PORT`: Port for NIXL handshake communication
-    - Default: 5600
-    - **Required for both prefiller and decoder instances**
-    - Each vLLM worker needs a unique port on its host; using the same port number across different hosts is fine
-    - For TP/DP deployments, each worker's port on a node is computed as: base_port + dp_rank (e.g., with `--data-parallel-size=2` and base_port=5600, dp_rank 0..1 use port 5600, 5601 on that node).
-    - Used for the initial NIXL handshake between the prefiller and the decoder
+- `VLLM_NIXL_SIDE_CHANNEL_PORT`: NIXL のハンドシェイク通信に使うポート
+    - 既定値: 5600
+    - **プレフィル側とデコード側の両方のインスタンスで必要です**
+    - 各 vLLM ワーカーは、自身のホスト上で一意なポートを必要とします。ホストが異なれば同じポート番号を使っても構いません
+    - TP / DP でのデプロイでは、ノード上の各ワーカーのポートは base_port + dp_rank として計算されます（たとえば `--data-parallel-size=2` で base_port=5600 の場合、dp_rank 0〜1 はそのノードでポート 5600、5601 を使います）
+    - プレフィル側とデコード側の最初の NIXL ハンドシェイクに使われます
 
-- `VLLM_NIXL_SIDE_CHANNEL_HOST`: Host for side channel communication
-    - Default: "localhost"
-    - Set when prefiller and decoder are on different machines
-    - Connection info is passed via KVTransferParams from prefiller to decoder for handshake
+- `VLLM_NIXL_SIDE_CHANNEL_HOST`: サイドチャネル通信に使うホスト
+    - 既定値: "localhost"
+    - プレフィル側とデコード側が別のマシンにある場合に設定します
+    - 接続情報は、ハンドシェイクのためにプレフィル側からデコード側へ KVTransferParams 経由で渡されます
 
-- `kv_lease_duration` (via `kv_connector_extra_config`): Lease duration (in seconds) for the prefiller's KV cache blocks. (Optional)
-    - Default: 30
-    - When a prefill request finishes, its KV blocks are held for this duration waiting for the decoder to read them. While the request is queued on the decoder, periodic heartbeats automatically extend the lease. If neither a heartbeat nor a read notification arrives before the lease expires, the blocks are freed. The heartbeat interval and extension amount are derived automatically from this value.
-    - Example: `--kv-transfer-config '{"kv_connector_extra_config": {"kv_lease_duration": 60}}'`
+- `kv_lease_duration`（`kv_connector_extra_config` 経由）: プレフィル側の KV キャッシュブロックのリース期間（秒）。（任意）
+    - 既定値: 30
+    - プレフィルのリクエストが完了すると、その KV ブロックはデコード側が読み出すのを待つあいだ、この期間だけ保持されます。リクエストがデコード側でキューに入っているあいだは、定期的なハートビートによりリースが自動的に延長されます。リースが切れるまでにハートビートも読み出し通知も届かない場合、ブロックは解放されます。ハートビートの間隔と延長量は、この値から自動的に導出されます。
+    - 例: `--kv-transfer-config '{"kv_connector_extra_config": {"kv_lease_duration": 60}}'`
 
-- `decoder_kv_blocks_ttl` (via `kv_connector_extra_config`): TTL (in seconds) for KV blocks cached on the decoder in bidirectional transfer mode. (Optional)
-    - Default: 480
-    - In bidirectional mode, the decoder caches KV blocks for multi-turn conversations. This TTL controls how long those blocks are held before being released. Unlike the prefiller lease, this TTL is not renewed via heartbeats.
-    - Example: `--kv-transfer-config '{"kv_connector_extra_config": {"decoder_kv_blocks_ttl": 600}}'`
+- `decoder_kv_blocks_ttl`（`kv_connector_extra_config` 経由）: 双方向転送モードでデコード側にキャッシュされる KV ブロックの TTL（秒）。（任意）
+    - 既定値: 480
+    - 双方向モードでは、デコード側がマルチターン会話のために KV ブロックをキャッシュします。この TTL は、それらのブロックを解放するまでどれだけ保持するかを制御します。プレフィル側のリースとは異なり、この TTL はハートビートで更新されません。
+    - 例: `--kv-transfer-config '{"kv_connector_extra_config": {"decoder_kv_blocks_ttl": 600}}'`
 
-## Bidirectional KV Transfer (Multi-turn)
+## 双方向の KV 転送（マルチターン） { #bidirectional-kv-transfer-multi-turn }
 
-In standard disaggregated prefilling, KV cache flows in one direction: Prefill (P) computes the KV cache and Decode (D) reads from P. For multi-turn conversations this is wasteful — D already holds the KV cache corresponding to the generated tokens from prior turns, yet P must recompute it from scratch on every new turn. Bidirectional KV transfer lets P **pull** existing KV blocks from D via RDMA before computing only the new tokens, significantly reducing Time-To-First-Token (TTFT) for long-prefill such as **multi-turn heavy scenarios**.
+標準的なプレフィル分離では、KV キャッシュは一方向に流れます。プレフィル（P）が KV キャッシュを計算し、デコード（D）が P から読み出します。マルチターン会話ではこれは無駄です。D は前のターンで生成されたトークンに対応する KV キャッシュをすでに保持しているにもかかわらず、P は新しいターンのたびにそれをゼロから再計算しなければなりません。双方向の KV 転送では、P が新しいトークンだけを計算する前に、RDMA 経由で D から既存の KV ブロックを**プル**できるため、**マルチターンが多い場面**のような長いプレフィルにおいて TTFT（最初のトークンまでの時間）を大きく短縮できます。
 
-### How it works
+### 仕組み { #how-it-works }
 
-The feature relies on a **stateful proxy** that sits between the client and the P/D instances. The proxy tracks `kv_transfer_params` returned by D at the end of each turn, and attaches them to the next turn's request so P knows which blocks to pull from D.
+この機能は、クライアントと P / D インスタンスのあいだに置かれる**ステートフルなプロキシ**に依存します。プロキシは各ターンの終わりに D が返す `kv_transfer_params` を追跡し、次のターンのリクエストに付加することで、P が D からどのブロックをプルすべきかを把握できるようにします。
 
 ```mermaid
 sequenceDiagram
@@ -190,26 +190,26 @@ sequenceDiagram
     end
 ```
 
-**Turn 1 (cache miss):**
+**ターン 1（キャッシュミス）:**
 
-1. Client sends a chat request with a `conversation_id` to the proxy.
-2. Proxy forwards the request to P with no remote block info — P computes the full KV cache.
-3. Proxy forwards the request to D along with P's `kv_transfer_params` (block IDs, engine ID, host/port).
-4. D reads KV blocks from P via RDMA (peer-to-peer pull), then generates the response.
-5. D streams the response back through the proxy. The final chunk includes D's own `kv_transfer_params`.
-6. Proxy caches D's `kv_transfer_params` keyed by `conversation_id`, then returns the response to the client.
+1. クライアントが `conversation_id` を含むチャットリクエストをプロキシに送ります。
+2. プロキシはリモートのブロック情報なしでリクエストを P に転送します。P は KV キャッシュ全体を計算します。
+3. プロキシは P の `kv_transfer_params`（ブロック ID、エンジン ID、ホスト / ポート）とともにリクエストを D に転送します。
+4. D は RDMA（ピアツーピアのプル）で P から KV ブロックを読み出し、応答を生成します。
+5. D はプロキシを介して応答をストリーミングで返します。最後のチャンクには D 自身の `kv_transfer_params` が含まれます。
+6. プロキシは D の `kv_transfer_params` を `conversation_id` をキーにキャッシュし、応答をクライアントに返します。
 
-**Turn 2+ (cache hit — bidirectional):**
+**ターン 2 以降（キャッシュヒット — 双方向）:**
 
-1. Client sends the next turn with the same `conversation_id`.
-2. Proxy looks up cached `kv_transfer_params` from the previous turn and attaches D's `remote_block_ids` to the request sent to P.
-3. P reads the existing KV cache from D via RDMA (D→P pull), then computes KV only for the new tokens.
-4. Proxy forwards the request to D with P's updated `kv_transfer_params`.
-5. D reads the new KV blocks from P, generates the response, and returns updated `kv_transfer_params` which the proxy caches for the next turn.
+1. クライアントが同じ `conversation_id` で次のターンを送ります。
+2. プロキシは前のターンでキャッシュした `kv_transfer_params` を参照し、D の `remote_block_ids` を P へのリクエストに付加します。
+3. P は RDMA（D→P のプル）で D から既存の KV キャッシュを読み出し、新しいトークンについてのみ KV を計算します。
+4. プロキシは P の更新された `kv_transfer_params` とともにリクエストを D に転送します。
+5. D は P から新しい KV ブロックを読み出して応答を生成し、更新された `kv_transfer_params` を返します。プロキシはこれを次のターンのためにキャッシュします。
 
-### Configuration
+### 設定 { #configuration }
 
-Enable bidirectional KV transfer by setting `bidirectional_kv_xfer` in `kv_connector_extra_config` on **both** P and D instances:
+双方向の KV 転送を有効にするには、P と D **両方の**インスタンスで `kv_connector_extra_config` に `bidirectional_kv_xfer` を設定します。
 
 ```bash
 # Prefill instance
@@ -233,17 +233,17 @@ vllm serve <MODEL> \
   }'
 ```
 
-Additional configuration options in `kv_connector_extra_config`:
+`kv_connector_extra_config` の追加の設定項目:
 
-| Parameter | Default | Description |
+| パラメータ | 既定値 | 説明 |
 | --------- | ------- | ----------- |
-| `bidirectional_kv_xfer` | `false` | Enable bidirectional D→P KV transfer. |
-| `kv_recompute_threshold` | `64` | Minimum number of remote tokens required to trigger a D→P pull. Below this threshold, P recomputes locally instead of pulling (to amortize transfer latency). |
-| `decoder_kv_blocks_ttl` | `480` | TTL (seconds) for KV blocks cached on D for bidirectional reuse. Blocks are released after this duration. Not renewed via heartbeats. |
+| `bidirectional_kv_xfer` | `false` | 双方向（D→P）の KV 転送を有効にします。 |
+| `kv_recompute_threshold` | `64` | D→P のプルを行うために必要なリモートトークンの最小数。この閾値未満の場合、P はプルせずローカルで再計算します（転送レイテンシを償却するため）。 |
+| `decoder_kv_blocks_ttl` | `480` | 双方向の再利用のために D にキャッシュされる KV ブロックの TTL（秒）。この期間を過ぎるとブロックは解放されます。ハートビートでは更新されません。 |
 
-### Multi-turn proxy setup
+### マルチターン用プロキシのセットアップ { #multi-turn-proxy-setup }
 
-Use the provided multi-turn proxy to manage `kv_transfer_params` caching across conversation turns:
+会話のターンをまたぐ `kv_transfer_params` のキャッシュを管理するには、同梱のマルチターン用プロキシを使います。
 
 ```bash
 python examples/disaggregated/disaggregated_serving/disagg_proxy_multiturn.py \
@@ -252,7 +252,7 @@ python examples/disaggregated/disaggregated_serving/disagg_proxy_multiturn.py \
   --decoder-host <D_IP> --decoder-port 8200
 ```
 
-The proxy supports multiple P and D instances via round-robin:
+このプロキシは、ラウンドロビンによる複数の P / D インスタンスをサポートします。
 
 ```bash
 python examples/disaggregated/disaggregated_serving/disagg_proxy_multiturn.py \
@@ -261,9 +261,9 @@ python examples/disaggregated/disaggregated_serving/disagg_proxy_multiturn.py \
   --decoder-hosts <D_IP1> <D_IP2> --decoder-ports 8200 8200
 ```
 
-### Client usage
+### クライアント側の使い方 { #client-usage }
 
-Include a `conversation_id` field in the request body to enable cross-turn KV reuse. Without it, the proxy cannot link turns and falls back to full recomputation.
+ターンをまたいだ KV の再利用を有効にするには、リクエストボディに `conversation_id` フィールドを含めます。これがない場合、プロキシはターンを関連づけられず、全体の再計算にフォールバックします。
 
 ```bash
 # Turn 1
@@ -292,13 +292,13 @@ curl http://localhost:8000/v1/chat/completions \
 ```
 
 !!! note
-    The `conversation_id` field is a non-standard extension to the OpenAI API. It is consumed by the proxy and not forwarded to the vLLM engine.
+    `conversation_id` フィールドは OpenAI API に対する非標準の拡張です。プロキシが消費し、vLLM エンジンには転送されません。
 
-### Benchmarking the multi-turn proxy
+### マルチターン用プロキシのベンチマーク { #benchmarking-the-multi-turn-proxy }
 
-[`benchmarks/multi_turn/benchmark_serving_multi_turn.py`](../../benchmarks/multi_turn/benchmark_serving_multi_turn.py) supports targeting the disaggregated multi-turn proxy with the `--send-conversation-id` flag, which injects a per-conversation `conversation_id` into every request payload so the proxy can key cross-turn KV cache reuse.
+[`benchmarks/multi_turn/benchmark_serving_multi_turn.py`](../../benchmarks/multi_turn/benchmark_serving_multi_turn.py) は `--send-conversation-id` フラグにより、分離構成のマルチターン用プロキシを対象にできます。このフラグは会話ごとの `conversation_id` をすべてのリクエストのペイロードに挿入し、プロキシがターンをまたいだ KV キャッシュの再利用をキー付けできるようにします。
 
-The flag is **off by default** so the benchmark is compatible with strict OpenAI-compatible frontends that reject unknown top-level fields. When benchmarking the multi-turn proxy you must pass it explicitly — otherwise every turn lands as a cache MISS and the bidirectional KV transfer path is never exercised.
+このフラグは**既定で無効**です。未知のトップレベルフィールドを拒否する厳格な OpenAI 互換フロントエンドとの互換性を保つためです。マルチターン用プロキシをベンチマークする際は明示的に渡す必要があります。そうしないと、すべてのターンがキャッシュミスになり、双方向の KV 転送の経路がまったく使われません。
 
 ```bash
 python benchmarks/multi_turn/benchmark_serving_multi_turn.py \
@@ -309,26 +309,24 @@ python benchmarks/multi_turn/benchmark_serving_multi_turn.py \
   --send-conversation-id
 ```
 
-### Limitations
+### 制限事項 { #limitations }
 
-- Requires a stateful proxy (or equivalent router) to track and forward `kv_transfer_params` between turns.
-- Currently supported on CUDA with device-buffer KV cache. Host-buffer support (e.g., for Intel XPU) is planned for future work.
+- ターン間で `kv_transfer_params` を追跡・転送するステートフルなプロキシ（または同等のルーター）が必要です。
+- 現時点では、デバイスバッファの KV キャッシュを使う CUDA でサポートされています。ホストバッファのサポート（Intel XPU 向けなど）は今後の作業として計画されています。
 
-!!! warning "Reasoning models with stripped thinking traces"
-    When using reasoning models (e.g. DeepSeek-R1) that produce thinking traces
-    (`<think>...</think>`), D's KV blocks cover the full token sequence including
-    thinking tokens. If the client strips thinking traces from the conversation
-    history before sending the next turn, the prompt P receives will be missing
-    tokens from the middle of what D generated. The block-alignment logic assumes
-    P's prompt is a prefix of D's sequence, so pulling KV blocks from D in this
-    case transfers cache computed for the wrong token positions, producing
-    incorrect results.
+!!! warning "thinking トレースが除去された推論モデル"
+    thinking トレース（`<think>...</think>`）を生成する推論モデル（DeepSeek-R1 など）を使う場合、
+    D の KV ブロックは thinking トークンを含むトークン列全体をカバーします。クライアントが
+    次のターンを送る前に会話履歴から thinking トレースを取り除くと、P が受け取るプロンプトは
+    D が生成した内容の途中のトークンを欠くことになります。ブロックの位置合わせのロジックは
+    P のプロンプトが D の列の接頭辞であることを前提としているため、この場合に D から KV ブロックを
+    プルすると、誤ったトークン位置について計算されたキャッシュが転送され、不正な結果になります。
 
-    We currently assume the router is able to detect such mismatch across turns. See [#43094](https://github.com/vllm-project/vllm/issues/43094). 
+    現時点では、ルーターがこうしたターンをまたぐ不一致を検出できることを前提としています。[#43094](https://github.com/vllm-project/vllm/issues/43094) を参照してください。
 
-## Multi-Instance Setup
+## 複数インスタンスの構成 { #multi-instance-setup }
 
-### Multiple Prefiller Instances on Different Machines
+### 複数のプレフィルインスタンスを別マシンに配置する { #multiple-prefiller-instances-on-different-machines }
 
 ```bash
 # Prefiller 1 on Machine A (example IP: ${IP1})
@@ -348,7 +346,7 @@ vllm serve Qwen/Qwen3-0.6B --port 8000 \
   --kv-transfer-config '{"kv_connector":"NixlConnector","kv_role":"kv_producer","kv_load_failure_policy":"fail"}'
 ```
 
-### Multiple Decoder Instances on Different Machines
+### 複数のデコードインスタンスを別マシンに配置する { #multiple-decoder-instances-on-different-machines }
 
 ```bash
 # Decoder 1 on Machine C (example IP: ${IP3})
@@ -368,7 +366,7 @@ vllm serve Qwen/Qwen3-0.6B --port 8000 \
   --kv-transfer-config '{"kv_connector":"NixlConnector","kv_role":"kv_consumer","kv_load_failure_policy":"fail"}'
 ```
 
-### Proxy for Multiple Instances
+### 複数インスタンス向けのプロキシ { #proxy-for-multiple-instances }
 
 ```bash
 python tests/v1/kv_connector/nixl_integration/toy_proxy_server.py \
@@ -379,54 +377,53 @@ python tests/v1/kv_connector/nixl_integration/toy_proxy_server.py \
   --decoder-ports 8000 8000
 ```
 
-For multi-host DP deployment, only need to provide the host/port of the head instances.
+複数ホストの DP デプロイでは、head インスタンスのホスト / ポートだけを指定すれば済みます。
 
-### KV Role Options
+### KV ロールの選択肢 { #kv-role-options }
 
-- **kv_producer**: For prefiller instances that generate KV caches
-- **kv_consumer**: For decoder instances that consume KV caches from prefiller
-- **kv_both** (deprecated): Previously used as a catch-all when the role was not predetermined. This value is now deprecated for NixlConnector and will be removed in a future release.
-
-!!! warning
-    `kv_role="kv_both"` is deprecated for NixlConnector. Please set `kv_role="kv_producer"` for prefill instances and `kv_role="kv_consumer"` for decode instances. See [#33702](https://github.com/vllm-project/vllm/issues/33702) for details.
-
-### KV Load Failure Policy
-
-The `kv_load_failure_policy` setting controls how the system handles failures when the decoder instance loads KV cache blocks from the prefiller instance:
-
-- **fail** (default): Immediately fail the request with an error when KV load fails. This prevents performance degradation by avoiding recomputation of prefill work on the decode instance.
-- **recompute**: Recompute failed blocks locally on the decode instance. This may cause performance _jitter_ on decode instances as the scheduled prefill will delay and interfere with other decodes. Furthermore, decode instances are typically configured with low-latency optimizations.
+- **kv_producer**: KV キャッシュを生成するプレフィルのインスタンス向け
+- **kv_consumer**: プレフィル側から KV キャッシュを消費するデコードのインスタンス向け
+- **kv_both**（非推奨）: 以前は役割があらかじめ決まっていない場合の汎用の値として使われていました。NixlConnector では非推奨となり、将来のリリースで削除されます。
 
 !!! warning
-    Using `kv_load_failure_policy="recompute"` can lead to performance degradation in production deployments. When KV loads fail, the decode instance will execute prefill work with decode-optimized configurations, which is inefficient and defeats the purpose of disaggregated prefilling. This also increases tail latency for other ongoing decode requests.
+    NixlConnector では `kv_role="kv_both"` は非推奨です。プレフィルのインスタンスには `kv_role="kv_producer"`、デコードのインスタンスには `kv_role="kv_consumer"` を設定してください。詳細は [#33702](https://github.com/vllm-project/vllm/issues/33702) を参照してください。
 
-### For NVIDIA GB-series GPUs
+### KV ロード失敗時のポリシー { #kv-load-failure-policy }
 
-GB-series GPUs support multi-node NVLink. NIXL supports this capability, but KVCache must be registered as VMM during KVCache registration. To enable this feature, you need to set `--enable-cumem-allocator` or `--enable-sleep-mode` flags, and set `UCX_CUDA_IPC_ENABLE_MNNVL: 'y'` env. Otherwise, NIXL can only use RDMA/TCP for cross-node KVCache transfers.
+`kv_load_failure_policy` の設定は、デコードのインスタンスがプレフィルのインスタンスから KV キャッシュブロックを読み込む際に失敗した場合の扱いを制御します。
 
-## Experimental Feature
+- **fail**（既定）: KV のロードが失敗した時点で、リクエストをエラーで即座に失敗させます。デコードのインスタンス上でプレフィルの処理を再計算することを避け、性能低下を防ぎます。
+- **recompute**: 失敗したブロックをデコードのインスタンス上でローカルに再計算します。スケジュールされたプレフィルが他のデコードを遅延させ干渉するため、デコードのインスタンスで性能の_ジッタ_が生じることがあります。さらに、デコードのインスタンスは通常、低レイテンシ向けの設定になっています。
 
-### Heterogeneous KV Layout support
+!!! warning
+    `kv_load_failure_policy="recompute"` を本番デプロイで使うと、性能低下を招くことがあります。KV のロードが失敗すると、デコードのインスタンスがデコード向けに最適化された設定でプレフィルの処理を実行することになり、非効率であるうえ、プレフィル分離の目的を損ないます。また、進行中の他のデコードリクエストのテールレイテンシも増加します。
 
-Support use case: Prefill with 'HND' and decode with 'NHD' with experimental configuration
+### NVIDIA GB シリーズ GPU の場合 { #for-nvidia-gb-series-gpus }
+
+GB シリーズの GPU はマルチノード NVLink をサポートします。NIXL もこの機能に対応していますが、KV キャッシュの登録時に KV キャッシュを VMM として登録する必要があります。この機能を有効にするには、`--enable-cumem-allocator` または `--enable-sleep-mode` フラグを指定し、環境変数 `UCX_CUDA_IPC_ENABLE_MNNVL: 'y'` を設定します。そうしない場合、NIXL はノード間の KV キャッシュ転送に RDMA / TCP しか使えません。
+
+## 実験的機能 { #experimental-feature }
+
+### 異種 KV レイアウトのサポート { #heterogeneous-kv-layout-support }
+
+サポートされるユースケース: 実験的な設定により、プレフィルを 'HND'、デコードを 'NHD' で行う
 
 ```bash
 --kv-transfer-config '{..., "enable_permute_local_kv":"True"}'
 ```
 
-### Cross layers blocks
+### 層をまたぐブロック { #cross-layers-blocks }
 
-By default, this feature is disabled. On attention backends that support this feature, each logical block is contiguous in physical memory. This reduces the number of buffers that need to be transferred.
-To enable this feature:
+この機能は既定で無効です。この機能をサポートする attention バックエンドでは、各論理ブロックが物理メモリ上で連続します。これにより、転送する必要のあるバッファ数が減ります。
+有効にするには次のようにします。
 
 ```bash
 --kv-transfer-config '{..., "kv_connector_extra_config": {"enable_cross_layers_blocks": "True"}}'
 ```
 
-## Metrics Reference
+## メトリクスのリファレンス { #metrics-reference }
 
-vLLM periodically logs a `KV Transfer metrics` line summarising NIXL transfer
-activity for the last reporting interval. Example output:
+vLLM は、直近の報告区間における NIXL の転送状況をまとめた `KV Transfer metrics` の行を定期的にログ出力します。出力例:
 
 ```text
 KV Transfer metrics: Num successful transfers=4, Avg xfer time (ms)=1.381,
@@ -434,46 +431,42 @@ P90 xfer time (ms)=2.601, Avg post time (ms)=0.672, P90 post time (ms)=0.801,
 Avg MB per transfer=2.25, Throughput (MB/s)=1629.549, Avg number of descriptors=72.0
 ```
 
-The table below describes each field. All timing values cover only the
-successful transfers recorded in the current interval; failed transfers are
-counted separately via Prometheus (see
-[Prometheus metrics](#prometheus-metrics) below).
+下表は各フィールドの説明です。時間の値はいずれも、その区間で記録された成功した転送のみを対象としています。失敗した転送は Prometheus 経由で別途カウントされます（後述の [Prometheus メトリクス](#prometheus-metrics)を参照）。
 
-| Metric | Unit | Description |
+| メトリクス | 単位 | 説明 |
 | -------- | ------ | ------------- |
-| `Num successful transfers` | count | Number of NIXL KV-block transfers that completed without error during the interval. A transfer corresponds to one prefill request's worth of KV cache being moved from the prefiller to the decoder (or vice versa in bidirectional mode). |
-| `Avg xfer time (ms)` | ms | Mean end-to-end transfer duration (`xferDuration` in NIXL telemetry, converted from µs). Measured from when the request is posted to when the backend reports completion, so it includes both the posting step and the actual data movement. |
-| `P90 xfer time (ms)` | ms | 90th-percentile transfer duration. Use this to identify tail latency: a large gap between average and P90 suggests occasional stragglers (e.g., network congestion or large KV blocks). |
-| `Avg post time (ms)` | ms | Mean time to submit the transfer request to the RDMA backend (`postDuration` in NIXL telemetry). This is the synchronous cost of posting work to the NIC queue (descriptor setup, etc.) before the async data movement begins. |
-| `P90 post time (ms)` | ms | 90th-percentile request-posting duration. Elevated P90 here (with low xfer P90) points to overhead in submitting requests rather than in the data transfer itself. |
-| `Avg MB per transfer` | MB | Mean payload size per transfer, computed as `total bytes transferred / number of transfers`. Reflects the average KV cache footprint of a single request (sequence length × layers × head dimension × dtype bytes). |
-| `Throughput (MB/s)` | MB/s | Effective bandwidth over the interval: `total MB transferred / total xfer time (s)` across all successful transfers. This is aggregate throughput, not per-request bandwidth. |
-| `Avg number of descriptors` | count | Mean number of NIXL memory descriptors (scatter-gather segments) submitted per transfer. More descriptors indicate more fragmented or larger KV cache allocations; very high counts can increase descriptor-registration overhead. |
+| `Num successful transfers` | 件数 | その区間中にエラーなく完了した NIXL の KV ブロック転送の件数。1 回の転送は、プレフィルリクエスト 1 件分の KV キャッシュがプレフィル側からデコード側へ（双方向モードではその逆へ）移動することに対応します。 |
+| `Avg xfer time (ms)` | ms | エンドツーエンドの転送時間の平均（NIXL テレメトリの `xferDuration` を µs から変換）。リクエストが post されてからバックエンドが完了を報告するまでを計測するため、post の処理と実際のデータ移動の両方を含みます。 |
+| `P90 xfer time (ms)` | ms | 転送時間の 90 パーセンタイル。テールレイテンシの把握に使います。平均と P90 の差が大きい場合、ときおり遅い転送（ネットワークの輻輳や大きな KV ブロックなど）が発生していることを示します。 |
+| `Avg post time (ms)` | ms | 転送リクエストを RDMA バックエンドへ投入するまでの平均時間（NIXL テレメトリの `postDuration`）。非同期のデータ移動が始まる前に、NIC のキューへ処理を投入する同期的なコスト（ディスクリプタの設定など）です。 |
+| `P90 post time (ms)` | ms | リクエスト投入時間の 90 パーセンタイル。ここが高く（xfer の P90 は低い）場合、データ転送そのものではなくリクエスト投入のオーバーヘッドを示します。 |
+| `Avg MB per transfer` | MB | 転送あたりのペイロードサイズの平均。`転送した総バイト数 / 転送回数` で計算されます。1 リクエストあたりの平均的な KV キャッシュのサイズ（シーケンス長 × 層数 × ヘッド次元 × dtype のバイト数）を反映します。 |
+| `Throughput (MB/s)` | MB/s | その区間の実効帯域幅。成功したすべての転送にわたる `転送した総 MB / 総転送時間（秒）` です。リクエストごとの帯域ではなく、合計のスループットです。 |
+| `Avg number of descriptors` | 件数 | 転送あたりに投入された NIXL のメモリディスクリプタ（scatter-gather のセグメント）数の平均。ディスクリプタが多いほど、KV キャッシュの確保が断片化しているか大きいことを示します。極端に多い場合、ディスクリプタ登録のオーバーヘッドが増える可能性があります。 |
 
-### Prometheus metrics
+### Prometheus メトリクス { #prometheus-metrics }
 
-In addition to the periodic log line, the following Prometheus metrics are
-exported when NixlConnector is active:
+定期的なログ行に加えて、NixlConnector が有効な場合は次の Prometheus メトリクスがエクスポートされます。
 
-| Metric name | Type | Description |
+| メトリクス名 | 種類 | 説明 |
 | ------------- | ------ | ------------- |
-| `vllm:nixl_xfer_time_seconds` | Histogram | Per-transfer RDMA copy duration (seconds). |
-| `vllm:nixl_post_time_seconds` | Histogram | Time to submit the transfer request to the RDMA backend (seconds). |
-| `vllm:nixl_bytes_transferred` | Histogram | Bytes moved per transfer. |
-| `vllm:nixl_num_descriptors` | Histogram | Descriptor count per transfer. |
-| `vllm:nixl_num_failed_transfers` | Counter | Cumulative count of failed NIXL KV-block transfers. |
-| `vllm:nixl_num_failed_notifications` | Counter | Cumulative count of failed completion notifications (`send_notif`). |
-| `vllm:nixl_num_kv_expired_reqs` | Counter | Requests whose KV blocks expired on the prefiller before the decoder read them (tracked on the P instance). |
+| `vllm:nixl_xfer_time_seconds` | Histogram | 転送ごとの RDMA コピー時間（秒）。 |
+| `vllm:nixl_post_time_seconds` | Histogram | 転送リクエストを RDMA バックエンドへ投入するまでの時間（秒）。 |
+| `vllm:nixl_bytes_transferred` | Histogram | 転送ごとに移動したバイト数。 |
+| `vllm:nixl_num_descriptors` | Histogram | 転送ごとのディスクリプタ数。 |
+| `vllm:nixl_num_failed_transfers` | Counter | 失敗した NIXL の KV ブロック転送の累計件数。 |
+| `vllm:nixl_num_failed_notifications` | Counter | 失敗した完了通知（`send_notif`）の累計件数。 |
+| `vllm:nixl_num_kv_expired_reqs` | Counter | デコード側が読み出す前にプレフィル側で KV ブロックが失効したリクエスト数（P インスタンス側で計測）。 |
 
 !!! tip
-    High `vllm:nixl_num_kv_expired_reqs` indicates that the prefiller's lease
-    duration (`kv_lease_duration`) is too short for your network or workload.
-    Increase it via `--kv-transfer-config '{"kv_connector_extra_config":
-    {"kv_lease_duration": <seconds>}}'`.
+    `vllm:nixl_num_kv_expired_reqs` が高い場合、プレフィル側のリース期間（`kv_lease_duration`）が
+    ネットワークやワークロードに対して短すぎることを示します。
+    `--kv-transfer-config '{"kv_connector_extra_config": {"kv_lease_duration": <秒数>}}'`
+    で値を大きくしてください。
 
-## Example Scripts/Code
+## サンプルスクリプト / コード { #example-scriptscode }
 
-Refer to these example scripts in the vLLM repository:
+vLLM リポジトリの次のサンプルスクリプトを参照してください。
 
 - [run_accuracy_test.sh](../../tests/v1/kv_connector/nixl_integration/run_accuracy_test.sh)
 - [toy_proxy_server.py](../../tests/v1/kv_connector/nixl_integration/toy_proxy_server.py)

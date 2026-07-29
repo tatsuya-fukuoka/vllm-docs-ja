@@ -881,8 +881,10 @@
       "upstream_sha": "262bcc65bd96f86b"
     },
     "features/nixl_connector_usage.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d5004353dd9935f2",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "d5004353dd9935f2"
     },
     "features/per_request_metrics.md": {
