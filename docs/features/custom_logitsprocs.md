@@ -1,101 +1,98 @@
-# Custom Logits Processors
+# カスタムのロジットプロセッサ { #custom-logits-processors }
 
 !!! important
-    Some logits processors design changes are still in progress and the API may
-    change in the near future. We hope to stabilize this part of the API soon
+    ロジットプロセッサの設計変更の一部はまだ進行中で、API は近い将来変わる可能性があります。この部分の API は近いうちに安定させたいと考えています。
 
-A "custom" logits processor is written by a user of vLLM and is loaded into vLLM at initialization without needing to modify or recompile the vLLM source code. It is the opposite of a built-in logits processor.
+「カスタム」のロジットプロセッサは vLLM の利用者が書くもので、vLLM のソースコードを変更したり再コンパイルしたりすることなく、初期化時に vLLM へ読み込まれます。組み込みのロジットプロセッサの対極にあるものです。
 
-This document shows how to write, load and use a custom logits processor.
+このドキュメントでは、カスタムのロジットプロセッサの書き方、読み込み方、使い方を説明します。
 
-## Logits Processors Background
+## ロジットプロセッサの背景 { #logits-processors-background }
 
-A logits processor adjusts the next-token probability distribution, usually with the intention of steering the model towards a desired type of behavior.
+ロジットプロセッサは次トークンの確率分布を調整するもので、通常はモデルを望ましい振る舞いへ誘導することを目的とします。
 
-In vLLM, logits processors operate at batch granularity. During a given engine step, the logits processor consumes a `(num_requests) x (vocab_size)` tensor of raw logits output by the model. For all requests which enable the logits processor, the logits processor applies a transformation to the corresponding row of the logits tensor, while leaving other rows unmodified. The transformed logits tensor is then passed to softmax.  
+vLLM では、ロジットプロセッサはバッチ単位で動作します。あるエンジンステップにおいて、ロジットプロセッサはモデルが出力した生のロジットの `(num_requests) x (vocab_size)` テンソルを受け取ります。そのロジットプロセッサを有効にしているすべてのリクエストについて、対応するロジットテンソルの行に変換を適用し、それ以外の行は変更しません。変換後のロジットテンソルは softmax に渡されます。
 
-## Creating a Custom Logits Processor
+## カスタムのロジットプロセッサを作る { #creating-a-custom-logits-processor }
 
-Custom logits processors must subclass `vllm.v1.sample.logits_processor.LogitsProcessor` and define (at minimum) the following methods:
+カスタムのロジットプロセッサは `vllm.v1.sample.logits_processor.LogitsProcessor` を継承し、少なくとも次のメソッドを定義する必要があります。
 
 * `validate_params(cls, sampling_params: SamplingParams)`:
-    * Raise `ValueError` if `SamplingParams` has invalid arguments (especially custom arguments) used by logits processor.
-    * When request is sent to entrypoint, `validate_params()` will validate `SamplingParams` and refuse request with invalid arguments.
-    * **Note:** it's important to implement `validate_params()` to prevent invalid parameters for custom logits processor. Otherwise requests with invalid parameters can cause unexpected behaviour in custom logits processor.
+    * ロジットプロセッサが使う `SamplingParams` の引数（とくにカスタム引数）が不正な場合に `ValueError` を送出します。
+    * リクエストがエントリポイントに送られると、`validate_params()` が `SamplingParams` を検証し、不正な引数を含むリクエストを拒否します。
+    * **注:** カスタムのロジットプロセッサに不正なパラメータが渡るのを防ぐため、`validate_params()` を実装することが重要です。そうしないと、不正なパラメータを含むリクエストがカスタムのロジットプロセッサで予期しない挙動を引き起こす可能性があります。
 
 * `__init__(self, vllm_config: VllmConfig, device: torch.device, is_pin_memory: bool)`
-    * `vllm_config`: engine configuration data structure
-    * `device`: hardware accelerator device info
-    * `is_pin_memory`: flag indicating whether pin memory is available to support logits processor implementation
+    * `vllm_config`: エンジンの設定データ構造
+    * `device`: ハードウェアアクセラレータのデバイス情報
+    * `is_pin_memory`: ロジットプロセッサの実装のために pin メモリが利用できるかを示すフラグ
 
 * `apply(self, logits: torch.Tensor) -> torch.Tensor`:
-    * Consume a `(num_requests) x (vocab_size)` logits tensor (`logits`)
-    * Apply logits processor transformation at batch granularity
-    * Return a transformed `(num_requests) x (vocab_size)` logits tensor
-    * You can modify the input logits processors in-place or out-of-place; in-place is more memory-efficient
+    * `(num_requests) x (vocab_size)` のロジットテンソル（`logits`）を受け取ります
+    * バッチ単位でロジットプロセッサの変換を適用します
+    * 変換後の `(num_requests) x (vocab_size)` のロジットテンソルを返します
+    * 入力のロジットはインプレースでもアウトオブプレースでも変更できます。インプレースのほうがメモリ効率に優れます
 
 * `is_argmax_invariant(self) -> bool`:
-    * Return `True` if the logits processor is argmax invariant (never changes what is the highest-logit-value token ID for a given request), `False` if the logits processor may modify argmax
-    * `is_argmax_invariant()` is evaluated once at startup; if `True`, vLLM will skip applying this logits processor in a given step when all requests use greedy sampling
+    * そのロジットプロセッサが argmax 不変（あるリクエストについて最大ロジット値を持つトークン ID を決して変えない）であれば `True`、argmax を変える可能性があれば `False` を返します
+    * `is_argmax_invariant()` は起動時に一度だけ評価されます。`True` の場合、すべてのリクエストが貪欲サンプリングを使うステップでは、vLLM はこのロジットプロセッサの適用をスキップします
 
 * `update_state(self, batch_update: Optional["BatchUpdate"]) -> None`:
-    * Consume a `BatchUpdate` data structure representing persistent batch state changes at the beginning of the current engine step
-    * Use the `BatchUpdate` members to update logits processor internal state
-    * **Note:** batch update data structure may be `None`, signaling no change to the batch constituents. In this case, the LogitsProcessor might still want to update its state based on the updated `output_token_ids` lists that it could have retained when they were added.
+    * 現在のエンジンステップ開始時の永続バッチの状態変化を表す `BatchUpdate` データ構造を受け取ります
+    * `BatchUpdate` のメンバを使ってロジットプロセッサの内部状態を更新します
+    * **注:** バッチ更新のデータ構造は `None` になることがあり、これはバッチの構成に変化がないことを示します。この場合でも、ロジットプロセッサは、追加時に保持した `output_token_ids` のリストが更新されているのを踏まえて状態を更新したい場合があります。
 
-### How the vLLM engine builds the `BatchUpdate` data structure
+### vLLM エンジンが `BatchUpdate` データ構造を構築する方法 { #how-the-vllm-engine-builds-the-batchupdate-data-structure }
 
 !!! important
-    Some logits processors design changes are still in progress. We expect
-    that in the future you will not need to account for batch state changes
-    when implementing a logits processor, and the information in this section
-    will become irrelevant.
+    ロジットプロセッサの設計変更の一部はまだ進行中です。将来的には、ロジットプロセッサを実装する際に
+    バッチ状態の変化を考慮する必要はなくなり、この節の情報は不要になる見込みです。
 
-Logits processor `update_state()` implementations should assume the following model for how the model runner updates persistent batch state (expressed here in terms of the `BatchUpdate` abstraction):
+ロジットプロセッサの `update_state()` の実装は、モデルランナーが永続バッチの状態を更新する方法として、次のモデル（ここでは `BatchUpdate` の抽象で表現）を前提とすべきです。
 
-1. Identify indices of requests which finished in the current engine step
+1. 現在のエンジンステップで完了したリクエストのインデックスを特定する
 
-2. Identify new requests introduced in the current step
+2. 現在のステップで新たに投入されたリクエストを特定する
 
-3. Use Add operations to replace as many finished requests with new requests, in order of increasing index of the replaced request starting with the lowest index
+3. Add 操作により、完了したリクエストをできるだけ多く新しいリクエストで置き換える。置き換えるリクエストのインデックスが小さい順に処理する
 
-4. Based on the relative number of new and finished requests:
+4. 新規リクエストと完了リクエストの数の関係に応じて:
 
-    1. If the numbers of new and finished requests are the same, proceed to next step
+    1. 新規と完了の数が同じであれば、次のステップへ進む
 
-    2. *If there are more new requests than finished requests:* apply Add operations to extend the batch with the remaining new requests which did not replace finished requests. Assign consecutive indices to these new requests, starting with `current_max_batch_index + 1`
+    2. *新規リクエストのほうが完了リクエストより多い場合:* 完了リクエストを置き換えなかった残りの新規リクエストで、Add 操作によりバッチを拡張する。これらの新規リクエストには `current_max_batch_index + 1` から始まる連続したインデックスを割り当てる
 
-    3. *If there are fewer new requests than finished requests:*
+    3. *新規リクエストのほうが完了リクエストより少ない場合:*
 
-        * Apply Remove operations to finished requests which were not replaced with new requests. These removed request indices will necessarily be greater than the greatest index of the finished requests which were replaced in the previous step. The Removes may leave the batch in a non-contiguous state
+        * 新規リクエストで置き換えられなかった完了リクエストに Remove 操作を適用する。これら削除されるリクエストのインデックスは、必ず前のステップで置き換えられた完了リクエストの最大インデックスより大きくなる。Remove によりバッチは非連続な状態になることがある
 
-        * **"Condense" the batch to be contiguous:** starting with the lowest-index empty slot (which was caused by a Remove), apply a Unidirectional Move from the current highest non-empty slot in the batch to fill the empty slot. Proceed with additional Unidirectional Move operations in order of increasing empty slot destination index and decreasing non-empty slot source index until the batch is contiguous
+        * **バッチを連続にするよう「圧縮」する:** （Remove により生じた）最も小さいインデックスの空きスロットから始め、バッチ内で現在最も大きいインデックスの非空スロットから一方向の Move を適用して空きスロットを埋める。バッチが連続になるまで、空きスロットの宛先インデックスは昇順、非空スロットの元インデックスは降順の順で一方向の Move を続ける
 
-        * **Shrink the batch:** a side effect of condensing the batch is that empty slots resulting from Remove operations are grouped in a contiguous block at the end of the batch array. Thus, after condensing, update `BatchUpdate.batch_size` to reflect the number of non-empty slots
+        * **バッチを縮小する:** バッチの圧縮の副作用として、Remove により生じた空きスロットはバッチ配列の末尾に連続したブロックとしてまとまる。したがって圧縮後は、非空スロットの数を反映するよう `BatchUpdate.batch_size` を更新する
 
-5. Reorder the batch for improved efficiency. Depending on the attention backend implementation and the current characteristics of the batch, zero or more Swap Move operations may be applied to reorder the batch
+5. 効率を高めるためにバッチを並べ替える。attention バックエンドの実装と現在のバッチの特性に応じて、バッチの並べ替えのために 0 個以上の Swap の Move 操作が適用されることがある
 
-Notes:
+注意点:
 
-* A logits processor `update_state()` method must process batch update operations in the following order: removes, adds, moves
+* ロジットプロセッサの `update_state()` メソッドは、バッチ更新の操作を「remove、add、move」の順で処理しなければなりません
 
-* The index argument for Add operations refers to the index *at the time the Add occurred*, i.e. before any Move operations
-    * Example: if a request is Added at index 5 and then swapped with index 3, the Add operation in `BatchUpdate.added` will be associated with index 5 not 3
-    * In other words Move operations can be assumed to be applied after Adds and Removes
+* Add 操作のインデックス引数は、*その Add が発生した時点*の、すなわち Move 操作より前のインデックスを指します
+    * 例: あるリクエストがインデックス 5 で Add され、その後インデックス 3 と交換された場合、`BatchUpdate.added` の Add 操作はインデックス 3 ではなく 5 に対応づけられます
+    * 言い換えると、Move 操作は Add と Remove のあとに適用されると仮定できます
 
-* Move operations can be assumed to be applied in the order in which they appear in `BatchUpdate.moved`
+* Move 操作は `BatchUpdate.moved` に現れる順序で適用されると仮定できます
 
-* If there are no new/finished requests and there is no batch reordering, then the batch update for the logits processors will be `None`
+* 新規 / 完了のリクエストがなく、バッチの並べ替えもない場合、ロジットプロセッサへのバッチ更新は `None` になります
 
-### Passing Custom Argument to a Custom Logits Processor
+### カスタムのロジットプロセッサへのカスタム引数の受け渡し { #passing-custom-argument-to-a-custom-logits-processor }
 
-Unlike built-in logits processors, custom logits processors may require configuration arguments that are not hard-coded into `SamplingParams` or the vLLM server REST API. To solve this problem, custom logits processors may leverage vLLM [custom arguments](./custom_arguments.md) support to receive configuration settings from the user (although you are also free to design a custom logits processor which utilizes the pre-existing fields in `SamplingParams`.)
+組み込みのロジットプロセッサとは異なり、カスタムのロジットプロセッサは `SamplingParams` や vLLM サーバーの REST API にハードコードされていない設定引数を必要とすることがあります。この問題を解決するため、カスタムのロジットプロセッサは vLLM の[カスタム引数](./custom_arguments.md)のサポートを活用してユーザーから設定を受け取れます（もちろん、`SamplingParams` の既存フィールドを利用するカスタムのロジットプロセッサを設計しても構いません）。
 
-### Example Custom Logits Processor Implementation
+### カスタムのロジットプロセッサの実装例 { #example-custom-logits-processor-implementation }
 
-The contrived example below implements a custom logits processor which consumes a `(num\_requests) \times (vocab\_size)` logits tensor and masks out all tokens except for one (`target_token`) with `float(-inf)`. The logits processor is disabled for any request that does not specify `target_token`. To determine whether the logits processor is enabled and which token to leave unmasked, the logits processor checks `SamplingParams.extra_args` for a `target_token` custom argument associated with each request:
+以下の作為的な例は、`(num\_requests) \times (vocab\_size)` のロジットテンソルを受け取り、1 つのトークン（`target_token`）を除くすべてのトークンを `float(-inf)` でマスクするカスタムのロジットプロセッサを実装したものです。`target_token` を指定しないリクエストでは、このロジットプロセッサは無効になります。ロジットプロセッサが有効かどうか、そしてどのトークンをマスクせずに残すかを判断するため、各リクエストに紐づく `target_token` カスタム引数を `SamplingParams.extra_args` から調べます。
 
-??? code "Example custom logits processor definition"
+??? code "カスタムのロジットプロセッサの定義例"
 
     ``` python
     import torch
@@ -174,13 +171,13 @@ The contrived example below implements a custom logits processor which consumes 
 
     ```
 
-In the rest of this document, we will use `DummyLogitsProcessor` as an example of a custom logits processor.
+このドキュメントの以降では、カスタムのロジットプロセッサの例として `DummyLogitsProcessor` を使います。
 
-The `DummyLogitsProcessor.update_state()` implementation maintains a "sparse" representation of the batched requests in the `self.req_info` dictionary: only those requests which specify a `target_token` value have a key in the dictionary. `update_state()` adjusts the stored request indices and `target_token` values (keys and values respectively in `self.req_info`) in response to Add, Remove and Move operations against the persistent batch.
+`DummyLogitsProcessor.update_state()` の実装は、バッチ内のリクエストを `self.req_info` 辞書で「疎な」表現として保持します。辞書にキーを持つのは、`target_token` の値を指定したリクエストだけです。`update_state()` は、永続バッチに対する Add、Remove、Move の操作に応じて、保存しているリクエストのインデックスと `target_token` の値（`self.req_info` のキーと値）を調整します。
 
-### Wrapping an Existing Request-Level Logits Processor
+### 既存のリクエスト単位ロジットプロセッサのラップ { #wrapping-an-existing-request-level-logits-processor }
 
-Although the vLLM engine applies logits processors at batch granularity, some users may want to use vLLM with a "request-level" logits processor implementation - an implementation which operates on individual requests. This will be especially true if your logits processor was developed for vLLM version 0, which required it to be a `Callable` (as described [`here`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.logits_process)) conforming to the following type annotation:
+vLLM エンジンはバッチ単位でロジットプロセッサを適用しますが、個々のリクエストに対して動作する「リクエスト単位」のロジットプロセッサ実装を vLLM で使いたい利用者もいるでしょう。とくに、そのロジットプロセッサが vLLM のバージョン 0 向けに開発されたものである場合はそうです。バージョン 0 では、次の型注釈に適合する `Callable`（[こちら](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.logits_process)で説明）であることが必要でした。
 
 ``` python
 RequestLogitsProcessor = Union[
@@ -193,17 +190,17 @@ RequestLogitsProcessor = Union[
 ]
 ```
 
-While request-level logits processors are explicitly *not* supported in the vLLM engine, vLLM *does* provide a convenient process to wrap an existing `Callable` request-level logits processor and create a batch-level logits processor that is compatible with vLLM. The `Callable` must conform to the type annotation above; if your request-level logits processor has a different interface, then in order to wrap it, you may need to modify it or implement an additional wrapper layer to comply with the interface specification above.
+リクエスト単位のロジットプロセッサは vLLM エンジンでは明示的に*サポートされていません*が、vLLM は既存の `Callable` なリクエスト単位ロジットプロセッサをラップし、vLLM と互換なバッチ単位のロジットプロセッサを作る便利な仕組みを提供して*います*。この `Callable` は上記の型注釈に適合している必要があります。リクエスト単位のロジットプロセッサが異なるインターフェースを持つ場合、ラップするには実装を修正するか、上記のインターフェース仕様に合わせる追加のラッパー層を実装する必要があるかもしれません。
 
-You can wrap the request-level logits processor by subclassing `AdapterLogitsProcessor` as shown in the example below (in this example, `DummyPerReqLogitsProcessor` is a stand-in for your request-level logits processor which needs to be wrapped.):
+以下の例のように `AdapterLogitsProcessor` を継承することで、リクエスト単位のロジットプロセッサをラップできます（この例では `DummyPerReqLogitsProcessor` が、ラップ対象のリクエスト単位ロジットプロセッサの代わりです）。
 
-* Override `AdapterLogitsProcessor.validate_params(cls,params)` to validate request's sampling parameters.
+* リクエストのサンプリングパラメータを検証するために `AdapterLogitsProcessor.validate_params(cls,params)` をオーバーライドします。
 
-* Override `AdapterLogitsProcessor.is_argmax_invariant(self)` to accurately reflect whether your request-level logits processor may impact which token has the highest-value logit.
+* リクエスト単位のロジットプロセッサが最大ロジット値を持つトークンに影響し得るかどうかを正確に反映するため、`AdapterLogitsProcessor.is_argmax_invariant(self)` をオーバーライドします。
 
-* Override `AdapterLogitsProcessor.new_req_logits_processor(self,params)` to create a new request-level logits processor instance from a `SamplingParams` instance:
+* `SamplingParams` のインスタンスから新しいリクエスト単位ロジットプロセッサのインスタンスを作るため、`AdapterLogitsProcessor.new_req_logits_processor(self,params)` をオーバーライドします。
 
-??? code "Example of Wrapping a Request-Level Logits Processor"
+??? code "リクエスト単位ロジットプロセッサのラップ例"
 
     ``` python
     ...
@@ -280,35 +277,35 @@ You can wrap the request-level logits processor by subclassing `AdapterLogitsPro
     ```
 
 !!! note
-    Your `new_req_logits_processor()` override can return `None` to signal that the wrapped logits processor should not be applied to the request in question.
+    `new_req_logits_processor()` のオーバーライドは `None` を返すことで、そのリクエストにはラップしたロジットプロセッサを適用すべきでないことを示せます。
 
-Once you have created a custom subclass (like `WrappedPerReqLogitsProcessor`) which wraps your request level logits processor, you can pass the custom subclass to vLLM via any of the methods described in the following section.
+リクエスト単位のロジットプロセッサをラップするカスタムのサブクラス（`WrappedPerReqLogitsProcessor` など）を作ったら、次の節で説明するいずれかの方法で vLLM に渡せます。
 
-## Ways to Load Your Custom Logits Processor in vLLM
+## カスタムのロジットプロセッサを vLLM に読み込ませる方法 { #ways-to-load-your-custom-logits-processor-in-vllm }
 
-Logits processors are loaded at initialization. Critically, the set of loaded logits processors cannot be modified after the vLLM engine finishes loading, and new logits processors cannot be loaded on-demand for individual requests.
+ロジットプロセッサは初期化時に読み込まれます。重要な点として、vLLM エンジンの読み込みが完了したあとに読み込み済みのロジットプロセッサの集合を変更することはできず、個々のリクエストのために新しいロジットプロセッサをオンデマンドで読み込むこともできません。
 
-This section details different ways of making your logits processor visible to vLLM and triggering vLLM to load your logits processor.
+この節では、ロジットプロセッサを vLLM から見えるようにし、vLLM に読み込ませるためのさまざまな方法を説明します。
 
-### Method 1: Pass the Custom Logits Processor Fully-Qualified Class Name (FQCN) to vLLM at Initialization Time
+### 方法 1: 初期化時にカスタムのロジットプロセッサの完全修飾クラス名（FQCN）を vLLM に渡す { #method-1-pass-the-custom-logits-processor-fully-qualified-class-name-fqcn-to-vllm-at-initialization-time }
 
-This method is supported in both offline and online vLLM usage scenarios. The custom logits processor's FQCN (in the form of `dotted.path.to.module:ClassName`) can be passed as an argument to the `LLM` and `AsyncLLM` Python constructors, or as a CLI argument to `vllm serve` with the following syntax
+この方法は、オフラインとオンラインの両方の利用シナリオでサポートされます。カスタムのロジットプロセッサの FQCN（`dotted.path.to.module:ClassName` の形式）は、Python の `LLM` および `AsyncLLM` コンストラクタの引数として、あるいは次の構文で `vllm serve` の CLI 引数として渡せます。
 
 ``` bash
 vllm serve ... --logits_processors <logits processor 1> <logits processor 2> ...
 ```
 
-The only requirements on the FQCN are
+FQCN に対する要件は次の 3 点だけです。
 
-1. Python's `importlib.import_module()` must be able to resolve the dotted path portion of the FQCN and load it as a module
+1. Python の `importlib.import_module()` が FQCN のドット区切りのパス部分を解決し、モジュールとして読み込めること
 
-2. The class-name portion of the FQCN must be possible to import from the loaded module
+2. 読み込んだモジュールから FQCN のクラス名部分を import できること
 
-3. The object pointed to by the FQCN must be a subclass of `LogitsProcessor`
+3. FQCN が指すオブジェクトが `LogitsProcessor` のサブクラスであること
 
-See examples below:
+例を以下に示します。
 
-??? code "Passing custom logits processor FQCN to `LLM` in Python"
+??? code "Python で `LLM` にカスタムのロジットプロセッサの FQCN を渡す"
 
     ``` python
     # Pass in FQCN
@@ -318,7 +315,7 @@ See examples below:
     )
     ```
 
-??? code "Passing custom logits processor FQCN to `AsyncLLM` in Python"
+??? code "Python で `AsyncLLM` にカスタムのロジットプロセッサの FQCN を渡す"
 
     ``` python
     # Pass in FQCN
@@ -327,37 +324,37 @@ See examples below:
     async_llm = AsyncLLM.from_engine_args(engine_args)
     ```
 
-??? code "Passing custom logits processor FQCN to vLLM server via CLI"
+??? code "CLI で vLLM サーバーにカスタムのロジットプロセッサの FQCN を渡す"
 
     ```bash
     vllm serve facebook/opt-125m --logits_processors your.module.path:DummyLogitsProcessor
     ```
 
-### Method 2: Automatically Detect Custom Logits Processors Installed in Your Python Environment As Entry Points
+### 方法 2: Python 環境にインストールされたカスタムのロジットプロセッサをエントリポイントとして自動検出する { #method-2-automatically-detect-custom-logits-processors-installed-in-your-python-environment-as-entry-points }
 
-[`setuptools`](https://setuptools.pypa.io/en/latest/userguide/entry_point.html) can enable installed packages to make themselves available as plugins to other Python programs, via pieces of metadata known as "entry points".
+[`setuptools`](https://setuptools.pypa.io/en/latest/userguide/entry_point.html) を使うと、インストール済みのパッケージが「エントリポイント」と呼ばれるメタデータを通じて、他の Python プログラムのプラグインとして自分自身を提供できます。
 
-During initialization, vLLM automatically scans the `vllm.logits_processors` entry point group and loads any installed logits processors which it finds.
+初期化時、vLLM は `vllm.logits_processors` のエントリポイントグループを自動的に走査し、見つかったインストール済みのロジットプロセッサを読み込みます。
 
-Suppose that you have developed a Python package that holds your custom logits processors. You can expose each logits processor to vLLM by adding a unique entrypoint for each logits processor to your logits processor Python package. The example below shows how to add an entrypoint to your project's `pyproject.toml` file:
+カスタムのロジットプロセッサを含む Python パッケージを開発したとします。そのパッケージにロジットプロセッサごとに一意なエントリポイントを追加することで、各ロジットプロセッサを vLLM に公開できます。以下の例は、プロジェクトの `pyproject.toml` にエントリポイントを追加する方法を示しています。
 
-??? code "Exposing a custom logits processor as a Python entrypoint"
+??? code "カスタムのロジットプロセッサを Python のエントリポイントとして公開する"
 
     ``` toml
     [project.entry-points."vllm.logits_processors"]
     dummy_logits_processor = "your.module.path:DummyLogitsProcessor"
     ```
 
-Once your package is installed, your custom logits processor will be loaded automatically whenever vLLM is initialized. You do *not* need to pass the custom logits processor to the `LLM` or `AsyncLLM` constructors or to the vLLM server explicitly at initialization time if your logits processor is exposed as an entry point.
+パッケージをインストールすれば、vLLM の初期化時にカスタムのロジットプロセッサが自動的に読み込まれます。エントリポイントとして公開している場合、初期化時に `LLM` や `AsyncLLM` のコンストラクタ、あるいは vLLM サーバーへ明示的にカスタムのロジットプロセッサを渡す必要は*ありません*。
 
 !!! note
-    vLLM will *always* load *all* logits processors which are exposed via entrypoints under the `vllm.logits_processors` grouping.
+    vLLM は、`vllm.logits_processors` のグループ配下のエントリポイントで公開された*すべての*ロジットプロセッサを*常に*読み込みます。
 
-### Method 3 (Offline-only): Pass a Python Class Object to the vLLM Constructor
+### 方法 3（オフライン限定）: Python のクラスオブジェクトを vLLM のコンストラクタに渡す { #method-3-offline-only-pass-a-python-class-object-to-the-vllm-constructor }
 
-You can pass one or more custom logits processor class objects to the `LLM` and `AsyncLLM` constructors. This option is very flexible, as the logits processor classes may either be (1) defined locally within the same Python source file where `LLM` or `AsyncLLM` is instantiated, or (2) imported from a Python package.
+`LLM` および `AsyncLLM` のコンストラクタに、1 つ以上のカスタムのロジットプロセッサのクラスオブジェクトを渡せます。この方法は非常に柔軟で、ロジットプロセッサのクラスは (1) `LLM` や `AsyncLLM` をインスタンス化するのと同じ Python ソースファイル内でローカルに定義してもよく、(2) Python パッケージから import してもよいためです。
 
-??? code "Passing custom logits processor class object to `LLM` or `AsyncLLM` in Python"
+??? code "Python で `LLM` または `AsyncLLM` にカスタムのロジットプロセッサのクラスオブジェクトを渡す"
 
     ``` python
     # Import custom logits processor
@@ -384,13 +381,13 @@ You can pass one or more custom logits processor class objects to the `LLM` and 
     async_llm = AsyncLLM.from_engine_args(engine_args)
     ```
 
-## Invoking a Custom Logits Processor Against a Request
+## リクエストに対してカスタムのロジットプロセッサを呼び出す { #invoking-a-custom-logits-processor-against-a-request }
 
-The design of the custom logits processor determines whether the logits processor must be enabled/disabled for a given request, and what arguments must be provided to configure the logits processor.
+あるリクエストについてロジットプロセッサを有効 / 無効にする必要があるか、またロジットプロセッサを設定するためにどの引数を渡す必要があるかは、カスタムのロジットプロセッサの設計によって決まります。
 
-The examples below show how a user would pass a custom argument (`target_token`) to `DummyLogitsProcessor` in order to (1) enable the logits processor for that particular request and (2) control the logits processor's behavior.
+以下の例は、(1) 特定のリクエストでロジットプロセッサを有効にし、(2) その挙動を制御するために、利用者が `DummyLogitsProcessor` へカスタム引数（`target_token`）を渡す方法を示しています。
 
-??? code "vLLM REST API: configure custom logits processor for a request"
+??? code "vLLM REST API: リクエストに対してカスタムのロジットプロセッサを設定する"
 
     ``` bash
     curl http://localhost:8000/v1/completions \
@@ -402,7 +399,7 @@ The examples below show how a user would pass a custom argument (`target_token`)
         }'
     ```
 
-??? code "OpenAI SDK: configure custom logits processor for a request"
+??? code "OpenAI SDK: リクエストに対してカスタムのロジットプロセッサを設定する"
 
     ``` python
     batch = await client.completions.create(
@@ -416,7 +413,7 @@ The examples below show how a user would pass a custom argument (`target_token`)
     )
     ```
 
-??? code "Offline: configure custom logits processor for an `LLM` request"
+??? code "オフライン: `LLM` のリクエストに対してカスタムのロジットプロセッサを設定する"
 
     ``` python
     outputs_logitproc = llm.generate("your prompt", 
@@ -424,7 +421,7 @@ The examples below show how a user would pass a custom argument (`target_token`)
                                         extra_args={"target_token": 67}))
     ```
 
-??? code "Offline: configure custom logits processor for an `AsyncLLM` request"
+??? code "オフライン: `AsyncLLM` のリクエストに対してカスタムのロジットプロセッサを設定する"
 
     ``` python
     async for out in engine.generate(request_id="your request id",
@@ -436,33 +433,33 @@ The examples below show how a user would pass a custom argument (`target_token`)
         ...
     ```
 
-## Best Practices for Writing Custom Logits Processors
+## カスタムのロジットプロセッサを書く際のベストプラクティス { #best-practices-for-writing-custom-logits-processors }
 
-Once vLLM loads a logits processor during initialization, then vLLM will invoke `update_state()` and `apply()` against that logits processor in every engine step. Both methods operate on all requests which currently reside in the vLLM persistent batch. Thus, it is important to implement these methods efficiently.
+初期化時に vLLM がロジットプロセッサを読み込むと、以降 vLLM はエンジンステップごとにそのロジットプロセッサの `update_state()` と `apply()` を呼び出します。どちらのメソッドも、その時点で vLLM の永続バッチに存在するすべてのリクエストに対して動作します。したがって、これらのメソッドを効率的に実装することが重要です。
 
-* Write efficient `apply()` and `update_state()` implementations in light of the fact that logits processors operate at batch granularity
-    * For example, you may be able to use efficient vectorized operations to implement `apply()` or update internal state vectors in `update_state()`
-    * However, if you think that a logits processor may be used infrequently, it may be appropriate to use a "sparse" representation of request state i.e. the class can represent request configuration using a dictionary which only stores metadata about requests that enable the logits processor
-    * **Note:** wrapped request-level logits processors do not need to implement `apply()` and `update_state()`; the default `AdapterLogitsProcessor.update_state()` implementation maintains a sparse representation of request state, wherein requests for which `new_req_logits_processor()` returns `None` are not represented in the base-class state dictionary. The default implementation of `AdapterLogitsProcessor.apply()` applies the request-level logits processor to each row of input logits sequentially and assembles the output logits tensor. If the performance of this `AdapterLogitsProcessor` default implementation is insufficient, then avoid wrapping your request-level logits processor and instead re-implement it as a `LogitsProcessor` subclass with optimized `apply()` and `update_state()` implementations that operate at batch granularity
+* ロジットプロセッサがバッチ単位で動作することを踏まえ、効率的な `apply()` と `update_state()` の実装を書いてください
+    * たとえば、`apply()` の実装や `update_state()` での内部状態ベクトルの更新に、効率的なベクトル化演算を使えるかもしれません
+    * ただし、そのロジットプロセッサが使われる頻度が低いと考えられる場合は、リクエスト状態を「疎な」表現で持つほうが適切なこともあります。すなわち、そのロジットプロセッサを有効にしているリクエストのメタデータだけを辞書で保持する、といった方法です
+    * **注:** ラップしたリクエスト単位のロジットプロセッサでは、`apply()` と `update_state()` を実装する必要はありません。既定の `AdapterLogitsProcessor.update_state()` の実装はリクエスト状態の疎な表現を保持し、`new_req_logits_processor()` が `None` を返したリクエストは基底クラスの状態辞書に含まれません。`AdapterLogitsProcessor.apply()` の既定の実装は、入力ロジットの各行に対してリクエスト単位のロジットプロセッサを順に適用し、出力ロジットテンソルを組み立てます。この `AdapterLogitsProcessor` の既定実装の性能が不十分な場合は、リクエスト単位のロジットプロセッサをラップするのではなく、バッチ単位で動作する最適化された `apply()` と `update_state()` を持つ `LogitsProcessor` のサブクラスとして再実装してください
 
-* It is up to the logits processor author to determine:
+* 次の点はロジットプロセッサの作者が決めることです。
 
-    1. **The per-request attributes which configure the logits processor's behavior against that request.** Your custom logits processor's `update_state()` override determines how `SamplingParams` fields are mapped into logits processor state
+    1. **そのリクエストに対するロジットプロセッサの挙動を設定する、リクエストごとの属性。** カスタムのロジットプロセッサの `update_state()` のオーバーライドが、`SamplingParams` のフィールドをどうロジットプロセッサの状態へ対応づけるかを決めます
 
-        * **Note:** for wrapped request-level logits processors, `new_req_logits_processor()` determines how `SamplingParams` fields are used to initialize a request-level logits processor instance.
+        * **注:** ラップしたリクエスト単位のロジットプロセッサでは、`new_req_logits_processor()` が、`SamplingParams` のフィールドをどう使ってリクエスト単位のロジットプロセッサのインスタンスを初期化するかを決めます。
 
-    2. **The conditions under which the logits processor is or is not enabled on a per-request basis.** Unless your intention is for the custom logits processor to act on all requests all the time, you should write your logits processor in such a way that it is possible to disable the logits processor for a given request, i.e. by defaulting an argument to `None` or by passing in a specific do-nothing argument value i.e. `0.0`. Try to save compute and memory for requests which disable the logits processor
+    2. **リクエストごとにロジットプロセッサを有効 / 無効にする条件。** カスタムのロジットプロセッサを常にすべてのリクエストに作用させるつもりでない限り、あるリクエストについてロジットプロセッサを無効にできるように書くべきです。たとえば引数の既定値を `None` にする、あるいは何もしないことを表す特定の値（`0.0` など）を渡す、といった方法です。ロジットプロセッサを無効にしたリクエストでは計算とメモリを節約するようにしてください
 
-        * **Note:** for wrapped per-request logits processors, the default `AdapterLogitsProcessor.update_state()` implementation ensures that the request-level logits processor is disabled when `new_req_logits_processor()` returns `None` for that request
+        * **注:** ラップしたリクエスト単位のロジットプロセッサでは、既定の `AdapterLogitsProcessor.update_state()` の実装により、`new_req_logits_processor()` がそのリクエストに対して `None` を返した場合にリクエスト単位のロジットプロセッサが無効になります
 
-    3. **The conditions under which the logits processor is short-circuited at the batch level.** Even if you have defined a way to disable the custom logits processor at the request level, it may be difficult to translate this into compute savings i.e. if your `update_state()` and `apply()` implementations use efficient vectorized implementations that operate on the whole persistent batch in a single command. For example, you cannot skip an entire vectorized operation in `apply()` just because one request disabled the logits processor. To save compute in the edge-case where no running requests utilize the custom logits processor, we recommend designing `apply()` to return the unmodified input tensor if all requests have the logits processor disabled. Similarly, consider whether steps can be skipped in `update_state()` if no requests enable the logits processor
+    3. **バッチレベルでロジットプロセッサを短絡（スキップ）する条件。** リクエスト単位でカスタムのロジットプロセッサを無効にする方法を定義したとしても、それを計算量の削減につなげるのは難しい場合があります。たとえば `update_state()` と `apply()` が永続バッチ全体を 1 コマンドで処理する効率的なベクトル化実装を使っている場合です。1 件のリクエストがロジットプロセッサを無効にしているというだけで、`apply()` のベクトル化演算全体をスキップすることはできません。実行中のどのリクエストもそのカスタムのロジットプロセッサを使っていないという端のケースで計算を節約するには、すべてのリクエストでロジットプロセッサが無効な場合に `apply()` が入力テンソルをそのまま返すよう設計することを推奨します。同様に、どのリクエストもロジットプロセッサを有効にしていない場合に `update_state()` の処理をスキップできないか検討してください
 
-        * Additionally, an easy way to save compute in `update_state()` is to exit early when the `batch_update` is `None`
+        * さらに、`update_state()` で計算を節約する簡単な方法は、`batch_update` が `None` のときに早期リターンすることです
 
-        * **Note:** for wrapped per-request logits processors, the `AdapterLogitsProcessor` base-class implements the above optimizations by default
+        * **注:** ラップしたリクエスト単位のロジットプロセッサでは、`AdapterLogitsProcessor` の基底クラスが上記の最適化を既定で実装しています
 
-* Ensure that the logits processor `update_state` method discards information about finished requests (i.e. requests which are replaced by an Add or which are subject to a Remove)
+* ロジットプロセッサの `update_state` メソッドが、完了したリクエスト（Add により置き換えられた、あるいは Remove の対象となったリクエスト）の情報を確実に破棄するようにしてください
 
-    * **Note:** for wrapped per-request logits processors, the `AdapterLogitsProcessor` base-class handles this by default
+    * **注:** ラップしたリクエスト単位のロジットプロセッサでは、`AdapterLogitsProcessor` の基底クラスがこれを既定で処理します
 
-* `is_argmax_invariant()` can be hard-coded to `True` or `False` if the logits processor has consistent behavior. However, the argmax invariance may also be determined programmatically (i.e. if your logits processor is user-customizable in some way that impacts whether the logits processor is argmax invariant). For this reason, `is_argmax_invariant()` is not a class method
+* ロジットプロセッサの挙動が一貫している場合、`is_argmax_invariant()` は `True` または `False` にハードコードできます。ただし、argmax 不変性はプログラム的に判定することもできます（たとえば、ロジットプロセッサがユーザーによってカスタマイズ可能で、それが argmax 不変性に影響する場合など）。このため、`is_argmax_invariant()` はクラスメソッドではありません

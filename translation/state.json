@@ -805,8 +805,10 @@
       "upstream_sha": "a42d402b98104f3c"
     },
     "features/custom_logitsprocs.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "f6a8e87ade51aaf4",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "f6a8e87ade51aaf4"
     },
     "features/disagg_encoder.md": {
