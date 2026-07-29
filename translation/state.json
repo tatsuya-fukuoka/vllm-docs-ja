@@ -32,8 +32,10 @@
       "upstream_sha": "1c2dd9f036dc66d1"
     },
     "benchmarking/sweeps.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4342cc2a183802d9",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "4342cc2a183802d9"
     },
     "cli/README.md": {
