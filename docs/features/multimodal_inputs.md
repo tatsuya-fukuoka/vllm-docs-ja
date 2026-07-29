@@ -1,28 +1,28 @@
-# Multimodal Inputs
+# マルチモーダル入力 { #multimodal-inputs }
 
-This page teaches you how to pass multi-modal inputs to [multi-modal models](../models/supported_models.md#list-of-multimodal-language-models) in vLLM.
+このページでは、vLLM の[マルチモーダルモデル](../models/supported_models.md#list-of-multimodal-language-models)にマルチモーダル入力を渡す方法を説明します。
 
 !!! note
-    We are actively iterating on multi-modal support. See [this RFC](https://github.com/vllm-project/vllm/issues/4194) for upcoming changes,
-    and [open an issue on GitHub](https://github.com/vllm-project/vllm/issues/new/choose) if you have any feedback or feature requests.
+    マルチモーダル対応は現在も活発に改善が進められています。今後の変更については[この RFC](https://github.com/vllm-project/vllm/issues/4194) を参照してください。
+    フィードバックや機能リクエストがあれば、[GitHub で issue を作成](https://github.com/vllm-project/vllm/issues/new/choose)してください。
 
 !!! tip
-    When serving multi-modal models, consider setting `--allowed-media-domains` to restrict domain that vLLM can access to prevent it from accessing arbitrary endpoints that can potentially be vulnerable to Server-Side Request Forgery (SSRF) attacks. You can provide a list of domains for this arg. For example: `--allowed-media-domains upload.wikimedia.org github.com www.bogotobogo.com`
+    マルチモーダルモデルをサービングする際は、`--allowed-media-domains` を設定して vLLM がアクセスできるドメインを制限し、SSRF（サーバーサイドリクエストフォージェリ）攻撃に対して脆弱になり得る任意のエンドポイントへのアクセスを防ぐことを検討してください。この引数にはドメインのリストを指定できます。例: `--allowed-media-domains upload.wikimedia.org github.com www.bogotobogo.com`
 
-    Also, consider setting `VLLM_MEDIA_URL_ALLOW_REDIRECTS=0` to prevent HTTP redirects from being followed to bypass domain restrictions.
+    あわせて、ドメイン制限を回避するための HTTP リダイレクトが追跡されないよう、`VLLM_MEDIA_URL_ALLOW_REDIRECTS=0` の設定も検討してください。
 
-    This restriction is especially important if you run vLLM in a containerized environment where the vLLM pods may have unrestricted access to internal networks.
+    この制限は、vLLM の Pod が内部ネットワークへ無制限にアクセスできるようなコンテナ環境で vLLM を実行する場合にとくに重要です。
 
-## Offline Inference
+## オフライン推論 { #offline-inference }
 
-To input multi-modal data, follow this schema in [vllm.inputs.PromptType][]:
+マルチモーダルデータを入力するには、[vllm.inputs.PromptType][] の次のスキーマに従います。
 
-- `prompt`: The prompt should follow the format that is documented on HuggingFace.
-- `multi_modal_data`: This is a dictionary that follows the schema defined in [vllm.inputs.MultiModalDataDict][].
+- `prompt`: プロンプトは HuggingFace に記載されている形式に従う必要があります。
+- `multi_modal_data`: [vllm.inputs.MultiModalDataDict][] で定義されたスキーマに従う辞書です。
 
-### Image Inputs
+### 画像入力 { #image-inputs }
 
-You can pass a single image to the `'image'` field of the multi-modal dictionary, as shown in the following examples:
+次の例のように、マルチモーダル辞書の `'image'` フィールドに 1 枚の画像を渡せます。
 
 ??? code
 
@@ -68,9 +68,9 @@ You can pass a single image to the `'image'` field of the multi-modal dictionary
         print(generated_text)
     ```
 
-Full example: [examples/generate/multimodal/vision_language_offline.py](../../examples/generate/multimodal/vision_language_offline.py)
+完全な例: [examples/generate/multimodal/vision_language_offline.py](../../examples/generate/multimodal/vision_language_offline.py)
 
-To substitute multiple images inside the same text prompt, you can pass in a list of images instead:
+同じテキストプロンプト内で複数の画像を差し込むには、画像のリストを渡します。
 
 ??? code
 
@@ -101,9 +101,9 @@ To substitute multiple images inside the same text prompt, you can pass in a lis
         print(generated_text)
     ```
 
-Full example: [examples/generate/multimodal/vision_language_multi_image_offline.py](../../examples/generate/multimodal/vision_language_multi_image_offline.py)
+完全な例: [examples/generate/multimodal/vision_language_multi_image_offline.py](../../examples/generate/multimodal/vision_language_multi_image_offline.py)
 
-If using the [LLM.chat](../models/generative_models.md#llmchat) method, you can pass images directly in the message content using various formats: image URLs, PIL Image objects, or pre-computed embeddings:
+[LLM.chat](../models/generative_models.md#llmchat) メソッドを使う場合は、画像 URL、PIL の Image オブジェクト、事前計算済みの埋め込みなど、さまざまな形式でメッセージの content に画像を直接渡せます。
 
 ??? code
 
@@ -151,7 +151,7 @@ If using the [LLM.chat](../models/generative_models.md#llmchat) method, you can 
         print(generated_text)
     ```
 
-Multi-image input can be extended to perform video captioning. We show this with [Qwen2-VL](https://huggingface.co/Qwen/Qwen2-VL-2B-Instruct) as it supports videos:
+複数画像の入力は、動画のキャプション生成にも拡張できます。動画をサポートする [Qwen2-VL](https://huggingface.co/Qwen/Qwen2-VL-2B-Instruct) を使って示します。
 
 ??? code
 
@@ -185,9 +185,9 @@ Multi-image input can be extended to perform video captioning. We show this with
         print(generated_text)
     ```
 
-#### Custom RGBA Background Color
+#### RGBA の背景色のカスタマイズ { #custom-rgba-background-color }
 
-When loading RGBA images (images with transparency), vLLM converts them to RGB format. By default, transparent pixels are replaced with white background. You can customize this background color using the `rgba_background_color` parameter in `media_io_kwargs`.
+RGBA 画像（透明度を持つ画像）を読み込むとき、vLLM はそれを RGB 形式へ変換します。既定では、透明なピクセルは白い背景に置き換えられます。この背景色は `media_io_kwargs` の `rgba_background_color` パラメータでカスタマイズできます。
 
 ??? code
 
@@ -211,16 +211,16 @@ When loading RGBA images (images with transparency), vLLM converts them to RGB f
     ```
 
 !!! note
-    - The `rgba_background_color` accepts RGB values as a list `[R, G, B]` or tuple `(R, G, B)` where each value is 0-255
-    - This setting only affects RGBA images with transparency; RGB images are unchanged
-    - If not specified, the default white background `(255, 255, 255)` is used for backward compatibility
+    - `rgba_background_color` は RGB の値をリスト `[R, G, B]` またはタプル `(R, G, B)` で受け取ります。各値は 0〜255 です
+    - この設定は透明度を持つ RGBA 画像にのみ影響します。RGB 画像は変更されません
+    - 指定しない場合、後方互換性のために既定の白い背景 `(255, 255, 255)` が使われます
 
-#### Moondream3 Prompt Recipes { #moondream3-prompt-recipes }
+#### Moondream3 のプロンプトレシピ { #moondream3-prompt-recipes }
 
-`Moondream3ForCausalLM` supports two task-specific prompt formats:
+`Moondream3ForCausalLM` は、タスク別の 2 つのプロンプト形式をサポートします。
 
-- `query`: ask a question about the image.
-- `caption`: generate a caption for the image.
+- `query`: 画像について質問する。
+- `caption`: 画像のキャプションを生成する。
 
 ```python
 from vllm import LLM, SamplingParams
@@ -272,16 +272,14 @@ print("caption:", caption_out)
 ```
 
 !!! note
-    The native Moondream3 model also has `detect` and `point` skills. Those
-    require custom coordinate decoding and are not exposed by this vLLM
-    implementation.
+    本来の Moondream3 モデルには `detect` と `point` のスキルもあります。これらは独自の
+    座標デコードを必要とし、この vLLM の実装では公開されていません。
 
-### Video Inputs
+### 動画入力 { #video-inputs }
 
-You can pass a list of NumPy arrays directly to the `'video'` field of the multi-modal dictionary
-instead of using multi-image input.
+複数画像の入力を使う代わりに、マルチモーダル辞書の `'video'` フィールドへ NumPy 配列のリストを直接渡せます。
 
-Instead of NumPy arrays, you can also pass `'torch.Tensor'` instances, as shown in this example using Qwen2.5-VL:
+NumPy 配列の代わりに `'torch.Tensor'` のインスタンスを渡すこともできます。Qwen2.5-VL を使った次の例を参照してください。
 
 ??? code
 
@@ -348,17 +346,17 @@ Instead of NumPy arrays, you can also pass `'torch.Tensor'` instances, as shown 
     !!! note
         'process_vision_info' is only applicable to Qwen2.5-VL and similar models.
 
-Full example: [examples/generate/multimodal/vision_language_offline.py](../../examples/generate/multimodal/vision_language_offline.py)
+完全な例: [examples/generate/multimodal/vision_language_offline.py](../../examples/generate/multimodal/vision_language_offline.py)
 
-### Audio Inputs
+### 音声入力 { #audio-inputs }
 
-You can pass a tuple `(array, sampling_rate)` to the `'audio'` field of the multi-modal dictionary.
+マルチモーダル辞書の `'audio'` フィールドには、タプル `(array, sampling_rate)` を渡せます。
 
-Full example: [examples/generate/multimodal/audio_language_offline.py](../../examples/generate/multimodal/audio_language_offline.py)
+完全な例: [examples/generate/multimodal/audio_language_offline.py](../../examples/generate/multimodal/audio_language_offline.py)
 
-#### Chunking Long Audio for Transcription
+#### 文字起こし向けに長い音声を分割する { #chunking-long-audio-for-transcription }
 
-Speech-to-text models like Whisper have a maximum audio length they can process (typically 30 seconds). For longer audio files, vLLM provides a utility to intelligently split audio into chunks at quiet points to minimize cutting through speech.
+Whisper のような音声認識モデルには、処理できる音声の長さの上限（通常 30 秒）があります。より長い音声ファイルのために、vLLM は音声を静かな箇所で賢く分割し、発話の途中で切ることを最小限に抑えるユーティリティを提供しています。
 
 ```python
 from vllm import LLM, SamplingParams
@@ -394,31 +392,31 @@ for chunk in chunks:
 full_transcription = " ".join(transcriptions)
 ```
 
-The `split_audio` function:
+`split_audio` 関数の特徴は次のとおりです。
 
-- Splits audio at quiet points to avoid cutting through speech
-- Uses RMS energy to find low-amplitude regions within the overlap window
-- Preserves all audio samples (no data loss)
-- Supports any sample rate
+- 発話の途中で切らないよう、静かな箇所で音声を分割します
+- オーバーラップの範囲内で振幅の小さい領域を見つけるために RMS エネルギーを使います
+- すべての音声サンプルを保持します（データの欠落なし）
+- 任意のサンプリングレートに対応します
 
-#### Automatic Audio Channel Normalization
+#### 音声チャンネルの自動正規化 { #automatic-audio-channel-normalization }
 
-vLLM automatically normalizes audio channels for models that require specific audio formats. When loading audio with libraries like `torchaudio`, stereo files return shape `[channels, time]`, but many audio models (particularly Whisper-based models) expect mono audio with shape `[time]`.
+vLLM は、特定の音声形式を必要とするモデルのために、音声のチャンネルを自動的に正規化します。`torchaudio` のようなライブラリで音声を読み込むと、ステレオのファイルは形状 `[channels, time]` を返しますが、多くの音声モデル（とくに Whisper 系のモデル）は形状 `[time]` のモノラル音声を前提としています。
 
-**Supported models with automatic mono conversion:**
+**モノラルへの自動変換に対応するモデル:**
 
 - **Whisper** and all Whisper-based models
 - **Qwen2-Audio**
 - **Qwen2.5-Omni** / **Qwen3-Omni** (inherits from Qwen2.5-Omni)
 - **Ultravox**
 
-For these models, vLLM automatically:
+これらのモデルに対して、vLLM は自動的に次を行います。
 
-1. Detects if the model requires mono audio via the feature extractor
-2. Converts multi-channel audio to mono using channel averaging
-3. Handles both `(channels, time)` format (torchaudio) and `(time, channels)` format (soundfile)
+1. 特徴抽出器を通じて、そのモデルがモノラル音声を必要とするかを検出する
+2. チャンネルの平均を取って多チャンネル音声をモノラルへ変換する
+3. `(channels, time)` 形式（torchaudio）と `(time, channels)` 形式（soundfile）の両方に対応する
 
-**Example with stereo audio:**
+**ステレオ音声の例:**
 
 ```python
 import torchaudio
@@ -437,21 +435,20 @@ outputs = llm.generate({
 })
 ```
 
-No manual conversion is needed - vLLM handles the channel normalization automatically based on the model's requirements.
+手動での変換は不要です。vLLM がモデルの要件にもとづいてチャンネルの正規化を自動的に処理します。
 
-### Embedding Inputs
+### 埋め込み入力 { #embedding-inputs }
 
-To input pre-computed embeddings belonging to a data type (i.e. image, video, or audio) directly to the language model,
-pass a tensor of shape `(..., hidden_size of LM)` to the corresponding field of the multi-modal dictionary.
-The exact shape depends on the model being used.
+あるデータ型（画像、動画、音声）に属する事前計算済みの埋め込みを言語モデルへ直接入力するには、形状 `(..., 言語モデルの hidden_size)` のテンソルをマルチモーダル辞書の対応するフィールドに渡します。
+正確な形状は使用するモデルによって異なります。
 
-You must enable this feature via `enable_mm_embeds=True`.
+この機能は `enable_mm_embeds=True` で有効にする必要があります。
 
 !!! warning
-    The vLLM engine may crash if incorrect shape of embeddings is passed.
-    Only enable this flag for trusted users!
+    誤った形状の埋め込みが渡されると、vLLM のエンジンがクラッシュする可能性があります。
+    このフラグは信頼できるユーザーに対してのみ有効にしてください。
 
-#### Image Embeddings
+#### 画像の埋め込み { #image-embeddings }
 
 ??? code
 
@@ -511,11 +508,11 @@ You must enable this feature via `enable_mm_embeds=True`.
     }
     ```
 
-For Qwen3-VL, the `image_embeds` should contain both the base image embedding and deepstack features.
+Qwen3-VL では、`image_embeds` に基本の画像埋め込みと deepstack の特徴の両方を含める必要があります。
 
-#### Audio Embedding Inputs
+#### 音声の埋め込み入力 { #audio-embedding-inputs }
 
-You can pass pre-computed audio embeddings similar to image embeddings:
+画像の埋め込みと同様に、事前計算済みの音声埋め込みを渡せます。
 
 ??? code
 
@@ -543,9 +540,9 @@ You can pass pre-computed audio embeddings similar to image embeddings:
         print(generated_text)
     ```
 
-### Cached Inputs
+### 入力のキャッシュ { #cached-inputs }
 
-When using multi-modal inputs, vLLM normally hashes each media item by content to enable caching across requests. You can optionally pass `multi_modal_uuids` to provide your own stable IDs for each item so caching can reuse work across requests without rehashing the raw content.
+マルチモーダル入力を使う場合、vLLM は通常、リクエストをまたいだキャッシュを可能にするため、各メディア項目を内容にもとづいてハッシュ化します。任意で `multi_modal_uuids` を渡し、項目ごとに独自の安定した ID を与えることもできます。これにより、生データを再ハッシュすることなく、リクエストをまたいで処理結果を再利用できます。
 
 ??? code
 
@@ -575,7 +572,7 @@ When using multi-modal inputs, vLLM normally hashes each media item by content t
         print(o.outputs[0].text)
     ```
 
-Using UUIDs, you can also skip sending media data entirely if you expect cache hits for respective items. Note that the request will fail if the skipped media doesn't have a corresponding UUID, or if the UUID fails to hit the cache.
+UUID を使うと、該当する項目のキャッシュヒットが見込める場合に、メディアデータの送信自体を省略することもできます。省略したメディアに対応する UUID がない場合や、その UUID でキャッシュにヒットしなかった場合、リクエストは失敗する点に注意してください。
 
 ??? code
 
@@ -602,35 +599,35 @@ Using UUIDs, you can also skip sending media data entirely if you expect cache h
     ```
 
 !!! warning
-    If both multimodal processor caching and prefix caching are disabled, user-provided `multi_modal_uuids` are ignored.
+    マルチモーダルプロセッサのキャッシュとプレフィックスキャッシュの両方が無効な場合、ユーザーが指定した `multi_modal_uuids` は無視されます。
 
-## Online Serving
+## オンラインサービング { #online-serving }
 
-Our OpenAI-compatible server accepts multi-modal data via the [Chat Completions API](https://platform.openai.com/docs/api-reference/chat). Media inputs also support optional UUIDs users can provide to uniquely identify each media, which is used to cache the media results across requests.
+vLLM の OpenAI 互換サーバーは、[Chat Completions API](https://platform.openai.com/docs/api-reference/chat) 経由でマルチモーダルデータを受け付けます。メディア入力では、各メディアを一意に識別するための任意の UUID もサポートしており、これはリクエストをまたいでメディアの処理結果をキャッシュするために使われます。
 
 !!! important
-    A chat template is **required** to use Chat Completions API.
-    For HF format models, the default chat template is defined inside `chat_template.json` or `tokenizer_config.json`.
+    Chat Completions API を使うにはチャットテンプレートが**必要**です。
+    HF 形式のモデルでは、既定のチャットテンプレートは `chat_template.json` または `tokenizer_config.json` の中で定義されています。
 
-    If no default chat template is available, we will first look for a built-in fallback in [vllm/transformers_utils/chat_templates/registry.py](../../vllm/transformers_utils/chat_templates/registry.py).
-    If no fallback is available, an error is raised and you have to provide the chat template manually via the `--chat-template` argument.
+    既定のチャットテンプレートが利用できない場合、vLLM はまず [vllm/transformers_utils/chat_templates/registry.py](../../vllm/transformers_utils/chat_templates/registry.py) の組み込みのフォールバックを探します。
+    フォールバックも利用できない場合はエラーになり、`--chat-template` 引数でチャットテンプレートを手動で指定する必要があります。
 
-    For certain models, we provide alternative chat templates inside [examples](../../examples).
-    For example, VLM2Vec uses [examples/pooling/embed/template/vlm2vec_phi3v.jinja](../../examples/pooling/embed/template/vlm2vec_phi3v.jinja) which is different from the default one for Phi-3-Vision.
+    一部のモデルについては、[examples](../../examples) に代替のチャットテンプレートを用意しています。
+    たとえば VLM2Vec は [examples/pooling/embed/template/vlm2vec_phi3v.jinja](../../examples/pooling/embed/template/vlm2vec_phi3v.jinja) を使い、これは Phi-3-Vision の既定のものとは異なります。
 
-### Image Inputs
+### 画像入力 { #image-inputs_1 }
 
-Image input is supported according to [OpenAI Vision API](https://platform.openai.com/docs/guides/vision).
-Here is a simple example using Phi-3.5-Vision.
+画像入力は [OpenAI Vision API](https://platform.openai.com/docs/guides/vision) に準拠してサポートされています。
+Phi-3.5-Vision を使った簡単な例を示します。
 
-First, launch the OpenAI-compatible server:
+まず、OpenAI 互換サーバーを起動します。
 
 ```bash
 vllm serve microsoft/Phi-3.5-vision-instruct --runner generate \
   --trust-remote-code --max-model-len 4096 --limit-mm-per-prompt.image 2
 ```
 
-Then, you can use the OpenAI client as follows:
+次に、OpenAI クライアントを次のように使えます。
 
 ??? code
 
@@ -735,35 +732,35 @@ Then, you can use the OpenAI client as follows:
     print("Chat completion output:", chat_response.choices[0].message.content)
     ```
 
-Full example: [examples/generate/multimodal/openai_chat_completion_client_for_multimodal.py](../../examples/generate/multimodal/openai_chat_completion_client_for_multimodal.py)
+完全な例: [examples/generate/multimodal/openai_chat_completion_client_for_multimodal.py](../../examples/generate/multimodal/openai_chat_completion_client_for_multimodal.py)
 
 !!! tip
-    Loading from local file paths is also supported on vLLM: You can specify the allowed local media path via `--allowed-local-media-path` when launching the API server/engine,
-    and pass the file path as `url` in the API request.
+    vLLM ではローカルのファイルパスからの読み込みもサポートされています。API サーバー / エンジンの起動時に `--allowed-local-media-path` で許可するローカルメディアのパスを指定し、
+    API リクエストの `url` にファイルパスを渡してください。
 
 !!! tip
-    There is no need to place image placeholders in the text content of the API request - they are already represented by the image content.
-    In fact, you can place image placeholders in the middle of the text by interleaving text and image content.
+    API リクエストのテキスト content に画像のプレースホルダーを置く必要はありません。画像の content ですでに表現されています。
+    実際、テキストと画像の content を交互に配置することで、テキストの途中に画像を挟むこともできます。
 
 !!! note
-    By default, the timeout for fetching images through HTTP URL is `5` seconds.
-    You can override this by setting the environment variable:
+    HTTP URL 経由で画像を取得する際のタイムアウトは、既定で `5` 秒です。
+    次の環境変数を設定して上書きできます。
 
     ```bash
     export VLLM_IMAGE_FETCH_TIMEOUT=<timeout>
     ```
 
-### Video Inputs
+### 動画入力 { #video-inputs_1 }
 
-Instead of `image_url`, you can pass a video file via `video_url`. Here is a simple example using [LLaVA-OneVision](https://huggingface.co/llava-hf/llava-onevision-qwen2-0.5b-ov-hf).
+`image_url` の代わりに、`video_url` で動画ファイルを渡せます。[LLaVA-OneVision](https://huggingface.co/llava-hf/llava-onevision-qwen2-0.5b-ov-hf) を使った簡単な例を示します。
 
-First, launch the OpenAI-compatible server:
+まず、OpenAI 互換サーバーを起動します。
 
 ```bash
 vllm serve llava-hf/llava-onevision-qwen2-0.5b-ov-hf --runner generate --max-model-len 8192
 ```
 
-Then, you can use the OpenAI client as follows:
+次に、OpenAI クライアントを次のように使えます。
 
 ??? code
 
@@ -806,47 +803,43 @@ Then, you can use the OpenAI client as follows:
     print("Chat completion output from image url:", result)
     ```
 
-Full example: [examples/generate/multimodal/openai_chat_completion_client_for_multimodal.py](../../examples/generate/multimodal/openai_chat_completion_client_for_multimodal.py)
+完全な例: [examples/generate/multimodal/openai_chat_completion_client_for_multimodal.py](../../examples/generate/multimodal/openai_chat_completion_client_for_multimodal.py)
 
 !!! note
-    By default, the timeout for fetching videos through HTTP URL is `30` seconds.
-    You can override this by setting the environment variable:
+    HTTP URL 経由で動画を取得する際のタイムアウトは、既定で `30` 秒です。
+    次の環境変数を設定して上書きできます。
 
     ```bash
     export VLLM_VIDEO_FETCH_TIMEOUT=<timeout>
     ```
 
-#### Video Decoding Backend
+#### 動画デコードのバックエンド { #video-decoding-backend }
 
-vLLM decodes video bytes into frames using a selectable decoding backend. Three
-backends are supported:
+vLLM は、選択可能なデコードバックエンドを使って動画のバイト列をフレームへデコードします。3 つのバックエンドがサポートされています。
 
-- `opencv` (default): OpenCV-based decoder.
-- `pyav`: PyAV decoder.
-- `torchcodec`: TorchCodec (PyTorch-native) decoder.
+- `opencv`（既定）: OpenCV ベースのデコーダ。
+- `pyav`: PyAV のデコーダ。
+- `torchcodec`: TorchCodec（PyTorch ネイティブ）のデコーダ。
 
-All three backends are ultimately backed by FFmpeg. `torchcodec` lets
-you choose which FFmpeg version is used while `opencv` and `pyav` rely on
-whichever FFmpeg build they were linked against.
+3 つのバックエンドはいずれも最終的に FFmpeg に支えられています。`torchcodec` では使用する FFmpeg のバージョンを選べますが、`opencv` と `pyav` はリンク時の FFmpeg のビルドに依存します。
 
-Select the backend by passing the `backend` parameter via `--media-io-kwargs`:
+バックエンドは、`--media-io-kwargs` で `backend` パラメータを渡して選択します。
 
 ```bash
 vllm serve Qwen/Qwen3-VL-30B-A3B-Instruct \
   --media-io-kwargs '{"video": {"backend": "torchcodec"}}'
 ```
 
-**TorchCodec-specific parameters:**
+**TorchCodec 固有のパラメータ:**
 
-The following parameters only apply to the `torchcodec` backend:
+次のパラメータは `torchcodec` バックエンドにのみ適用されます。
 
-- `num_ffmpeg_threads`: Number of FFmpeg decoding threads. `0` (default) relies
-  on the FFmpeg default, which is `min(cpu_count + 1, 16)`. This allows you to
-  control thread over-subscription.
-- `seek_mode`: Seek mode for the decoder. `"exact"` (default) guarantees
-  frame-accurate sampling by scanning the file when the decoder is created.
-  `"approximate"` skips that scan for faster decoder creation, at the cost of
-  relying on the file's metadata (which may yield less accurate seeking).
+- `num_ffmpeg_threads`: FFmpeg のデコードスレッド数です。`0`（既定）は FFmpeg の既定値
+  `min(cpu_count + 1, 16)` に従います。スレッドの過剰割り当てを制御できます。
+- `seek_mode`: デコーダのシークモードです。`"exact"`（既定）は、デコーダ作成時にファイルを
+  走査することでフレーム単位の正確なサンプリングを保証します。`"approximate"` はその走査を
+  省いてデコーダの作成を高速化しますが、ファイルのメタデータに依存するため（シークの精度が
+  落ちる可能性があります）。
 
 ```bash
 # Example: TorchCodec with approximate seek mode and 4 FFmpeg threads
@@ -854,11 +847,11 @@ vllm serve Qwen/Qwen3-VL-30B-A3B-Instruct \
   --media-io-kwargs '{"video": {"backend": "torchcodec", "seek_mode": "approximate", "num_ffmpeg_threads": 4}}'
 ```
 
-#### Video Frame Recovery
+#### 動画フレームのリカバリ { #video-frame-recovery }
 
-For improved robustness when processing potentially corrupted or truncated video files, vLLM supports optional frame recovery using a dynamic window forward-scan approach. When enabled, if a target frame fails to load during sequential reading, the next successfully grabbed frame (before the next target frame) will be used in its place.
+破損や切り詰めの可能性がある動画ファイルを処理する際の堅牢性を高めるため、vLLM は動的ウィンドウの前方スキャンによる任意のフレームリカバリをサポートしています。有効にすると、逐次読み出し中に対象フレームの読み込みが失敗した場合、（次の対象フレームより手前で）正常に取得できた次のフレームがその代わりに使われます。
 
-To enable video frame recovery, pass the `frame_recovery` parameter via `--media-io-kwargs`:
+動画フレームのリカバリを有効にするには、`--media-io-kwargs` で `frame_recovery` パラメータを渡します。
 
 ```bash
 # Example: Enable frame recovery
@@ -866,33 +859,30 @@ vllm serve Qwen/Qwen3-VL-30B-A3B-Instruct \
   --media-io-kwargs '{"video": {"frame_recovery": true}}'
 ```
 
-**Parameters:**
+**パラメータ:**
 
-- `frame_recovery`: Boolean flag to enable forward-scan recovery. When `true`, failed frames are recovered using the next available frame within the dynamic window (up to the next target frame). Default is `false`.
+- `frame_recovery`: 前方スキャンによるリカバリを有効にする真偽値のフラグです。`true` の場合、失敗したフレームは動的ウィンドウ内（次の対象フレームまで）で利用可能な次のフレームを使って補完されます。既定値は `false` です。
 
-**How it works:**
+**動作の仕組み:**
 
-1. The system reads frames sequentially
-2. If a target frame fails to grab, it's marked as "failed"
-3. The next successfully grabbed frame (before reaching the next target) is used to recover the failed frame
-4. This approach handles both mid-video corruption and end-of-video truncation
+1. フレームを逐次読み出します
+2. 対象フレームの取得に失敗した場合、それは「失敗」として記録されます
+3. （次の対象フレームに達する前に）正常に取得できた次のフレームが、失敗したフレームの補完に使われます
+4. この方式は、動画中間部の破損と末尾の切り詰めの両方に対応します
 
-Works with common video formats like MP4 when using OpenCV backends.
+OpenCV バックエンドを使う場合、MP4 のような一般的な動画形式で動作します。
 
-#### GPU Video Decoding with DeepStream (NVDEC)
+#### DeepStream（NVDEC）による GPU 動画デコード { #gpu-video-decoding-with-deepstream-nvdec }
 
-By default vLLM decodes video on the CPU. On NVIDIA GPUs you can instead decode
-directly on the hardware video engine (NVDEC) with the DeepStream backend, which
-keeps decoding off the CPU and can significantly increase video throughput.
+既定では、vLLM は動画を CPU でデコードします。NVIDIA GPU では、代わりに DeepStream バックエンドを使ってハードウェアの動画エンジン（NVDEC）で直接デコードできます。これによりデコード処理を CPU から切り離し、動画のスループットを大きく向上させられます。
 
-Install the backend (Linux x86-64 only):
+バックエンドをインストールします（Linux x86-64 のみ）。
 
 ```bash
 pip install vllm[deepstream]
 ```
 
-The pip wheel bundles the DeepStream libraries but still relies on a few system
-packages that pip cannot install. On Ubuntu:
+pip の wheel には DeepStream のライブラリが同梱されていますが、pip ではインストールできないいくつかのシステムパッケージに依然として依存します。Ubuntu の場合は次のとおりです。
 
 ```bash
 apt-get install -y \
@@ -901,26 +891,26 @@ apt-get install -y \
   python3-gi python3-gst-1.0 libv4l-0 cuda-libraries-13-0
 ```
 
-Select the backend either with an environment variable:
+バックエンドは環境変数で選択できます。
 
 ```bash
 export VLLM_VIDEO_LOADER_BACKEND=deepstream
 vllm serve Qwen/Qwen3-VL-30B-A3B-Instruct
 ```
 
-or per request via `--media-io-kwargs`:
+あるいは `--media-io-kwargs` でリクエストごとに指定します。
 
 ```bash
 vllm serve Qwen/Qwen3-VL-30B-A3B-Instruct \
   --media-io-kwargs '{"video": {"backend": "deepstream"}}'
 ```
 
-**Parameters:**
+**パラメータ:**
 
-- `pool_size`: Number of GPU decode workers in the process-wide decode pool
-  (clamped to `[1, 16]`). When unset it defaults to
-  `VLLM_MEDIA_LOADING_THREAD_COUNT` (default `8`). The pool is a singleton, so
-  the first request's value wins.
+- `pool_size`: プロセス全体のデコードプールにおける GPU デコードワーカーの数です
+  （`[1, 16]` にクランプされます）。未設定の場合、既定では
+  `VLLM_MEDIA_LOADING_THREAD_COUNT`（既定値 `8`）になります。プールはシングルトンであるため、
+  最初のリクエストの値が採用されます。
 
 ```bash
 # Example: 12 decode workers
@@ -928,19 +918,19 @@ vllm serve Qwen/Qwen3-VL-30B-A3B-Instruct \
   --media-io-kwargs '{"video": {"backend": "deepstream", "pool_size": 12}}'
 ```
 
-#### Pre-extracted Frame Sequences with `media_io_kwargs`
+#### `media_io_kwargs` による事前抽出済みフレーム列 { #pre-extracted-frame-sequences-with-media_io_kwargs }
 
-When you extract video frames on the client side and send them as `video/jpeg` (base64-concatenated JPEG frames), you can preserve the original video metadata by using `media_io_kwargs` in your request. This enables more accurate video understanding by preserving temporal information that would otherwise be lost during client-side frame extraction.
+クライアント側で動画のフレームを抽出し、`video/jpeg`（base64 で連結した JPEG フレーム）として送信する場合、リクエストで `media_io_kwargs` を使うことで元の動画のメタデータを保持できます。これにより、クライアント側のフレーム抽出で失われてしまう時間的な情報が保たれ、より正確な動画理解が可能になります。
 
-**Supported Parameters:**
+**サポートされるパラメータ:**
 
-| Parameter | Type | Description |
+| パラメータ | 型 | 説明 |
 | --------- | ---- | ----------- |
-| `fps` | float | Frame rate of the original video |
-| `frames_indices` | list[int] | Indices of the actually sampled frames |
-| `total_num_frames` | int | Total frame count of the original video |
-| `duration` | float | Duration of the original video in seconds |
-| `do_sample_frames` | bool | Whether to perform frame sampling |
+| `fps` | float | 元の動画のフレームレート |
+| `frames_indices` | list[int] | 実際にサンプリングされたフレームのインデックス |
+| `total_num_frames` | int | 元の動画の総フレーム数 |
+| `duration` | float | 元の動画の長さ（秒） |
+| `do_sample_frames` | bool | フレームのサンプリングを行うかどうか |
 
 ??? code
 
@@ -982,19 +972,19 @@ When you extract video frames on the client side and send them as `video/jpeg` (
     print(response.choices[0].message.content)
     ```
 
-**Why use `media_io_kwargs`?**
+**なぜ `media_io_kwargs` を使うのか**
 
-When extracting frames client-side, the server loses important context about the original video:
+クライアント側でフレームを抽出すると、サーバーは元の動画に関する重要な文脈を失います。
 
-- **Temporal information**: Which frames were sampled and their positions in the original timeline
-- **Video duration**: How long the original video was
-- **Frame rate**: The original playback speed
+- **時間的な情報**: どのフレームがサンプリングされ、元のタイムライン上でどの位置にあったか
+- **動画の長さ**: 元の動画がどれくらいの長さだったか
+- **フレームレート**: 元の再生速度
 
-By passing this metadata, the model can better understand the temporal distribution of the sampled frames and whether important moments might have been skipped.
+このメタデータを渡すことで、モデルはサンプリングされたフレームの時間的な分布や、重要な瞬間が飛ばされている可能性をより良く理解できます。
 
-#### Custom RGBA Background Color
+#### RGBA の背景色のカスタマイズ { #custom-rgba-background-color_1 }
 
-To use a custom background color for RGBA images, pass the `rgba_background_color` parameter via `--media-io-kwargs`:
+RGBA 画像にカスタムの背景色を使うには、`--media-io-kwargs` で `rgba_background_color` パラメータを渡します。
 
 ```bash
 # Example: Black background for dark theme
@@ -1006,18 +996,18 @@ vllm serve llava-hf/llava-1.5-7b-hf \
   --media-io-kwargs '{"image": {"rgba_background_color": [128, 128, 128]}}'
 ```
 
-### Audio Inputs
+### 音声入力 { #audio-inputs_1 }
 
-Audio input is supported according to [OpenAI Audio API](https://platform.openai.com/docs/guides/audio?audio-generation-quickstart-example=audio-in).
-Here is a simple example using Ultravox-v0.5-1B.
+音声入力は [OpenAI Audio API](https://platform.openai.com/docs/guides/audio?audio-generation-quickstart-example=audio-in) に準拠してサポートされています。
+Ultravox-v0.5-1B を使った簡単な例を示します。
 
-First, launch the OpenAI-compatible server:
+まず、OpenAI 互換サーバーを起動します。
 
 ```bash
 vllm serve fixie-ai/ultravox-v0_5-llama-3_2-1b
 ```
 
-Then, you can use the OpenAI client as follows:
+次に、OpenAI クライアントを次のように使えます。
 
 ??? code
 
@@ -1076,7 +1066,7 @@ Then, you can use the OpenAI client as follows:
     print("Chat completion output from input audio:", result)
     ```
 
-Alternatively, you can pass `audio_url`, which is the audio counterpart of `image_url` for image input:
+あるいは、画像入力における `image_url` の音声版である `audio_url` を渡すこともできます。
 
 ??? code
 
@@ -1106,35 +1096,34 @@ Alternatively, you can pass `audio_url`, which is the audio counterpart of `imag
     print("Chat completion output from audio url:", result)
     ```
 
-Full example: [examples/generate/multimodal/openai_chat_completion_client_for_multimodal.py](../../examples/generate/multimodal/openai_chat_completion_client_for_multimodal.py)
+完全な例: [examples/generate/multimodal/openai_chat_completion_client_for_multimodal.py](../../examples/generate/multimodal/openai_chat_completion_client_for_multimodal.py)
 
 !!! note
-    By default, the timeout for fetching audios through HTTP URL is `10` seconds.
-    You can override this by setting the environment variable:
+    HTTP URL 経由で音声を取得する際のタイムアウトは、既定で `10` 秒です。
+    次の環境変数を設定して上書きできます。
 
     ```bash
     export VLLM_AUDIO_FETCH_TIMEOUT=<timeout>
     ```
 
-### Embedding Inputs
+### 埋め込み入力 { #embedding-inputs_1 }
 
-To input pre-computed embeddings belonging to a data type (i.e. image, video, or audio) directly to the language model,
-pass a tensor of shape `(..., hidden_size of LM)` for each item to the corresponding field of the multi-modal dictionary.
+あるデータ型（画像、動画、音声）に属する事前計算済みの埋め込みを言語モデルへ直接入力するには、項目ごとに形状 `(..., 言語モデルの hidden_size)` のテンソルをマルチモーダル辞書の対応するフィールドに渡します。
 
 !!! important
-    Unlike offline inference, the embeddings for each item must be passed separately
-    in order for placeholder tokens to be applied correctly by the chat template.
+    オフライン推論とは異なり、チャットテンプレートがプレースホルダートークンを正しく適用できるよう、
+    各項目の埋め込みは個別に渡す必要があります。
 
-You must enable this feature via the `--enable-mm-embeds` flag in `vllm serve`.
+この機能は `vllm serve` の `--enable-mm-embeds` フラグで有効にする必要があります。
 
 !!! warning
-    The vLLM engine may crash if incorrect shape of embeddings is passed.
-    Only enable this flag for trusted users!
+    誤った形状の埋め込みが渡されると、vLLM のエンジンがクラッシュする可能性があります。
+    このフラグは信頼できるユーザーに対してのみ有効にしてください。
 
-#### Image Embedding Inputs
+#### 画像の埋め込み入力 { #image-embedding-inputs }
 
-For image embeddings, you can pass the base64-encoded tensor to the `image_embeds` field.
-The following example demonstrates how to pass image embeddings to the OpenAI server:
+画像の埋め込みでは、base64 エンコードしたテンソルを `image_embeds` フィールドに渡せます。
+次の例は、OpenAI サーバーへ画像の埋め込みを渡す方法を示しています。
 
 ??? code
 
@@ -1243,9 +1232,9 @@ The following example demonstrates how to pass image embeddings to the OpenAI se
     )
     ```
 
-### Cached Inputs
+### 入力のキャッシュ { #cached-inputs_1 }
 
-Just like with offline inference, you can skip sending media if you expect cache hits with provided UUIDs. You can do so by sending media like this:
+オフライン推論と同様に、指定した UUID でキャッシュヒットが見込める場合は、メディアの送信を省略できます。次のようにメディアを送ることで実現できます。
 
 ??? code
 

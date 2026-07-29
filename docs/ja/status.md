@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **223 ページ**を翻訳済みです（98.7%）。
+全 226 ページ中 **224 ページ**を翻訳済みです（99.1%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -19,14 +19,14 @@
 | 開発者ガイド | 16 | 0 | 0 | 16 |
 | デプロイ | 35 | 0 | 0 | 35 |
 | 設計ドキュメント | 29 | 0 | 0 | 29 |
-| 機能 | 51 | 0 | 1 | 52 |
+| 機能 | 52 | 0 | 0 | 52 |
 | はじめに | 13 | 0 | 0 | 13 |
 | ガバナンス | 3 | 0 | 0 | 3 |
 | モデル | 15 | 0 | 1 | 16 |
 | 推論とサービング | 16 | 0 | 0 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **223** | **0** | **3** | **226** |
+| **合計** | **224** | **0** | **2** | **226** |
 
 ## 翻訳済みのページ
 
@@ -154,6 +154,7 @@
 - `features/mooncake_connector_usage.md`
 - `features/mooncake_store_connector_usage.md`
 - `features/moriio_connector_usage.md`
+- `features/multimodal_inputs.md`
 - `features/nixl_connector_compatibility.md`
 - `features/nixl_connector_usage.md`
 - `features/per_request_metrics.md`

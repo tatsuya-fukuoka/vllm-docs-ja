@@ -879,8 +879,10 @@
       "upstream_sha": "b3753f1a27ae8566"
     },
     "features/multimodal_inputs.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "2cc00101af5826bd",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "2cc00101af5826bd"
     },
     "features/nixl_connector_compatibility.md": {
