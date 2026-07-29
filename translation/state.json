@@ -826,8 +826,10 @@
       "upstream_sha": "0877f4c334f35fe7"
     },
     "features/moriio_connector_usage.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "b3753f1a27ae8566",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "b3753f1a27ae8566"
     },
     "features/multimodal_inputs.md": {
