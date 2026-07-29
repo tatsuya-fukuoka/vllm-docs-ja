@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **179 ページ**を翻訳済みです（79.2%）。
+全 226 ページ中 **181 ページ**を翻訳済みです（80.1%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -18,15 +18,15 @@
 | 設定 | 7 | 0 | 0 | 7 |
 | 開発者ガイド | 11 | 0 | 5 | 16 |
 | デプロイ | 35 | 0 | 0 | 35 |
-| 設計ドキュメント | 11 | 0 | 18 | 29 |
+| 設計ドキュメント | 12 | 0 | 17 | 29 |
 | 機能 | 41 | 0 | 11 | 52 |
 | はじめに | 9 | 0 | 4 | 13 |
 | ガバナンス | 3 | 0 | 0 | 3 |
-| モデル | 10 | 0 | 6 | 16 |
+| モデル | 11 | 0 | 5 | 16 |
 | 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **179** | **0** | **47** | **226** |
+| **合計** | **181** | **0** | **45** | **226** |
 
 ## 翻訳済みのページ
 
@@ -114,6 +114,7 @@
 - `design/multiprocessing.md`
 - `design/nixl_kv_cache_lease.md`
 - `design/optimization_levels.md`
+- `design/prefix_caching.md`
 - `design/torch_compile_multimodal.md`
 - `features/README.md`
 - `features/automatic_prefix_caching.md`
@@ -175,6 +176,7 @@
 - `models/generative_models.md`
 - `models/hardware_supported_models/cpu.md`
 - `models/hardware_supported_models/xpu.md`
+- `models/pooling_models/classify.md`
 - `models/pooling_models/reward.md`
 - `models/pooling_models/token_classify.md`
 - `models/pooling_models/token_embed.md`

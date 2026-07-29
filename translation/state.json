@@ -704,8 +704,10 @@
       "upstream_sha": "d1e80796c029bfaf"
     },
     "design/prefix_caching.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "67ee4e2b7bc23d40",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "67ee4e2b7bc23d40"
     },
     "design/torch_compile.md": {
@@ -1226,8 +1228,10 @@
       "upstream_sha": "c31ac72b21efe923"
     },
     "models/pooling_models/classify.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d567545ecdce0c38",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "d567545ecdce0c38"
     },
     "models/pooling_models/embed.md": {
