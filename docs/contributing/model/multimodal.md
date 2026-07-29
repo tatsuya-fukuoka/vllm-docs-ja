@@ -1,13 +1,13 @@
-# Multi-Modal Support
+# マルチモーダル対応 { #multi-modal-support }
 
-This document walks you through the steps to extend a basic model so that it accepts [multi-modal inputs](../../features/multimodal_inputs.md).
+このドキュメントでは、基本的なモデルを拡張して[マルチモーダル入力](../../features/multimodal_inputs.md)を受け付けられるようにする手順を説明します。
 
-## 1. Update the base vLLM model
+## 1. ベースとなる vLLM モデルの更新 { #1-update-the-base-vllm-model }
 
-It is assumed that you have already implemented the model in vLLM according to [these steps](basic.md).
-Further update the model as follows:
+[こちらの手順](basic.md)に従って、すでに vLLM でモデルを実装済みであることを前提とします。
+さらに、次のようにモデルを更新します。
 
-- Implement [`get_placeholder_str`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal.get_placeholder_str) to define the placeholder string which is used to represent the multi-modal item in the text prompt. This should be consistent with the chat template of the model.
+- [`get_placeholder_str`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal.get_placeholder_str) を実装し、テキストプロンプト内でマルチモーダル項目を表すプレースホルダー文字列を定義します。これはモデルのチャットテンプレートと一致している必要があります。
 
     ??? code
 
@@ -23,7 +23,7 @@ Further update the model as follows:
                 raise ValueError("Only image modality is supported")
         ```
 
-- Inside `__init__` method, initialize the language components of the model inside [`_mark_language_model`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal._mark_language_model), and the multimodal components of the model inside [`_mark_tower_model`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal._mark_tower_model), e.g.:
+- `__init__` メソッド内で、モデルの言語系のコンポーネントを [`_mark_language_model`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal._mark_language_model) の中で、マルチモーダル系のコンポーネントを [`_mark_tower_model`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal._mark_tower_model) の中で初期化します。例:
 
     ```python
         def __init__(self, *, vllm_config: VllmConfig, prefix: str = "") -> None:
@@ -43,9 +43,9 @@ Further update the model as follows:
                 )
     ```
 
-- Remove the embedding part from the [forward][torch.nn.Module.forward] method:
-    - Move the multi-modal embedding to [`embed_multimodal`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal.embed_multimodal).
-    - The text embedding and embedding merge are handled automatically by a default implementation of [`embed_input_ids`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal.embed_input_ids). It does not need to be overridden in most cases.
+- [forward][torch.nn.Module.forward] メソッドから埋め込みの部分を取り除きます。
+    - マルチモーダルの埋め込みを [`embed_multimodal`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal.embed_multimodal) へ移します。
+    - テキストの埋め込みと埋め込みのマージは、[`embed_input_ids`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal.embed_input_ids) の既定の実装が自動的に処理します。ほとんどの場合、これをオーバーライドする必要はありません。
 
     ```diff
       def forward(
@@ -90,7 +90,7 @@ Further update the model as follows:
     +      )
     ```
 
-    Below we provide a boilerplate of a typical implementation pattern of [`embed_multimodal`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal.embed_multimodal), but feel free to adjust it to your own needs.
+    以下に [`embed_multimodal`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal.embed_multimodal) の典型的な実装パターンの雛形を示します。必要に応じて自由に調整してください。
 
     ```python
     def _process_image_input(self, image_input: YourModelImageInputs) -> torch.Tensor:
@@ -112,16 +112,16 @@ Further update the model as follows:
     ```
 
 !!! important
-    The returned `multimodal_embeddings` must be either a **3D [torch.Tensor][]** of shape `(num_items, feature_size, hidden_size)`, or a **list / tuple of 2D [torch.Tensor][]'s** of shape `(feature_size, hidden_size)`, so that `multimodal_embeddings[i]` retrieves the embeddings generated from the `i`-th multimodal data item (e.g, image) of the request.
+    返される `multimodal_embeddings` は、形状 `(num_items, feature_size, hidden_size)` の **3 次元の [torch.Tensor][]**、または形状 `(feature_size, hidden_size)` の **2 次元 [torch.Tensor][] のリスト / タプル**でなければなりません。これにより、`multimodal_embeddings[i]` でリクエストの `i` 番目のマルチモーダルデータ項目（画像など）から生成された埋め込みを取得できます。
 
 !!! note
-    By default, vLLM merges the multimodal embeddings into text embeddings depending on the information of their locations defined in
-    [`PlaceholderRange`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/inputs/#vllm.multimodal.inputs.PlaceholderRange) from input processing.
-    This logic can be found at [`embed_input_ids`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal.embed_input_ids).
+    既定では、vLLM は入力処理で定義された [`PlaceholderRange`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/inputs/#vllm.multimodal.inputs.PlaceholderRange) の位置情報にもとづいて、
+    マルチモーダルの埋め込みをテキストの埋め込みへマージします。
+    このロジックは [`embed_input_ids`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal.embed_input_ids) にあります。
 
-    You may override this method if additional logic is required for your model when merging embeddings.
+    埋め込みのマージ時にモデル固有の追加ロジックが必要な場合は、このメソッドをオーバーライドできます。
 
-- Once the above steps are done, update the model class with the [`SupportsMultiModal`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal) interface.
+- 上記の手順が完了したら、モデルクラスに [`SupportsMultiModal`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal) インターフェースを追加します。
 
   ```diff
   + from vllm.model_executor.models.interfaces import SupportsMultiModal
@@ -131,38 +131,35 @@ Further update the model as follows:
   ```
 
 !!! note
-    The model class does not have to be named `*ForCausalLM`.
-    Check out [the HuggingFace Transformers documentation](https://huggingface.co/docs/transformers/model_doc/auto#multimodal) for some examples.
+    モデルクラスの名前が `*ForCausalLM` である必要はありません。
+    いくつかの例は [HuggingFace Transformers のドキュメント](https://huggingface.co/docs/transformers/model_doc/auto#multimodal)を参照してください。
 
-## 2. Specify processing information
+## 2. 処理情報の指定 { #2-specify-processing-information }
 
-Next, create a subclass of [`BaseProcessingInfo`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseProcessingInfo)
-to provide basic information related to HF processing.
+次に、[`BaseProcessingInfo`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseProcessingInfo) のサブクラスを作成し、HF の処理に関する基本情報を提供します。
 
-### Maximum number of input items
+### 入力項目数の上限 { #maximum-number-of-input-items }
 
-You need to override the abstract method [`get_supported_mm_limits`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseProcessingInfo.get_supported_mm_limits)
-to return the maximum number of input items for each modality supported by the model.
+抽象メソッド [`get_supported_mm_limits`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseProcessingInfo.get_supported_mm_limits) をオーバーライドし、モデルがサポートするモダリティごとの入力項目数の上限を返す必要があります。
 
-For example, if the model supports any number of images but only one video per prompt:
+たとえば、モデルが画像を任意の枚数サポートし、動画はプロンプトあたり 1 本のみサポートする場合は次のようにします。
 
 ```python
 def get_supported_mm_limits(self) -> Mapping[str, int | None]:
     return {"image": None, "video": 1}
 ```
 
-## 3. Specify dummy inputs
+## 3. ダミー入力の指定 { #3-specify-dummy-inputs }
 
-Then, inherit [`BaseDummyInputsBuilder`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseDummyInputsBuilder) to construct dummy inputs for
-HF processing. The processed outputs are also used for memory profiling.
+次に、[`BaseDummyInputsBuilder`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseDummyInputsBuilder) を継承して、HF の処理用のダミー入力を構築します。処理後の出力はメモリのプロファイリングにも使われます。
 
-Override the abstract methods [`get_dummy_text`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseDummyInputsBuilder.get_dummy_text) and [`get_dummy_mm_data`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseDummyInputsBuilder.get_dummy_mm_data) to construct dummy inputs. These dummy inputs should result in the worst-case memory usage of the model so that vLLM can reserve the correct amount of memory for it.
+抽象メソッド [`get_dummy_text`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseDummyInputsBuilder.get_dummy_text) と [`get_dummy_mm_data`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseDummyInputsBuilder.get_dummy_mm_data) をオーバーライドしてダミー入力を構築します。これらのダミー入力は、vLLM が適切な量のメモリを確保できるよう、モデルのメモリ使用量が最悪ケースになるものにすべきです。
 
-Assuming that the memory usage increases with the number of tokens, the dummy inputs can be constructed to maximize the number of output embeddings, which is the same number as placeholder feature tokens.
+メモリ使用量がトークン数とともに増えると仮定すると、ダミー入力は出力埋め込みの数（プレースホルダーの特徴トークン数と同じ）が最大になるように構築できます。
 
-=== "Basic example: LLaVA"
+=== "基本的な例: LLaVA"
 
-    Looking at the code of HF's `LlavaForConditionalGeneration`:
+    HF の `LlavaForConditionalGeneration` のコードを見てみます。
 
     ??? code
 
@@ -185,8 +182,8 @@ Assuming that the memory usage increases with the number of tokens, the dummy in
         inputs_embeds = inputs_embeds.masked_scatter(special_image_mask, image_features)
         ```
 
-    The number of placeholder feature tokens per image is `image_features.shape[1]`.
-    `image_features` is calculated inside the `get_image_features` method:
+    画像 1 枚あたりのプレースホルダー特徴トークン数は `image_features.shape[1]` です。
+    `image_features` は `get_image_features` メソッドの中で計算されます。
 
     ??? code
 
@@ -205,11 +202,11 @@ Assuming that the memory usage increases with the number of tokens, the dummy in
         return image_features
         ```
 
-    We can infer that `image_features.shape[1]` is based on `image_outputs.hidden_states.shape[1]` from the vision tower
-    (`CLIPVisionModel` for the [`llava-hf/llava-1.5-7b-hf`](https://huggingface.co/llava-hf/llava-1.5-7b-hf) model).
-    Moreover, we only need the sequence length (the second dimension of the tensor) to get `image_features.shape[1]`.
-    The sequence length is determined by the initial hidden states in `CLIPVisionTransformer` since the attention
-    mechanism doesn't change the sequence length of the output hidden states.
+    ここから、`image_features.shape[1]` は vision tower（[`llava-hf/llava-1.5-7b-hf`](https://huggingface.co/llava-hf/llava-1.5-7b-hf) モデルでは `CLIPVisionModel`）の
+    `image_outputs.hidden_states.shape[1]` にもとづくことが分かります。
+    さらに、`image_features.shape[1]` を得るのに必要なのはシーケンス長（テンソルの 2 番目の次元）だけです。
+    attention の仕組みは出力 hidden states のシーケンス長を変えないため、シーケンス長は `CLIPVisionTransformer` の
+    初期 hidden states によって決まります。
 
     ```python
     # https://github.com/huggingface/transformers/blob/v4.47.1/src/transformers/models/clip/modeling_clip.py#L1094-L1102
@@ -224,7 +221,7 @@ Assuming that the memory usage increases with the number of tokens, the dummy in
     )
     ```
 
-    To find the sequence length, we turn to the code of `CLIPVisionEmbeddings`:
+    シーケンス長を求めるため、`CLIPVisionEmbeddings` のコードを見てみます。
 
     ??? code
 
@@ -243,7 +240,7 @@ Assuming that the memory usage increases with the number of tokens, the dummy in
         return embeddings
         ```
 
-    We can infer that `embeddings.shape[1] == self.num_positions`, where
+    ここから `embeddings.shape[1] == self.num_positions` であることが分かります。ここで、
 
     ```python
     # https://github.com/huggingface/transformers/blob/v4.47.1/src/transformers/models/clip/modeling_clip.py#L195-L196
@@ -251,7 +248,7 @@ Assuming that the memory usage increases with the number of tokens, the dummy in
     self.num_positions = self.num_patches + 1
     ```
 
-    Overall, the number of placeholder feature tokens for an image can be calculated as:
+    まとめると、画像 1 枚あたりのプレースホルダー特徴トークン数は次のように計算できます。
 
     ??? code
 
@@ -275,8 +272,8 @@ Assuming that the memory usage increases with the number of tokens, the dummy in
             return num_image_tokens
         ```
 
-    Notice that the number of image tokens doesn't depend on the image width and height.
-    We can simply use a dummy `image_size` to calculate the multimodal profiling data:
+    画像トークン数が画像の幅と高さに依存しない点に注目してください。
+    マルチモーダルのプロファイリングデータの計算には、単にダミーの `image_size` を使えます。
 
     ??? code
 
@@ -312,7 +309,7 @@ Assuming that the memory usage increases with the number of tokens, the dummy in
             }
         ```
 
-    For the text, we simply expand the multimodal image token from the model config to match the desired number of images.
+    テキストについては、モデルの設定にあるマルチモーダルの画像トークンを、目的の画像枚数に合わせて単純に繰り返すだけです。
 
     ```python
     def get_dummy_text(self, mm_counts: Mapping[str, int]) -> str:
@@ -324,22 +321,22 @@ Assuming that the memory usage increases with the number of tokens, the dummy in
         return image_token * num_images
     ```
 
-=== "No input placeholders: PaliGemma"
+=== "入力プレースホルダーがない場合: PaliGemma"
 
-    Unlike LLaVA, PaliGemma's HF processor does not expect image placeholder
-    tokens in the input prompt; the placeholder feature tokens are instead
-    inserted afterwards (see [Prompt updates](#prompt-updates)). So the dummy
-    prompt text is empty regardless of the number of images:
+    LLaVA とは異なり、PaliGemma の HF プロセッサは入力プロンプトに画像の
+    プレースホルダートークンがあることを前提としません。プレースホルダーの特徴トークンは、
+    あとから挿入されます（[プロンプトの更新](#prompt-updates)を参照）。したがって、
+    ダミーのプロンプトテキストは画像枚数にかかわらず空になります。
 
     ```python
     def get_dummy_text(self, mm_counts: Mapping[str, int]) -> str:
         return ""
     ```
 
-    PaliGemma resizes every image to a square of `vision_config.image_size`, so
-    the number of placeholder feature tokens per image is fixed at
-    `(image_size // patch_size) ** 2`. This is computed by the SigLIP vision
-    encoder that PaliGemma uses:
+    PaliGemma はすべての画像を `vision_config.image_size` の正方形にリサイズするため、
+    画像 1 枚あたりのプレースホルダー特徴トークン数は
+    `(image_size // patch_size) ** 2` に固定されます。これは PaliGemma が使う SigLIP の
+    vision エンコーダによって計算されます。
 
     ??? code
 
@@ -359,9 +356,8 @@ Assuming that the memory usage increases with the number of tokens, the dummy in
                 return image_size // patch_size
         ```
 
-    Since the number of image tokens doesn't depend on the input image dimensions,
-    we can simply use a dummy image of the model's expected input size for the
-    multimodal profiling data:
+    画像トークン数は入力画像の寸法に依存しないため、マルチモーダルのプロファイリング
+    データには、モデルが想定する入力サイズのダミー画像を単に使えばよいことになります。
 
     ??? code
 
@@ -390,23 +386,21 @@ Assuming that the memory usage increases with the number of tokens, the dummy in
             }
         ```
 
-## 4. Specify processing details
+## 4. 処理の詳細の指定 { #4-specify-processing-details }
 
-Afterwards, create a subclass of [`BaseMultiModalProcessor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor)
-to fill in the missing details about HF processing.
+続いて、[`BaseMultiModalProcessor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor) のサブクラスを作成し、HF の処理に関する不足情報を補います。
 
 !!! info
-    [Multi-Modal Data Processing](../../design/mm_processing.md)
+    [マルチモーダルデータの処理](../../design/mm_processing.md)
 
-### Multi-modal fields
+### マルチモーダルのフィールド { #multi-modal-fields }
 
-Override [`_get_mm_fields_config`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_mm_fields_config) to
-return a schema of the tensors outputted by the HF processor that are related to the input multi-modal items.
+[`_get_mm_fields_config`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_mm_fields_config) をオーバーライドし、入力のマルチモーダル項目に関連する、HF プロセッサが出力するテンソルのスキーマを返します。
 
-=== "Basic example: LLaVA"
+=== "基本的な例: LLaVA"
 
-    The output of `CLIPImageProcessor` is a simple tensor with shape
-    `(num_images, num_channels, image_height, image_width)`:
+    `CLIPImageProcessor` の出力は、形状
+    `(num_images, num_channels, image_height, image_width)` の単純なテンソルです。
 
 
     ```python
@@ -420,7 +414,7 @@ return a schema of the tensors outputted by the HF processor that are related to
     return BatchFeature(data=data, tensor_type=return_tensors)
     ```
 
-    So, we override [`_get_mm_fields_config`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_mm_fields_config) as follows:
+    そこで、[`_get_mm_fields_config`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_mm_fields_config) を次のようにオーバーライドします。
 
     ```python
     def _get_mm_fields_config(
@@ -434,19 +428,19 @@ return a schema of the tensors outputted by the HF processor that are related to
     ```
 
     !!! note
-        Our [actual code](../../../vllm/model_executor/models/llava.py) additionally supports
-        pre-computed image embeddings, which can be passed to be model via the `image_embeds` argument.
+        vLLM の[実際のコード](../../../vllm/model_executor/models/llava.py)は、`image_embeds` 引数で
+        モデルに渡せる事前計算済みの画像埋め込みもサポートしています。
 
-=== "With postprocessing: Mistral3"
+=== "後処理を伴う場合: Mistral3"
 
-    The `pixel_values` output of Mistral3's HF processor pads every image in the
-    batch to a common size, so that they can be stacked into a single tensor.
+    Mistral3 の HF プロセッサが出力する `pixel_values` は、単一のテンソルへ積み上げられるよう、
+    バッチ内のすべての画像を共通のサイズへパディングします。
 
-    To use [`MultiModalFieldConfig.batched`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/inputs/#vllm.multimodal.inputs.MultiModalFieldConfig.batched)
-    like in LLaVA, each image's features must be independent of the others (which
-    is also required for prefix caching to work correctly). So, we un-pad each image
-    back to its own size by overriding
-    [`BaseMultiModalProcessor._call_hf_processor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._call_hf_processor):
+    LLaVA と同様に [`MultiModalFieldConfig.batched`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/inputs/#vllm.multimodal.inputs.MultiModalFieldConfig.batched)
+    を使うには、各画像の特徴が他の画像から独立している必要があります（これはプレフィックス
+    キャッシュが正しく機能するためにも必要です）。そこで、
+    [`BaseMultiModalProcessor._call_hf_processor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._call_hf_processor)
+    をオーバーライドし、各画像を元のサイズへアンパディングします。
 
     ??? code
 
@@ -480,12 +474,12 @@ return a schema of the tensors outputted by the HF processor that are related to
         ```
 
     !!! note
-        The `_call_hf_processor` method specifies both `mm_kwargs` and `tok_kwargs` for
-        processing. `mm_kwargs` is used to both initialize and call the huggingface
-        processor, whereas `tok_kwargs` is only used to call the huggingface processor.
+        `_call_hf_processor` メソッドは、処理のために `mm_kwargs` と `tok_kwargs` の両方を指定します。
+        `mm_kwargs` は HuggingFace のプロセッサの初期化と呼び出しの両方に使われ、
+        `tok_kwargs` は呼び出しにのみ使われます。
 
-    Since `pixel_values` is now a list with one tensor per image, we can override
-    [`_get_mm_fields_config`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_mm_fields_config) as follows:
+    `pixel_values` は画像ごとに 1 つのテンソルを持つリストになったので、
+    [`_get_mm_fields_config`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_mm_fields_config) を次のようにオーバーライドできます。
 
     ```python
     def _get_mm_fields_config(
@@ -500,19 +494,17 @@ return a schema of the tensors outputted by the HF processor that are related to
     ```
 
     !!! note
-        See our [actual code](../../../vllm/model_executor/models/mistral3.py) for the full implementation.
+        完全な実装は vLLM の[実際のコード](../../../vllm/model_executor/models/mistral3.py)を参照してください。
 
-### Prompt updates
+### プロンプトの更新 { #prompt-updates }
 
-Override [`_get_prompt_updates`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates) to
-return a list of [`PromptUpdate`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.PromptUpdate) instances.
+[`_get_prompt_updates`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates) をオーバーライドし、[`PromptUpdate`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.PromptUpdate) インスタンスのリストを返します。
 
-Each [`PromptUpdate`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.PromptUpdate) instance specifies an update operation
-(e.g.: insertion, replacement) performed by the HF processor.
+各 [`PromptUpdate`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.PromptUpdate) インスタンスは、HF プロセッサが行う更新操作（挿入、置換など）を指定します。
 
-=== "Basic example: LLaVA"
+=== "基本的な例: LLaVA"
 
-    Looking at HF's `LlavaProcessor`:
+    HF の `LlavaProcessor` を見てみます。
 
     ```python
     # https://github.com/huggingface/transformers/blob/v4.47.1/src/transformers/models/llava/processing_llava.py#L167-L170
@@ -522,8 +514,8 @@ Each [`PromptUpdate`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/proces
         prompt_strings.append(sample)
     ```
 
-    It simply repeats each input `image_token` a number of times equal to the number of placeholder feature tokens (`num_image_tokens`).
-    Based on this, we override [`_get_prompt_updates`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates) as follows:
+    入力の `image_token` を、プレースホルダー特徴トークンの数（`num_image_tokens`）と同じ回数だけ単純に繰り返しているだけです。
+    これにもとづき、[`_get_prompt_updates`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates) を次のようにオーバーライドします。
 
     ??? code
 
@@ -557,12 +549,11 @@ Each [`PromptUpdate`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/proces
             ]
         ```
 
-=== "Handling additional tokens: PaliGemma"
+=== "追加トークンの扱い: PaliGemma"
 
-    PaliGemma's HF processor inserts, after the prompt's leading `<bos>` token, a
-    run of image tokens followed by a second `<bos>` token that marks the start of
-    the text prompt. We start by building the run of image tokens, one per
-    placeholder feature token:
+    PaliGemma の HF プロセッサは、プロンプト先頭の `<bos>` トークンの後ろに、画像トークンの
+    連なりと、それに続いてテキストプロンプトの開始を示す 2 つ目の `<bos>` トークンを挿入します。
+    まず、プレースホルダー特徴トークンごとに 1 つずつ画像トークンの連なりを構築します。
 
     ??? code
 
@@ -585,11 +576,10 @@ Each [`PromptUpdate`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/proces
             ...
         ```
 
-    The trailing `<bos>` token is an additional token that must **not** receive a
-    vision embedding. To assign the vision embeddings to only the image tokens,
-    instead of returning the token ids directly you can return an instance of
-    [`PromptUpdateDetails`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.PromptUpdateDetails) and mark
-    the embedding tokens with `embed_token_id`:
+    末尾の `<bos>` トークンは追加のトークンであり、vision の埋め込みを受け取っては**いけません**。
+    vision の埋め込みを画像トークンにのみ割り当てるには、トークン ID を直接返すのではなく、
+    [`PromptUpdateDetails`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.PromptUpdateDetails) のインスタンスを返し、
+    `embed_token_id` で埋め込み対象のトークンを指定します。
 
     ??? code
 
@@ -600,10 +590,10 @@ Each [`PromptUpdate`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/proces
         )
         ```
 
-    Putting it together, we override [`_get_prompt_updates`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates).
-    Since these tokens are inserted (rather than replacing an existing placeholder)
-    after the prompt's leading `<bos>`, we use [`PromptInsertion`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.PromptInsertion)
-    with a prefix target:
+    これらをまとめて、[`_get_prompt_updates`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates) をオーバーライドします。
+    これらのトークンは（既存のプレースホルダーを置き換えるのではなく）プロンプト先頭の `<bos>` の後ろに
+    挿入されるため、接頭辞をターゲットとする [`PromptInsertion`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.PromptInsertion)
+    を使います。
 
     ??? code
 
@@ -654,13 +644,13 @@ Each [`PromptUpdate`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/proces
             ]
         ```
 
-## 5. Register processor-related classes
+## 5. プロセッサ関連クラスの登録 { #5-register-processor-related-classes }
 
-After you have defined [`BaseProcessingInfo`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseProcessingInfo) (Step 2),
-[`BaseDummyInputsBuilder`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseDummyInputsBuilder) (Step 3),
-and [`BaseMultiModalProcessor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor) (Step 4),
-decorate the model class with [`MULTIMODAL_REGISTRY.register_processor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/registry/#vllm.multimodal.registry.MultiModalRegistry.register_processor)
-to register them to the multi-modal registry:
+[`BaseProcessingInfo`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseProcessingInfo)（ステップ 2）、
+[`BaseDummyInputsBuilder`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseDummyInputsBuilder)（ステップ 3）、
+[`BaseMultiModalProcessor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor)（ステップ 4）を定義したら、
+モデルクラスを [`MULTIMODAL_REGISTRY.register_processor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/registry/#vllm.multimodal.registry.MultiModalRegistry.register_processor) でデコレートして、
+マルチモーダルレジストリに登録します。
 
 ```diff
   from vllm.model_executor.models.interfaces import SupportsMultiModal
@@ -674,32 +664,32 @@ to register them to the multi-modal registry:
   class YourModelForImage2Seq(nn.Module, SupportsMultiModal):
 ```
 
-## Notes
+## 補足 { #notes }
 
-### Inserting feature tokens without replacement
+### 置換せずに特徴トークンを挿入する { #inserting-feature-tokens-without-replacement }
 
-Some HF processors directly insert feature tokens without replacing anything in the original prompt. In that case, you can use [`PromptInsertion`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.PromptInsertion) instead of [`PromptReplacement`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.PromptReplacement) inside [`_get_prompt_updates`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates).
+HF プロセッサの中には、元のプロンプトの何かを置き換えるのではなく、特徴トークンを直接挿入するものがあります。その場合は、[`_get_prompt_updates`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates) の中で [`PromptReplacement`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.PromptReplacement) の代わりに [`PromptInsertion`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.PromptInsertion) を使えます。
 
-Examples:
+例:
 
-- BLIP-2 (insert at start of prompt): [vllm/model_executor/models/blip2.py](../../../vllm/model_executor/models/blip2.py)
-- Molmo (insert after `<|endoftext|>` token): [vllm/model_executor/models/molmo.py](../../../vllm/model_executor/models/molmo.py)
+- BLIP-2（プロンプトの先頭に挿入）: [vllm/model_executor/models/blip2.py](../../../vllm/model_executor/models/blip2.py)
+- Molmo（`<|endoftext|>` トークンの後ろに挿入）: [vllm/model_executor/models/molmo.py](../../../vllm/model_executor/models/molmo.py)
 
-### Handling prompt updates unrelated to multi-modal data
+### マルチモーダルデータと無関係なプロンプト更新の扱い { #handling-prompt-updates-unrelated-to-multi-modal-data }
 
-[`_get_prompt_updates`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates) assumes that each application of prompt update corresponds to one multi-modal item. If the HF processor performs additional processing regardless of how many multi-modal items there are, you should override [`_apply_hf_processor_tokens_only`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._apply_hf_processor_tokens_only) so that the processed token inputs are consistent with the result of applying the HF processor on text inputs. This is because token inputs bypass the HF processor according to [our design](../../design/mm_processing.md).
+[`_get_prompt_updates`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates) は、プロンプト更新の 1 回の適用が 1 つのマルチモーダル項目に対応することを前提としています。HF プロセッサがマルチモーダル項目の数にかかわらず追加の処理を行う場合は、[`_apply_hf_processor_tokens_only`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._apply_hf_processor_tokens_only) をオーバーライドし、処理後のトークン入力が、テキスト入力に HF プロセッサを適用した結果と一致するようにしてください。これは、[vLLM の設計](../../design/mm_processing.md)ではトークン入力が HF プロセッサを迂回するためです。
 
-Examples:
+例:
 
-- Chameleon (appends `sep_token`): [vllm/model_executor/models/chameleon.py](../../../vllm/model_executor/models/chameleon.py)
-- Molmo2 (prepends `bos_token`): [vllm/model_executor/models/molmo2.py](../../../vllm/model_executor/models/molmo2.py)
-- Molmo (applies chat template which is not defined elsewhere): [vllm/model_executor/models/molmo.py](../../../vllm/model_executor/models/molmo.py)
+- Chameleon（`sep_token` を末尾に追加）: [vllm/model_executor/models/chameleon.py](../../../vllm/model_executor/models/chameleon.py)
+- Molmo2（`bos_token` を先頭に追加）: [vllm/model_executor/models/molmo2.py](../../../vllm/model_executor/models/molmo2.py)
+- Molmo（他所で定義されていないチャットテンプレートを適用）: [vllm/model_executor/models/molmo.py](../../../vllm/model_executor/models/molmo.py)
 
-### Custom HF processor
+### カスタムの HF プロセッサ { #custom-hf-processor }
 
-Some models don't define an HF processor class on HF Hub. In that case, you can define a custom HF processor that has the same call signature as HF processors and pass it to [`_call_hf_processor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._call_hf_processor).
+HF Hub 上で HF プロセッサのクラスを定義していないモデルもあります。その場合は、HF プロセッサと同じ呼び出しシグネチャを持つカスタムの HF プロセッサを定義し、[`_call_hf_processor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._call_hf_processor) に渡せます。
 
-Examples:
+例:
 
 - DeepSeek-VL2: [vllm/model_executor/models/deepseek_vl2.py](../../../vllm/model_executor/models/deepseek_vl2.py)
 - InternVL: [vllm/model_executor/models/internvl.py](../../../vllm/model_executor/models/internvl.py)

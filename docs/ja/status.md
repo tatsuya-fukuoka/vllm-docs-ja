@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **221 ページ**を翻訳済みです（97.8%）。
+全 226 ページ中 **222 ページ**を翻訳済みです（98.2%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -16,7 +16,7 @@
 | CLI リファレンス | 15 | 0 | 0 | 15 |
 | コミュニティ | 3 | 0 | 0 | 3 |
 | 設定 | 7 | 0 | 0 | 7 |
-| 開発者ガイド | 15 | 0 | 1 | 16 |
+| 開発者ガイド | 16 | 0 | 0 | 16 |
 | デプロイ | 35 | 0 | 0 | 35 |
 | 設計ドキュメント | 28 | 0 | 1 | 29 |
 | 機能 | 51 | 0 | 1 | 52 |
@@ -26,7 +26,7 @@
 | 推論とサービング | 16 | 0 | 0 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **221** | **0** | **5** | **226** |
+| **合計** | **222** | **0** | **4** | **226** |
 
 ## 翻訳済みのページ
 
@@ -69,6 +69,7 @@
 - `contributing/incremental_build.md`
 - `contributing/model/README.md`
 - `contributing/model/basic.md`
+- `contributing/model/multimodal.md`
 - `contributing/model/registration.md`
 - `contributing/model/tests.md`
 - `contributing/model/transcription.md`

@@ -284,8 +284,10 @@
       "upstream_sha": "5fdcaccdf8c758ed"
     },
     "contributing/model/multimodal.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "b6b54873fc73278b",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "b6b54873fc73278b"
     },
     "contributing/model/registration.md": {
