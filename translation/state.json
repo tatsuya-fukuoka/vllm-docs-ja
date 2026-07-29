@@ -632,8 +632,10 @@
       "upstream_sha": "c848cbcbc0670dd7"
     },
     "design/fusions.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4b5e3a3774aa4d13",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "4b5e3a3774aa4d13"
     },
     "design/huggingface_integration.md": {
