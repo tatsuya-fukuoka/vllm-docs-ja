@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **173 ページ**を翻訳済みです（76.5%）。
+全 226 ページ中 **175 ページ**を翻訳済みです（77.4%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -18,7 +18,7 @@
 | 設定 | 7 | 0 | 0 | 7 |
 | 開発者ガイド | 11 | 0 | 5 | 16 |
 | デプロイ | 35 | 0 | 0 | 35 |
-| 設計ドキュメント | 9 | 0 | 20 | 29 |
+| 設計ドキュメント | 11 | 0 | 18 | 29 |
 | 機能 | 41 | 0 | 11 | 52 |
 | はじめに | 5 | 0 | 8 | 13 |
 | ガバナンス | 3 | 0 | 0 | 3 |
@@ -26,7 +26,7 @@
 | 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **173** | **0** | **53** | **226** |
+| **合計** | **175** | **0** | **51** | **226** |
 
 ## 翻訳済みのページ
 
@@ -111,6 +111,8 @@
 - `design/lora_resolver_plugins.md`
 - `design/mm_processing.md`
 - `design/model_runner_v2.md`
+- `design/multiprocessing.md`
+- `design/nixl_kv_cache_lease.md`
 - `design/optimization_levels.md`
 - `design/torch_compile_multimodal.md`
 - `features/README.md`

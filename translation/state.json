@@ -668,13 +668,17 @@
       "upstream_sha": "16431be4e40e59e5"
     },
     "design/multiprocessing.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1959cb563a5decf9",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "1959cb563a5decf9"
     },
     "design/nixl_kv_cache_lease.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "8a6b40fef18aae88",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "8a6b40fef18aae88"
     },
     "design/nixl_kv_push_connector.md": {
