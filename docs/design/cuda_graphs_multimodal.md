@@ -1,32 +1,32 @@
-# Vision Encoder (ViT) CUDA Graphs
+# Vision Encoder（ViT）の CUDA Graphs { #vision-encoder-vit-cuda-graphs }
 
-The [CUDA Graphs](cuda_graphs.md) infrastructure in vLLM primarily targets the **decoder** (language model) forward pass. vLLM also supports capturing the **encoder** (vision transformer) forward pass as CUDA Graphs, independently from the decoder. This is based on <https://github.com/vllm-project/vllm/pull/35963>.
+vLLM の [CUDA Graphs](cuda_graphs.md) の仕組みは、主に**デコーダ**（言語モデル）の forward pass を対象としています。vLLM は、デコーダとは独立に**エンコーダ**（vision transformer）の forward pass を CUDA Graphs としてキャプチャすることもサポートしています。これは <https://github.com/vllm-project/vllm/pull/35963> にもとづいています。
 
-For two-tower vision encoders (e.g., DeepSeek-OCR's SAM + CLIP with dynamic tiling), a **dual-path graph** mode captures two independent sets of CUDA graphs — one for the global image path and one for the local patch path — enabling independent budget selection and partial eager fallback per path. This is based on <https://github.com/vllm-project/vllm/pull/43586>.
+2 タワー構成の vision エンコーダ（動的タイリングを伴う DeepSeek-OCR の SAM + CLIP など）向けには、**dual-path graph** モードが 2 つの独立した CUDA graph の集合（グローバル画像パス用とローカルパッチパス用）をキャプチャし、パスごとに独立した budget の選択と部分的な eager フォールバックを可能にします。これは <https://github.com/vllm-project/vllm/pull/43586> にもとづいています。
 
 !!! note
-    Encoder CUDA Graphs are orthogonal to decoder CUDA Graphs — both can be enabled simultaneously. Encoder graphs capture the vision encoder execution (e.g., ViT in Qwen3-VL), while decoder graphs capture the language model execution as described in the [CUDA Graphs design document](cuda_graphs.md).
+    エンコーダの CUDA Graphs はデコーダの CUDA Graphs と直交しており、両方を同時に有効にできます。エンコーダのグラフは vision エンコーダの実行（Qwen3-VL の ViT など）をキャプチャし、デコーダのグラフは [CUDA Graphs の設計ドキュメント](cuda_graphs.md)で説明したとおり言語モデルの実行をキャプチャします。
 
-## Motivation
+## 動機 { #motivation }
 
-Vision encoder inference incurs CUDA kernel launch overhead on the host side. The overhead is more significant when the batch size is small or image size is small.
+vision エンコーダの推論では、ホスト側で CUDA カーネルの起動オーバーヘッドが発生します。バッチサイズが小さい場合や画像サイズが小さい場合、このオーバーヘッドはより顕著になります。
 
-Encoder CUDA Graphs eliminate this overhead by pre-capturing the full encoder forward pass at multiple token budget levels during model initialization, then replaying the appropriate graph at runtime.
+エンコーダの CUDA Graphs は、モデル初期化時にエンコーダの forward pass 全体を複数のトークン budget レベルであらかじめキャプチャし、実行時に適切なグラフを再生することで、このオーバーヘッドを解消します。
 
-For two-tower vision encoders such as DeepSeek-OCR (SAM + CLIP with dynamic tiling), the global image path and local patch path have independent token profiles (272 tokens per global image vs. 100 tokens per local patch). Capturing a single monolithic graph for both paths would significantly reduce packing efficiency. The dual-path graph mode captures each path as a separate set of budgets, allowing the manager to pack and replay each path independently.
+DeepSeek-OCR（動的タイリングを伴う SAM + CLIP）のような 2 タワー構成の vision エンコーダでは、グローバル画像パスとローカルパッチパスが独立したトークンのプロファイルを持ちます（グローバル画像 1 枚あたり 272 トークン、ローカルパッチ 1 個あたり 100 トークン）。両方のパスを 1 つの一枚岩のグラフとしてキャプチャすると、パッキングの効率が大きく下がってしまいます。dual-path graph モードは各パスを別々の budget の集合としてキャプチャし、マネージャがパスごとに独立してパッキングと再生を行えるようにします。
 
-## Design
+## 設計 { #design }
 
-The encoder CUDA Graph system uses a **budget-based capture/replay** strategy, managed by [`EncoderCudaGraphManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/worker/encoder_cudagraph/#vllm.v1.worker.encoder_cudagraph.EncoderCudaGraphManager). The system contains the following core components:
+エンコーダの CUDA Graph システムは、[`EncoderCudaGraphManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/worker/encoder_cudagraph/#vllm.v1.worker.encoder_cudagraph.EncoderCudaGraphManager) が管理する **budget ベースのキャプチャ / 再生**戦略を採用しています。システムは次の中核コンポーネントから成ります。
 
-* [`EncoderCudaGraphManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/worker/encoder_cudagraph/#vllm.v1.worker.encoder_cudagraph.EncoderCudaGraphManager): orchestrates capture, replay, greedy packing, and data-parallel execution for encoder CUDA Graphs.
-* [`SupportsEncoderCudaGraph`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsEncoderCudaGraph): a runtime-checkable protocol that models implement to opt-in to encoder CUDA Graphs.
-* [`EncoderItemSpec`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/worker/encoder_cudagraph_defs/#vllm.v1.worker.encoder_cudagraph_defs.EncoderItemSpec): describes a single encoder input item (image or video) with its input size and output token count.
-* [`BudgetGraphMetadata`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/worker/encoder_cudagraph/#vllm.v1.worker.encoder_cudagraph.BudgetGraphMetadata): holds the captured CUDA Graph and its associated I/O buffers for a single token budget level.
+* [`EncoderCudaGraphManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/worker/encoder_cudagraph/#vllm.v1.worker.encoder_cudagraph.EncoderCudaGraphManager): エンコーダ CUDA Graphs のキャプチャ、再生、貪欲なパッキング、データ並列実行を統括します。
+* [`SupportsEncoderCudaGraph`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsEncoderCudaGraph): モデルがエンコーダ CUDA Graphs に対応するために実装する、実行時に検査可能なプロトコルです。
+* [`EncoderItemSpec`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/worker/encoder_cudagraph_defs/#vllm.v1.worker.encoder_cudagraph_defs.EncoderItemSpec): 1 つのエンコーダ入力項目（画像または動画）を、その入力サイズと出力トークン数とともに記述します。
+* [`BudgetGraphMetadata`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/worker/encoder_cudagraph/#vllm.v1.worker.encoder_cudagraph.BudgetGraphMetadata): 1 つのトークン budget レベルについて、キャプチャした CUDA Graph と関連する入出力バッファを保持します。
 
-### Budget-based graph capture
+### budget ベースのグラフキャプチャ { #budget-based-graph-capture }
 
-Multiple CUDA Graphs are pre-captured at different **token budget** levels (e.g., `[2048, 4096, 8192, 13824]`). Each budget defines a fixed token capacity, and all budgets share the same maximum batch size (number of images). The `BudgetGraphMetadata` for each level stores the graph along with pre-allocated input, metadata, and output buffers:
+異なる**トークン budget** のレベル（`[2048, 4096, 8192, 13824]` など）で複数の CUDA Graphs をあらかじめキャプチャします。各 budget は固定のトークン容量を定義し、すべての budget が同じ最大バッチサイズ（画像枚数）を共有します。各レベルの `BudgetGraphMetadata` は、グラフとともに、あらかじめ確保した入力・メタデータ・出力のバッファを保持します。
 
 ```python
 @dataclass
@@ -39,92 +39,92 @@ class BudgetGraphMetadata:
     output_buffer: torch.Tensor      # encoder hidden states
 ```
 
-Budgets are auto-generated as power-of-2 levels from a model-provided range via `get_encoder_cudagraph_budget_range()`, with the maximum budget always included even if it does not fall on a power-of-2 boundary. Budgets can also be explicitly specified by the user via `encoder_cudagraph_token_budgets` in `CompilationConfig`.
+budget は `get_encoder_cudagraph_budget_range()` によりモデルが提供する範囲から 2 のべき乗のレベルとして自動生成され、最大 budget は 2 のべき乗の境界に一致しない場合でも常に含まれます。budget は `CompilationConfig` の `encoder_cudagraph_token_budgets` でユーザーが明示的に指定することもできます。
 
-When `EncoderCudaGraphConfig.enable_dual_path_graph` is `True`, the manager generates two independent budget lists — `global_token_budgets` (multiples of `global_token_per_image`) and `local_token_budgets` (multiples of `local_token_per_patch`) — and stores captured graphs under `budget_graphs["global"]` and `budget_graphs["local"]` respectively.
+`EncoderCudaGraphConfig.enable_dual_path_graph` が `True` の場合、マネージャは 2 つの独立した budget のリスト（`global_token_per_image` の倍数からなる `global_token_budgets` と、`local_token_per_patch` の倍数からなる `local_token_budgets`）を生成し、キャプチャしたグラフをそれぞれ `budget_graphs["global"]` と `budget_graphs["local"]` に格納します。
 
-### Greedy bin-packing at runtime
+### 実行時の貪欲なビンパッキング { #greedy-bin-packing-at-runtime }
 
-When a batch of images arrives, the manager sorts images by output token count (smallest first) and greedily packs as many images as possible into each sub-batch while staying within the **largest** token budget and the maximum batch size. Once a sub-batch is finalized (the next image would overflow either constraint), the manager finds the **smallest** budget that fits the sub-batch's total tokens and replays the corresponding CUDA Graph. This repeats until the batch is exhausted. Images that exceed all budgets fall back to eager execution.
+画像のバッチが届くと、マネージャは出力トークン数の小さい順に画像を並べ替え、**最大の**トークン budget と最大バッチサイズを超えない範囲で、各サブバッチにできるだけ多くの画像を貪欲に詰め込みます。サブバッチが確定すると（次の画像を入れるといずれかの制約を超える場合）、マネージャはそのサブバッチの合計トークン数に収まる**最小の** budget を見つけ、対応する CUDA Graph を再生します。これをバッチが尽きるまで繰り返します。すべての budget を超える画像は eager 実行にフォールバックします。
 
-For dual-path models, the manager routes to `_execute_local_dual_path()`, which constrains both global and local token budgets simultaneously during packing (see [Dual-Path graph capture](#dual-path-graph-capture)).
+dual-path のモデルでは、マネージャは `_execute_local_dual_path()` へ処理を振り分けます。これはパッキング時にグローバルとローカル双方のトークン budget を同時に制約します（[Dual-Path のグラフキャプチャ](#dual-path-graph-capture)を参照）。
 
-For each graph replay:
+グラフ再生ごとの処理は次のとおりです。
 
-1. Call `prepare_encoder_cudagraph_replay_buffers()` to compute buffer values (including `pixel_values` and precomputed metadata) from actual batch inputs.
-2. Zero the pre-allocated `input_buffers`, then slice-copy the replay values into them.
-3. Replay the CUDA Graph.
-4. Clone outputs from `output_buffer` (cloning is necessary since the buffer is reused across replays).
+1. `prepare_encoder_cudagraph_replay_buffers()` を呼び出し、実際のバッチ入力から（`pixel_values` や事前計算済みメタデータを含む）バッファの値を計算します。
+2. あらかじめ確保した `input_buffers` をゼロで埋め、再生用の値をスライスコピーで書き込みます。
+3. CUDA Graph を再生します。
+4. `output_buffer` から出力を clone します（バッファは再生ごとに再利用されるため clone が必要です）。
 
-### Dual-Path graph capture
+### Dual-Path のグラフキャプチャ { #dual-path-graph-capture }
 
-For two-tower vision encoders (e.g., DeepSeek-OCR), the `EncoderCudaGraphConfig` sets `enable_dual_path_graph=True` and provides `global_token_per_image` / `local_token_per_patch`. The manager captures two independent sets of CUDA graphs — one for the **global** image path and one for the **local** patch path — stored under `budget_graphs["global"]` and `budget_graphs["local"]` respectively.
+2 タワー構成の vision エンコーダ（DeepSeek-OCR など）では、`EncoderCudaGraphConfig` が `enable_dual_path_graph=True` を設定し、`global_token_per_image` / `local_token_per_patch` を提供します。マネージャは 2 つの独立した CUDA graph の集合（**グローバル**画像パス用と**ローカル**パッチパス用）をキャプチャし、それぞれ `budget_graphs["global"]` と `budget_graphs["local"]` に格納します。
 
-**Budget generation.** Two separate budget lists are generated:
+**budget の生成。** 2 つの別々の budget リストが生成されます。
 
-* `global_token_budgets` — power-of-2 multiples of `global_token_per_image` (e.g., `[272, 544, 1088, 2176, 4352, 8704, 13824]` for DeepSeek-OCR).
-* `local_token_budgets` — power-of-2 multiples of `local_token_per_patch` (e.g., `[0, 100, 200, 400, 800, 1600, 3200, 6400, 12800]` for DeepSeek-OCR). A budget of `0` is always included to handle images with no local patches (images ≤ 640×640 that produce only global features).
+* `global_token_budgets` — `global_token_per_image` の 2 のべき乗倍（DeepSeek-OCR では `[272, 544, 1088, 2176, 4352, 8704, 13824]` など）。
+* `local_token_budgets` — `local_token_per_patch` の 2 のべき乗倍（DeepSeek-OCR では `[0, 100, 200, 400, 800, 1600, 3200, 6400, 12800]` など）。ローカルパッチを持たない画像（640×640 以下で、グローバル特徴のみを生成する画像）に対応するため、budget `0` が常に含まれます。
 
-Both lists are capped at the same `max_budget`.
+いずれのリストも同じ `max_budget` で上限が設けられます。
 
-**Dual-path greedy packing.** Each `EncoderItemSpec` provides both `global_output_tokens` (constant per image) and `local_output_tokens` (proportional to the patch count). The dual-path packing algorithm constrains both budgets simultaneously:
+**dual-path の貪欲なパッキング。** 各 `EncoderItemSpec` は `global_output_tokens`（画像ごとに一定）と `local_output_tokens`（パッチ数に比例）の両方を提供します。dual-path のパッキングアルゴリズムは、両方の budget を同時に制約します。
 
-* Sort images by total output tokens (global + local), smallest first.
-* Greedily pack images: an image is added to the current sub-batch only if both the accumulated global tokens ≤ `max_global_budget` **and** the accumulated local tokens ≤ `max_local_budget`, with the image count ≤ `max_batch_size`.
-* Once either constraint would overflow, finalize the sub-batch and find the smallest fitting budget **independently** for each path.
-* Repeat until all images are packed.
+* 画像を合計出力トークン数（グローバル + ローカル）の小さい順に並べ替えます。
+* 貪欲に画像を詰め込みます。画像が現在のサブバッチに追加されるのは、累積グローバルトークンが `max_global_budget` 以下**かつ**累積ローカルトークンが `max_local_budget` 以下で、画像枚数が `max_batch_size` 以下の場合のみです。
+* いずれかの制約を超えそうになった時点でサブバッチを確定し、各パスについて**独立に**収まる最小の budget を探します。
+* すべての画像を詰め終わるまで繰り返します。
 
-**Partial graph fallback.** After packing, each sub-batch falls into one of four execution scenarios:
+**部分的なグラフのフォールバック。** パッキング後、各サブバッチは次の 4 つの実行シナリオのいずれかになります。
 
-| Global budget | Local budget | Execution |
+| グローバル budget | ローカル budget | 実行 |
 | :---: | :---: | --- |
-| Found | Found | Both paths use CUDA graph replay |
-| Found | `None` | Global graph replay + local path skipped (no patches) |
-| `None` | Found | Global eager fallback + local graph replay |
-| `None` | `None` | Both paths fall back to eager execution |
+| あり | あり | 両方のパスで CUDA graph を再生 |
+| あり | `None` | グローバルはグラフ再生、ローカルパスはスキップ（パッチなし） |
+| `None` | あり | グローバルは eager フォールバック、ローカルはグラフ再生 |
+| `None` | `None` | 両方のパスが eager 実行にフォールバック |
 
-Note that the `0`-budget graph is never actually replayed for local — it signals that local patch processing should be skipped entirely.
+なお、ローカル側で budget `0` のグラフが実際に再生されることはありません。これはローカルパッチの処理を完全にスキップすべきことを示すものです。
 
-**Buffer keys per path.** Global and local paths use different buffer keys. For DeepSeek-OCR, the global path uses `pixel_values` (full images, shape `[B, 3, 1280, 1280]`) while the local path uses `images_crop` (patches, shape `[P, 3, 1024, 1024]`). The manager iterates over each captured graph's own `input_buffers.keys()` rather than a shared `buffer_keys` list, so both paths can use different buffers.
+**パスごとのバッファキー。** グローバルとローカルのパスは異なるバッファキーを使います。DeepSeek-OCR では、グローバルパスが `pixel_values`（画像全体、形状 `[B, 3, 1280, 1280]`）を使い、ローカルパスが `images_crop`（パッチ、形状 `[P, 3, 1024, 1024]`）を使います。マネージャは共有の `buffer_keys` リストではなく、キャプチャされた各グラフ自身の `input_buffers.keys()` を走査するため、両方のパスで異なるバッファを使えます。
 
-**Post-processing.** The `postprocess_encoder_output` method receives a `local_output` parameter (a tensor or `None`) containing the local-path encoder output. The model is responsible for assembling global and local features into the final per-image embedding. For DeepSeek-OCR, this means reshaping the global output into `[B, 272, n_embed]`, the local output into `[P, 100, n_embed]`, assembling patch grids with newline tokens, and concatenating `[patches_grid, global, view_separator]` for each image.
-
-!!! note
-    The dual-path design enables partial CUDA graph coverage — one path can hit while the other falls back to eager. This avoids wasted compute on zero-padded patch buffers for untiled images and avoids graph invalidation caused by variable `crop_shape` per image.
-
-### Data-parallel support
-
-When `mm_encoder_tp_mode="data"`, the manager distributes images across TP ranks using load-balanced assignment via `get_load_balance_assignment`, executes locally on each rank, then gathers results back in the original order via `tensor_model_parallel_all_gather`.
-
-### Video inference support
-
-Following <https://github.com/vllm-project/vllm/pull/35963> (ViT full CUDA graph support for image inference), <https://github.com/vllm-project/vllm/pull/38061> extends the encoder CUDA graph framework to support video inference for Qwen3-VL. Previously, the CUDA graph capture/replay path only handled image inputs (`pixel_values` + `image_grid_thw`). Video inputs use different keys (`pixel_values_videos` + `video_grid_thw`) and require larger `cu_seqlens` buffers because each video item contributes multiple frames (`T` attention sequences). This PR generalizes the protocol and manager to handle both modalities through a single shared graph manager.
+**後処理。** `postprocess_encoder_output` メソッドは、ローカルパスのエンコーダ出力を含む `local_output` パラメータ（テンソルまたは `None`）を受け取ります。グローバル特徴とローカル特徴を組み立てて画像ごとの最終的な埋め込みにするのはモデルの責任です。DeepSeek-OCR の場合、グローバル出力を `[B, 272, n_embed]` に、ローカル出力を `[P, 100, n_embed]` に整形し、改行トークンを含むパッチグリッドを組み立て、画像ごとに `[patches_grid, global, view_separator]` を連結することを意味します。
 
 !!! note
-    Video CUDA graphs are automatically disabled when EVS (Efficient Video Sampling) pruning is enabled, since EVS makes the token count data-dependent and incompatible with CUDA graph capture.
+    dual-path の設計により、CUDA graph の部分的な適用が可能になります。一方のパスがヒットし、他方が eager にフォールバックすることができます。これにより、タイル分割されていない画像でゼロ埋めされたパッチバッファに無駄な計算を行うことを避け、画像ごとに変化する `crop_shape` によるグラフの無効化も回避できます。
 
-    Mixed inputs (image+video) per prompt are also supported now.
+### データ並列のサポート { #data-parallel-support }
 
-## Model integration via `SupportsEncoderCudaGraph`
+`mm_encoder_tp_mode="data"` の場合、マネージャは `get_load_balance_assignment` による負荷分散された割り当てを使って画像を TP ランク間に分配し、各ランクでローカルに実行したうえで、`tensor_model_parallel_all_gather` により元の順序で結果を集約します。
 
-Models opt-in to encoder CUDA Graphs by implementing the [`SupportsEncoderCudaGraph`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsEncoderCudaGraph) protocol. This protocol encapsulates all model-specific logic so that the manager remains model-agnostic. The protocol defines the following methods:
+### 動画推論のサポート { #video-inference-support }
 
-* `get_encoder_cudagraph_config()` — returns static configuration (supported modalities, buffer keys, output hidden size, padding logics, max frames per video).
-* `get_encoder_cudagraph_budget_range(vllm_config)` — returns `(min_budget, max_budget)` for auto-inference of token budgets.
-* `get_encoder_cudagraph_item_specs(mm_kwargs)` — returns `list[EncoderItemSpec]` describing each item with its input size, total output token count (`output_tokens`), and optionally per-path token counts (`global_output_tokens`, `local_output_tokens`) for dual-path models.
-* `select_encoder_cudagraph_items(mm_kwargs, indices)` — extracts a sub-batch of items by index, used during greedy packing and DP sharding.
-* `prepare_encoder_cudagraph_capture_inputs(..., path="default")` — creates dummy inputs for graph capture. The `path` parameter (`"global"` or `"local"`) tells the model which path to generate dummy inputs for. Returns `EncoderCudaGraphCaptureInputs` with a single `values: dict[str, torch.Tensor]` that contains all buffers to be recorded into the graph.
-* `prepare_encoder_cudagraph_replay_buffers(mm_kwargs, max_batch_size, max_frames_per_batch, path="default")` — computes buffer values from actual batch inputs. The `path` parameter selects which modality keys to extract from `mm_kwargs`. Returns `EncoderCudaGraphReplayBuffers` with a `values` dict whose keys match the captured graph's `input_buffers.keys()`.
-* `encoder_cudagraph_forward(inputs: dict[str, torch.Tensor], path="default")` — forward pass accepting only fixed-shaped input tensors (the captured `values` dict). Called during both capture and replay. The `path` parameter dispatches to the correct encoder sub-module (e.g., global vs. local path for DeepSeek-OCR).
-* `encoder_eager_forward(mm_kwargs, path="default")` — fallback eager forward when no graph fits. When `path` is `"global"` or `"local"`, runs only that encoder path without graph capture.
-* `postprocess_encoder_output(..., local_output=None)` — post-process encoder output. The `local_output` parameter receives the local-path encoder output tensor (or `None`), enabling dual-path models to assemble global and local features into the final per-image embedding.
+<https://github.com/vllm-project/vllm/pull/35963>（画像推論向けの ViT フル CUDA graph サポート）に続き、<https://github.com/vllm-project/vllm/pull/38061> はエンコーダの CUDA graph フレームワークを拡張し、Qwen3-VL の動画推論をサポートしました。以前は、CUDA graph のキャプチャ / 再生の経路は画像入力（`pixel_values` + `image_grid_thw`）しか扱えませんでした。動画入力は異なるキー（`pixel_values_videos` + `video_grid_thw`）を使い、各動画項目が複数フレーム（`T` 個の attention シーケンス）を持つため、より大きな `cu_seqlens` バッファを必要とします。この PR はプロトコルとマネージャを一般化し、単一の共有グラフマネージャで両方のモダリティを扱えるようにしました。
 
 !!! note
-    The `SupportsEncoderCudaGraph` protocol is designed to be model-agnostic. New vision encoder models can opt-in by implementing the protocol methods without modifying the manager.
+    EVS（Efficient Video Sampling）による枝刈りが有効な場合、動画の CUDA graph は自動的に無効になります。EVS はトークン数をデータ依存にするため、CUDA graph のキャプチャと両立しないためです。
 
-**Supported models:**
+    プロンプトごとの入力の混在（画像 + 動画）も現在サポートされています。
 
-| Architecture | Models | CG for Image | CG for Video | Dual-Path Graph |
+## `SupportsEncoderCudaGraph` によるモデルの統合 { #model-integration-via-supportsencodercudagraph }
+
+モデルは [`SupportsEncoderCudaGraph`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsEncoderCudaGraph) プロトコルを実装することで、エンコーダの CUDA Graphs に対応します。このプロトコルはモデル固有のロジックをすべてカプセル化し、マネージャがモデルに依存しないようにします。プロトコルは次のメソッドを定義します。
+
+* `get_encoder_cudagraph_config()` — 静的な設定（サポートするモダリティ、バッファキー、出力の hidden size、パディングのロジック、動画あたりの最大フレーム数）を返します。
+* `get_encoder_cudagraph_budget_range(vllm_config)` — トークン budget の自動推定のための `(min_budget, max_budget)` を返します。
+* `get_encoder_cudagraph_item_specs(mm_kwargs)` — 各項目について入力サイズ、合計出力トークン数（`output_tokens`）、および dual-path モデルの場合は任意でパスごとのトークン数（`global_output_tokens`、`local_output_tokens`）を記述する `list[EncoderItemSpec]` を返します。
+* `select_encoder_cudagraph_items(mm_kwargs, indices)` — インデックスにより項目のサブバッチを抽出します。貪欲なパッキングと DP のシャーディングで使われます。
+* `prepare_encoder_cudagraph_capture_inputs(..., path="default")` — グラフキャプチャ用のダミー入力を作成します。`path` パラメータ（`"global"` または `"local"`）は、どのパス向けのダミー入力を生成するかをモデルに伝えます。グラフに記録されるすべてのバッファを含む単一の `values: dict[str, torch.Tensor]` を持つ `EncoderCudaGraphCaptureInputs` を返します。
+* `prepare_encoder_cudagraph_replay_buffers(mm_kwargs, max_batch_size, max_frames_per_batch, path="default")` — 実際のバッチ入力からバッファの値を計算します。`path` パラメータは `mm_kwargs` から抽出するモダリティのキーを選択します。キーがキャプチャ済みグラフの `input_buffers.keys()` と一致する `values` 辞書を持つ `EncoderCudaGraphReplayBuffers` を返します。
+* `encoder_cudagraph_forward(inputs: dict[str, torch.Tensor], path="default")` — 固定形状の入力テンソル（キャプチャされた `values` 辞書）のみを受け取る forward pass です。キャプチャ時と再生時の両方で呼ばれます。`path` パラメータは適切なエンコーダのサブモジュール（DeepSeek-OCR のグローバル / ローカルパスなど）へディスパッチします。
+* `encoder_eager_forward(mm_kwargs, path="default")` — 適合するグラフがない場合の eager によるフォールバック forward です。`path` が `"global"` または `"local"` の場合、グラフキャプチャを行わずにそのエンコーダパスのみを実行します。
+* `postprocess_encoder_output(..., local_output=None)` — エンコーダ出力を後処理します。`local_output` パラメータはローカルパスのエンコーダ出力テンソル（または `None`）を受け取り、dual-path モデルがグローバル特徴とローカル特徴を組み立てて画像ごとの最終的な埋め込みを作れるようにします。
+
+!!! note
+    `SupportsEncoderCudaGraph` プロトコルは、モデルに依存しないよう設計されています。新しい vision エンコーダのモデルは、マネージャを変更することなくプロトコルのメソッドを実装するだけで対応できます。
+
+**サポートされるモデル:**
+
+| アーキテクチャ | モデル | 画像の CG | 動画の CG | Dual-Path Graph |
 | ------------ | ------ | ------------ | ------------ | --------------- |
 | `DeepseekOCRForCausalLM` | `DeepSeek-OCR` | ✅︎ | ❌︎ | ✅︎ |
 | `Gemma3ForConditionalGeneration` | `Gemma3` | ✅︎ | ❌︎ | ❌︎ |
@@ -140,32 +140,32 @@ Models opt-in to encoder CUDA Graphs by implementing the [`SupportsEncoderCudaGr
 | `Step3VLForConditionalGeneration` | `Step3-VL` | ✅︎ | ❌︎ | ✅︎ |
 
 !!! note
-    Encoder CUDA Graphs have currently been tested with `--mm-encoder-attn-backend=FLASH_ATTN` and `--mm-encoder-attn-backend=FLASHINFER` on Blackwell GPUs.
-    For Qwen2-VL and Qwen2.5-VL only FA2 and FA3 has been tested.
+    エンコーダの CUDA Graphs は、現時点では Blackwell GPU 上で `--mm-encoder-attn-backend=FLASH_ATTN` および `--mm-encoder-attn-backend=FLASHINFER` を用いてテストされています。
+    Qwen2-VL と Qwen2.5-VL については FA2 と FA3 のみテストされています。
 
-## Configuration
+## 設定 { #configuration }
 
-Three fields in `CompilationConfig` control encoder CUDA Graphs:
+`CompilationConfig` の次のフィールドがエンコーダの CUDA Graphs を制御します。
 
-* `cudagraph_mm_encoder` (`bool`, default `False`) — enable CUDA Graph capture for multimodal encoder. When enabled, captures the full encoder forward as a CUDA Graph for each token budget level.
-* `encoder_cudagraph_token_budgets` (`list[int]`, default `[]`) — token budget levels for capture. If empty (default), auto-inferred from model architecture as power-of-2 levels. User-provided values override auto-inference.
-* `encoder_cudagraph_max_vision_items_per_batch` (`int`, default `0`) — maximum number of images/videos per batch during capture. If 0 (default), auto-inferred as `max_budget // min_budget`.
-* `encoder_cudagraph_max_frames_per_batch` (`int`, default `None`) — maximum number of video frames per batch during capture. If `None` (default), auto-inferred as `encoder_cudagraph_max_vision_items_per_batch * max_frames_per_video` (`max_frames_per_video` is a model-specific value from `EncoderCudaGraphConfig`, computed by `get_max_frames_per_video()` on the model). If we limit the video count per prompt to `0`, it will also be set to `0` (i.e., fall back to image-only mode).
+* `cudagraph_mm_encoder`（`bool`、既定値 `False`）— マルチモーダルエンコーダの CUDA Graph キャプチャを有効にします。有効にすると、各トークン budget レベルについてエンコーダの forward 全体を CUDA Graph としてキャプチャします。
+* `encoder_cudagraph_token_budgets`（`list[int]`、既定値 `[]`）— キャプチャ対象のトークン budget レベルです。空（既定）の場合、モデルアーキテクチャから 2 のべき乗のレベルとして自動推定されます。ユーザーが指定した値は自動推定より優先されます。
+* `encoder_cudagraph_max_vision_items_per_batch`（`int`、既定値 `0`）— キャプチャ時のバッチあたりの画像 / 動画の最大数です。0（既定）の場合、`max_budget // min_budget` として自動推定されます。
+* `encoder_cudagraph_max_frames_per_batch`（`int`、既定値 `None`）— キャプチャ時のバッチあたりの動画フレームの最大数です。`None`（既定）の場合、`encoder_cudagraph_max_vision_items_per_batch * max_frames_per_video` として自動推定されます（`max_frames_per_video` は `EncoderCudaGraphConfig` に由来するモデル固有の値で、モデルの `get_max_frames_per_video()` によって計算されます）。プロンプトあたりの動画数を `0` に制限した場合、この値も `0` になります（つまり画像のみのモードにフォールバックします）。
 
-Dual-path mode is configured at the model level via `EncoderCudaGraphConfig` fields (`enable_dual_path_graph`, `global_token_per_image`, `local_token_per_patch`) — no additional user configuration is required. The manager automatically generates separate budget lists and routes to dual-path execution when the model opts in.
+dual-path モードは、モデル側の `EncoderCudaGraphConfig` のフィールド（`enable_dual_path_graph`、`global_token_per_image`、`local_token_per_patch`）で設定され、ユーザー側の追加設定は不要です。モデルが対応している場合、マネージャは自動的に別々の budget リストを生成し、dual-path の実行経路へ振り分けます。
 
-## Usage guide
+## 使い方ガイド { #usage-guide }
 
-### Image inference
+### 画像の推論 { #image-inference }
 
-Enable encoder CUDA Graphs via `compilation_config`:
+`compilation_config` でエンコーダの CUDA Graphs を有効にします。
 
 ```bash
 vllm serve Qwen/Qwen3-VL-32B \
   --compilation-config '{"cudagraph_mm_encoder": true}'
 ```
 
-For `Llama 4` (image only):
+`Llama 4`（画像のみ）の場合:
 
 ```bash
 vllm serve meta-llama/Llama-4-Scout-17B-16E-Instruct \
@@ -173,14 +173,14 @@ vllm serve meta-llama/Llama-4-Scout-17B-16E-Instruct \
   --compilation-config '{"cudagraph_mm_encoder": true}'
 ```
 
-With explicit budgets:
+budget を明示的に指定する場合:
 
 ```bash
 vllm serve Qwen/Qwen3-VL-32B \
   --compilation-config '{"cudagraph_mm_encoder": true, "encoder_cudagraph_token_budgets": [2048, 4096, 8192, 13824], "encoder_cudagraph_max_vision_items_per_batch": 8}'
 ```
 
-Python example:
+Python の例:
 
 ```python
 import vllm
@@ -198,25 +198,25 @@ model = vllm.LLM(
 )
 ```
 
-The manager tracks hit/miss statistics and logs them periodically. A "hit" means an image was processed via CUDA Graph replay; a "miss" means eager fallback (image exceeded all budgets).
+マネージャはヒット / ミスの統計を追跡し、定期的にログ出力します。「ヒット」は画像が CUDA Graph の再生で処理されたことを、「ミス」は eager へのフォールバック（画像がすべての budget を超えた）を意味します。
 
-### Video inference
+### 動画の推論 { #video-inference }
 
-Enable encoder CUDA Graphs via `compilation_config`:
+`compilation_config` でエンコーダの CUDA Graphs を有効にします。
 
 ```bash
 vllm serve Qwen/Qwen3-VL-32B \
   --compilation-config '{"cudagraph_mm_encoder": true}'
 ```
 
-With explicit budgets:
+budget を明示的に指定する場合:
 
 ```bash
 vllm serve Qwen/Qwen3-VL-32B \
   --compilation-config '{"cudagraph_mm_encoder": true, "encoder_cudagraph_token_budgets": [2048, 4096, 8192, 13824], "encoder_cudagraph_max_vision_items_per_batch": 8, "encoder_cudagraph_max_frames_per_batch": 64}'
 ```
 
-Python example:
+Python の例:
 
 ```python
 import vllm
@@ -235,20 +235,20 @@ model = vllm.LLM(
 )
 ```
 
-## About the Performance
+## 性能について { #about-the-performance }
 
-The following benchmarks were run on Blackwell GPUs (GB200) using `vllm bench mm-processor`. See [#35963](https://github.com/vllm-project/vllm/pull/35963) for full details.
+以下のベンチマークは、Blackwell GPU（GB200）上で `vllm bench mm-processor` を使って実行したものです。詳細は [#35963](https://github.com/vllm-project/vllm/pull/35963) を参照してください。
 
-### Single GPU (1x GB200)
+### 単一 GPU（GB200 × 1） { #single-gpu-1x-gb200 }
 
-Model: `Qwen/Qwen3-VL-30B-A3B-Instruct`, dataset: `lmarena-ai/VisionArena-Chat` (3000 prompts, 300 warmup), `max_model_len=32768`.
+モデル: `Qwen/Qwen3-VL-30B-A3B-Instruct`、データセット: `lmarena-ai/VisionArena-Chat`（3000 プロンプト、ウォームアップ 300）、`max_model_len=32768`。
 
-| Backend | Mean latency improvement | P99 latency improvement |
+| バックエンド | 平均レイテンシの改善 | P99 レイテンシの改善 |
 | :------ | :----------------------- | :---------------------- |
-| FLASH_ATTN | +11.8% (5.13→4.52ms) | +31.6% (9.16→6.26ms) |
-| FLASHINFER | +19.6% (5.42→4.36ms) | +40.3% (10.87→6.49ms) |
+| FLASH_ATTN | +11.8%（5.13→4.52ms） | +31.6%（9.16→6.26ms） |
+| FLASHINFER | +19.6%（5.42→4.36ms） | +40.3%（10.87→6.49ms） |
 
-To reproduce:
+再現方法:
 
 ```bash
 vllm bench mm-processor \
@@ -260,16 +260,16 @@ vllm bench mm-processor \
   --compilation-config '{"cudagraph_mm_encoder": true, "encoder_cudagraph_token_budgets": [512, 1024, 1536, 2048, 2560, 3072, 3584, 4096, 4864], "encoder_cudagraph_max_vision_items_per_batch": 8}'
 ```
 
-### Multi-GPU (4x GB200, TP=4, DP=4)
+### 複数 GPU（GB200 × 4、TP=4、DP=4） { #multi-gpu-4x-gb200-tp4-dp4 }
 
-Model: `Qwen/Qwen3-VL-32B-Instruct`, dataset: `random-mm` (1000 prompts, 200 warmup, 20 images/request at 336x336), `max_model_len=8192`.
+モデル: `Qwen/Qwen3-VL-32B-Instruct`、データセット: `random-mm`（1000 プロンプト、ウォームアップ 200、リクエストあたり 336x336 の画像 20 枚）、`max_model_len=8192`。
 
-| Backend | Mean latency improvement | P99 latency improvement |
+| バックエンド | 平均レイテンシの改善 | P99 レイテンシの改善 |
 | :------ | :----------------------- | :---------------------- |
-| FLASH_ATTN | +18.4% (28.39→23.16ms) | +14.0% (238.78→205.28ms) |
-| FLASHINFER | +44.4% (23.24→12.91ms) | +84.9% (172.41→26.05ms) |
+| FLASH_ATTN | +18.4%（28.39→23.16ms） | +14.0%（238.78→205.28ms） |
+| FLASHINFER | +44.4%（23.24→12.91ms） | +84.9%（172.41→26.05ms） |
 
-To reproduce:
+再現方法:
 
 ```bash
 vllm bench mm-processor \
@@ -286,4 +286,4 @@ vllm bench mm-processor \
 ```
 
 !!! note
-    Find more details about benchmarks on GPUs (A100) for video inference at [#38061](https://github.com/vllm-project/vllm/pull/38061).
+    動画推論に関する GPU（A100）でのベンチマークの詳細は [#38061](https://github.com/vllm-project/vllm/pull/38061) を参照してください。
