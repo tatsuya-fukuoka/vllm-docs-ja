@@ -1,17 +1,17 @@
-# Reasoning Outputs
+# 推論（reasoning）の出力 { #reasoning-outputs }
 
-vLLM offers support for reasoning models like [DeepSeek R1](https://huggingface.co/deepseek-ai/DeepSeek-R1), which are designed to generate outputs containing both reasoning steps and final conclusions.
+vLLM は [DeepSeek R1](https://huggingface.co/deepseek-ai/DeepSeek-R1) のような推論モデルをサポートしています。これらのモデルは、推論の過程と最終的な結論の両方を含む出力を生成するよう設計されています。
 
-Reasoning models return an additional `reasoning` field in their outputs, which contains the reasoning steps that led to the final conclusion. This field is not present in the outputs of other models.
+推論モデルは、出力に追加の `reasoning` フィールドを返します。ここには最終的な結論に至るまでの推論の過程が含まれます。このフィールドは、それ以外のモデルの出力には含まれません。
 
 !!! warning
-    `reasoning` used to be called `reasoning_content`. To migrate, directly replace `reasoning_content` with `reasoning`.
+    `reasoning` は以前 `reasoning_content` と呼ばれていました。移行するには、`reasoning_content` を `reasoning` にそのまま置き換えてください。
 
-## Supported Models
+## サポートされるモデル { #supported-models }
 
-vLLM currently supports the following reasoning models:
+vLLM は現在、次の推論モデルをサポートしています。
 
-| Model Series | Parser Name | Structured Output Support | Tool Calling |
+| モデルシリーズ | パーサー名 | 構造化出力のサポート | ツール呼び出し |
 | ------------ | ----------- | ---------------- | ----------- |
 | [Cohere Command A Reasoning](https://huggingface.co/CohereLabs/command-a-reasoning-08-2025) | `cohere_command3` | `json`, `regex` | ✅ |
 | [DeepSeek R1 series](https://huggingface.co/collections/deepseek-ai/deepseek-r1-678e1e131c0169c0bc89728d) | `deepseek_r1` | `json`, `regex` | ❌ |
@@ -28,22 +28,22 @@ vLLM currently supports the following reasoning models:
 | [QwQ-32B](https://huggingface.co/Qwen/QwQ-32B) | `deepseek_r1` | `json`, `regex` | ✅ |
 
 !!! note
-    IBM Granite 3.2 and DeepSeek-V3.1 reasoning is disabled by default; to enable it, you must also pass `thinking=True` in your `chat_template_kwargs`.
-    The reasoning feature for the Qwen3 series is enabled by default. To disable it, you must pass `enable_thinking=False` in your `chat_template_kwargs`.
-    Gemma 4 reasoning is disabled by default; to enable it, pass `enable_thinking=True` in your `chat_template_kwargs` or set `reasoning_effort` (which enables it automatically).
-    DeepSeek-V3.1 tool calling is supported in non-thinking mode.
-    Holo2 reasoning is enabled by default. To disable it, you must also pass `thinking=False` in your `chat_template_kwargs`.
+    IBM Granite 3.2 と DeepSeek-V3.1 の推論は既定で無効です。有効にするには `chat_template_kwargs` に `thinking=True` を渡す必要があります。
+    Qwen3 シリーズの推論機能は既定で有効です。無効にするには `chat_template_kwargs` に `enable_thinking=False` を渡す必要があります。
+    Gemma 4 の推論は既定で無効です。有効にするには `chat_template_kwargs` に `enable_thinking=True` を渡すか、`reasoning_effort` を設定してください（自動的に有効になります）。
+    DeepSeek-V3.1 のツール呼び出しは非 thinking モードでサポートされます。
+    Holo2 の推論は既定で有効です。無効にするには `chat_template_kwargs` に `thinking=False` を渡す必要があります。
 
-## Quickstart
+## クイックスタート { #quickstart }
 
-To use reasoning models, you need to specify the `--reasoning-parser` flags when making a request to the chat completion endpoint. The `--reasoning-parser` flag specifies the reasoning parser to use for extracting reasoning content from the model output.
+推論モデルを使うには、chat completion エンドポイントへのリクエスト時に `--reasoning-parser` フラグを指定する必要があります。`--reasoning-parser` フラグは、モデル出力から推論内容を抽出するために使う推論パーサーを指定します。
 
 ```bash
 vllm serve deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B \
     --reasoning-parser deepseek_r1
 ```
 
-Next, make a request to the model that should return the reasoning content in the response.
+次に、レスポンスに推論内容が含まれるはずのリクエストをモデルに送ります。
 
 ??? code
 
@@ -76,11 +76,11 @@ Next, make a request to the model that should return the reasoning content in th
     print("content:", content)
     ```
 
-The `reasoning` field contains the reasoning steps that led to the final conclusion, while the `content` field contains the final conclusion.
+`reasoning` フィールドには最終的な結論に至るまでの推論の過程が、`content` フィールドには最終的な結論が含まれます。
 
-## Streaming chat completions
+## ストリーミングの chat completions { #streaming-chat-completions }
 
-Streaming chat completions are also supported for reasoning models. The `reasoning` field is available in the `delta` field in [chat completion response chunks](https://platform.openai.com/docs/api-reference/chat/streaming).
+推論モデルではストリーミングの chat completions もサポートされています。`reasoning` フィールドは、[chat completion のレスポンスチャンク](https://platform.openai.com/docs/api-reference/chat/streaming)の `delta` フィールドで利用できます。
 
 ??? console "Json"
 
@@ -105,7 +105,7 @@ Streaming chat completions are also supported for reasoning models. The `reasoni
     }
     ```
 
-OpenAI Python client library does not officially support `reasoning` attribute for streaming output. But the client supports extra attributes in the response. You can use `hasattr` to check if the `reasoning` attribute is present in the response. For example:
+OpenAI の Python クライアントライブラリは、ストリーミング出力の `reasoning` 属性を公式にはサポートしていません。ただし、レスポンスの追加属性はサポートされています。`hasattr` を使って、レスポンスに `reasoning` 属性があるかどうかを確認できます。例:
 
 ??? code
 
@@ -159,11 +159,11 @@ OpenAI Python client library does not officially support `reasoning` attribute f
             print(content, end="", flush=True)
     ```
 
-Remember to check whether the `reasoning` exists in the response before accessing it. You could check out the [example](https://github.com/vllm-project/vllm/blob/main/examples/reasoning/openai_chat_completion_with_reasoning_streaming.py).
+アクセスする前に、レスポンスに `reasoning` が存在するかを確認することを忘れないでください。[例](https://github.com/vllm-project/vllm/blob/main/examples/reasoning/openai_chat_completion_with_reasoning_streaming.py)も参照してください。
 
-## Tool Calling
+## ツール呼び出し { #tool-calling }
 
-The reasoning content is also available when both tool calling and the reasoning parser are enabled. Additionally, tool calling only parses functions from the `content` field, not from the `reasoning`.
+ツール呼び出しと推論パーサーの両方が有効な場合も、推論内容を利用できます。なお、ツール呼び出しが関数を解析するのは `content` フィールドからのみで、`reasoning` からは解析しません。
 
 ??? code
 
@@ -205,15 +205,15 @@ The reasoning content is also available when both tool calling and the reasoning
     print(f"Arguments: {tool_call.arguments}")
     ```
 
-For more examples, please refer to [examples/reasoning/openai_chat_completion_tool_calls_with_reasoning.py](../../examples/reasoning/openai_chat_completion_tool_calls_with_reasoning.py).
+その他の例は [examples/reasoning/openai_chat_completion_tool_calls_with_reasoning.py](../../examples/reasoning/openai_chat_completion_tool_calls_with_reasoning.py) を参照してください。
 
-## Server-Level Default Chat Template Kwargs
+## サーバーレベルの既定 chat template kwargs { #server-level-default-chat-template-kwargs }
 
-You can set default `chat_template_kwargs` at the server level using the `--default-chat-template-kwargs` CLI argument. This is useful for configuring reasoning behavior across all requests without requiring clients to specify it in each request.
+`--default-chat-template-kwargs` の CLI 引数で、サーバーレベルの既定の `chat_template_kwargs` を設定できます。クライアントがリクエストごとに指定しなくても、すべてのリクエストに対して推論の挙動を設定できるため便利です。
 
-### Disabling Thinking Mode by Default
+### 既定で thinking モードを無効にする { #disabling-thinking-mode-by-default }
 
-For models like Qwen3 where thinking is enabled by default, you can disable it server-wide:
+Qwen3 のように thinking が既定で有効なモデルでは、サーバー全体で無効にできます。
 
 ```bash
 vllm serve Qwen/Qwen3-8B \
@@ -221,9 +221,9 @@ vllm serve Qwen/Qwen3-8B \
     --default-chat-template-kwargs '{"enable_thinking": false}'
 ```
 
-### Enabling Thinking Mode by Default
+### 既定で thinking モードを有効にする { #enabling-thinking-mode-by-default }
 
-For models like IBM Granite 3.2 or DeepSeek-V3.1 where thinking is disabled by default, you can enable it server-wide:
+IBM Granite 3.2 や DeepSeek-V3.1 のように thinking が既定で無効なモデルでは、サーバー全体で有効にできます。
 
 ```bash
 vllm serve ibm-granite/granite-3.2-2b-instruct \
@@ -231,9 +231,9 @@ vllm serve ibm-granite/granite-3.2-2b-instruct \
     --default-chat-template-kwargs '{"thinking": true}'
 ```
 
-### Request-Level Override
+### リクエスト単位の上書き { #request-level-override }
 
-Request-level `chat_template_kwargs` always take priority over server defaults. For example, if the server is started with `enable_thinking=false`, a client can still enable it for a specific request:
+リクエスト単位の `chat_template_kwargs` は、常にサーバーの既定値より優先されます。たとえばサーバーを `enable_thinking=false` で起動していても、クライアントは特定のリクエストで有効にできます。
 
 ```python
 response = client.chat.completions.create(
@@ -243,32 +243,31 @@ response = client.chat.completions.create(
 )
 ```
 
-## Thinking Budget Control
+## thinking budget の制御 { #thinking-budget-control }
 
-Some models, such as [Qwen3](https://qwen.readthedocs.io/en/latest/getting_started/quickstart.html#thinking-budget), [DeepSeek](https://www.alibabacloud.com/help/en/model-studio/deep-thinking), and [Nemotron3](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16), support a thinking budget that limits the maximum number of tokens used for reasoning.
+[Qwen3](https://qwen.readthedocs.io/en/latest/getting_started/quickstart.html#thinking-budget)、[DeepSeek](https://www.alibabacloud.com/help/en/model-studio/deep-thinking)、[Nemotron3](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16) など一部のモデルは、推論に使うトークン数の上限を制限する thinking budget をサポートしています。
 
-Token counting starts from `reasoning_start_str`. Once the reasoning token count reaches the configured `thinking_token_budget`, vLLM forces the model to produce `reasoning_end_str`, effectively terminating the reasoning block.
+トークンの計数は `reasoning_start_str` から始まります。推論のトークン数が設定した `thinking_token_budget` に達すると、vLLM はモデルに `reasoning_end_str` を出力させ、推論ブロックを終了させます。
 
-To use this feature:
+この機能を使うには次のようにします。
 
-- `--reasoning-parser` enables reasoning extraction.
-- `--reasoning-config` defines the reasoning boundary tokens (e.g., `reasoning_start_str`, `reasoning_end_str`). If not set, vLLM will attempt to automatically initialize these tokens from the reasoning parser.
-- `thinking_token_budget` (a sampling parameter) sets the per-request reasoning token limit.
+- `--reasoning-parser` で推論の抽出を有効にします。
+- `--reasoning-config` で推論の境界トークン（`reasoning_start_str`、`reasoning_end_str` など）を定義します。設定しない場合、vLLM は推論パーサーからこれらのトークンを自動的に初期化しようとします。
+- `thinking_token_budget`（サンプリングパラメータ）でリクエストごとの推論トークン数の上限を設定します。
 
-If `thinking_token_budget` is not specified, no explicit reasoning limit is applied beyond normal generation constraints such as `max_tokens`.
+`thinking_token_budget` を指定しない場合、`max_tokens` などの通常の生成制約を超える明示的な推論の上限は適用されません。
 
-`--reasoning-config` accepts a JSON object corresponding to  
-[`ReasoningConfig`](https://docs.vllm.ai/en/v0.26.0/api/vllm/config/#vllm.config.ReasoningConfig) with the following fields:
+`--reasoning-config` は、次のフィールドを持つ [`ReasoningConfig`](https://docs.vllm.ai/en/v0.26.0/api/vllm/config/#vllm.config.ReasoningConfig) に対応する JSON オブジェクトを受け取ります。
 
-| Field                 | Type           | Description                                      |
+| フィールド                 | 型           | 説明                                      |
 |-----------------------|----------------|--------------------------------------------------|
-| `reasoning_start_str` | `str \| null`  | String that marks the start of reasoning content |
-| `reasoning_end_str`   | `str \| null`  | String that marks the end of reasoning content   |
+| `reasoning_start_str` | `str \| null`  | 推論内容の開始を示す文字列 |
+| `reasoning_end_str`   | `str \| null`  | 推論内容の終了を示す文字列   |
 
 !!! note
-    `reasoning_end_str` can include a transition phrase before the reasoning end token. For example, setting `reasoning_end_str` to `"I have to give the solution based on the reasoning directly now.</think>"` instructs the model to emit that phrase when the budget is exhausted, making the reasoning termination more natural.
+    `reasoning_end_str` には、推論終了トークンの前に置く移行フレーズを含められます。たとえば `reasoning_end_str` を `"I have to give the solution based on the reasoning directly now.</think>"` に設定すると、budget を使い切ったときにモデルがそのフレーズを出力するようになり、推論の終了がより自然になります。
 
-### Online Serving
+### オンラインサービング { #online-serving }
 
 ```bash
 vllm serve Qwen/Qwen3-0.6B \
@@ -276,7 +275,7 @@ vllm serve Qwen/Qwen3-0.6B \
     --reasoning-config '{"reasoning_start_str": "<think>", "reasoning_end_str": "I have to give the solution based on the reasoning directly now.</think>"}'
 ```
 
-Then make a request with `thinking_token_budget` to limit the reasoning tokens:
+次に、推論トークンを制限するために `thinking_token_budget` を指定してリクエストを送ります。
 
 ```bash
 curl http://localhost:8000/v1/chat/completions \
@@ -290,7 +289,7 @@ curl http://localhost:8000/v1/chat/completions \
   }'
 ```
 
-### Offline Inference
+### オフライン推論 { #offline-inference }
 
 ```python
 from vllm import LLM, SamplingParams
@@ -316,24 +315,24 @@ for output in outputs:
     print("text:", output.outputs[0].text)
 ```
 
-## Automatic `enable_thinking` Activation
+## `enable_thinking` の自動有効化 { #automatic-enable_thinking-activation }
 
-Some models (such as Gemma 4, DeepSeek-V4-Pro and IBM Granite 3.2) require `enable_thinking: true` in their chat template kwargs to activate thinking mode — without it, reasoning tokens are never generated regardless of other settings.
+一部のモデル（Gemma 4、DeepSeek-V4-Pro、IBM Granite 3.2 など）は、thinking モードを有効にするために chat template kwargs に `enable_thinking: true` を必要とします。これがないと、他の設定にかかわらず推論トークンは生成されません。
 
-When you set `reasoning_effort` in a Chat Completions request (or `reasoning.effort` in a Responses API request), vLLM automatically injects `enable_thinking` into the chat template kwargs:
+Chat Completions のリクエストで `reasoning_effort`（Responses API のリクエストでは `reasoning.effort`）を設定すると、vLLM は自動的に `enable_thinking` を chat template kwargs に挿入します。
 
-- `reasoning_effort` = `"low"`, `"medium"`, or `"high"` → `enable_thinking = true`
-- `reasoning_effort` = `"none"` → `enable_thinking = false`
-- `reasoning_effort` not set → `enable_thinking` is not injected (preserves existing behavior)
+- `reasoning_effort` が `"low"`、`"medium"`、`"high"` → `enable_thinking = true`
+- `reasoning_effort` が `"none"` → `enable_thinking = false`
+- `reasoning_effort` を未設定 → `enable_thinking` は挿入されません（従来の挙動を維持）
 
-This means you no longer need to manually pass `chat_template_kwargs: {"enable_thinking": true}` when using `reasoning_effort` — it is handled automatically.
+つまり、`reasoning_effort` を使う場合に `chat_template_kwargs: {"enable_thinking": true}` を手動で渡す必要はなくなり、自動的に処理されます。
 
 !!! note
-    If you explicitly set `enable_thinking` in `chat_template_kwargs`, your value takes priority over the automatic injection. This allows you to override the behavior if needed.
+    `chat_template_kwargs` で `enable_thinking` を明示的に設定した場合、その値が自動挿入より優先されます。必要に応じて挙動を上書きできます。
 
-    For models whose templates don't declare `enable_thinking` (e.g., DeepSeek R1), the injected kwarg is harmlessly filtered out by `resolve_chat_template_kwargs`.
+    テンプレートが `enable_thinking` を宣言していないモデル（DeepSeek R1 など）では、挿入された kwarg は `resolve_chat_template_kwargs` によって無害に取り除かれます。
 
-### Example
+### 例 { #example }
 
 ```python
 from openai import OpenAI
@@ -351,15 +350,15 @@ print(response.choices[0].message.reasoning)
 print(response.choices[0].message.content)
 ```
 
-## Suppressing Reasoning Output
+## 推論出力の抑制 { #suppressing-reasoning-output }
 
-You can suppress reasoning content from API responses using the `include_reasoning` parameter. When set to `false`, reasoning tokens are still generated (so model quality is unaffected) but excluded from the response. This reduces network traffic without changing inference behavior.
+`include_reasoning` パラメータを使うと、API レスポンスから推論内容を抑制できます。`false` に設定すると、推論トークンは引き続き生成されるものの（モデルの品質には影響しません）、レスポンスからは除外されます。これにより、推論の挙動を変えずにネットワークのトラフィックを削減できます。
 
-The parameter is supported in both the Chat Completions API and the Responses API, for streaming and non-streaming requests.
+このパラメータは Chat Completions API と Responses API の両方で、ストリーミング・非ストリーミングいずれのリクエストでもサポートされます。
 
-When `include_reasoning=false`, vLLM also suppresses per-token metadata (logprobs and token IDs) to prevent leaking reasoning content through decoded token text in logprob entries or raw token IDs.
+`include_reasoning=false` の場合、vLLM はトークン単位のメタデータ（logprobs とトークン ID）も抑制します。logprob のエントリ内のデコード済みトークンテキストや生のトークン ID を通じて推論内容が漏れるのを防ぐためです。
 
-### Chat Completions API
+### Chat Completions API { #chat-completions-api }
 
 ```python
 from openai import OpenAI
@@ -379,7 +378,7 @@ assert msg.content  # Content is still present
 assert not getattr(msg, "reasoning", None)  # Reasoning is suppressed
 ```
 
-Streaming works the same way, reasoning deltas are omitted from chunks:
+ストリーミングでも同様に動作し、推論の delta はチャンクから省かれます。
 
 ```python
 stream = client.chat.completions.create(
@@ -396,7 +395,7 @@ for chunk in stream:
         print(delta.content, end="", flush=True)
 ```
 
-### Responses API
+### Responses API { #responses-api }
 
 ```python
 from openai import OpenAI
@@ -414,13 +413,13 @@ types = [item.type for item in response.output]
 assert "reasoning" not in types
 ```
 
-## Limitations
+## 制限事項 { #limitations }
 
-- The reasoning content is only available for online serving's chat completion endpoint (`/v1/chat/completions`), Anthropic Messages API (`/v1/messages`) and the Responses API (`/v1/responses`).
+- 推論内容が利用できるのは、オンラインサービングの chat completion エンドポイント（`/v1/chat/completions`）、Anthropic Messages API（`/v1/messages`）、Responses API（`/v1/responses`）のみです。
 
-## How to support a new reasoning model
+## 新しい推論モデルをサポートする方法 { #how-to-support-a-new-reasoning-model }
 
-You can add a new `ReasoningParser` similar to [vllm/reasoning/deepseek_r1_reasoning_parser.py](../../vllm/reasoning/deepseek_r1_reasoning_parser.py).
+[vllm/reasoning/deepseek_r1_reasoning_parser.py](../../vllm/reasoning/deepseek_r1_reasoning_parser.py) と同様に、新しい `ReasoningParser` を追加できます。
 
 ??? code
 
@@ -485,7 +484,7 @@ You can add a new `ReasoningParser` similar to [vllm/reasoning/deepseek_r1_reaso
     )
     ```
 
-Additionally, to enable structured output, you'll need to create a new `Reasoner` similar to the one in [vllm/reasoning/deepseek_r1_reasoning_parser.py](../../vllm/reasoning/deepseek_r1_reasoning_parser.py).
+さらに構造化出力を有効にするには、[vllm/reasoning/deepseek_r1_reasoning_parser.py](../../vllm/reasoning/deepseek_r1_reasoning_parser.py) にあるものと同様の新しい `Reasoner` を作成する必要があります。
 
 ??? code
 
@@ -516,9 +515,9 @@ Additionally, to enable structured output, you'll need to create a new `Reasoner
         ...
     ```
 
-The structured output engine like [xgrammar](https://github.com/mlc-ai/xgrammar) will use `end_token_id` to check if the reasoning content is present in the model output and skip the structured output if it is the case.
+[xgrammar](https://github.com/mlc-ai/xgrammar) のような構造化出力エンジンは、`end_token_id` を使ってモデル出力に推論内容が含まれているかを確認し、含まれている場合は構造化出力をスキップします。
 
-Finally, you can enable reasoning for the model by using the `--reasoning-parser` flags.
+最後に、`--reasoning-parser` フラグを使ってそのモデルの推論を有効にできます。
 
 ```bash
 vllm serve <model_tag> --reasoning-parser example

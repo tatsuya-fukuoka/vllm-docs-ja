@@ -1017,8 +1017,10 @@
       "upstream_sha": "be37c7fed4937392"
     },
     "features/reasoning_outputs.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "3f2be4e99e0174d2",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "3f2be4e99e0174d2"
     },
     "features/sleep_mode.md": {

@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **213 ページ**を翻訳済みです（94.2%）。
+全 226 ページ中 **214 ページ**を翻訳済みです（94.7%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -19,14 +19,14 @@
 | 開発者ガイド | 15 | 0 | 1 | 16 |
 | デプロイ | 35 | 0 | 0 | 35 |
 | 設計ドキュメント | 25 | 0 | 4 | 29 |
-| 機能 | 47 | 0 | 5 | 52 |
+| 機能 | 48 | 0 | 4 | 52 |
 | はじめに | 13 | 0 | 0 | 13 |
 | ガバナンス | 3 | 0 | 0 | 3 |
 | モデル | 14 | 0 | 2 | 16 |
 | 推論とサービング | 16 | 0 | 0 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **213** | **0** | **13** | **226** |
+| **合計** | **214** | **0** | **12** | **226** |
 
 ## 翻訳済みのページ
 
@@ -168,6 +168,7 @@
 - `features/quantization/quantized_kvcache.md`
 - `features/quantization/quark.md`
 - `features/quantization/torchao.md`
+- `features/reasoning_outputs.md`
 - `features/sleep_mode.md`
 - `features/speculative_decoding/README.md`
 - `features/speculative_decoding/draft_model.md`
