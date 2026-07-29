@@ -184,7 +184,7 @@ vllm bench sweep serve_workload \
 ]
 ```
 
-Example command:
+コマンドの例:
 
 ```bash
 vllm bench sweep startup \
