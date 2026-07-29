@@ -833,8 +833,10 @@
       "upstream_sha": "a509bb3aca70755e"
     },
     "features/lora.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "46513bde61b79570",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "46513bde61b79570"
     },
     "features/mooncake_connector_usage.md": {
