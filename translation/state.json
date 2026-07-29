@@ -20,8 +20,10 @@
       "upstream_sha": "ed089f4555bbb97f"
     },
     "benchmarking/cli.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "48d8171b9de048a3",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "48d8171b9de048a3"
     },
     "benchmarking/dashboard.md": {

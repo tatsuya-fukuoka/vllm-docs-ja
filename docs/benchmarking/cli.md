@@ -1,15 +1,15 @@
 # Benchmark CLI
 
-This section guides you through running benchmark tests with the extensive datasets supported on vLLM.
+この節では、vLLM がサポートする豊富なデータセットを使ってベンチマークを実行する方法を説明します。
 
-It's a living document, updated as new features and datasets become available.
+これは生きたドキュメントであり、新しい機能やデータセットが利用可能になるたびに更新されます。
 
 !!! tip
-    The benchmarks described on this page are mainly for evaluating specific vLLM features as well as regression testing.
+    このページで説明するベンチマークは、主に vLLM の特定機能の評価とリグレッションテストを目的としています。
 
-    For benchmarking production vLLM servers, we recommend [GuideLLM](https://github.com/vllm-project/guidellm), an established performance benchmarking framework with live progress updates and automatic report generation. It is also more flexible than `vllm bench serve` in terms of dataset loading, request formatting, and workload patterns.
+    本番の vLLM サーバーのベンチマークには [GuideLLM](https://github.com/vllm-project/guidellm) を推奨します。これは実績のある性能ベンチマークのフレームワークで、進捗のライブ表示とレポートの自動生成に対応しています。また、データセットの読み込み、リクエストの整形、ワークロードのパターンという点で `vllm bench serve` より柔軟です。
 
-## Dataset Overview
+## データセットの概要 { #dataset-overview }
 
 <style>
 th {
@@ -17,7 +17,7 @@ th {
 }
 </style>
 
-| Dataset | Online | Offline | Data Path |
+| データセット | オンライン | オフライン | データの取得元 |
 | ------- | ------ | ------- | --------- |
 | ShareGPT | ✅ | ✅ | `wget https://huggingface.co/datasets/anon8231489123/ShareGPT_Vicuna_unfiltered/resolve/main/ShareGPT_V3_unfiltered_cleaned_split.json` |
 | ShareGPT4V (Image) | ✅ | ✅ | `wget https://huggingface.co/datasets/Lin-Chen/ShareGPT4V/resolve/main/sharegpt4v_instruct_gpt4-vision_cap100k.json`<br>Note that the images need to be downloaded separately. For example, to download COCO's 2017 Train images:<br>`wget http://images.cocodataset.org/zips/train2017.zip` |
@@ -44,34 +44,34 @@ th {
 | Custom Audio | ✅ | ✅ | Local file: `audio_data.jsonl` |
 | Custom Image | ✅ | ✅ | Local file: `image_data.jsonl` |
 
-Legend:
+凡例:
 
-- ✅ - supported
-- 🟡 - Partial support
-- 🚧 - to be supported
+- ✅ - サポート済み
+- 🟡 - 部分的にサポート
+- 🚧 - 今後サポート予定
 
 !!! note
-    HuggingFace dataset's `dataset-name` should be set to `hf`.
-    For local `dataset-path`, please set `hf-name` to its Hugging Face ID like
+    HuggingFace のデータセットでは `dataset-name` に `hf` を設定してください。
+    ローカルの `dataset-path` を使う場合は、次のように `hf-name` に Hugging Face の ID を設定してください。
 
     ```bash
     --dataset-path /datasets/VisionArena-Chat/ --hf-name lmarena-ai/VisionArena-Chat
     ```
 
-## Examples
+## 例 { #examples }
 
-### 🚀 Online Benchmark
+### 🚀 オンラインベンチマーク { #-online-benchmark }
 
 <details class="admonition abstract" markdown="1">
 <summary>Show more</summary>
 
-First start serving your model:
+まず、モデルのサービングを開始します。
 
 ```bash
 vllm serve NousResearch/Hermes-3-Llama-3.1-8B
 ```
 
-Then run the benchmarking script:
+次に、ベンチマークのスクリプトを実行します。
 
 ```bash
 # download dataset
@@ -85,7 +85,7 @@ vllm bench serve \
   --num-prompts 10
 ```
 
-If successful, you will see the following output:
+成功すると、次のような出力が表示されます。
 
 ```text
 ============ Serving Benchmark Result ============
@@ -111,9 +111,9 @@ P99 ITL (ms):                            8.39
 ==================================================
 ```
 
-#### Results Visualization
+#### 結果の可視化 { #results-visualization }
 
-The `--plot-timeline` and `--plot-dataset-stats` can be used to generate respectively the requests completion timeline and dataset prompt and output tokens statistics, which can be useful for debugging purpose or for deeper analysis.
+`--plot-timeline` と `--plot-dataset-stats` を使うと、それぞれリクエスト完了のタイムラインと、データセットのプロンプト / 出力トークンの統計を生成できます。デバッグ用途やより詳しい分析に役立ちます。
 
 ```bash
 vllm bench serve \
@@ -129,23 +129,23 @@ vllm bench serve \
     --save-result
 ```
 
-##### Interactive Timeline
+##### インタラクティブなタイムライン { #interactive-timeline }
 
-The generated timeline is an interactive visualization in the form of an HTML file that can be rendered in most browsers. To customize the ITL color thresholds, one can use `--timeline-itl-thresholds` flag (default: 25ms, 50ms)
+生成されるタイムラインは HTML ファイル形式のインタラクティブな可視化で、ほとんどのブラウザで表示できます。ITL の色の閾値をカスタマイズするには、`--timeline-itl-thresholds` フラグ（既定: 25ms、50ms）を使います。
 
-Example output:
+出力例:
 
 <iframe src="https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/contributing/vllm_bench_serve_timeline.html" width="100%" height="600" frameborder="0"></iframe>
 
-##### Dataset statistics
+##### データセットの統計 { #dataset-statistics }
 
-The generated figure shows the input prompt and output tokens distribution.
+生成される図は、入力プロンプトと出力トークンの分布を示します。
 
-Example output: ![Dataset Statistics](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/contributing/vllm_bench_serve_dataset_stats.png)
+出力例: ![データセットの統計](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/contributing/vllm_bench_serve_dataset_stats.png)
 
-#### Custom Dataset
+#### カスタムデータセット { #custom-dataset }
 
-If the dataset you want to benchmark is not supported yet in vLLM, even then you can benchmark on it using `CustomDataset`. At inference time, use the option `--dataset-name custom`. Your data needs to be in the `.jsonl` format and needs to have "prompt" field per entry, e.g., data.jsonl
+ベンチマークしたいデータセットが vLLM でまだサポートされていない場合でも、`CustomDataset` を使ってベンチマークできます。推論時にはオプション `--dataset-name custom` を指定します。データは `.jsonl` 形式で、エントリごとに "prompt" フィールドを持つ必要があります（例: data.jsonl）。
 
 ```json
 {"prompt": "What is the capital of India?"}
@@ -174,11 +174,11 @@ vllm bench serve --port 9001 --save-result --save-detailed \
   --result-dir "./log/"
 ```
 
-You can skip applying chat template if your data already has it by using `--custom-skip-chat-template`.
+データにすでにチャットテンプレートが適用されている場合は、`--custom-skip-chat-template` を使ってテンプレートの適用をスキップできます。
 
-#### Custom Audio Dataset
+#### カスタム音声データセット { #custom-audio-dataset }
 
-If the audio dataset you want to benchmark is not supported yet in vLLM, then you can benchmark on it using `CustomAudioDataset`. At inference time, use the option `--dataset-name custom_audio`. Your data needs to be in the `.jsonl` format and needs to have "prompt" and "audio" fields per entry, e.g., `audio_data.jsonl`:
+ベンチマークしたい音声データセットが vLLM でまだサポートされていない場合は、`CustomAudioDataset` を使ってベンチマークできます。推論時にはオプション `--dataset-name custom_audio` を指定します。データは `.jsonl` 形式で、エントリごとに "prompt" と "audio" のフィールドを持つ必要があります（例: `audio_data.jsonl`）。
 
 ```json
 {"prompt": "What does this audio say?", "audio": "/path/to/audio_1.wav"}
@@ -189,7 +189,7 @@ If the audio dataset you want to benchmark is not supported yet in vLLM, then yo
 
 - **Example 1: Whisper**
 
-Whisper is a dedicated ASR encoder-decoder model, so it uses `--backend openai-audio` and `--endpoint /v1/audio/transcriptions`.
+Whisper は音声認識専用のエンコーダ・デコーダモデルであるため、`--backend openai-audio` と `--endpoint /v1/audio/transcriptions` を使います。
 
 ```bash
 # start server
@@ -212,7 +212,7 @@ vllm bench serve \
 
 - **Example 2: Qwen2-Audio**
 
-Qwen2-Audio is a multimodal chat model that can do ASR and speech analysis, so it uses `--backend openai-chat`, and `--endpoint /v1/chat/completions`. It also requires `--enable-multimodal-chat` to enable multimodal chat transformation.
+Qwen2-Audio は音声認識と音声解析ができるマルチモーダルのチャットモデルであるため、`--backend openai-chat` と `--endpoint /v1/chat/completions` を使います。また、マルチモーダルのチャット変換を有効にするために `--enable-multimodal-chat` も必要です。
 
 ```bash
 vllm bench serve \
@@ -229,28 +229,28 @@ vllm bench serve \
   --result-filename qwen_bench.json
 ```
 
-#### Custom Image Dataset
+#### カスタム画像データセット { #custom-image-dataset }
 
-If the image dataset you want to benchmark is not supported yet in vLLM, then you can benchmark on it using `CustomImageDataset`. At inference time, use the option `--dataset-name custom_image`. Your data needs to be in the `.jsonl` format and can use "prompt" and "image_files" fields per entry, e.g., `image_data.jsonl`:
+ベンチマークしたい画像データセットが vLLM でまだサポートされていない場合は、`CustomImageDataset` を使ってベンチマークできます。推論時にはオプション `--dataset-name custom_image` を指定します。データは `.jsonl` 形式で、エントリごとに "prompt" と "image_files" のフィールドを使えます（例: `image_data.jsonl`）。
 
 ```json
 {"prompt": "How many animals are present in the given image?", "image_files": ["/path/to/image/folder/horsepony.jpg"]}
 {"prompt": "What colour is the bird shown in the image?", "image_files": ["/path/to/image/folder/flycatcher.jpeg"]}
 ```
 
-Every image listed in "image_files" is added to the request in the listed order after the prompt text. To preserve an interleaved order of text and images, use a "content" field with OpenAI-compatible content parts:
+"image_files" に列挙した画像は、プロンプトのテキストの後ろに列挙順でリクエストへ追加されます。テキストと画像を交互に並べた順序を保つには、OpenAI 互換のコンテンツパートを持つ "content" フィールドを使います。
 
 ```json
 {"content": [{"type": "text", "text": "Compare "}, {"type": "image", "image": "/path/to/image/folder/chart_a.png"}, {"type": "text", "text": " with "}, {"type": "image_url", "image_url": {"url": "/path/to/image/folder/chart_b.png"}}]}
 ```
 
-The "image" shorthand accepts the same values as "image_files". The "image_url" field accepts either an OpenAI-style object with a "url" field or a URL string.
+"image" の省略形は "image_files" と同じ値を受け付けます。"image_url" フィールドは、"url" フィールドを持つ OpenAI 形式のオブジェクトか、URL の文字列のいずれかを受け付けます。
 
-By default, image references are sent to the serving endpoint as provided, with local image paths converted to `file://` URLs.
+既定では、画像への参照はそのままサービングのエンドポイントへ送られ、ローカルの画像パスは `file://` の URL に変換されます。
 
-If the benchmark client should load local and HTTP(S) images before sending requests, pass `--custom-ensure-client-side-data` to encode them as base64 data URLs on the client side.
+ベンチマークのクライアントがリクエスト送信前にローカルおよび HTTP(S) の画像を読み込むようにするには、`--custom-ensure-client-side-data` を渡してクライアント側で base64 のデータ URL としてエンコードします。
 
-Existing `data:image/...` URLs are already self-contained and are kept unchanged.
+既存の `data:image/...` の URL はすでに自己完結しているため、そのまま維持されます。
 
 ```bash
 # need a model with vision capability here
@@ -268,9 +268,9 @@ vllm bench serve --save-result --save-detailed \
   --custom-ensure-client-side-data
 ```
 
-Note that we need to use the `openai-chat` backend and `/v1/chat/completions` endpoint for multimodal inputs.
+マルチモーダル入力では、`openai-chat` バックエンドと `/v1/chat/completions` エンドポイントを使う必要がある点に注意してください。
 
-#### VisionArena Benchmark for Vision Language Models
+#### vision-language モデル向けの VisionArena ベンチマーク { #visionarena-benchmark-for-vision-language-models }
 
 ```bash
 # need a model with vision capability here
@@ -288,7 +288,7 @@ vllm bench serve \
   --num-prompts 1000
 ```
 
-#### InstructCoder Benchmark with Speculative Decoding
+#### 投機的デコーディングを用いた InstructCoder のベンチマーク { #instructcoder-benchmark-with-speculative-decoding }
 
 ``` bash
 vllm serve meta-llama/Meta-Llama-3-8B-Instruct \
@@ -305,7 +305,7 @@ vllm bench serve \
     --num-prompts 2048
 ```
 
-#### Spec Bench Benchmark with Speculative Decoding
+#### 投機的デコーディングを用いた Spec Bench のベンチマーク { #spec-bench-benchmark-with-speculative-decoding }
 
 ``` bash
 vllm serve meta-llama/Meta-Llama-3-8B-Instruct \
@@ -316,7 +316,7 @@ vllm serve meta-llama/Meta-Llama-3-8B-Instruct \
 
 [SpecBench dataset](https://github.com/hemingkx/Spec-Bench)
 
-Run all categories:
+すべてのカテゴリを実行します。
 
 ``` bash
 # Download the dataset using:
@@ -329,9 +329,9 @@ vllm bench serve \
     --num-prompts -1
 ```
 
-Available categories include `[writing, roleplay, reasoning, math, coding, extraction, stem, humanities, translation, summarization, qa, math_reasoning, rag]`.
+利用できるカテゴリは `[writing, roleplay, reasoning, math, coding, extraction, stem, humanities, translation, summarization, qa, math_reasoning, rag]` です。
 
-Run only a specific category like "summarization":
+「summarization」のような特定のカテゴリのみを実行します。
 
 ``` bash
 vllm bench serve \
@@ -342,25 +342,25 @@ vllm bench serve \
     --spec-bench-category "summarization"
 ```
 
-#### SPEED-Bench Benchmark with Speculative Decoding
+#### 投機的デコーディングを用いた SPEED-Bench のベンチマーク { #speed-bench-benchmark-with-speculative-decoding }
 
 [SPEED-Bench](https://huggingface.co/datasets/nvidia/SPEED-Bench) is a unified and diverse dataset for speculative decoding, supporting acceptance rate and length measurements using the Qualitative split and throughput measurements using the Throughput splits in 5 configuration of input sequence length (1k, 2k, 8k, 16k, 32k).
 
 !!! note
     This dataset is governed by the [NVIDIA Evaluation Dataset License Agreement](https://huggingface.co/datasets/nvidia/SPEED-Bench/blob/main/License.pdf). For each dataset a user elects to use, the user is responsible for checking if the dataset license is fit for the intended purpose. The `prepare.py` script automatically fetches data from all the source datasets.
 
-First, download the dataset to a folder, using this one liner:
+まず、次のワンライナーでデータセットをフォルダへダウンロードします。
 
 ```bash
 curl -LsSf https://raw.githubusercontent.com/NVIDIA-NeMo/Skills/refs/heads/main/nemo_skills/dataset/speed-bench/prepare.py | python3 -
 ```
 
-The command supports also the following arguments:
+このコマンドは次の引数もサポートします。
 
 - `--config`: download only a subset of the dataset: `qualitative`, `throughput_1k`, `throughput_2k`, `throughput_8k`, `throughput_16k` and `throughput_32k`. By default, it will download all subsets.
 - `--output_dir`: download to a specified folder. By default, it will download to the current directory.
 
-Start a server with speculative decoding:
+投機的デコーディングを有効にしてサーバーを起動します。
 
 ```bash
 vllm serve meta-llama/Llama-3.3-70B-Instruct \
@@ -369,7 +369,7 @@ vllm serve meta-llama/Llama-3.3-70B-Instruct \
     "model": "nvidia/Llama-3.3-70B-Instruct-Eagle3"}'
 ```
 
-Run all categories in the Qualitative split:
+Qualitative スプリットのすべてのカテゴリを実行します。
 
 ```bash
 vllm bench serve \
@@ -379,9 +379,9 @@ vllm bench serve \
     --num-prompts -1
 ```
 
-Available categories include `[writing, roleplay, reasoning, math, coding, stem, humanities, multilingual, summarization, qa, rag]`.
+利用できるカテゴリは `[writing, roleplay, reasoning, math, coding, stem, humanities, multilingual, summarization, qa, rag]` です。
 
-Run only a specific category like "multilingual":
+「multilingual」のような特定のカテゴリのみを実行します。
 
 ```bash
 vllm bench serve \
@@ -392,7 +392,7 @@ vllm bench serve \
     --speed-bench-category "multilingual"
 ```
 
-Run all categories in the Throughput split (2k ISL):
+Throughput スプリット（2k ISL）のすべてのカテゴリを実行します。
 
 ```bash
 vllm bench serve \
@@ -403,18 +403,16 @@ vllm bench serve \
     --num-prompts -1
 ```
 
-Available categories include `[high_entropy, mixed, low_entropy]`, where high entropy data contains unstructued data such as creative writing while low entropy data contains more structured data such as coding, more details are in the dataset card.
+利用できるカテゴリは `[high_entropy, mixed, low_entropy]` です。high entropy のデータは創作文のような非構造的なデータを、low entropy のデータはコーディングのようなより構造的なデータを含みます。詳細はデータセットカードを参照してください。
 
-#### BFCL (Tool-Calling) Benchmark
+#### BFCL（ツール呼び出し）のベンチマーク { #bfcl-tool-calling-benchmark }
 
-The Berkeley Function Calling Leaderboard (BFCL) dataset measures serving
-latency and throughput on realistic tool-calling traffic. Each request
-carries a per-sample `tools` schema and chat history, so the server must
-expose `/v1/chat/completions` with an auto-tool-choice parser enabled.
-The benchmark client always uses the `openai-chat` backend.
+Berkeley Function Calling Leaderboard（BFCL）のデータセットは、現実的なツール呼び出しのトラフィックにおける
+サービングのレイテンシとスループットを測定します。各リクエストはサンプルごとの `tools` スキーマと
+チャット履歴を持つため、サーバーは自動ツール選択のパーサーを有効にした `/v1/chat/completions` を
+公開している必要があります。ベンチマークのクライアントは常に `openai-chat` バックエンドを使います。
 
-Start a tool-parser-enabled server, then run the bench. For example, with
-`gpt-oss-20b`:
+ツールパーサーを有効にしたサーバーを起動してからベンチマークを実行します。たとえば `gpt-oss-20b` の場合は次のようにします。
 
 ```bash
 # Server
@@ -434,19 +432,17 @@ vllm bench serve \
     --num-prompts 200
 ```
 
-`--bfcl-categories` is a comma-separated list of BFCL v3 category names
-(without the `BFCL_v3_` prefix or `.json` suffix). Defaults to
-`simple,live_simple,multiple`. Other supported non-multi-turn categories
-include `parallel`, `live_parallel`, `parallel_multiple`,
-`live_parallel_multiple`, `irrelevance`, `live_irrelevance`,
-`live_relevance`, `java`, `javascript`, and `rest`. Multi-turn categories
-are not yet supported.
+`--bfcl-categories` は BFCL v3 のカテゴリ名（`BFCL_v3_` の接頭辞と `.json` の拡張子を除いたもの）を
+カンマ区切りで並べたものです。既定値は `simple,live_simple,multiple` です。マルチターン以外で
+サポートされる他のカテゴリには `parallel`、`live_parallel`、`parallel_multiple`、
+`live_parallel_multiple`、`irrelevance`、`live_irrelevance`、`live_relevance`、`java`、
+`javascript`、`rest` があります。マルチターンのカテゴリはまだサポートされていません。
 
-The dataset class normalizes BFCL's loose schema dialect (`dict` →
-`object`, `float` → `number`, `tuple` → `array`, `any` → `string`) so
-modern grammar backends accept the translated tool definitions.
+このデータセットクラスは BFCL の緩いスキーマ方言を正規化するため（`dict` → `object`、
+`float` → `number`、`tuple` → `array`、`any` → `string`）、最近の文法バックエンドでも
+変換後のツール定義を受け付けられます。
 
-#### Other HuggingFaceDataset Examples
+#### その他の HuggingFaceDataset の例 { #other-huggingfacedataset-examples }
 
 ```bash
 vllm serve Qwen/Qwen2-VL-7B-Instruct
@@ -548,10 +544,10 @@ vllm bench serve \
     --max-concurrency 512
 ```
 
-#### Running With Sampling Parameters
+#### サンプリングパラメータを指定して実行する { #running-with-sampling-parameters }
 
-When using OpenAI-compatible backends such as `vllm`, optional sampling
-parameters can be specified. Example client command:
+`vllm` のような OpenAI 互換バックエンドを使う場合、任意のサンプリングパラメータを指定できます。
+クライアント側のコマンド例:
 
 ```bash
 vllm bench serve \
@@ -566,24 +562,24 @@ vllm bench serve \
   --num-prompts 10
 ```
 
-#### Running With Ramp-Up Request Rate
+#### リクエストレートをランプアップして実行する { #running-with-ramp-up-request-rate }
 
-The benchmark tool also supports ramping up the request rate over the
-duration of the benchmark run. This can be useful for stress testing the
-server or finding the maximum throughput that it can handle, given some latency budget.
+このベンチマークツールは、実行時間の経過とともにリクエストレートを増加させる（ランプアップ）ことも
+サポートします。サーバーのストレステストや、あるレイテンシ予算のもとで処理できる最大スループットを
+見つけるのに役立ちます。
 
-Two ramp-up strategies are supported:
+2 つのランプアップ戦略がサポートされています。
 
 - `linear`: Increases the request rate linearly from a start value to an end value.
 - `exponential`: Increases the request rate exponentially.
 
-The following arguments can be used to control the ramp-up:
+ランプアップの制御には、次の引数を使えます。
 
 - `--ramp-up-strategy`: The ramp-up strategy to use (`linear` or `exponential`).
 - `--ramp-up-start-rps`: The request rate at the beginning of the benchmark.
 - `--ramp-up-end-rps`: The request rate at the end of the benchmark.
 
-#### Load Pattern Configuration
+#### 負荷パターンの設定 { #load-pattern-configuration }
 
 vLLM's benchmark serving script provides sophisticated load pattern simulation capabilities through three key parameters that control request generation and concurrency behavior:
 
@@ -652,7 +648,7 @@ Using KV cache metrics for load pattern configuration:
 
 </details>
 
-### 📈 Offline Throughput Benchmark
+### 📈 オフラインのスループットベンチマーク { #-offline-throughput-benchmark }
 
 <details class="admonition abstract" markdown="1">
 <summary>Show more</summary>
@@ -673,7 +669,7 @@ Total num prompt tokens:  5014
 Total num output tokens:  1500
 ```
 
-#### VisionArena Benchmark for Vision Language Models
+#### vision-language モデル向けの VisionArena ベンチマーク { #visionarena-benchmark-for-vision-language-models_1 }
 
 ```bash
 vllm bench throughput \
@@ -693,7 +689,7 @@ Total num prompt tokens:  14527
 Total num output tokens:  1280
 ```
 
-#### InstructCoder Benchmark with Speculative Decoding
+#### 投機的デコーディングを用いた InstructCoder のベンチマーク { #instructcoder-benchmark-with-speculative-decoding_1 }
 
 ``` bash
 VLLM_WORKER_MULTIPROC_METHOD=spawn \
@@ -716,7 +712,7 @@ Total num prompt tokens:  261136
 Total num output tokens:  204800
 ```
 
-#### Other HuggingFaceDataset Examples
+#### その他の HuggingFaceDataset の例 { #other-huggingfacedataset-examples_1 }
 
 `lmms-lab/LLaVA-OneVision-Data`:
 
@@ -772,7 +768,7 @@ vllm bench throughput \
   --lora-path yard1/llama-2-7b-sql-lora-test
 ```
 
-#### Synthetic Random Multimodal (random-mm)
+#### 合成のランダムなマルチモーダル入力（random-mm） { #synthetic-random-multimodal-random-mm }
 
 Generate synthetic multimodal inputs for offline throughput testing without external datasets.
 Use `--backend vllm-chat` so that image tokens are counted correctly.
@@ -792,20 +788,20 @@ vllm bench throughput \
 
 </details>
 
-### 🛠️ Structured Output Benchmark
+### 🛠️ 構造化出力のベンチマーク { #-structured-output-benchmark }
 
 <details class="admonition abstract" markdown="1">
 <summary>Show more</summary>
 
 Benchmark the performance of structured output generation (JSON, grammar, regex).
 
-#### Server Setup
+#### サーバーのセットアップ { #server-setup }
 
 ```bash
 vllm serve NousResearch/Hermes-3-Llama-3.1-8B
 ```
 
-#### JSON Schema Benchmark
+#### JSON スキーマのベンチマーク { #json-schema-benchmark }
 
 ```bash
 python3 benchmarks/benchmark_serving_structured_output.py \
@@ -817,7 +813,7 @@ python3 benchmarks/benchmark_serving_structured_output.py \
   --num-prompts 1000
 ```
 
-#### Grammar-based Generation Benchmark
+#### 文法にもとづく生成のベンチマーク { #grammar-based-generation-benchmark }
 
 ```bash
 python3 benchmarks/benchmark_serving_structured_output.py \
@@ -829,7 +825,7 @@ python3 benchmarks/benchmark_serving_structured_output.py \
   --num-prompts 1000
 ```
 
-#### Regex-based Generation Benchmark
+#### 正規表現にもとづく生成のベンチマーク { #regex-based-generation-benchmark }
 
 ```bash
 python3 benchmarks/benchmark_serving_structured_output.py \
@@ -840,7 +836,7 @@ python3 benchmarks/benchmark_serving_structured_output.py \
   --num-prompts 1000
 ```
 
-#### Choice-based Generation Benchmark
+#### 選択肢にもとづく生成のベンチマーク { #choice-based-generation-benchmark }
 
 ```bash
 python3 benchmarks/benchmark_serving_structured_output.py \
@@ -851,7 +847,7 @@ python3 benchmarks/benchmark_serving_structured_output.py \
   --num-prompts 1000
 ```
 
-#### XGrammar Benchmark Dataset
+#### XGrammar のベンチマークデータセット { #xgrammar-benchmark-dataset }
 
 ```bash
 python3 benchmarks/benchmark_serving_structured_output.py \
@@ -864,14 +860,14 @@ python3 benchmarks/benchmark_serving_structured_output.py \
 
 </details>
 
-### 📚 Long Document QA Benchmark
+### 📚 長文ドキュメント QA のベンチマーク { #-long-document-qa-benchmark }
 
 <details class="admonition abstract" markdown="1">
 <summary>Show more</summary>
 
 Benchmark the performance of long document question-answering with prefix caching.
 
-#### Basic Long Document QA Test
+#### 基本的な長文ドキュメント QA のテスト { #basic-long-document-qa-test }
 
 ```bash
 python3 benchmarks/benchmark_long_document_qa_throughput.py \
@@ -883,7 +879,7 @@ python3 benchmarks/benchmark_long_document_qa_throughput.py \
   --repeat-count 5
 ```
 
-#### Different Repeat Modes
+#### 各種の繰り返しモード { #different-repeat-modes }
 
 ```bash
 # Random mode (default) - shuffle prompts randomly
@@ -916,14 +912,14 @@ python3 benchmarks/benchmark_long_document_qa_throughput.py \
 
 </details>
 
-### 🗂️ Prefix Caching Benchmark
+### 🗂️ プレフィックスキャッシュのベンチマーク { #-prefix-caching-benchmark }
 
 <details class="admonition abstract" markdown="1">
 <summary>Show more</summary>
 
 Benchmark the efficiency of automatic prefix caching.
 
-#### Fixed Prompt with Prefix Caching
+#### 固定プロンプトでのプレフィックスキャッシュ { #fixed-prompt-with-prefix-caching }
 
 ```bash
 python3 benchmarks/benchmark_prefix_caching.py \
@@ -934,7 +930,7 @@ python3 benchmarks/benchmark_prefix_caching.py \
   --input-length-range 128:256
 ```
 
-#### ShareGPT Dataset with Prefix Caching
+#### ShareGPT データセットでのプレフィックスキャッシュ { #sharegpt-dataset-with-prefix-caching }
 
 ```bash
 # download dataset
@@ -949,7 +945,7 @@ python3 benchmarks/benchmark_prefix_caching.py \
   --input-length-range 128:256
 ```
 
-##### Prefix Repetition Dataset
+##### プレフィックス反復のデータセット { #prefix-repetition-dataset }
 
 ```bash
 vllm bench serve \
@@ -965,7 +961,7 @@ vllm bench serve \
 
 </details>
 
-### Replay Timed Traces
+### タイミング付きトレースの再生 { #replay-timed-traces }
 
 <details class="admonition abstract" markdown="1">
 <summary>Show more</summary>
@@ -973,16 +969,16 @@ vllm bench serve \
 Example of how to run traces which have timing information
 with them.
 
-#### Running MoonshotAI traces
+#### MoonshotAI のトレースを実行する { #running-moonshotai-traces }
 
-Start the server:
+サーバーを起動します。
 
 ```bash
 vllm serve Qwen/Qwen3.5-2B \
 --host 127.0.0.1 --port 8000
 ```
 
-Run the benchmark:
+ベンチマークを実行します。
 
 ```bash
 # Download an example trace 
@@ -1000,7 +996,7 @@ This will replay the first 100 lines from the trace file `conversation.jsonl`.
 
 </details>
 
-### 🧪 Hashing Benchmarks
+### 🧪 ハッシュのベンチマーク { #-hashing-benchmarks }
 
 <details class="admonition abstract" markdown="1">
 <summary>Show more</summary>
@@ -1029,14 +1025,14 @@ If an algorithm’s dependency is missing, the script will skip it and continue.
 
 </details>
 
-### ⚡ Request Prioritization Benchmark
+### ⚡ リクエスト優先度付けのベンチマーク { #-request-prioritization-benchmark }
 
 <details class="admonition abstract" markdown="1">
 <summary>Show more</summary>
 
 Benchmark the performance of request prioritization in vLLM.
 
-#### Basic Prioritization Test
+#### 基本的な優先度付けのテスト { #basic-prioritization-test }
 
 ```bash
 python3 benchmarks/benchmark_prioritization.py \
@@ -1047,7 +1043,7 @@ python3 benchmarks/benchmark_prioritization.py \
   --scheduling-policy priority
 ```
 
-#### Multiple Sequences per Prompt
+#### プロンプトあたり複数シーケンス { #multiple-sequences-per-prompt }
 
 ```bash
 python3 benchmarks/benchmark_prioritization.py \
@@ -1061,16 +1057,16 @@ python3 benchmarks/benchmark_prioritization.py \
 
 </details>
 
-### 👁️ Multi-Modal Benchmark
+### 👁️ マルチモーダルのベンチマーク { #-multi-modal-benchmark }
 
 <details class="admonition abstract" markdown="1">
 <summary>Show more</summary>
 
 Benchmark the performance of multi-modal requests in vLLM.
 
-#### Images (ShareGPT4V)
+#### 画像（ShareGPT4V） { #images-sharegpt4v }
 
-Start vLLM:
+vLLM を起動します。
 
 ```bash
 vllm serve Qwen/Qwen2.5-VL-7B-Instruct \
@@ -1094,9 +1090,9 @@ vllm bench serve \
   --endpoint /v1/chat/completions
 ```
 
-#### Videos (ShareGPT4Video)
+#### 動画（ShareGPT4Video） { #videos-sharegpt4video }
 
-Start vLLM:
+vLLM を起動します。
 
 ```bash
 vllm serve Qwen/Qwen2.5-VL-7B-Instruct \
@@ -1120,7 +1116,7 @@ vllm bench serve \
   --endpoint /v1/chat/completions
 ```
 
-#### Synthetic Random Images (random-mm)
+#### 合成のランダムな画像（random-mm） { #synthetic-random-images-random-mm }
 
 Generate synthetic image inputs alongside random text prompts to stress-test vision models without external datasets.
 
@@ -1193,7 +1189,7 @@ This should be seen as an edge case, and if this behavior can be avoided by sett
 
 </details>
 
-### 🔬 Multimodal Processor Benchmark
+### 🔬 マルチモーダルプロセッサのベンチマーク { #-multimodal-processor-benchmark }
 
 Benchmark per-stage latency of the multimodal (MM) input processor pipeline, including the encoder forward pass. This is useful for profiling preprocessing bottlenecks in vision-language models.
 
@@ -1217,7 +1213,7 @@ The benchmark also reports end-to-end latency (TTFT + decode time) per
 request. Use `--metric-percentiles` to select which percentiles to report
 (default: p99) and `--output-json` to save results.
 
-#### Basic Example with Synthetic Data (random-mm)
+#### 合成データを使った基本的な例（random-mm） { #basic-example-with-synthetic-data-random-mm }
 
 ```bash
 vllm bench mm-processor \
@@ -1231,7 +1227,7 @@ vllm bench mm-processor \
   --random-mm-bucket-config '{(256, 256, 1): 0.7, (720, 1280, 1): 0.3}'
 ```
 
-#### Using a HuggingFace Dataset
+#### HuggingFace のデータセットを使う { #using-a-huggingface-dataset }
 
 ```bash
 vllm bench mm-processor \
@@ -1242,7 +1238,7 @@ vllm bench mm-processor \
   --num-prompts 100
 ```
 
-#### Warmup, Custom Percentiles, and JSON Output
+#### ウォームアップ、カスタムのパーセンタイル、JSON 出力 { #warmup-custom-percentiles-and-json-output }
 
 ```bash
 vllm bench mm-processor \
@@ -1261,27 +1257,27 @@ See [`vllm bench mm-processor`](../cli/bench/mm_processor.md) for the full argum
 
 </details>
 
-### Embedding Benchmark
+### 埋め込みのベンチマーク { #embedding-benchmark }
 
 Benchmark the performance of embedding requests in vLLM.
 
 <details class="admonition abstract" markdown="1">
 <summary>Show more</summary>
 
-#### Text Embeddings
+#### テキストの埋め込み { #text-embeddings }
 
-Unlike generative models which use Completions API or Chat Completions API,
-you should set `--backend openai-embeddings` and `--endpoint /v1/embeddings` to use the Embeddings API.
+生成モデルが Completions API や Chat Completions API を使うのとは異なり、Embeddings API を使うには
+`--backend openai-embeddings` と `--endpoint /v1/embeddings` を設定します。
 
 You can use any text dataset to benchmark the model, such as ShareGPT.
 
-Start the server:
+サーバーを起動します。
 
 ```bash
 vllm serve jinaai/jina-embeddings-v3 --trust-remote-code
 ```
 
-Run the benchmark:
+ベンチマークを実行します。
 
 ```bash
 # download dataset
@@ -1294,7 +1290,7 @@ vllm bench serve \
   --dataset-path <your data path>/ShareGPT_V3_unfiltered_cleaned_split.json
 ```
 
-#### Multi-modal Embeddings
+#### マルチモーダルの埋め込み { #multi-modal-embeddings }
 
 Unlike generative models which use Completions API or Chat Completions API,
 you should set `--endpoint /v1/embeddings` to use the Embeddings API. The backend to use depends on the model:
@@ -1302,12 +1298,12 @@ you should set `--endpoint /v1/embeddings` to use the Embeddings API. The backen
 - CLIP: `--backend openai-embeddings-clip`
 - VLM2Vec: `--backend openai-embeddings-vlm2vec`
 
-For other models, please add your own implementation inside [vllm/benchmarks/lib/endpoint_request_func.py](../../vllm/benchmarks/lib/endpoint_request_func.py) to match the expected instruction format.
+その他のモデルについては、期待される指示の形式に合わせて [vllm/benchmarks/lib/endpoint_request_func.py](../../vllm/benchmarks/lib/endpoint_request_func.py) 内に独自の実装を追加してください。
 
-You can use any text or multi-modal dataset to benchmark the model, as long as the model supports it.
-For example, you can use ShareGPT and VisionArena to benchmark vision-language embeddings.
+モデルがサポートしていれば、任意のテキストまたはマルチモーダルのデータセットを使ってベンチマークできます。
+たとえば ShareGPT と VisionArena を使って vision-language の埋め込みをベンチマークできます。
 
-Serve and benchmark CLIP:
+CLIP をサービングしてベンチマークします。
 
 ```bash
 # Run this in another process
@@ -1331,7 +1327,7 @@ vllm bench serve \
   --dataset-path lmarena-ai/VisionArena-Chat
 ```
 
-Serve and benchmark VLM2Vec:
+VLM2Vec をサービングしてベンチマークします。
 
 ```bash
 # Run this in another process
@@ -1359,25 +1355,25 @@ vllm bench serve \
 
 </details>
 
-### Reranker Benchmark
+### リランカーのベンチマーク { #reranker-benchmark }
 
-Benchmark the performance of rerank requests in vLLM.
+vLLM におけるリランクリクエストの性能をベンチマークします。
 
 <details class="admonition abstract" markdown="1">
 <summary>Show more</summary>
 
-Unlike generative models which use Completions API or Chat Completions API,
-you should set `--backend vllm-rerank` and `--endpoint /v1/rerank` to use the Reranker API.
+生成モデルが Completions API や Chat Completions API を使うのとは異なり、Reranker API を使うには
+`--backend vllm-rerank` と `--endpoint /v1/rerank` を設定します。
 
-For reranking, the only supported dataset is `--dataset-name random-rerank`
+リランキングでサポートされるデータセットは `--dataset-name random-rerank` のみです。
 
-Start the server:
+サーバーを起動します。
 
 ```bash
 vllm serve BAAI/bge-reranker-v2-m3
 ```
 
-Run the benchmark:
+ベンチマークを実行します。
 
 ```bash
 vllm bench serve \
@@ -1391,15 +1387,14 @@ vllm bench serve \
   --random-batch-size 5
 ```
 
-For reranker models, this will create `num_prompts / random_batch_size` requests with
-`random_batch_size` "documents" where each one has close to `random_input_len` tokens.
-In the example above, this results in 2 rerank requests with 5 "documents" each where
-each document has close to 512 tokens.
+リランカーのモデルでは、`random_batch_size` 個の「ドキュメント」（各ドキュメントは
+`random_input_len` に近いトークン数）を持つリクエストが `num_prompts / random_batch_size` 件作成されます。
+上記の例では、各ドキュメントが 512 トークン近くを持つ「ドキュメント」を 5 個含むリランクリクエストが
+2 件になります。
 
-Please note that the `/v1/rerank` is also supported by embedding models. So if you're running
-with an embedding model, also set `--no_reranker`. Because in this case the query is
-treated as an individual prompt by the server, here we send `random_batch_size - 1` documents
-to account for the extra prompt which is the query. The token accounting to report the
-throughput numbers correctly is also adjusted.
+なお、`/v1/rerank` は埋め込みモデルでもサポートされています。埋め込みモデルで実行する場合は
+`--no_reranker` も設定してください。この場合、クエリはサーバー側で個別のプロンプトとして扱われるため、
+クエリという余分なプロンプトを考慮して `random_batch_size - 1` 個のドキュメントを送ります。
+スループットの数値を正しく報告するためのトークンの計上も、あわせて調整されます。
 
 </details>
