@@ -1,245 +1,245 @@
-# Hybrid KV Cache Manager
+# ハイブリッド KV キャッシュマネージャ { #hybrid-kv-cache-manager }
 
 !!! warning
-    This document was written based on commit [458e74](https://github.com/vllm-project/vllm/commit/458e74eb907f96069e6d8a4f3c9f457001fef2ea). This feature is still in its early stage and things may change.
+    このドキュメントはコミット [458e74](https://github.com/vllm-project/vllm/commit/458e74eb907f96069e6d8a4f3c9f457001fef2ea) をもとに書かれています。この機能はまだ初期段階にあり、内容は変わる可能性があります。
 
-## What is a hybrid model?
+## ハイブリッドモデルとは { #what-is-a-hybrid-model }
 
-Many recent "hybrid" LLMs combine multiple attention types within one model. For example:
+近年の「ハイブリッド」LLM の多くは、1 つのモデルの中に複数の attention 種別を組み合わせています。例:
 
-1. Sliding window attention (sw) + full attention (full): gpt-oss, Gemma 2/3, Ministral, cohere, etc.
-2. Mamba + full: Bamba, Jamba, Minimax, etc.
-3. Local chunked attention + full: Llama4
+1. スライディングウィンドウ attention（sw）+ フル attention（full）: gpt-oss、Gemma 2/3、Ministral、cohere など
+2. Mamba + full: Bamba、Jamba、Minimax など
+3. ローカルなチャンク attention + full: Llama4
 
-To serve these models efficiently, our [`KVCacheManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_manager/#vllm.v1.core.kv_cache_manager.KVCacheManager) must:
+これらのモデルを効率よくサービングするには、vLLM の [`KVCacheManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_manager/#vllm.v1.core.kv_cache_manager.KVCacheManager) が次を満たす必要があります。
 
-1. Allocate different slots to different layer type, for example:
-    - Full attention layers: reserve slots for **all** tokens.
-    - Sliding window layers: reserve slots only for the most recent **`sliding_window_size`** tokens.
-2. Support layer-specific prefix-cache rules, for example:
-    - Full attention: a cache hit prefix requires **all** tokens remain in the KV cache.
-    - Sliding window: a cache hit prefix only requires the last **`sliding_window_size`** tokens remain in the KV cache.
+1. 層の種別ごとに異なるスロットを割り当てる。例:
+    - フル attention 層: **すべての**トークン分のスロットを確保する。
+    - スライディングウィンドウ層: 直近の **`sliding_window_size`** トークン分のスロットのみ確保する。
+2. 層ごとに異なるプレフィックスキャッシュのルールをサポートする。例:
+    - フル attention: キャッシュヒットするプレフィックスには、**すべての**トークンが KV キャッシュに残っている必要がある。
+    - スライディングウィンドウ: キャッシュヒットするプレフィックスには、末尾の **`sliding_window_size`** トークンが KV キャッシュに残っていればよい。
 
-## Definitions
+## 用語の定義 { #definitions }
 
-1. **kv hidden size**: The number of bytes to store one token's KV cache for a single layer.
-2. **block**: the memory reserved for kv cache are divided into multiple *blocks* with the same *page size* (defined below)
-3. **block size**: number of tokens inside a block
-4. **page size**: the physical memory size of a block, defined as:
+1. **kv hidden size**: 1 層分について、1 トークンの KV キャッシュを保存するのに必要なバイト数。
+2. **block**: KV キャッシュ用に確保したメモリは、同じ *page size*（下記参照）を持つ複数の *block* に分割されます。
+3. **block size**: 1 つの block に含まれるトークン数。
+4. **page size**: 1 つの block の物理メモリサイズ。次のように定義されます。
 
     $$
     \text{num_layers} \times \text{block_size} \times \text{kv_hidden_size}
     $$
 
-    `num_layers` doesn't mean the total number of layers in the model. The exact number depends on the context in this doc.
+    `num_layers` はモデル全体の層数を意味するわけではありません。実際の値は、このドキュメント内の文脈によって異なります。
 
     !!! note
-        This is different from `KVCacheSpec.page_size_bytes` in the code, which is defined as:
+        これはコード中の `KVCacheSpec.page_size_bytes` とは異なります。そちらは次のように定義されています。
 
         $$
         \text{block_size} \times \text{kv_hidden_size}
         $$
 
-## Allocation
+## メモリの割り当て { #allocation }
 
-### High level idea
+### 全体の考え方 { #high-level-idea }
 
-We use a single memory pool for all layer types. The memory pool is split into multiple blocks with the same page size. [`KVCacheManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_manager/#vllm.v1.core.kv_cache_manager.KVCacheManager) allocates different numbers of blocks to different layers according to its attention type.
+すべての層の種別で単一のメモリプールを使います。このメモリプールは、同じ page size を持つ複数の block に分割されます。[`KVCacheManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_manager/#vllm.v1.core.kv_cache_manager.KVCacheManager) は、attention の種別に応じて層ごとに異なる数の block を割り当てます。
 
-The core challenge is ensuring every layer type uses the same **page size**.  For full-attention-only models, the page size is straightforward, defined as:
+中心的な課題は、すべての層の種別で同じ **page size** を使うようにすることです。フル attention のみのモデルでは page size は単純で、次のように定義されます。
 
 $$
 \text{page_size} = \text{block_size} \times \text{num_hidden_layers} \times \text{kv_hidden_size}
 $$
 
-However, in hybrid models, `num_hidden_layers` varies by attention type, which would normally produce mismatched page sizes. The cases below show how we unify them.
+ところがハイブリッドモデルでは `num_hidden_layers` が attention の種別ごとに異なるため、そのままでは page size が食い違ってしまいます。以下のケースでは、これをどう統一するかを説明します。
 
-### Case 1: toy model
+### ケース 1: おもちゃのモデル { #case-1-toy-model }
 
-Let's start with a toy example: a model has 1 full attention layer and 3 sliding window attention layers. All layers have the same `kv_hidden_size`.
+まずは簡単な例から始めます。フル attention 層が 1 つ、スライディングウィンドウ attention 層が 3 つあるモデルを考えます。すべての層の `kv_hidden_size` は同じとします。
 
-We let each block to hold `block_size` tokens for one layer, so:
+各 block が 1 層分の `block_size` トークンを保持するようにすると、次のようになります。
 
 $$
 \text{page_size} = \text{kv_hidden_size} \times \text{block_size}
 $$
 
-[`KVCacheManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_manager/#vllm.v1.core.kv_cache_manager.KVCacheManager) allocates a different number of blocks to each layer.
+[`KVCacheManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_manager/#vllm.v1.core.kv_cache_manager.KVCacheManager) は、各層に異なる数の block を割り当てます。
 
-This case is only a toy example. For real models, please refer to the following cases.
+このケースはあくまで簡略化した例です。実際のモデルについては、以降のケースを参照してください。
 
-### Case 2: same `kv_hidden_size` and a regular pattern
+### ケース 2: `kv_hidden_size` が同じで規則的なパターンがある場合 { #case-2-same-kv_hidden_size-and-a-regular-pattern }
 
-When the model has more layers, e.g., 20 sliding window attention layers and 10 full attention layers with the same `kv_hidden_size`. Calling the allocator once per layer (30 calls) is OK but becomes inefficient. As a solution, we group the allocation of layers that need the same number of blocks to reduce the number of calls.
+モデルの層数が増える場合を考えます。たとえば `kv_hidden_size` が同じスライディングウィンドウ attention 層 20 個とフル attention 層 10 個からなるモデルです。層ごとにアロケータを呼ぶ（30 回の呼び出し）こと自体は可能ですが、非効率になります。そこで、同じ数の block を必要とする層の割り当てをまとめることで、呼び出し回数を減らします。
 
-The grouping is feasible because there is usually a beautiful ratio between the number of different types of layers. For example:
+このグループ化が成り立つのは、通常、種別ごとの層数のあいだにきれいな比があるからです。例:
 
 - Gemma-2: 1 sw : 1 full
 - Llama 4: 3 local : 1 full
 
-Our example can be regarded as 2 sw : 1 full. We can allocate blocks as if there are 2 sw and 1 full in the model, and repeat the result by 10 times to generate the `block_ids` for the 30 layers. The page size becomes:
+この例のモデルは 2 sw : 1 full と見なせます。モデルに 2 つの sw と 1 つの full があるものとして block を割り当て、その結果を 10 回繰り返すことで 30 層分の `block_ids` を生成できます。page size は次のようになります。
 
 $$
 10 \times \text{kv_hidden_size} \times \text{block_size}
 $$
 
-Assume `block_size` 16, sliding window size 32, request length 112, then for the above example model, we need to allocate 11 blocks (0-6 for full, 7-8 for sw group 1, 9-10 for sw group 2).
+`block_size` を 16、スライディングウィンドウのサイズを 32、リクエスト長を 112 とすると、上記の例のモデルでは 11 個の block を割り当てる必要があります（full に 0〜6、sw グループ 1 に 7〜8、sw グループ 2 に 9〜10）。
 
-![Allocation Result](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/hybrid_kv_cache_manager/basic_grouping_example.png)
+![割り当て結果](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/hybrid_kv_cache_manager/basic_grouping_example.png)
 
-Here, "/" denotes no block needed (sliding‑window layers don't need slots for early tokens).
+ここで「/」は block が不要であることを示します（スライディングウィンドウ層は、前方のトークンにスロットを必要としません）。
 
-See the formal definition below. The layers are divided into multiple *KV Cache Groups* so that there is:
+以下に形式的な定義を示します。層は複数の *KV キャッシュグループ* に分割され、次の 2 つの性質を満たします。
 
-1. **Identical attention type inside each group**: Each group only contains layers with the same attention type and thus need the same number of blocks for a given request. This enables layers in the same group share the same block ids without memory waste.
-2. **Identical page size across groups**: Because our memory pool only have one page size.
+1. **各グループ内で attention の種別が同一**: 各グループには同じ attention 種別の層だけが含まれるため、あるリクエストに対して必要な block 数も同じになります。これにより、同じグループの層がメモリを無駄にせず同じ block ID を共有できます。
+2. **グループ間で page size が同一**: メモリプールが単一の page size しか持たないためです。
 
-Our example model is divided into 3 KV cache groups:
+例のモデルは 3 つの KV キャッシュグループに分割されます。
 
-- Group 0: 10 full attention layers (full.0 - full.9)
-- Group 1: 10 sliding window attention layers (sw.0 - sw.9)
-- Group 2: 10 sliding window attention layers (sw.10 - sw.19)
+- グループ 0: フル attention 層 10 個（full.0 〜 full.9）
+- グループ 1: スライディングウィンドウ attention 層 10 個（sw.0 〜 sw.9）
+- グループ 2: スライディングウィンドウ attention 層 10 個（sw.10 〜 sw.19）
 
-Obviously, it satisfies rule 1. For rule 2, all 3 groups have
+これが規則 1 を満たすのは明らかです。規則 2 についても、3 つのグループはいずれも
 
 $$
 10 \times \text{kv_hidden_size} \times \text{block_size}
 $$
 
-as their page size.
+を page size として持ちます。
 
-### Case 3: same `kv_hidden_size` and no regular pattern
+### ケース 3: `kv_hidden_size` が同じで規則的なパターンがない場合 { #case-3-same-kv_hidden_size-and-no-regular-pattern }
 
-Unfortunately, not all models have such a beautiful ratio, and approach in Case 2 will produce too many small groups. For example, Gemma-3-27b has 52 sliding window attention layers and 10 full attention layers. With the constraints in case 2, it would be 26 sliding window groups and 5 full attention groups, each contains 2 layers. The allocation is still inefficient. To reduce the number of kv cache groups, we group layers using the smallest layer count among all attention types. For example, min(52, 10)=10 layers per group in Gemma-3-27b. Then the grouping result is:
+残念ながら、すべてのモデルがこのようなきれいな比を持つわけではなく、ケース 2 の方法では小さなグループが多くなりすぎます。たとえば Gemma-3-27b はスライディングウィンドウ attention 層 52 個とフル attention 層 10 個を持ちます。ケース 2 の制約では、それぞれ 2 層からなるスライディングウィンドウのグループ 26 個とフル attention のグループ 5 個になり、割り当ては依然として非効率です。KV キャッシュグループの数を減らすため、すべての attention 種別のうち最も少ない層数を基準に層をグループ化します。たとえば Gemma-3-27b では min(52, 10)=10 層が 1 グループになります。この場合のグループ化結果は次のとおりです。
 
-- Group 0: 10 full attention layers (full.0 - full.9)
-- Group 1: 10 sliding window attention layers (sw.0 - sw.9)
-- Group 2: 10 sliding window attention layers (sw.10 - sw.19)
+- グループ 0: フル attention 層 10 個（full.0 〜 full.9）
+- グループ 1: スライディングウィンドウ attention 層 10 個（sw.0 〜 sw.9）
+- グループ 2: スライディングウィンドウ attention 層 10 個（sw.10 〜 sw.19）
 - ...
-- Group 6: 10 sliding window attention layers (sw.40 - sw.49)
-- Group 7: 2 sliding window attention layers (sw.50 - sw.51) and 8 padding layers
+- グループ 6: スライディングウィンドウ attention 層 10 個（sw.40 〜 sw.49）
+- グループ 7: スライディングウィンドウ attention 層 2 個（sw.50 〜 sw.51）とパディング用の 8 層
 
-We will update this algorithm if this heuristic leads to a bad result when a new model comes out (e.g., 20 full + 30 sw, the group size should be 10 instead of 20).
+新しいモデルが登場して、このヒューリスティックが良くない結果を招く場合（たとえば 20 full + 30 sw では、グループサイズは 20 ではなく 10 にすべきです）には、アルゴリズムを更新します。
 
-This case happens in Gemma-3 series models, and models in case 2 but with eagle speculative decoding which introduce one full attention layer. The solution has some memory waste and is not perfect. Please report any cases where padding overhead becomes unacceptable so we can refine the algorithm.
+このケースは Gemma-3 系のモデル、およびケース 2 に該当するモデルにフル attention 層を 1 つ追加する eagle 投機的デコーディングを組み合わせた場合に発生します。この解決策にはある程度のメモリの無駄があり、完璧ではありません。パディングのオーバーヘッドが許容できないケースがあれば報告してください。アルゴリズムの改善に役立てます。
 
-### Case 4: different `kv_hidden_size` (mainly hybrid mamba models)
+### ケース 4: `kv_hidden_size` が異なる場合（主にハイブリッド mamba モデル） { #case-4-different-kv_hidden_size-mainly-hybrid-mamba-models }
 
-Some architectures (e.g., Bamba, Jamba, Minimax) interleave standard attention layers with Mamba layers, where each Mamba layer's state size per token can be much larger than the attention layers' `kv_hidden_size`. Because we only support a single page size across all groups, we must reconcile these differing hidden sizes.
+一部のアーキテクチャ（Bamba、Jamba、Minimax など）では、標準的な attention 層と Mamba 層が交互に配置されます。Mamba 層の 1 トークンあたりの状態サイズは、attention 層の `kv_hidden_size` よりずっと大きくなることがあります。すべてのグループで単一の page size しかサポートしないため、これら異なる hidden size を揃える必要があります。
 
-The current algorithm is:
+現在のアルゴリズムは次のとおりです。
 
-1. Increase the `block_size` of attention layers until
+1. attention 層の `block_size` を、次を満たすまで大きくします。
     $$
     \text{block_size} \times \text{kv_hidden_size}_{\text{att}} \ge \text{state_size}_{\text{mamba}}
     $$
-2. Pad the mamba state per layer to
+2. 各層の mamba の状態を次のサイズまでパディングします。
     $$
     \text{block_size} \times \text{kv_hidden_size}_{\text{att}}
     $$
-3. Apply the grouping strategy in case 3.
+3. ケース 3 のグループ化戦略を適用します。
 
 !!! note
-    This can lead to more than 400 `block_size` for attention layers, which is too large. Another padding strategy is to increase `block_size` until
+    この方法では attention 層の `block_size` が 400 を超えることがあり、大きすぎます。別のパディング戦略として、次を満たすまで `block_size` を大きくする方法があります。
 
     $$
     \text{block_size} \times \text{kv_hidden_size}_{\text{att}} \times \text{num_attn_layers} \ge \text{state_size}_{\text{mamba}}
     $$
 
-    This padding strategy is still a work in progress.
+    このパディング戦略はまだ作業中です。
 
-### Case 5: KV sharing
+### ケース 5: KV 共有 { #case-5-kv-sharing }
 
-KV sharing refers to a layer using the KV cache of another layer, e.g., gemma-3n.
-In these models, [`KVCacheManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_manager/#vllm.v1.core.kv_cache_manager.KVCacheManager) ignores all layers with kv sharing and only allocates KV cache for layers that need kv cache, and some patches are made in model runner to apply the allocation result to kv sharing layers.
+KV 共有（KV sharing）とは、ある層が別の層の KV キャッシュを利用することを指します（gemma-3n など）。
+これらのモデルでは、[`KVCacheManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_manager/#vllm.v1.core.kv_cache_manager.KVCacheManager) は KV 共有を行うすべての層を無視し、KV キャッシュが必要な層に対してのみ割り当てを行います。そして、割り当て結果を KV 共有の層に適用するためのパッチが model runner 側に入っています。
 
-## Prefix caching
+## プレフィックスキャッシュ { #prefix-caching }
 
-For simplicity, we assume `block_size=1` in this section.
+説明を簡単にするため、この節では `block_size=1` と仮定します。
 
-### High level idea
+### 全体の考え方 { #high-level-idea_1 }
 
-The block pool uses a dict similar to `tuple(block_hash, group_id) -> block` to cache the full blocks. That means the same tokens of different groups are cached and evicted independently.
+block プールは、`tuple(block_hash, group_id) -> block` のような辞書を使って埋まった block をキャッシュします。つまり、異なるグループの同じトークンは、それぞれ独立にキャッシュ・追い出しされます。
 
-When a new request comes in, we check the cache hit prefix of each group, and return the intersection of these groups as the cached prefix of the request. See below for the detailed algorithm for checking the cache hit of one group & performing the intersection.
+新しいリクエストが来ると、各グループについてキャッシュヒットするプレフィックスを調べ、それらの共通部分をリクエストのキャッシュ済みプレフィックスとして返します。1 グループのキャッシュヒットを調べる方法と共通部分の求め方の詳細は、以下を参照してください。
 
-### Case 0: full attention only models
+### ケース 0: フル attention のみのモデル { #case-0-full-attention-only-models }
 
-For full attention layers, blocks are allocated for all tokens in the request. For details on the underlying design, see [Prefix Caching](prefix_caching.md)
+フル attention 層では、リクエスト内のすべてのトークンに block が割り当てられます。基礎となる設計の詳細は[プレフィックスキャッシュ](prefix_caching.md)を参照してください。
 
-To find the longest cache hit prefix of a request, we enumerate from left (the first block) to right (the last block), checking whether the block is cached, and exit when cache misses. For example, we will return the first 7 tokens (0-6) as the cache hit prefix in the below example (blue blocks are cached):
+リクエストの最長キャッシュヒットプレフィックスを求めるには、左（最初の block）から右（最後の block）へ順に block がキャッシュされているかを調べ、キャッシュミスしたところで終了します。たとえば次の例では、最初の 7 トークン（0〜6）がキャッシュヒットプレフィックスとして返されます（青い block がキャッシュ済み）。
 
-![Prefix Caching of Full Attention](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/hybrid_kv_cache_manager/full_attn.png)
+![フル attention のプレフィックスキャッシュ](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/hybrid_kv_cache_manager/full_attn.png)
 
-### Case 1: sliding window attention only models
+### ケース 1: スライディングウィンドウ attention のみのモデル { #case-1-sliding-window-attention-only-models }
 
-For sliding window attention layers, a naive implementation for memory allocation is to allocate `sliding_window_size` blocks and fill in the blocks in a round-robin way. But this naive implementation is not compatible with prefix caching so we didn't pick this design. In vLLM,  we allocate different blocks for different tokens and free blocks that are outside the sliding window.
+スライディングウィンドウ attention 層では、素朴なメモリ割り当ての実装として、`sliding_window_size` 個の block を確保してラウンドロビンで埋めていく方法が考えられます。しかしこの素朴な実装はプレフィックスキャッシュと両立しないため、この設計は採用していません。vLLM では、トークンごとに異なる block を割り当て、スライディングウィンドウの外に出た block を解放します。
 
-For a new request, the cache hit prefix only requires the last `sliding_window_size - 1` tokens being cached.
-Let's say `sliding_window_size = 4` and `block_size = 1`, and the request is a 15-token prompt (blue blocks are cached):
+新しいリクエストでは、キャッシュヒットするプレフィックスに必要なのは、末尾の `sliding_window_size - 1` トークンがキャッシュされていることだけです。
+`sliding_window_size = 4`、`block_size = 1` で、リクエストが 15 トークンのプロンプトである場合を考えます（青い block がキャッシュ済み）。
 
-![Prefix Caching of Sliding Window Attention](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/hybrid_kv_cache_manager/sw_attn.png)
+![スライディングウィンドウ attention のプレフィックスキャッシュ](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/hybrid_kv_cache_manager/sw_attn.png)
 
-There are 3 possible cache hit prefixes:
+キャッシュヒットするプレフィックスの候補は 3 つあります。
 
-- cache hit length 5, compute prefill with [2, 3, 4] → [5, 6, …, 14]
-- cache hit length 6, compute prefill with [3, 4, 5] → [6, 7, …, 14]
-- cache hit length 14, compute prefill with [11, 12, 13] → [14] (most efficient)
+- キャッシュヒット長 5、[2, 3, 4] → [5, 6, …, 14] のプレフィルを計算
+- キャッシュヒット長 6、[3, 4, 5] → [6, 7, …, 14] のプレフィルを計算
+- キャッシュヒット長 14、[11, 12, 13] → [14] のプレフィルを計算（最も効率的）
 
-We can check the cache hit from right to left, and early exit when we find a match.This is opposite from full attention, where we check from left to right and early exit when the match fails. One potential cons (compared to full attention) is that we end up iterating over the entire list of tokens when there's no match, which is often a common case. This could potentially cause non-negligible overheads, but fine with full + swa, as discussed below.
+キャッシュヒットは右から左へ調べ、一致が見つかった時点で早期終了できます。これはフル attention とは逆です（フル attention では左から右へ調べ、一致しなくなった時点で早期終了します）。フル attention と比べたときの潜在的な欠点は、一致がまったくない場合にトークン列全体を走査することになる点で、これは珍しくない状況です。無視できないオーバーヘッドを生む可能性がありますが、以下で述べるように full + swa の構成では問題になりません。
 
-### Case 2: sliding window attention + full attention models
+### ケース 2: スライディングウィンドウ attention + フル attention のモデル { #case-2-sliding-window-attention-full-attention-models }
 
-The first problem is how to find the cache hit prefix. We need to "intersect" the cache hits of global and sliding window attention layers by:
+第 1 の課題は、キャッシュヒットするプレフィックスをどう求めるかです。グローバル attention 層とスライディングウィンドウ attention 層のキャッシュヒットを、次の手順で「交差」させる必要があります。
 
-1. Get the longest cache hit for full attention (scanning from left to right)
-2. Get the longest cache hit for sliding window attention that is within that length. Implemented by checking cache hits from right to left starting from the cache hit length of full attention.
+1. フル attention について最長のキャッシュヒットを求める（左から右へ走査）。
+2. その長さの範囲内で、スライディングウィンドウ attention の最長のキャッシュヒットを求める。実装としては、フル attention のキャッシュヒット長を起点に右から左へキャッシュヒットを調べます。
 
-It can be ensured that the resulting cache hit of sliding window attention layers is also a cache hit of full attention layers. This is more efficient than finding all possible prefixes of each group and doing the intersection, because our approach can exit early if there is no cache hit.
+この手順により、得られたスライディングウィンドウ attention 層のキャッシュヒットが、フル attention 層のキャッシュヒットでもあることが保証されます。各グループのあり得るプレフィックスをすべて求めて共通部分を取るよりも効率的です。キャッシュヒットがない場合に早期終了できるためです。
 
-The algorithm applies to models with exactly two attention types full attention + X, where X can be an arbitrary efficient attention algorithm like sliding window, llama 4 local attention, and mamba. It doesn't support models without full attention layers, and models with more than 2 types of attention. This is enough for most hybrid models at the moment of writing this doc.
+このアルゴリズムは、attention の種別がちょうど 2 つ、すなわち「フル attention + X」であるモデルに適用できます。X は、スライディングウィンドウ、llama 4 のローカル attention、mamba など任意の効率的な attention アルゴリズムです。フル attention 層を持たないモデルや、3 種類以上の attention を持つモデルはサポートしません。このドキュメントの執筆時点では、ほとんどのハイブリッドモデルにとってこれで十分です。
 
-The second question is the cache eviction policy. For now, we use one LRU queue for all kv cache groups. The blocks are added to the LRU queue when freed, either because the request is finished or the block is out of the sliding window.
+第 2 の課題はキャッシュの追い出しポリシーです。現時点では、すべての KV キャッシュグループに対して 1 つの LRU キューを使います。block は解放されたとき（リクエストが完了した、あるいは block がスライディングウィンドウの外に出た）に LRU キューへ追加されます。
 
-### Case 3: mamba models
+### ケース 3: mamba モデル { #case-3-mamba-models }
 
-The prefix caching support of the mamba model is work in progress. Once implemented, models with mamba layer + full attention layer can be supported via the full attention + X algorithm in case 2.
+mamba モデルのプレフィックスキャッシュ対応は作業中です。実装されれば、mamba 層 + フル attention 層のモデルも、ケース 2 の「フル attention + X」アルゴリズムでサポートできるようになります。
 
-## Implementation
+## 実装 { #implementation }
 
-### Overview
+### 概要 { #overview }
 
-![Overview of Hybrid KV Cache Manager](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/hybrid_kv_cache_manager/overview.png)
+![ハイブリッド KV キャッシュマネージャの概要](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/hybrid_kv_cache_manager/overview.png)
 
-The `KVCacheManager` is organized into 3 layers:
+`KVCacheManager` は 3 つの層に分かれています。
 
-- **[`KVCacheManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_manager/#vllm.v1.core.kv_cache_manager.KVCacheManager)**: The interface between the scheduler and kv cache management system.
-- **[`KVCacheCoordinator`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_coordinator/#vllm.v1.core.kv_cache_coordinator.KVCacheCoordinator)**: coordinate per-group SingleTypeKVCacheManagers to generate the allocation result of a request. Depending on the model's configuration, one of these coordinators is chosen:
-    - **[`KVCacheCoordinatorNoPrefixCache`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_coordinator/#vllm.v1.core.kv_cache_coordinator.KVCacheCoordinatorNoPrefixCache)**: Used when prefix caching is disabled.
-    - **[`UnitaryKVCacheCoordinator`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_coordinator/#vllm.v1.core.kv_cache_coordinator.UnitaryKVCacheCoordinator)**: If only one KV cache group. The prefix caching logic is simplified as no intersection is needed.
-    - **[`HybridKVCacheCoordinator`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_coordinator/#vllm.v1.core.kv_cache_coordinator.HybridKVCacheCoordinator)**: Handles exactly two KV cache groups (must include one full‑attention group plus one other efficient‑attention group). Other cases are not implemented. You can disable prefix caching to use the KVCacheCoordinatorNoPrefixCache.
-- **[`SingleTypeKVCacheManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/single_type_kv_cache_manager/#vllm.v1.core.single_type_kv_cache_manager.SingleTypeKVCacheManager)**: Each instance manages allocation and prefix caching for one KV cache group, implementing the attention‑type–specific logic (e.g., full attention, sliding window, Mamba).
+- **[`KVCacheManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_manager/#vllm.v1.core.kv_cache_manager.KVCacheManager)**: スケジューラと KV キャッシュ管理システムのあいだのインターフェース。
+- **[`KVCacheCoordinator`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_coordinator/#vllm.v1.core.kv_cache_coordinator.KVCacheCoordinator)**: グループごとの SingleTypeKVCacheManager を調停し、リクエストの割り当て結果を生成します。モデルの構成に応じて、次のいずれかの coordinator が選ばれます。
+    - **[`KVCacheCoordinatorNoPrefixCache`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_coordinator/#vllm.v1.core.kv_cache_coordinator.KVCacheCoordinatorNoPrefixCache)**: プレフィックスキャッシュが無効な場合に使われます。
+    - **[`UnitaryKVCacheCoordinator`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_coordinator/#vllm.v1.core.kv_cache_coordinator.UnitaryKVCacheCoordinator)**: KV キャッシュグループが 1 つだけの場合に使われます。共通部分を取る必要がないため、プレフィックスキャッシュのロジックが簡略化されます。
+    - **[`HybridKVCacheCoordinator`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/kv_cache_coordinator/#vllm.v1.core.kv_cache_coordinator.HybridKVCacheCoordinator)**: ちょうど 2 つの KV キャッシュグループを扱います（フル attention のグループ 1 つと、それ以外の効率的な attention のグループ 1 つを含む必要があります）。それ以外のケースは未実装です。プレフィックスキャッシュを無効にすれば KVCacheCoordinatorNoPrefixCache を使えます。
+- **[`SingleTypeKVCacheManager`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/core/single_type_kv_cache_manager/#vllm.v1.core.single_type_kv_cache_manager.SingleTypeKVCacheManager)**: 各インスタンスが 1 つの KV キャッシュグループについて割り当てとプレフィックスキャッシュを管理し、attention 種別ごとのロジック（フル attention、スライディングウィンドウ、Mamba など）を実装します。
 
-The blue box in the above figure shows the case with 10 full attention layers and 20 sliding window attention layers, thus:
+上図の青い枠は、フル attention 層 10 個とスライディングウィンドウ attention 層 20 個の場合を示しています。したがって次のようになります。
 
-- use `HybridKVCacheCoordinator`
-- use 1 `FullAttentionManager` and 2 `SlidingWindowManager` for the 3 `KVCacheGroup`s.
+- `HybridKVCacheCoordinator` を使用
+- 3 つの `KVCacheGroup` に対して `FullAttentionManager` を 1 つ、`SlidingWindowManager` を 2 つ使用
 
-### Memory Layout
+### メモリレイアウト { #memory-layout }
 
-For a model with n `KVCacheGroup`s, each with m layers, we allocate m buffers. Each buffer is shared by n layers, one from each group.
+n 個の `KVCacheGroup`（各グループが m 層）を持つモデルでは、m 個のバッファを確保します。各バッファは、各グループから 1 層ずつ、計 n 層で共有されます。
 
-The following figure is for a model with 10 full attention layers (full.0 - full.9) and 20 sliding window attention layers (sw.0-sw.19). It follows "case 2" in "Allocation" section and is divided into 3 groups:
+次の図は、フル attention 層 10 個（full.0 〜 full.9）とスライディングウィンドウ attention 層 20 個（sw.0 〜 sw.19）を持つモデルの例です。「メモリの割り当て」節の「ケース 2」に従って、3 つのグループに分割されています。
 
-- Group 0: 10 full attention layers (full.0 - full.9)
-- Group 1: 10 sliding window attention layers (sw.0 - sw.9)
-- Group 2: 10 sliding window attention layers (sw.10 - sw.19)
+- グループ 0: フル attention 層 10 個（full.0 〜 full.9）
+- グループ 1: スライディングウィンドウ attention 層 10 個（sw.0 〜 sw.9）
+- グループ 2: スライディングウィンドウ attention 層 10 個（sw.10 〜 sw.19）
 
-And for a request, we allocate 11 blocks with `block_id` 0-6 to group 0, 7-8 to group 1, and 9-10 to group 2.
+そしてあるリクエストに対して、`block_id` 0〜6 をグループ 0、7〜8 をグループ 1、9〜10 をグループ 2 に割り当て、計 11 個の block を確保します。
 
-With such an example, the physical memory is divided into 10 buffers (`KVCacheTensor` 0 - `KVCacheTensor` 9). Each buffer is shared by 3 layers (e.g., `KVCacheTensor` 0 is shared by full.0 from group 0, sw.0 from group 1, and sw.10 from group 2) and is divided into pieces with size `block_size * kv_hidden_size`. The KV cache of these 3 attention layers are saved to different pieces of the buffer based on the allocated `block_ids`:
+この例では、物理メモリは 10 個のバッファ（`KVCacheTensor` 0 〜 `KVCacheTensor` 9）に分割されます。各バッファは 3 つの層で共有され（たとえば `KVCacheTensor` 0 は、グループ 0 の full.0、グループ 1 の sw.0、グループ 2 の sw.10 で共有されます）、`block_size * kv_hidden_size` のサイズの区画に分割されます。これら 3 つの attention 層の KV キャッシュは、割り当てられた `block_ids` にもとづいてバッファの異なる区画に保存されます。
 
-![Example Memory Layout](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/hybrid_kv_cache_manager/memory_layout.png)
+![メモリレイアウトの例](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/hybrid_kv_cache_manager/memory_layout.png)
 
 !!! note
-    One logic "block" is mapped to 10 pieces in the 10 buffers of the physical memory.
+    論理的な 1 つの「block」は、物理メモリ上の 10 個のバッファ内の 10 個の区画に対応づけられます。

@@ -638,8 +638,10 @@
       "upstream_sha": "a1d49d8e66ece0fe"
     },
     "design/hybrid_kv_cache_manager.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "751fd1ef3cf5b414",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "751fd1ef3cf5b414"
     },
     "design/io_processor_plugins.md": {
@@ -681,8 +683,10 @@
       "upstream_sha": "1ef00c68fcc82b5d"
     },
     "design/moe_kernel_features.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "16431be4e40e59e5",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "16431be4e40e59e5"
     },
     "design/multiprocessing.md": {

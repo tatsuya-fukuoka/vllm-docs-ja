@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **200 ページ**を翻訳済みです（88.5%）。
+全 226 ページ中 **202 ページ**を翻訳済みです（89.4%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -18,7 +18,7 @@
 | 設定 | 7 | 0 | 0 | 7 |
 | 開発者ガイド | 15 | 0 | 1 | 16 |
 | デプロイ | 35 | 0 | 0 | 35 |
-| 設計ドキュメント | 18 | 0 | 11 | 29 |
+| 設計ドキュメント | 20 | 0 | 9 | 29 |
 | 機能 | 46 | 0 | 6 | 52 |
 | はじめに | 11 | 0 | 2 | 13 |
 | ガバナンス | 3 | 0 | 0 | 3 |
@@ -26,7 +26,7 @@
 | 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **200** | **0** | **26** | **226** |
+| **合計** | **202** | **0** | **24** | **226** |
 
 ## 翻訳済みのページ
 
@@ -116,10 +116,12 @@
 - `design/debug_vllm_compile.md`
 - `design/endpoint_plugins.md`
 - `design/huggingface_integration.md`
+- `design/hybrid_kv_cache_manager.md`
 - `design/io_processor_plugins.md`
 - `design/lora_resolver_plugins.md`
 - `design/mm_processing.md`
 - `design/model_runner_v2.md`
+- `design/moe_kernel_features.md`
 - `design/multiprocessing.md`
 - `design/nixl_kv_cache_lease.md`
 - `design/nixl_kv_push_connector.md`
