@@ -1,73 +1,73 @@
-# Expert Parallel Deployment
+# エキスパート並列のデプロイ { #expert-parallel-deployment }
 
-vLLM supports Expert Parallelism (EP), which allows experts in Mixture-of-Experts (MoE) models to be deployed on separate GPUs, increasing locality, efficiency, and throughput overall.
+vLLM はエキスパート並列（Expert Parallelism、EP）に対応しています。EP を使うと、Mixture-of-Experts（MoE）モデルのエキスパートを別々の GPU に配置でき、局所性・効率・全体のスループットが向上します。
 
-EP is typically coupled with Data Parallelism (DP). While DP can be used independently of EP, EP is more efficient when used in conjunction with DP. You can read more about data parallelism [here](data_parallel_deployment.md).
+EP は通常、データ並列（Data Parallelism、DP）と組み合わせて使われます。DP は EP なしでも使えますが、EP は DP と併用するほうが効率的です。データ並列については[こちら](data_parallel_deployment.md)を参照してください。
 
-## Prerequisites
+## 前提条件 { #prerequisites }
 
-Before using EP, you need to install the necessary dependencies. We are actively working on making this easier in the future:
+EP を使う前に、必要な依存関係をインストールする必要があります。これをより簡単にするための作業が進行中です。
 
-1. **Install DeepEP**: Set up host environment following vLLM's guide for EP kernels [here](../../tools/ep_kernels).
-2. **Install DeepGEMM library**: Follow the [official instructions](https://github.com/deepseek-ai/DeepGEMM#installation).
-3. **For disaggregated serving**: Install `gdrcopy` by running the [`install_gdrcopy.sh`](../../tools/install_gdrcopy.sh) script (e.g., `install_gdrcopy.sh "${GDRCOPY_OS_VERSION}" "12.8" "x64"`). You can find available OS versions [here](https://developer.download.nvidia.com/compute/redist/gdrcopy/CUDA%2012.8/).
+1. **DeepEP のインストール**: EP カーネル向けの vLLM のガイド（[こちら](../../tools/ep_kernels)）に従ってホスト環境をセットアップします。
+2. **DeepGEMM ライブラリのインストール**: [公式の手順](https://github.com/deepseek-ai/DeepGEMM#installation)に従います。
+3. **分離サービングを使う場合**: [`install_gdrcopy.sh`](../../tools/install_gdrcopy.sh) スクリプトを実行して `gdrcopy` をインストールします（例: `install_gdrcopy.sh "${GDRCOPY_OS_VERSION}" "12.8" "x64"`）。利用可能な OS バージョンは[こちら](https://developer.download.nvidia.com/compute/redist/gdrcopy/CUDA%2012.8/)で確認できます。
 
-### Backend Selection Guide
+### バックエンドの選び方 { #backend-selection-guide }
 
-vLLM provides multiple communication backends for EP. Use `--all2all-backend` to select one:
+vLLM は EP 向けに複数の通信バックエンドを提供しています。`--all2all-backend` で選択します。
 
-| Backend | Use Case | Features | Best For |
+| バックエンド | 用途 | 特徴 | 適した場面 |
 | ------- | -------- | -------- | -------- |
-| `allgather_reducescatter` | Default backend | Standard all2all using allgather/reducescatter primitives | General purpose, works with any EP+DP configuration |
-| `deepep_high_throughput` | Multi-node prefill | Grouped GEMM with continuous layout, optimized for prefill | Prefill-dominated workloads, high-throughput scenarios |
-| `deepep_low_latency` | Multi-node decode | CUDA graph support, masked layout, optimized for decode | Decode-dominated workloads, low-latency scenarios |
-| `flashinfer_nvlink_one_sided` | MNNVL systems | FlashInfer's one-sided A2A strategy for multi-node NVLink | High-throughput workloads |
-| `flashinfer_nvlink_two_sided` | MNNVL systems | FlashInfer's two-sided A2A strategy for multi-node NVLink | Systems with NVLink across nodes |
+| `allgather_reducescatter` | 既定のバックエンド | allgather / reducescatter プリミティブを使う標準的な all2all | 汎用。任意の EP+DP 構成で動作します |
+| `deepep_high_throughput` | 複数ノードでのプレフィル | 連続レイアウトのグループ化 GEMM。プレフィル向けに最適化 | プレフィルが支配的なワークロード、高スループットが求められる場面 |
+| `deepep_low_latency` | 複数ノードでのデコード | CUDA graph 対応、マスク付きレイアウト。デコード向けに最適化 | デコードが支配的なワークロード、低レイテンシが求められる場面 |
+| `flashinfer_nvlink_one_sided` | MNNVL システム | 複数ノード NVLink 向けの FlashInfer の片側 A2A 戦略 | 高スループットのワークロード |
+| `flashinfer_nvlink_two_sided` | MNNVL システム | 複数ノード NVLink 向けの FlashInfer の両側 A2A 戦略 | ノード間 NVLink を備えたシステム |
 
-## Single Node Deployment
+## 単一ノードでのデプロイ { #single-node-deployment }
 
 !!! warning
-    EP is an experimental feature. Argument names and default values may change in the future.
+    EP は実験的機能です。引数名や既定値は今後変わる可能性があります。
 
-### Configuration
+### 設定 { #configuration }
 
-Enable EP by setting the `--enable-expert-parallel` flag. The EP size is automatically calculated as:
+`--enable-expert-parallel` フラグを指定して EP を有効にします。EP のサイズは次のように自動的に計算されます。
 
 ```text
 EP_SIZE = TP_SIZE × DP_SIZE
 ```
 
-Where:
+各項目の意味は次のとおりです。
 
-- `TP_SIZE`: Tensor parallel size
-- `DP_SIZE`: Data parallel size
-- `EP_SIZE`: Expert parallel size (computed automatically)
+- `TP_SIZE`: テンソル並列のサイズ
+- `DP_SIZE`: データ並列のサイズ
+- `EP_SIZE`: エキスパート並列のサイズ（自動計算されます）
 
-### Layer Behavior with EP Enabled
+### EP を有効にしたときの層ごとの挙動 { #layer-behavior-with-ep-enabled }
 
-When EP is enabled, different layers in MoE models behave differently:
+EP を有効にすると、MoE モデル内の層は種別ごとに異なる振る舞いをします。
 
-| Layer Type | Behavior | Parallelism Used |
+| 層の種別 | 挙動 | 使われる並列化 |
 | ---------- | -------- | ---------------- |
-| **Expert (MoE) Layers** | Sharded across all EP ranks | Expert Parallel (EP) of size `TP × DP` |
-| **Attention Layers** | Behavior depends on TP size | See below |
+| **エキスパート（MoE）層** | すべての EP ランクに分割配置される | サイズ `TP × DP` のエキスパート並列（EP） |
+| **Attention 層** | TP のサイズによって変わる | 下記参照 |
 
-**Attention layer parallelism:**
+**Attention 層の並列化:**
 
-- **When `TP = 1`**: Attention weights are **replicated** across all DP ranks (data parallelism)
-- **When `TP > 1`**: Attention weights are **sharded** using tensor parallelism across TP ranks within each DP group
+- **`TP = 1` の場合**: attention の重みはすべての DP ランクに**複製**されます（データ並列）
+- **`TP > 1` の場合**: attention の重みは、各 DP グループ内の TP ランクにわたってテンソル並列で**分割**されます
 
-For example, with `TP=2, DP=4` (8 GPUs total):
+たとえば `TP=2, DP=4`（合計 8 GPU）の場合は次のようになります。
 
-- Expert layers form an EP group of size 8, with experts distributed across all GPUs
-- Attention layers use TP=2 within each of the 4 DP groups
+- エキスパート層はサイズ 8 の EP グループを構成し、エキスパートが全 GPU に分散配置されます
+- attention 層は 4 つの DP グループそれぞれの内部で TP=2 を使います
 
-!!! note "Key Difference from Data Parallel Deployment"
-    Without `--enable-expert-parallel`, MoE layers would use tensor parallelism (forming a TP group of size `TP × DP`), similar to dense models. With EP enabled, expert layers switch to expert parallelism, which can provide better efficiency and locality for MoE models.
+!!! note "データ並列デプロイとの主な違い"
+    `--enable-expert-parallel` を指定しない場合、MoE 層は dense モデルと同様にテンソル並列（サイズ `TP × DP` の TP グループ）を使います。EP を有効にすると、エキスパート層はエキスパート並列に切り替わり、MoE モデルにとってより高い効率と局所性が得られます。
 
-### Example Command
+### コマンド例 { #example-command }
 
-The following command serves a `DeepSeek-V3-0324` model with 1-way tensor parallel, 8-way (attention) data parallel, and 8-way expert parallel. The attention weights are replicated across all GPUs, while the expert weights are split across GPUs. It will work on a H200 (or H20) node with 8 GPUs. For H100, you can try to serve a smaller model or refer to the multi-node deployment section.
+次のコマンドは、テンソル並列 1、（attention の）データ並列 8、エキスパート並列 8 で `DeepSeek-V3-0324` モデルをサービングします。attention の重みは全 GPU に複製され、エキスパートの重みは GPU 間で分割されます。GPU 8 基の H200（または H20）ノードで動作します。H100 の場合は、より小さいモデルを試すか、複数ノードでのデプロイの節を参照してください。
 
 ```bash
 # Single node EP deployment
@@ -77,19 +77,19 @@ vllm serve deepseek-ai/DeepSeek-V3-0324 \
     --enable-expert-parallel         # Enable expert parallelism
 ```
 
-## Multi-Node Deployment
+## 複数ノードでのデプロイ { #multi-node-deployment }
 
-For multi-node deployment, use the DeepEP communication kernel with one of two modes (see [Backend Selection Guide](#backend-selection-guide) above).
+複数ノードでのデプロイでは、DeepEP の通信カーネルを 2 つのモードのいずれかで使います（上記の[バックエンドの選び方](#backend-selection-guide)を参照）。
 
-### Deployment Steps
+### デプロイ手順 { #deployment-steps }
 
-1. **Run one command per node** - Each node requires its own launch command
-2. **Configure networking** - Ensure proper IP addresses and port configurations
-3. **Set node roles** - First node handles requests, additional nodes run in headless mode
+1. **ノードごとにコマンドを 1 つ実行する** - 各ノードにそれぞれ起動コマンドが必要です
+2. **ネットワークを設定する** - IP アドレスとポートの設定が正しいことを確認します
+3. **ノードの役割を決める** - 最初のノードがリクエストを処理し、残りのノードは headless モードで動作します
 
-### Example: 2-Node Deployment
+### 例: 2 ノード構成のデプロイ { #example-2-node-deployment }
 
-The following example deploys `DeepSeek-V3-0324` across 2 nodes using `deepep_low_latency` mode:
+次の例では、`deepep_low_latency` モードを使って `DeepSeek-V3-0324` を 2 ノードにデプロイします。
 
 ```bash
 # Node 1 (Primary - handles incoming requests)
@@ -116,46 +116,46 @@ vllm serve deepseek-ai/DeepSeek-V3-0324 \
     --headless                               # No API server, worker only
 ```
 
-### Key Configuration Notes
+### 設定上の重要な注意点 { #key-configuration-notes }
 
-- **Headless mode**: Secondary nodes run with `--headless` flag, meaning all client requests are handled by the primary node
-- **Rank calculation**: `--data-parallel-start-rank` should equal the cumulative local DP size of previous nodes
-- **Load scaling**: Adjust `--api-server-count` on the primary node to handle higher request loads
+- **headless モード**: 副ノードは `--headless` フラグ付きで動作します。つまり、クライアントからのリクエストはすべて主ノードが処理します
+- **ランクの計算**: `--data-parallel-start-rank` には、それ以前のノードのローカル DP サイズの累計を指定します
+- **負荷に応じたスケーリング**: リクエスト負荷が高い場合は、主ノードの `--api-server-count` を調整します
 
-### Network Configuration
+### ネットワークの設定 { #network-configuration }
 
-!!! important "InfiniBand Clusters"
-    On InfiniBand networked clusters, set this environment variable to prevent initialization hangs:
+!!! important "InfiniBand クラスタ"
+    InfiniBand で接続されたクラスタでは、初期化時のハングを防ぐために次の環境変数を設定してください。
     ```bash
     export GLOO_SOCKET_IFNAME=eth0
     ```
-    This ensures torch distributed group discovery uses Ethernet instead of InfiniBand for initial setup.
+    これにより、torch distributed のグループ探索が初期セットアップ時に InfiniBand ではなく Ethernet を使うようになります。
 
-## Expert Parallel Load Balancer (EPLB)
+## エキスパート並列ロードバランサ（EPLB） { #expert-parallel-load-balancer-eplb }
 
-While MoE models are typically trained so that each expert receives a similar number of tokens, in practice the distribution of tokens across experts can be highly skewed. vLLM provides an Expert Parallel Load Balancer (EPLB) to redistribute expert mappings across EP ranks, evening the load across experts.
+MoE モデルは通常、各エキスパートが同程度の数のトークンを受け取るように学習されますが、実際にはエキスパート間のトークン分布が大きく偏ることがあります。vLLM は、EP ランク間でエキスパートの割り当てを再配置し、エキスパート間の負荷を均す仕組みとして、エキスパート並列ロードバランサ（EPLB）を提供しています。
 
-### Configuration
+### 設定 { #configuration_1 }
 
-Enable EPLB with the `--enable-eplb` flag.
+`--enable-eplb` フラグで EPLB を有効にします。
 
-When enabled, vLLM collects load statistics with every forward pass and periodically rebalances expert distribution.
+有効にすると、vLLM は forward pass のたびに負荷統計を収集し、定期的にエキスパートの配置をリバランスします。
 
-### EPLB Parameters
+### EPLB のパラメータ { #eplb-parameters }
 
-Configure EPLB with the `--eplb-config` argument, which accepts a JSON string. The available keys and their descriptions are:
+EPLB は `--eplb-config` 引数（JSON 文字列を受け取ります）で設定します。指定できるキーとその説明は次のとおりです。
 
-| Parameter | Description | Default |
+| パラメータ | 説明 | 既定値 |
 | --------- | ----------- | ------- |
-| `window_size` | Number of engine steps to track for rebalancing decisions | 1000 |
-| `step_interval` | Frequency of rebalancing (every N engine steps) | 3000 |
-| `log_balancedness` | Log balancedness metrics (avg tokens per expert ÷ max tokens per expert) | `false` |
-| `num_redundant_experts` | Additional global experts per EP rank beyond equal distribution | `0` |
-| `use_async` | Use non-blocking EPLB for reduced latency overhead | `true` |
-| `policy` | The policy type for expert parallel load balancing | `"default"` |
-| `communicator` | Backend for expert weight transfers: `"torch_nccl"`, `"torch_gloo"`, `"pynccl"`, `"nixl"`,  or `null` (auto) | `null` |
+| `window_size` | リバランスの判断に使う、追跡対象のエンジンステップ数 | 1000 |
+| `step_interval` | リバランスの頻度（N エンジンステップごと） | 3000 |
+| `log_balancedness` | 均衡度のメトリクス（エキスパートあたり平均トークン数 ÷ エキスパートあたり最大トークン数）をログ出力するか | `false` |
+| `num_redundant_experts` | 均等配分に加えて、EP ランクごとに追加するグローバルエキスパートの数 | `0` |
+| `use_async` | レイテンシのオーバーヘッドを減らすため、ノンブロッキングの EPLB を使うか | `true` |
+| `policy` | エキスパート並列のロードバランシングに使うポリシーの種類 | `"default"` |
+| `communicator` | エキスパートの重み転送に使うバックエンド: `"torch_nccl"`、`"torch_gloo"`、`"pynccl"`、`"nixl"`、または `null`（自動） | `null` |
 
-For example:
+例:
 
 ```bash
 vllm serve Qwen/Qwen3-30B-A3B \
@@ -163,7 +163,7 @@ vllm serve Qwen/Qwen3-30B-A3B \
   --eplb-config '{"window_size":1000,"step_interval":3000,"num_redundant_experts":2,"log_balancedness":true}'
 ```
 
-??? tip "Prefer individual arguments instead of JSON?"
+??? tip "JSON ではなく個別の引数で指定したい場合"
 
     ```bash
     vllm serve Qwen/Qwen3-30B-A3B \
@@ -174,21 +174,21 @@ vllm serve Qwen/Qwen3-30B-A3B \
             --eplb-config.log_balancedness true
     ```
 
-### Expert Distribution Formula
+### エキスパート配分の計算式 { #expert-distribution-formula }
 
-- **Default**: Each EP rank has `NUM_TOTAL_EXPERTS ÷ NUM_EP_RANKS` experts
-- **With redundancy**: Each EP rank has `(NUM_TOTAL_EXPERTS + NUM_REDUNDANT_EXPERTS) ÷ NUM_EP_RANKS` experts
+- **既定**: 各 EP ランクは `NUM_TOTAL_EXPERTS ÷ NUM_EP_RANKS` 個のエキスパートを持ちます
+- **冗長エキスパートあり**: 各 EP ランクは `(NUM_TOTAL_EXPERTS + NUM_REDUNDANT_EXPERTS) ÷ NUM_EP_RANKS` 個のエキスパートを持ちます
 
-### Memory Footprint Overhead
+### メモリ使用量のオーバーヘッド { #memory-footprint-overhead }
 
-EPLB uses redundant experts that need to fit in GPU memory. This means that EPLB may not be a good fit for memory constrained environments or when KV cache space is at a premium.
+EPLB は冗長エキスパートを使うため、その分が GPU メモリに収まる必要があります。したがって、メモリに制約のある環境や KV キャッシュ領域が逼迫している場合には、EPLB は適さないことがあります。
 
-This overhead equals `NUM_MOE_LAYERS * BYTES_PER_EXPERT * (NUM_TOTAL_EXPERTS + NUM_REDUNDANT_EXPERTS) ÷ NUM_EP_RANKS`.
-For DeepSeekV3, this is approximately `2.4 GB` for one redundant expert per EP rank.
+このオーバーヘッドは `NUM_MOE_LAYERS * BYTES_PER_EXPERT * (NUM_TOTAL_EXPERTS + NUM_REDUNDANT_EXPERTS) ÷ NUM_EP_RANKS` に等しくなります。
+DeepSeekV3 では、EP ランクあたり冗長エキスパート 1 つで約 `2.4 GB` になります。
 
-### Example Command
+### コマンド例 { #example-command_1 }
 
-Single node deployment with EPLB enabled:
+EPLB を有効にした単一ノードでのデプロイ:
 
 ```bash
 # Single node with EPLB load balancing
@@ -200,45 +200,45 @@ vllm serve deepseek-ai/DeepSeek-V3-0324 \
     --eplb-config '{"window_size":1000,"step_interval":3000,"num_redundant_experts":2,"log_balancedness":true}'
 ```
 
-For multi-node deployment, add these EPLB flags to each node's command. We recommend setting `--eplb-config '{"num_redundant_experts":32}'` to 32 in large scale use cases so the most popular experts are always available.
+複数ノードでのデプロイでは、これらの EPLB フラグを各ノードのコマンドに追加します。大規模な利用では、人気の高いエキスパートが常に利用可能になるよう `--eplb-config '{"num_redundant_experts":32}'` のように 32 を設定することを推奨します。
 
-## Advanced Configuration
+## 高度な設定 { #advanced-configuration }
 
-### Performance Optimization
+### 性能の最適化 { #performance-optimization }
 
-- **DeepEP kernels**: The `high_throughput` and `low_latency` kernels are optimized for disaggregated serving and may show poor performance for mixed workloads
-- **Dual Batch Overlap**: Use `--enable-dbo` to overlap all-to-all communication with compute. See [Dual Batch Overlap](../design/dbo.md) for more details.
-- **Async scheduling (experimental)**: Try `--async-scheduling` to overlap scheduling with model execution.
+- **DeepEP カーネル**: `high_throughput` と `low_latency` のカーネルは分離サービング向けに最適化されており、混在ワークロードでは性能が出ない場合があります
+- **Dual Batch Overlap**: `--enable-dbo` を使うと all-to-all 通信と計算をオーバーラップできます。詳細は [Dual Batch Overlap](../design/dbo.md) を参照してください。
+- **非同期スケジューリング（実験的）**: `--async-scheduling` を試すと、スケジューリングとモデル実行をオーバーラップできます。
 
-### Troubleshooting
+### トラブルシューティング { #troubleshooting }
 
-- **`non-zero status: 7 cannot register cq buf`**: When using Infiniband/RoCE, make sure host VM and pods show `ulimit -l` "unlimited".
-- **`init failed for transport: IBGDA`**: The InfiniBand GDA kernel modules are missing. Run `tools/ep_kernels/configure_system_drivers.sh` on each GPU node and reboot. Also fixes error `NVSHMEM API called before NVSHMEM initialization has completed`.
-- **NVSHMEM peer disconnect**: Usually a networking misconfiguration. If deploying via Kubernetes, verify that every pod runs with `hostNetwork: true`, `securityContext.privileged: true` to access Infiniband.
+- **`non-zero status: 7 cannot register cq buf`**: Infiniband / RoCE を使う場合、ホスト VM と Pod の両方で `ulimit -l` が "unlimited" になっていることを確認してください。
+- **`init failed for transport: IBGDA`**: InfiniBand GDA のカーネルモジュールが不足しています。各 GPU ノードで `tools/ep_kernels/configure_system_drivers.sh` を実行し、再起動してください。`NVSHMEM API called before NVSHMEM initialization has completed` というエラーもこれで解消します。
+- **NVSHMEM の peer disconnect**: 通常はネットワーク設定の誤りです。Kubernetes でデプロイしている場合は、Infiniband にアクセスできるよう、すべての Pod が `hostNetwork: true`、`securityContext.privileged: true` で動作していることを確認してください。
 
-### Benchmarking
+### ベンチマーク { #benchmarking }
 
-- Use simulator flags `VLLM_MOE_ROUTING_SIMULATION_STRATEGY=uniform_random` and `VLLM_RANDOMIZE_DP_DUMMY_INPUTS=1` so token routing is balanced across EP ranks.
+- シミュレータ用のフラグ `VLLM_MOE_ROUTING_SIMULATION_STRATEGY=uniform_random` と `VLLM_RANDOMIZE_DP_DUMMY_INPUTS=1` を使うと、トークンのルーティングが EP ランク間で均等になります。
 
-## Disaggregated Serving (Prefill/Decode Split)
+## 分離サービング（プレフィル / デコードの分離） { #disaggregated-serving-prefilldecode-split }
 
-For production deployments requiring strict SLA guarantees for time-to-first-token and inter-token latency, disaggregated serving allows independent scaling of prefill and decode operations.
+TTFT（最初のトークンまでの時間）やトークン間レイテンシに厳密な SLA 保証が求められる本番デプロイでは、分離サービングによってプレフィルとデコードを独立にスケールできます。
 
-### Architecture Overview
+### アーキテクチャの概要 { #architecture-overview }
 
-- **Prefill Instance**: Uses `deepep_high_throughput` backend for optimal prefill performance
-- **Decode Instance**: Uses `deepep_low_latency` backend for minimal decode latency  
-- **KV Cache Transfer**: Connects instances via NIXL or other KV connectors
+- **プレフィルインスタンス**: 最適なプレフィル性能のために `deepep_high_throughput` バックエンドを使います
+- **デコードインスタンス**: デコードレイテンシを最小化するために `deepep_low_latency` バックエンドを使います
+- **KV キャッシュの転送**: NIXL やその他の KV コネクタでインスタンス同士を接続します
 
-### Setup Steps
+### セットアップ手順 { #setup-steps }
 
-1. **Install gdrcopy/ucx/nixl**: For maximum performance, run the [install_gdrcopy.sh](../../tools/install_gdrcopy.sh) script to install `gdrcopy` (e.g., `install_gdrcopy.sh "${GDRCOPY_OS_VERSION}" "12.8" "x64"`). You can find available OS versions [here](https://developer.download.nvidia.com/compute/redist/gdrcopy/CUDA%2012.8/). If `gdrcopy` is not installed, things will still work with a plain `pip install nixl`, just with lower performance. `nixl` and `ucx` are installed as dependencies via pip. For non-cuda platform to install nixl with non-cuda UCX build, run the [install_nixl_from_source_ubuntu.py](../../tools/install_nixl_from_source_ubuntu.py) script.
+1. **gdrcopy / ucx / nixl のインストール**: 最大限の性能を得るには、[install_gdrcopy.sh](../../tools/install_gdrcopy.sh) スクリプトを実行して `gdrcopy` をインストールします（例: `install_gdrcopy.sh "${GDRCOPY_OS_VERSION}" "12.8" "x64"`）。利用可能な OS バージョンは[こちら](https://developer.download.nvidia.com/compute/redist/gdrcopy/CUDA%2012.8/)で確認できます。`gdrcopy` をインストールしなくても、単に `pip install nixl` するだけで動作しますが、性能は低下します。`nixl` と `ucx` は pip の依存関係としてインストールされます。CUDA 以外のプラットフォームで、CUDA を使わない UCX ビルドとともに nixl をインストールするには、[install_nixl_from_source_ubuntu.py](../../tools/install_nixl_from_source_ubuntu.py) スクリプトを実行します。
 
-2. **Configure Both Instances**: Add this flag to both prefill and decode instances `--kv-transfer-config '{"kv_connector":"NixlConnector","kv_role":"kv_both"}`. Noted, you may also specify one or multiple NIXL_Backend. Such as: `--kv-transfer-config '{"kv_connector":"NixlConnector","kv_role":"kv_both", "kv_connector_extra_config":{"backends":["UCX", "GDS"]}}'`
+2. **両方のインスタンスの設定**: プレフィル側とデコード側の両方に `--kv-transfer-config '{"kv_connector":"NixlConnector","kv_role":"kv_both"}` を追加します。なお、NIXL_Backend を 1 つ以上指定することもできます。例: `--kv-transfer-config '{"kv_connector":"NixlConnector","kv_role":"kv_both", "kv_connector_extra_config":{"backends":["UCX", "GDS"]}}'`
 
-3. **Client Orchestration**: Use the client-side script below to coordinate prefill/decode operations. We are actively working on routing solutions.
+3. **クライアント側のオーケストレーション**: 下記のクライアント側スクリプトを使ってプレフィル / デコードの処理を連携させます。ルーティングの仕組みについては現在も開発を進めています。
 
-### Client Orchestration Example
+### クライアント側オーケストレーションの例 { #client-orchestration-example }
 
 ```python
 from openai import OpenAI
@@ -311,8 +311,8 @@ except Exception as e:
     print("Check that both prefill and decode instances are running and accessible")
 ```
 
-### Benchmarking
+### ベンチマーク { #benchmarking_1 }
 
-- To simulate the decode deployment of disaggregated serving, pass `--kv-transfer-config '{"kv_connector":"DecodeBenchConnector","kv_role":"kv_both"}'` to the `vllm serve` invocation. The connector populates KV cache with random values so decode can be profiled in isolation.
+- 分離サービングにおけるデコード側のデプロイをシミュレートするには、`vllm serve` の呼び出しに `--kv-transfer-config '{"kv_connector":"DecodeBenchConnector","kv_role":"kv_both"}'` を渡します。このコネクタは KV キャッシュをランダムな値で埋めるため、デコードを単体でプロファイルできます。
 
-- **CUDAGraph capture**: Use `--compilation_config '{"cudagraph_mode": "FULL_DECODE_ONLY"}'` to enable CUDA graph capture for decode only and save KV cache.
+- **CUDAGraph のキャプチャ**: `--compilation_config '{"cudagraph_mode": "FULL_DECODE_ONLY"}'` を使うと、デコードのみ CUDA graph をキャプチャし、KV キャッシュを節約できます。

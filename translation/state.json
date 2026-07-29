@@ -1339,8 +1339,10 @@
       "upstream_sha": "256bdc415e859481"
     },
     "serving/expert_parallel_deployment.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "35421111c5074d9c",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "35421111c5074d9c"
     },
     "serving/integrations/claude_code.md": {
