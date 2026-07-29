@@ -574,8 +574,10 @@
       "upstream_sha": "d710d381f4b3e024"
     },
     "design/attention_backends.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "605e97451fea181e",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "605e97451fea181e"
     },
     "design/cuda_graphs.md": {
