@@ -1123,8 +1123,10 @@
       "upstream_sha": "0720d1d9b94f77b0"
     },
     "features/tool_calling.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "caa6db0c295aabbf",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "caa6db0c295aabbf"
     },
     "getting_started/installation/README.md": {

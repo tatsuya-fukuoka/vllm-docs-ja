@@ -1,10 +1,10 @@
-# Tool Calling
+# ツール呼び出し { #tool-calling }
 
-vLLM currently supports named function calling, as well as the `auto`, `required` (as of `vllm>=0.8.3`), and `none` options for the `tool_choice` field in the chat completion API.
+vLLM は現在、chat completion API の `tool_choice` フィールドについて、名前付き関数呼び出しに加え、`auto`、`required`（`vllm>=0.8.3` 以降）、`none` のオプションをサポートしています。
 
-## Quickstart
+## クイックスタート { #quickstart }
 
-Start the server with tool calling enabled. This example uses Meta's Llama 3.1 8B model, so we need to use the `llama3_json` tool calling chat template from the vLLM examples directory:
+ツール呼び出しを有効にしてサーバーを起動します。この例では Meta の Llama 3.1 8B モデルを使うため、vLLM の examples ディレクトリにある `llama3_json` 用のツール呼び出しチャットテンプレートを指定します。
 
 ```bash
 vllm serve meta-llama/Llama-3.1-8B-Instruct \
@@ -13,7 +13,7 @@ vllm serve meta-llama/Llama-3.1-8B-Instruct \
     --chat-template examples/tool_chat_template_llama3.1_json.jinja
 ```
 
-Next, make a request that triggers the model to use the available tools:
+次に、モデルが利用可能なツールを使うようなリクエストを送ります。
 
 ??? code
 
@@ -58,7 +58,7 @@ Next, make a request that triggers the model to use the available tools:
     print(f"Result: {tool_functions[tool_call.name](**json.loads(tool_call.arguments))}")
     ```
 
-Example output:
+出力例:
 
 ```text
 Function called: get_weather
@@ -66,453 +66,436 @@ Arguments: {"location": "San Francisco, CA", "unit": "fahrenheit"}
 Result: Getting the weather for San Francisco, CA in fahrenheit...
 ```
 
-This example demonstrates:
+この例では次を示しています。
 
-* Setting up the server with tool calling enabled
-* Defining an actual function to handle tool calls
-* Making a request with `tool_choice="auto"`
-* Handling the structured response and executing the corresponding function
+* ツール呼び出しを有効にしたサーバーのセットアップ
+* ツール呼び出しを処理する実際の関数の定義
+* `tool_choice="auto"` を指定したリクエストの送信
+* 構造化されたレスポンスの処理と、対応する関数の実行
 
-You can also specify a particular function using named function calling by setting `tool_choice={"type": "function", "function": {"name": "get_weather"}}`. Note that this will use the structured outputs backend - so the first time this is used, there will be several seconds of latency (or more) as the FSM is compiled for the first time before it is cached for subsequent requests.
+`tool_choice={"type": "function", "function": {"name": "get_weather"}}` を設定すれば、名前付き関数呼び出しで特定の関数を指定することもできます。この場合は構造化出力のバックエンドが使われるため、初回の利用時には FSM のコンパイルに数秒（あるいはそれ以上）のレイテンシが生じます。以降のリクエストではキャッシュされます。
 
-Remember that it's the caller's responsibility to:
+次の点は呼び出し側の責任であることに注意してください。
 
-1. Define appropriate tools in the request
-2. Include relevant context in the chat messages
-3. Handle the tool calls in your application logic
+1. リクエストで適切なツールを定義すること
+2. チャットメッセージに関連する文脈を含めること
+3. アプリケーションのロジックでツール呼び出しを処理すること
 
-For more advanced usage, including parallel tool calls and different model-specific parsers, see the sections below.
+並列のツール呼び出しやモデルごとのパーサーなど、より高度な使い方は以下の各節を参照してください。
 
-## Named Function Calling
+## 名前付き関数呼び出し { #named-function-calling }
 
-vLLM supports named function calling in the chat completion API by default. This should work with most structured outputs backends supported by vLLM. You are guaranteed a validly-parsable function call - not a
-high-quality one.
+vLLM は chat completion API の名前付き関数呼び出しを既定でサポートします。これは vLLM がサポートするほとんどの構造化出力バックエンドで動作するはずです。ここで保証されるのは、構文的に正しく解析できる関数呼び出しであり、内容の品質が高いことではありません。
 
-vLLM will use structured outputs to ensure the response matches the tool parameter object defined by the JSON schema in the `tools` parameter.
-For best results, we recommend ensuring that the expected output format / schema is specified in the prompt to ensure that the model's intended generation is aligned with the schema that it's being forced to generate by the structured outputs backend.
+vLLM は構造化出力を使い、レスポンスが `tools` パラメータの JSON スキーマで定義されたツールのパラメータオブジェクトと一致するようにします。
+最良の結果を得るには、期待される出力形式 / スキーマをプロンプトにも明示し、モデルが意図する生成内容と、構造化出力バックエンドが強制するスキーマを揃えることを推奨します。
 
-To use a named function, you need to define the functions in the `tools` parameter of the chat completion request, and
-specify the `name` of one of the tools in the `tool_choice` parameter of the chat completion request.
+名前付き関数を使うには、chat completion リクエストの `tools` パラメータで関数を定義し、`tool_choice` パラメータでいずれかのツールの `name` を指定します。
 
-## Required Function Calling
+## 必須の関数呼び出し（required） { #required-function-calling }
 
-vLLM supports the `tool_choice='required'` option in the chat completion API. Similar to the named function calling, it also uses structured outputs, so this is enabled by default and will work with any supported model. However, support for alternative decoding backends are on the [roadmap](../usage/v1_guide.md#features) for the V1 engine.
+vLLM は chat completion API の `tool_choice='required'` オプションをサポートします。名前付き関数呼び出しと同様に構造化出力を使うため、既定で有効であり、サポートされる任意のモデルで動作します。ただし、代替のデコードバックエンドのサポートは V1 エンジンの[ロードマップ](../usage/v1_guide.md#features)にあります。
 
-When tool_choice='required' is set, the model is guaranteed to generate one or more tool calls based on the specified tool list in the `tools` parameter. The number of tool calls depends on the user's query. The output format strictly follows the schema defined in the `tools` parameter.
+tool_choice='required' を設定すると、モデルは `tools` パラメータで指定されたツール一覧にもとづき、1 つ以上のツール呼び出しを必ず生成します。ツール呼び出しの数はユーザーのクエリによって決まります。出力形式は `tools` パラメータで定義したスキーマに厳密に従います。
 
-## None Function Calling
+## ツールを使わない設定（none） { #none-function-calling }
 
-vLLM supports the `tool_choice='none'` option in the chat completion API. When this option is set, the model will not generate any tool calls and will respond with regular text content only, even if tools are defined in the request.
+vLLM は chat completion API の `tool_choice='none'` オプションをサポートします。このオプションを設定すると、リクエストでツールが定義されていても、モデルはツール呼び出しを生成せず、通常のテキストのみで応答します。
 
 !!! note
-    When tools are specified in the request, vLLM includes tool definitions in the prompt by default, regardless of the `tool_choice` setting. To exclude tool definitions when `tool_choice='none'`, use the `--exclude-tools-when-tool-choice-none` option.
+    リクエストでツールが指定されている場合、vLLM は `tool_choice` の設定にかかわらず、既定でプロンプトにツールの定義を含めます。`tool_choice='none'` のときにツール定義を除外するには、`--exclude-tools-when-tool-choice-none` オプションを使ってください。
 
-## Constrained Decoding Behavior
+## 制約付きデコードの挙動 { #constrained-decoding-behavior }
 
-Whether vLLM enforces the tool parameter schema during generation depends on the `tool_choice` mode and the per-tool `strict` field:
+生成時に vLLM がツールのパラメータスキーマを強制するかどうかは、`tool_choice` のモードとツールごとの `strict` フィールドによって決まります。
 
-| `tool_choice` value | Schema-constrained decoding | Behavior |
+| `tool_choice` の値 | スキーマ制約付きデコード | 挙動 |
 | --- | --- | --- |
-| Named function | Yes (via structured outputs backend) | Arguments are guaranteed to be valid JSON conforming to the function's parameter schema. |
-| `"required"` | Yes (via structured outputs backend) | Same as named function. The model must produce at least one tool call. |
-| `"auto"` | Only when `strict: true` is set on at least one tool | Structural-tag parsers constrain tool-call arguments when a tool opts in with `strict: true`. Without it, the model generates freely and tool calls are extracted from raw text. |
-| `"none"` | N/A | No tool calls are produced. |
+| 名前付き関数 | あり（構造化出力バックエンド経由） | 引数は、その関数のパラメータスキーマに準拠した正しい JSON であることが保証されます。 |
+| `"required"` | あり（構造化出力バックエンド経由） | 名前付き関数と同じです。モデルは少なくとも 1 つのツール呼び出しを生成する必要があります。 |
+| `"auto"` | 少なくとも 1 つのツールに `strict: true` が設定されている場合のみ | ツールが `strict: true` で明示的に選択した場合、構造タグのパーサーがツール呼び出しの引数を制約します。指定がない場合、モデルは自由に生成し、ツール呼び出しは生のテキストから抽出されます。 |
+| `"none"` | 該当なし | ツール呼び出しは生成されません。 |
 
-### Strict Mode
+### strict モード { #strict-mode }
 
-For `tool_choice="required"` or named function calling, structural-tag constraints are always applied regardless of the `strict` field. For `tool_choice="auto"`, setting `strict: true` on at least one tool opts in to structural-tag constraints; without it, the model generates freely and tool calls are extracted from raw text. The `strict` field is supported across all three API surfaces: Chat Completion, Responses, and Anthropic Messages.
+`tool_choice="required"` または名前付き関数呼び出しでは、`strict` フィールドにかかわらず、構造タグの制約が常に適用されます。`tool_choice="auto"` では、少なくとも 1 つのツールに `strict: true` を設定することで構造タグの制約が有効になります。指定がない場合、モデルは自由に生成し、ツール呼び出しは生のテキストから抽出されます。`strict` フィールドは、Chat Completion、Responses、Anthropic Messages の 3 つの API すべてでサポートされます。
 
-For best compatibility with strict schema enforcement, define tool parameter schemas in the OpenAI strict-schema style:
+厳密なスキーマ強制との互換性を高めるには、ツールのパラメータスキーマを OpenAI の strict-schema 形式で定義してください。
 
-* Set `additionalProperties` to `false` for each object in `parameters`.
-* Mark all fields in `properties` as required.
-* Represent optional fields by allowing `null`, for example `{"type": ["string", "null"]}`.
+* `parameters` 内の各オブジェクトで `additionalProperties` を `false` に設定します。
+* `properties` のすべてのフィールドを必須にします。
+* 省略可能なフィールドは `null` を許容する形で表現します（例: `{"type": ["string", "null"]}`）。
 
-vLLM also provides a global toggle via the `VLLM_ENFORCE_STRICT_TOOL_CALLING` environment variable (defaults to `true`). When set to `false`, vLLM does not attach structural tags for tool calling regardless of the per-tool `strict` field. This environment variable only affects structural-tag based tool calling; it does not change schema-derived structured outputs used by named function calling or `tool_choice="required"`.
+vLLM は環境変数 `VLLM_ENFORCE_STRICT_TOOL_CALLING`（既定値 `true`）によるグローバルな切り替えも提供します。`false` に設定すると、ツールごとの `strict` フィールドにかかわらず、vLLM はツール呼び出しに構造タグを付与しません。この環境変数が影響するのは構造タグにもとづくツール呼び出しのみで、名前付き関数呼び出しや `tool_choice="required"` で使われるスキーマ由来の構造化出力は変わりません。
 
 ```bash
 VLLM_ENFORCE_STRICT_TOOL_CALLING=false vllm serve ...
 ```
 
-## Automatic Function Calling
+## 自動的な関数呼び出し { #automatic-function-calling }
 
-To enable this feature, you should set the following flags:
+この機能を有効にするには、次のフラグを設定します。
 
-* `--enable-auto-tool-choice` -- **mandatory** Auto tool choice. It tells vLLM that you want to enable the model to generate its own tool calls when it
-deems appropriate.
-* `--tool-call-parser` -- select the tool parser to use (listed below). Additional tool parsers
-will continue to be added in the future. You can also register your own tool parsers in the `--tool-parser-plugin`.
-* `--tool-parser-plugin` -- **optional** tool parser plugin used to register user defined tool parsers into vllm, the registered tool parser name can be specified in `--tool-call-parser`.
-* `--chat-template` -- **optional** for auto tool choice. It's the path to the chat template which handles `tool`-role messages and `assistant`-role messages
-that contain previously generated tool calls. Hermes, Mistral and Llama models have tool-compatible chat templates in their
-`tokenizer_config.json` files, but you can specify a custom template. This argument can be set to `tool_use` if your model has a tool use-specific chat
-template configured in the `tokenizer_config.json`. In this case, it will be used per the `transformers` specification. More on this [here](https://huggingface.co/docs/transformers/en/chat_templating#why-do-some-models-have-multiple-templates)
-from HuggingFace; and you can find an example of this in a `tokenizer_config.json` [here](https://huggingface.co/NousResearch/Hermes-2-Pro-Llama-3-8B/blob/main/tokenizer_config.json).
+* `--enable-auto-tool-choice` — **必須**。自動的なツール選択です。モデルが適切と判断したときに自ら tool call を生成できるようにすることを vLLM に伝えます。
+* `--tool-call-parser` — 使用するツールパーサーを選択します（一覧は下記）。ツールパーサーは今後も追加されていきます。`--tool-parser-plugin` で自作のツールパーサーを登録することもできます。
+* `--tool-parser-plugin` — **任意**。ユーザー定義のツールパーサーを vLLM に登録するためのツールパーサープラグインです。登録したツールパーサー名は `--tool-call-parser` で指定できます。
+* `--chat-template` — 自動ツール選択では**任意**です。`tool` ロールのメッセージや、過去に生成されたツール呼び出しを含む `assistant` ロールのメッセージを扱うチャットテンプレートへのパスです。Hermes、Mistral、Llama の各モデルは `tokenizer_config.json` にツール対応のチャットテンプレートを持っていますが、独自のテンプレートを指定することもできます。モデルの `tokenizer_config.json` にツール利用専用のチャットテンプレートが設定されている場合、この引数に `tool_use` を指定できます。その場合は `transformers` の仕様に従って使われます。詳細は HuggingFace の[こちら](https://huggingface.co/docs/transformers/en/chat_templating#why-do-some-models-have-multiple-templates)を参照してください。`tokenizer_config.json` の例は[こちら](https://huggingface.co/NousResearch/Hermes-2-Pro-Llama-3-8B/blob/main/tokenizer_config.json)にあります。
 
-If your favorite tool-calling model is not supported, please feel free to contribute a parser & tool use chat template!
+お気に入りのツール呼び出し対応モデルがサポートされていない場合は、パーサーとツール利用チャットテンプレートのコントリビューションをぜひご検討ください。
 
 !!! note
-    With `tool_choice="auto"`, schema-level constraint requires both `VLLM_ENFORCE_STRICT_TOOL_CALLING=true` (the default) and at least one tool with `strict: true`. When these conditions are met and the selected parser supports structural tags, vLLM constrains tool-call arguments. Otherwise, vLLM extracts tool calls from raw text, so arguments may occasionally be malformed or violate the function's parameter schema.
+    `tool_choice="auto"` では、スキーマレベルの制約に `VLLM_ENFORCE_STRICT_TOOL_CALLING=true`（既定）と、`strict: true` を持つツールが少なくとも 1 つ必要です。これらの条件が満たされ、選択したパーサーが構造タグをサポートしている場合、vLLM はツール呼び出しの引数を制約します。そうでない場合、vLLM は生のテキストからツール呼び出しを抽出するため、引数が不正な形式であったり、関数のパラメータスキーマに違反したりすることがあります。
 
-### Hermes Models (`hermes`)
+### Hermes 系モデル（`hermes`） { #hermes-models-hermes }
 
-All Nous Research Hermes-series models newer than Hermes 2 Pro should be supported.
+Hermes 2 Pro より新しい Nous Research の Hermes シリーズのモデルはすべてサポートされているはずです。
 
 * `NousResearch/Hermes-2-Pro-*`
 * `NousResearch/Hermes-2-Theta-*`
 * `NousResearch/Hermes-3-*`
 
-_Note that the Hermes 2 **Theta** models are known to have degraded tool call quality and capabilities due to the merge
-step in their creation_.
+_なお、Hermes 2 **Theta** のモデルは、作成過程のマージ手順が原因でツール呼び出しの品質と能力が低下していることが知られています_。
 
-Flags: `--tool-call-parser hermes`
+フラグ: `--tool-call-parser hermes`
 
-### Mistral Models (`mistral`)
+### Mistral 系モデル（`mistral`） { #mistral-models-mistral }
 
-Supported models:
+サポートされるモデル:
 
-* `mistralai/Mistral-7B-Instruct-v0.3` (confirmed)
-* Additional Mistral function-calling models are compatible as well.
+* `mistralai/Mistral-7B-Instruct-v0.3`（確認済み）
+* その他の Mistral の関数呼び出し対応モデルも互換です。
 
-Known issues:
+既知の問題:
 
-1. Mistral 7B struggles to generate parallel tool calls correctly.
-2. **For Transformers tokenization backend only**: Mistral's `tokenizer_config.json` chat template requires tool call IDs that are exactly 9 digits, which is
-   much shorter than what vLLM generates. Since an exception is thrown when this condition
-   is not met, the following additional chat templates are provided:
+1. Mistral 7B は並列のツール呼び出しを正しく生成するのが苦手です。
+2. **Transformers のトークナイズバックエンドの場合のみ**: Mistral の `tokenizer_config.json` のチャットテンプレートは、ちょうど 9 桁のツール呼び出し ID を必要とし、これは vLLM が生成するものよりずっと短いものです。この条件が満たされないと例外が送出されるため、次の追加のチャットテンプレートが用意されています。
 
-    * [examples/tool_chat_template_mistral.jinja](../../examples/tool_chat_template_mistral.jinja) - this is the "official" Mistral chat template, but tweaked so that
-      it works with vLLM's tool call IDs (provided `tool_call_id` fields are truncated to the last 9 digits)
-    * [examples/tool_chat_template_mistral_parallel.jinja](../../examples/tool_chat_template_mistral_parallel.jinja) - this is a "better" version that adds a tool-use system prompt
-      when tools are provided, that results in much better reliability when working with parallel tool calling.
+    * [examples/tool_chat_template_mistral.jinja](../../examples/tool_chat_template_mistral.jinja) - 「公式」の Mistral チャットテンプレートを、vLLM のツール呼び出し ID で動くよう調整したものです（`tool_call_id` フィールドは末尾 9 桁に切り詰められます）
+    * [examples/tool_chat_template_mistral_parallel.jinja](../../examples/tool_chat_template_mistral_parallel.jinja) - ツールが与えられたときにツール利用のシステムプロンプトを追加する「改良版」で、並列のツール呼び出しの信頼性が大きく向上します。
 
-Recommended flags:
+推奨フラグ:
 
-1. To use the official Mistral AI's format:
+1. Mistral AI 公式の形式を使う場合:
 
     `--tool-call-parser mistral`
 
-2. To use the Transformers format when available:
+2. 利用可能な場合に Transformers の形式を使う場合:
 
     `--tokenizer_mode hf --config_format hf --load_format hf --tool-call-parser mistral --chat-template examples/tool_chat_template_mistral_parallel.jinja`
 
 !!! note
-    Models officially released by Mistral AI have two possible formats:
+    Mistral AI が公式にリリースしているモデルには 2 つの形式があります。
 
-    1. The official format that is used by default with `auto` or `mistral` arguments:
+    1. `auto` または `mistral` の引数で既定で使われる公式の形式:
 
         `--tokenizer_mode mistral --config_format mistral --load_format mistral`
-        This format uses [mistral-common](https://github.com/mistralai/mistral-common), the Mistral AI's tokenizer backend.
+        この形式は Mistral AI のトークナイザーバックエンドである [mistral-common](https://github.com/mistralai/mistral-common) を使います。
 
-    2. The Transformers format, when available, that is used with `hf` arguments:
+    2. 利用可能な場合に `hf` の引数で使われる Transformers の形式:
 
         `--tokenizer_mode hf --config_format hf --load_format hf --chat-template examples/tool_chat_template_mistral_parallel.jinja`
 
-### Llama Models (`llama3_json`)
+### Llama 系モデル（`llama3_json`） { #llama-models-llama3_json }
 
-Supported models:
+サポートされるモデル:
 
-All Llama 3.1, 3.2 and 4 models should be supported.
+Llama 3.1、3.2、4 のすべてのモデルがサポートされているはずです。
 
 * `meta-llama/Llama-3.1-*`
 * `meta-llama/Llama-3.2-*`
 * `meta-llama/Llama-4-*`
 
-The tool calling that is supported is the [JSON-based tool calling](https://llama.meta.com/docs/model-cards-and-prompt-formats/llama3_1/#json-based-tool-calling). For [pythonic tool calling](https://github.com/meta-llama/llama-models/blob/main/models/llama3_2/text_prompt_format.md#zero-shot-function-calling) introduced by the Llama-3.2 models, see the `pythonic` tool parser below. As for Llama 4 models, it is recommended to use the `llama4_pythonic` tool parser.
+サポートされるのは [JSON ベースのツール呼び出し](https://llama.meta.com/docs/model-cards-and-prompt-formats/llama3_1/#json-based-tool-calling)です。Llama-3.2 のモデルで導入された [pythonic なツール呼び出し](https://github.com/meta-llama/llama-models/blob/main/models/llama3_2/text_prompt_format.md#zero-shot-function-calling)については、後述の `pythonic` ツールパーサーを参照してください。Llama 4 のモデルでは `llama4_pythonic` ツールパーサーの利用を推奨します。
 
-Other tool calling formats like the built-in python tool calling or custom tool calling are not supported.
+組み込みの python ツール呼び出しやカスタムのツール呼び出しなど、その他の形式はサポートされていません。
 
-Known issues:
+既知の問題:
 
-1. Parallel tool calls are not supported for Llama 3, but it is supported in Llama 4 models.
-2. The model can generate parameters in an incorrect format, such as generating
-   an array serialized as string instead of an array.
+1. Llama 3 では並列のツール呼び出しはサポートされませんが、Llama 4 のモデルではサポートされます。
+2. モデルが誤った形式のパラメータを生成することがあります。たとえば配列ではなく、文字列としてシリアライズされた配列を生成する、といったケースです。
 
-VLLM provides two JSON-based chat templates for Llama 3.1 and 3.2:
+vLLM は Llama 3.1 と 3.2 向けに 2 つの JSON ベースのチャットテンプレートを提供しています。
 
-* [examples/tool_chat_template_llama3.1_json.jinja](../../examples/tool_chat_template_llama3.1_json.jinja) - this is the "official" chat template for the Llama 3.1
-models, but tweaked so that it works better with vLLM.
-* [examples/tool_chat_template_llama3.2_json.jinja](../../examples/tool_chat_template_llama3.2_json.jinja) - this extends upon the Llama 3.1 chat template by adding support for
-images.
+* [examples/tool_chat_template_llama3.1_json.jinja](../../examples/tool_chat_template_llama3.1_json.jinja) - Llama 3.1 モデル向けの「公式」チャットテンプレートを、vLLM でより良く動くよう調整したものです。
+* [examples/tool_chat_template_llama3.2_json.jinja](../../examples/tool_chat_template_llama3.2_json.jinja) - Llama 3.1 のチャットテンプレートを拡張し、画像のサポートを追加したものです。
 
-Recommended flags: `--tool-call-parser llama3_json --chat-template {see_above}`
+推奨フラグ: `--tool-call-parser llama3_json --chat-template {上記参照}`
 
-VLLM also provides a pythonic and JSON-based chat template for Llama 4, but pythonic tool calling is recommended:
+vLLM は Llama 4 向けに pythonic と JSON ベースのチャットテンプレートも提供していますが、pythonic なツール呼び出しを推奨します。
 
-* [examples/tool_chat_template_llama4_pythonic.jinja](../../examples/tool_chat_template_llama4_pythonic.jinja) - this is based on the [official chat template](https://www.llama.com/docs/model-cards-and-prompt-formats/llama4/) for the Llama 4 models.
+* [examples/tool_chat_template_llama4_pythonic.jinja](../../examples/tool_chat_template_llama4_pythonic.jinja) - Llama 4 モデル向けの[公式チャットテンプレート](https://www.llama.com/docs/model-cards-and-prompt-formats/llama4/)にもとづくものです。
 
-For Llama 4 model, use `--tool-call-parser llama4_pythonic --chat-template examples/tool_chat_template_llama4_pythonic.jinja`.
+Llama 4 モデルでは `--tool-call-parser llama4_pythonic --chat-template examples/tool_chat_template_llama4_pythonic.jinja` を使ってください。
 
-### IBM Granite
+### IBM Granite { #ibm-granite }
 
-Supported models:
+サポートされるモデル:
 
-* `ibm-granite/granite-4.0-h-small` and other Granite 4.0 models
+* `ibm-granite/granite-4.0-h-small` およびその他の Granite 4.0 モデル
 
-    Recommended flags: `--tool-call-parser granite4`
+    推奨フラグ: `--tool-call-parser granite4`
 
 * `ibm-granite/granite-3.0-8b-instruct`
 
-    Recommended flags: `--tool-call-parser granite --chat-template examples/tool_chat_template_granite.jinja`
+    推奨フラグ: `--tool-call-parser granite --chat-template examples/tool_chat_template_granite.jinja`
 
-    [examples/tool_chat_template_granite.jinja](../../examples/tool_chat_template_granite.jinja): this is a modified chat template from the original on Hugging Face. Parallel function calls are supported.
+    [examples/tool_chat_template_granite.jinja](../../examples/tool_chat_template_granite.jinja): Hugging Face 上の元のテンプレートを修正したものです。並列の関数呼び出しをサポートします。
 
 * `ibm-granite/granite-3.1-8b-instruct`
 
-    Recommended flags: `--tool-call-parser granite`
+    推奨フラグ: `--tool-call-parser granite`
 
-    The chat template from Huggingface can be used directly. Parallel function calls are supported.
+    Hugging Face のチャットテンプレートをそのまま使えます。並列の関数呼び出しをサポートします。
 
 * `ibm-granite/granite-20b-functioncalling`
 
-    Recommended flags: `--tool-call-parser granite-20b-fc --chat-template examples/tool_chat_template_granite_20b_fc.jinja`
+    推奨フラグ: `--tool-call-parser granite-20b-fc --chat-template examples/tool_chat_template_granite_20b_fc.jinja`
 
-    [examples/tool_chat_template_granite_20b_fc.jinja](../../examples/tool_chat_template_granite_20b_fc.jinja): this is a modified chat template from the original on Hugging Face, which is not vLLM-compatible. It blends function description elements from the Hermes template and follows the same system prompt as "Response Generation" mode from [the paper](https://arxiv.org/abs/2407.00121). Parallel function calls are supported.
+    [examples/tool_chat_template_granite_20b_fc.jinja](../../examples/tool_chat_template_granite_20b_fc.jinja): Hugging Face 上の元のテンプレート（vLLM と互換ではありません）を修正したものです。Hermes テンプレートの関数記述の要素を取り入れ、[論文](https://arxiv.org/abs/2407.00121)の「Response Generation」モードと同じシステムプロンプトに従います。並列の関数呼び出しをサポートします。
 
-### InternLM Models (`internlm`)
+### InternLM 系モデル（`internlm`） { #internlm-models-internlm }
 
-Supported models:
+サポートされるモデル:
 
-* `internlm/internlm2_5-7b-chat` (confirmed)
-* Additional internlm2.5 function-calling models are compatible as well
+* `internlm/internlm2_5-7b-chat`（確認済み）
+* その他の internlm2.5 の関数呼び出し対応モデルも互換です
 
-Known issues:
+既知の問題:
 
-* Although this implementation also supports InternLM2, the tool call results are not stable when testing with the `internlm/internlm2-chat-7b` model.
+* この実装は InternLM2 もサポートしますが、`internlm/internlm2-chat-7b` モデルでのテストではツール呼び出しの結果が安定しません。
 
-Recommended flags: `--tool-call-parser internlm --chat-template examples/tool_chat_template_internlm2_tool.jinja`
+推奨フラグ: `--tool-call-parser internlm --chat-template examples/tool_chat_template_internlm2_tool.jinja`
 
-### Jamba Models (`jamba`)
+### Jamba 系モデル（`jamba`） { #jamba-models-jamba }
 
-AI21's Jamba-1.5 models are supported.
+AI21 の Jamba-1.5 モデルがサポートされています。
 
 * `ai21labs/AI21-Jamba-1.5-Mini`
 * `ai21labs/AI21-Jamba-1.5-Large`
 
-Flags: `--tool-call-parser jamba`
+フラグ: `--tool-call-parser jamba`
 
-### xLAM Models (`xlam`)
+### xLAM 系モデル（`xlam`） { #xlam-models-xlam }
 
-The xLAM tool parser is designed to support models that generate tool calls in various JSON formats. It detects function calls in several different output styles:
+xLAM のツールパーサーは、さまざまな JSON 形式でツール呼び出しを生成するモデルをサポートするよう設計されています。次のような複数の出力スタイルの関数呼び出しを検出します。
 
-1. Direct JSON arrays: Output strings that are JSON arrays starting with `[` and ending with `]`
-2. Thinking tags: Using `<think>...</think>` tags containing JSON arrays
-3. Code blocks: JSON in code blocks (```json ...```)
-4. Tool calls tags: Using `[TOOL_CALLS]` or `<tool_call>...</tool_call>` tags
+1. 直接の JSON 配列: `[` で始まり `]` で終わる JSON 配列の出力文字列
+2. thinking タグ: JSON 配列を含む `<think>...</think>` タグ
+3. コードブロック: コードブロック内の JSON（```json ...```）
+4. ツール呼び出しタグ: `[TOOL_CALLS]` または `<tool_call>...</tool_call>` タグ
 
-Parallel function calls are supported, and the parser can effectively separate text content from tool calls.
+並列の関数呼び出しをサポートし、テキストの内容とツール呼び出しを適切に分離できます。
 
-Supported models:
+サポートされるモデル:
 
-* Salesforce Llama-xLAM models: `Salesforce/Llama-xLAM-2-8B-fc-r`, `Salesforce/Llama-xLAM-2-70B-fc-r`
-* Qwen-xLAM models: `Salesforce/xLAM-1B-fc-r`, `Salesforce/xLAM-3B-fc-r`, `Salesforce/Qwen-xLAM-32B-fc-r`
+* Salesforce の Llama-xLAM モデル: `Salesforce/Llama-xLAM-2-8B-fc-r`、`Salesforce/Llama-xLAM-2-70B-fc-r`
+* Qwen-xLAM モデル: `Salesforce/xLAM-1B-fc-r`、`Salesforce/xLAM-3B-fc-r`、`Salesforce/Qwen-xLAM-32B-fc-r`
 
-Flags:
+フラグ:
 
-* For Llama-based xLAM models: `--tool-call-parser xlam --chat-template examples/tool_chat_template_xlam_llama.jinja`
-* For Qwen-based xLAM models: `--tool-call-parser xlam --chat-template examples/tool_chat_template_xlam_qwen.jinja`
+* Llama ベースの xLAM モデル: `--tool-call-parser xlam --chat-template examples/tool_chat_template_xlam_llama.jinja`
+* Qwen ベースの xLAM モデル: `--tool-call-parser xlam --chat-template examples/tool_chat_template_xlam_qwen.jinja`
 
-### Qwen Models
+### Qwen 系モデル { #qwen-models }
 
-For Qwen2.5, the chat template in tokenizer_config.json has already included support for the Hermes-style tool use. Therefore, you can use the `hermes` parser to enable tool calls for Qwen models. For more detailed information, please refer to the official [Qwen documentation](https://qwen.readthedocs.io/en/latest/framework/function_call.html#vllm)
+Qwen2.5 では、tokenizer_config.json のチャットテンプレートにすでに Hermes 形式のツール利用のサポートが含まれています。したがって、Qwen モデルのツール呼び出しを有効にするには `hermes` パーサーを使えます。詳細は公式の [Qwen ドキュメント](https://qwen.readthedocs.io/en/latest/framework/function_call.html#vllm)を参照してください。
 
 * `Qwen/Qwen2.5-*`
 * `Qwen/QwQ-32B`
 
-Flags: `--tool-call-parser hermes`
+フラグ: `--tool-call-parser hermes`
 
-### DeepSeek-V3 Models (`deepseek_v3`)
+### DeepSeek-V3 系モデル（`deepseek_v3`） { #deepseek-v3-models-deepseek_v3 }
 
-Supported models:
+サポートされるモデル:
 
-* `deepseek-ai/DeepSeek-V3-0324` (use with [examples/tool_chat_template_deepseekv3.jinja](../../examples/tool_chat_template_deepseekv3.jinja))
-* `deepseek-ai/DeepSeek-R1-0528` (use with [examples/tool_chat_template_deepseekr1.jinja](../../examples/tool_chat_template_deepseekr1.jinja))
+* `deepseek-ai/DeepSeek-V3-0324`（[examples/tool_chat_template_deepseekv3.jinja](../../examples/tool_chat_template_deepseekv3.jinja) とともに使用）
+* `deepseek-ai/DeepSeek-R1-0528`（[examples/tool_chat_template_deepseekr1.jinja](../../examples/tool_chat_template_deepseekr1.jinja) とともに使用）
 
-Flags: `--tool-call-parser deepseek_v3 --chat-template {see_above}`
+フラグ: `--tool-call-parser deepseek_v3 --chat-template {上記参照}`
 
-### DeepSeek-V3.1 Models (`deepseek_v31`)
+### DeepSeek-V3.1 系モデル（`deepseek_v31`） { #deepseek-v31-models-deepseek_v31 }
 
-Supported models:
+サポートされるモデル:
 
-* `deepseek-ai/DeepSeek-V3.1` (use with [examples/tool_chat_template_deepseekv31.jinja](../../examples/tool_chat_template_deepseekv31.jinja))
+* `deepseek-ai/DeepSeek-V3.1`（[examples/tool_chat_template_deepseekv31.jinja](../../examples/tool_chat_template_deepseekv31.jinja) とともに使用）
 
-Flags: `--tool-call-parser deepseek_v31 --chat-template {see_above}`
+フラグ: `--tool-call-parser deepseek_v31 --chat-template {上記参照}`
 
-### OpenAI OSS Models (`openai`)
+### OpenAI OSS モデル（`openai`） { #openai-oss-models-openai }
 
-Supported models:
+サポートされるモデル:
 
 * `openai/gpt-oss-20b`
 * `openai/gpt-oss-120b`
 
-Flags: `--tool-call-parser openai`
+フラグ: `--tool-call-parser openai`
 
-### Kimi-K2 Models (`kimi_k2`)
+### Kimi-K2 系モデル（`kimi_k2`） { #kimi-k2-models-kimi_k2 }
 
-Supported models:
+サポートされるモデル:
 
 * `moonshotai/Kimi-K2-Instruct`
 
-Flags: `--tool-call-parser kimi_k2`
+フラグ: `--tool-call-parser kimi_k2`
 
-### Hunyuan Models (`hunyuan_a13b`)
+### Hunyuan 系モデル（`hunyuan_a13b`） { #hunyuan-models-hunyuan_a13b }
 
-Supported models:
+サポートされるモデル:
 
-* `tencent/Hunyuan-A13B-Instruct` (The chat template is already included in the Hugging Face model files.)
+* `tencent/Hunyuan-A13B-Instruct`（チャットテンプレートは Hugging Face のモデルファイルに含まれています）
 
-Flags:
+フラグ:
 
-* For non-reasoning: `--tool-call-parser hunyuan_a13b`
-* For reasoning: `--tool-call-parser hunyuan_a13b --reasoning-parser hunyuan_a13b`
+* 推論なしの場合: `--tool-call-parser hunyuan_a13b`
+* 推論ありの場合: `--tool-call-parser hunyuan_a13b --reasoning-parser hunyuan_a13b`
 
-### Cohere Command A Reasoning (`cohere_command3`)
+### Cohere Command A Reasoning（`cohere_command3`） { #cohere-command-a-reasoning-cohere_command3 }
 
-Supported models:
+サポートされるモデル:
 
 * [`CohereLabs/command-a-reasoning-08-2025`](https://huggingface.co/CohereLabs/command-a-reasoning-08-2025)
 
-Flags: `--tool-call-parser cohere_command3 --reasoning-parser cohere_command3`
+フラグ: `--tool-call-parser cohere_command3 --reasoning-parser cohere_command3`
 
-Note: the Cohere tool parser requires the `cohere_melody` package, which is not installed by default. Before using this parser please install the [cohere_melody](https://pypi.org/project/cohere-melody/) package.
+注: Cohere のツールパーサーは `cohere_melody` パッケージを必要としますが、既定ではインストールされません。このパーサーを使う前に [cohere_melody](https://pypi.org/project/cohere-melody/) パッケージをインストールしてください。
 
-### LongCat-Flash-Chat Models (`longcat`)
+### LongCat-Flash-Chat 系モデル（`longcat`） { #longcat-flash-chat-models-longcat }
 
-Supported models:
+サポートされるモデル:
 
 * `meituan-longcat/LongCat-Flash-Chat`
 * `meituan-longcat/LongCat-Flash-Chat-FP8`
 
-Flags: `--tool-call-parser longcat`
+フラグ: `--tool-call-parser longcat`
 
-### GLM-4.5 Models (`glm45`)
+### GLM-4.5 系モデル（`glm45`） { #glm-45-models-glm45 }
 
-Supported models:
+サポートされるモデル:
 
 * `zai-org/GLM-4.5`
 * `zai-org/GLM-4.5-Air`
 * `zai-org/GLM-4.6`
 
-Flags: `--tool-call-parser glm45`
+フラグ: `--tool-call-parser glm45`
 
-### GLM-4.7 Models (`glm47`)
+### GLM-4.7 系モデル（`glm47`） { #glm-47-models-glm47 }
 
-Supported models:
+サポートされるモデル:
 
 * `zai-org/GLM-4.7`
 * `zai-org/GLM-4.7-Flash`
 
-Flags: `--tool-call-parser glm47`
+フラグ: `--tool-call-parser glm47`
 
-### FunctionGemma Models (`functiongemma`)
+### FunctionGemma 系モデル（`functiongemma`） { #functiongemma-models-functiongemma }
 
-Google's FunctionGemma is a lightweight (270M parameter) model specifically designed for function calling.
-It's built on Gemma 3 and optimized for edge deployment on devices like laptops and phones.
+Google の FunctionGemma は、関数呼び出しに特化して設計された軽量（2.7 億パラメータ）のモデルです。
+Gemma 3 をベースに構築され、ノート PC やスマートフォンなどのデバイス上でのエッジデプロイ向けに最適化されています。
 
-Supported models:
+サポートされるモデル:
 
 * `google/functiongemma-270m-it`
 
-FunctionGemma uses a unique output format with `<start_function_call>` and `<end_function_call>` tags:
+FunctionGemma は `<start_function_call>` と `<end_function_call>` タグを使う独自の出力形式を採用しています。
 
 ```text
 <start_function_call>call:get_weather{location:<escape>London<escape>}<end_function_call>
 ```
 
-The model is designed to be fine-tuned for specific function-calling tasks for best results.
+最良の結果を得るには、特定の関数呼び出しタスク向けにファインチューニングすることを想定した設計になっています。
 
-Flags: `--tool-call-parser functiongemma --chat-template examples/tool_chat_template_functiongemma.jinja`
+フラグ: `--tool-call-parser functiongemma --chat-template examples/tool_chat_template_functiongemma.jinja`
 
 !!! note
-    FunctionGemma is intended to be fine-tuned for your specific function-calling task.
-    The base model provides general function calling capabilities, but best results
-    are achieved with task-specific fine-tuning. See Google's [FunctionGemma documentation](https://ai.google.dev/gemma/docs/functiongemma) for fine-tuning guides.
+    FunctionGemma は、あなたの特定の関数呼び出しタスク向けにファインチューニングして使うことが想定されています。
+    ベースモデルでも一般的な関数呼び出しの能力は得られますが、最良の結果はタスク固有の
+    ファインチューニングによって得られます。ファインチューニングのガイドは Google の [FunctionGemma ドキュメント](https://ai.google.dev/gemma/docs/functiongemma)を参照してください。
 
-### Qwen3-Coder Models (`qwen3_xml`)
+### Qwen3-Coder 系モデル（`qwen3_xml`） { #qwen3-coder-models-qwen3_xml }
 
-Supported models:
+サポートされるモデル:
 
 * `Qwen/Qwen3-Coder-480B-A35B-Instruct`
 * `Qwen/Qwen3-Coder-30B-A3B-Instruct`
 
-Flags: `--tool-call-parser qwen3_xml`
+フラグ: `--tool-call-parser qwen3_xml`
 
-### Olmo 3 Models (`olmo3`)
+### Olmo 3 系モデル（`olmo3`） { #olmo-3-models-olmo3 }
 
-Olmo 3 models output tool calls in a format that is very similar to the one expected by the `pythonic` parser (see below), with a few differences. Each tool call is a pythonic string, but the parallel tool calls are newline-delimited, and the calls are wrapped within XML tags as `<function_calls>..</function_calls>`. In addition, the parser also allows JSON boolean and null literals (`true`, `false`, and `null`) in addition to the pythonic ones (`True`, `False`, and `None`).
+Olmo 3 のモデルは、後述の `pythonic` パーサーが想定する形式に非常に近い形式でツール呼び出しを出力しますが、いくつか違いがあります。各ツール呼び出しは pythonic な文字列ですが、並列のツール呼び出しは改行区切りで、呼び出し全体が `<function_calls>..</function_calls>` の XML タグで囲まれます。さらにこのパーサーは、pythonic のリテラル（`True`、`False`、`None`）に加えて JSON の真偽値・null リテラル（`true`、`false`、`null`）も許容します。
 
-Supported models:
+サポートされるモデル:
 
 * `allenai/Olmo-3-7B-Instruct`
 * `allenai/Olmo-3-32B-Think`
 
-Flags: `--tool-call-parser olmo3`
+フラグ: `--tool-call-parser olmo3`
 
-### Gigachat 3 Models (`gigachat3`)
+### Gigachat 3 系モデル（`gigachat3`） { #gigachat-3-models-gigachat3 }
 
-Use chat template from the Hugging Face model files.
+Hugging Face のモデルファイルにあるチャットテンプレートを使ってください。
 
-Supported models:
+サポートされるモデル:
 
 * `ai-sage/GigaChat3-702B-A36B-preview`
 * `ai-sage/GigaChat3-702B-A36B-preview-bf16`
 * `ai-sage/GigaChat3-10B-A1.8B`
 * `ai-sage/GigaChat3-10B-A1.8B-bf16`
 
-Flags: `--tool-call-parser gigachat3`
+フラグ: `--tool-call-parser gigachat3`
 
-### Apertus Models (`apertus`)
+### Apertus 系モデル（`apertus`） { #apertus-models-apertus }
 
-Use the chat template from the examples folder; it fixes several OpenAI compatibility issues: `--chat-template /vllm-workspace/examples/tool_chat_template_apertus.jinja`
+examples フォルダのチャットテンプレートを使ってください。OpenAI 互換性の問題がいくつか修正されています: `--chat-template /vllm-workspace/examples/tool_chat_template_apertus.jinja`
 
-Supported models:
+サポートされるモデル:
 
 * `swiss-ai/Apertus-8B-Instruct-2509`
 * `swiss-ai/Apertus-70B-Instruct-2509`
 
-Flags: `--tool-call-parser apertus`
+フラグ: `--tool-call-parser apertus`
 
-### Models with Pythonic Tool Calls (`pythonic`)
+### pythonic なツール呼び出しを行うモデル（`pythonic`） { #models-with-pythonic-tool-calls-pythonic }
 
-A growing number of models output a python list to represent tool calls instead of using JSON. This has the advantage of inherently supporting parallel tool calls and removing ambiguity around the JSON schema required for tool calls. The `pythonic` tool parser can support such models.
+JSON ではなく python のリストでツール呼び出しを表現するモデルが増えています。この方式には、並列のツール呼び出しを本質的にサポートでき、ツール呼び出しに必要な JSON スキーマの曖昧さを取り除けるという利点があります。`pythonic` ツールパーサーはこうしたモデルをサポートできます。
 
-As a concrete example, these models may look up the weather in San Francisco and Seattle by generating:
+具体例として、こうしたモデルはサンフランシスコとシアトルの天気を調べるために次のような出力を生成します。
 
 ```python
 [get_weather(city='San Francisco', metric='celsius'), get_weather(city='Seattle', metric='celsius')]
 ```
 
-Limitations:
+制限事項:
 
-* The model must not generate both text and tool calls in the same generation. This may not be hard to change for a specific model, but the community currently lacks consensus on which tokens to emit when starting and ending tool calls.  (In particular, the Llama 3.2 models emit no such tokens.)
-* Llama's smaller models struggle to use tools effectively.
+* モデルは、同一の生成の中でテキストとツール呼び出しの両方を生成してはいけません。特定のモデルについてはこれを変えるのは難しくないかもしれませんが、ツール呼び出しの開始と終了にどのトークンを出力すべきかについて、現時点でコミュニティの合意がありません。（とくに Llama 3.2 のモデルはそうしたトークンを出力しません。）
+* Llama の小さいモデルは、ツールを効果的に使うのが苦手です。
 
-Example supported models:
+サポートされるモデルの例:
 
-* `meta-llama/Llama-3.2-1B-Instruct` ⚠️ (use with [examples/tool_chat_template_llama3.2_pythonic.jinja](../../examples/tool_chat_template_llama3.2_pythonic.jinja))
-* `meta-llama/Llama-3.2-3B-Instruct` ⚠️ (use with [examples/tool_chat_template_llama3.2_pythonic.jinja](../../examples/tool_chat_template_llama3.2_pythonic.jinja))
-* `Team-ACE/ToolACE-8B` (use with [examples/tool_chat_template_toolace.jinja](../../examples/tool_chat_template_toolace.jinja))
-* `fixie-ai/ultravox-v0_4-ToolACE-8B` (use with [examples/tool_chat_template_toolace.jinja](../../examples/tool_chat_template_toolace.jinja))
-* `meta-llama/Llama-4-Scout-17B-16E-Instruct` ⚠️ (use with [examples/tool_chat_template_llama4_pythonic.jinja](../../examples/tool_chat_template_llama4_pythonic.jinja))
-* `meta-llama/Llama-4-Maverick-17B-128E-Instruct` ⚠️ (use with [examples/tool_chat_template_llama4_pythonic.jinja](../../examples/tool_chat_template_llama4_pythonic.jinja))
+* `meta-llama/Llama-3.2-1B-Instruct` ⚠️（[examples/tool_chat_template_llama3.2_pythonic.jinja](../../examples/tool_chat_template_llama3.2_pythonic.jinja) とともに使用）
+* `meta-llama/Llama-3.2-3B-Instruct` ⚠️（[examples/tool_chat_template_llama3.2_pythonic.jinja](../../examples/tool_chat_template_llama3.2_pythonic.jinja) とともに使用）
+* `Team-ACE/ToolACE-8B`（[examples/tool_chat_template_toolace.jinja](../../examples/tool_chat_template_toolace.jinja) とともに使用）
+* `fixie-ai/ultravox-v0_4-ToolACE-8B`（[examples/tool_chat_template_toolace.jinja](../../examples/tool_chat_template_toolace.jinja) とともに使用）
+* `meta-llama/Llama-4-Scout-17B-16E-Instruct` ⚠️（[examples/tool_chat_template_llama4_pythonic.jinja](../../examples/tool_chat_template_llama4_pythonic.jinja) とともに使用）
+* `meta-llama/Llama-4-Maverick-17B-128E-Instruct` ⚠️（[examples/tool_chat_template_llama4_pythonic.jinja](../../examples/tool_chat_template_llama4_pythonic.jinja) とともに使用）
 
-Flags: `--tool-call-parser pythonic --chat-template {see_above}`
+フラグ: `--tool-call-parser pythonic --chat-template {上記参照}`
 
 !!! warning
-    Llama's smaller models frequently fail to emit tool calls in the correct format. Results may vary depending on the model.
+    Llama の小さいモデルは、正しい形式でツール呼び出しを出力できないことが頻繁にあります。結果はモデルによって異なります。
 
-## Benchmarking Tool-Calling Performance
+## ツール呼び出し性能のベンチマーク { #benchmarking-tool-calling-performance }
 
-To measure serving latency and throughput on realistic tool-calling traffic,
-use the BFCL (Berkeley Function Calling Leaderboard) dataset with
-`vllm bench serve`. See the [BFCL benchmark example](../benchmarking/cli.md#bfcl-tool-calling-benchmark)
-for the full server + client commands.
+現実的なツール呼び出しのトラフィックにおけるサービングのレイテンシとスループットを測定するには、
+`vllm bench serve` とともに BFCL（Berkeley Function Calling Leaderboard）データセットを使います。
+サーバー側・クライアント側の完全なコマンドは [BFCL ベンチマークの例](../benchmarking/cli.md#bfcl-tool-calling-benchmark)を参照してください。
 
-## How to Write a Tool Parser Plugin
+## ツールパーサープラグインの書き方 { #how-to-write-a-tool-parser-plugin }
 
-A tool parser plugin is a Python file containing one or more ToolParser implementations. You can write a ToolParser similar to the `Hermes2ProToolParser` in [vllm/tool_parsers/hermes_tool_parser.py](../../vllm/tool_parsers/hermes_tool_parser.py).
+ツールパーサープラグインは、1 つ以上の ToolParser 実装を含む Python ファイルです。[vllm/tool_parsers/hermes_tool_parser.py](../../vllm/tool_parsers/hermes_tool_parser.py) の `Hermes2ProToolParser` と同様に ToolParser を書けます。
 
-Here is a summary of a plugin file:
+プラグインファイルの概要は次のとおりです。
 
 ??? code
 
@@ -564,7 +547,7 @@ Here is a summary of a plugin file:
 
     ```
 
-Then you can use this plugin in the command line like this.
+そのうえで、このプラグインをコマンドラインで次のように使えます。
 
 ```bash
     --enable-auto-tool-choice \
