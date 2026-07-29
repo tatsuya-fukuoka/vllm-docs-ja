@@ -1,37 +1,37 @@
-# Sleep Mode
+# スリープモード { #sleep-mode }
 
-vLLM's Sleep Mode allows you to temporarily release most GPU memory used by a model, including model weights and KV cache, without stopping the server or unloading the Docker container. This is especially useful for RLHF, training, or cost-saving scenarios where GPU resources need to be freed between inference workloads.
+vLLM のスリープモードを使うと、サーバーを停止したり Docker コンテナを終了したりすることなく、モデルの重みや KV キャッシュを含む GPU メモリの大部分を一時的に解放できます。RLHF や学習、あるいは推論ワークロードの合間に GPU リソースを解放してコストを抑えたい場面で特に役立ちます。
 
-Key benefits:
+主な利点:
 
-- **Frees GPU memory**: Offloads model weights to CPU RAM and discards KV cache, releasing up to 90%+ of GPU memory for other tasks.
-- **Fast resume**: Quickly wake up the engine and resume inference without full model reload.
-- **API endpoints**: Control sleep/wake_up state via HTTP endpoints or Python API.
-- **Supports distributed workloads**: Works with tensor parallelism, pipeline parallelism, etc.
-- **Fine-grained control**: Optionally wake up only model weights or KV cache to avoid OOM during weight updates.
-
-!!! note
-    This feature is now supported on CUDA and ROCm platform.
+- **GPU メモリを解放**: モデルの重みを CPU RAM に退避し、KV キャッシュを破棄することで、GPU メモリの 90% 以上を他のタスク向けに解放できます。
+- **高速な再開**: モデルを完全に読み込み直すことなく、エンジンをすばやく起こして推論を再開できます。
+- **API エンドポイント**: sleep / wake_up の状態を HTTP エンドポイントまたは Python API から制御できます。
+- **分散ワークロードに対応**: テンソル並列やパイプライン並列などと併用できます。
+- **細かい制御**: モデルの重みだけ、または KV キャッシュだけを起こすこともでき、重み更新中の OOM を避けられます。
 
 !!! note
-    For more information, see this [Blog Post](https://blog.vllm.ai/2025/10/26/sleep-mode.html).
+    この機能は現在、CUDA と ROCm のプラットフォームでサポートされています。
 
-## Sleep levels
+!!! note
+    詳細はこちらの[ブログ記事](https://blog.vllm.ai/2025/10/26/sleep-mode.html)を参照してください。
 
-Level 1 sleep will offload the model weights and discard the KV cache. The content of KV cache is forgotten. Level 1 sleep is good for sleeping and waking up the engine to run the same model again. The model weights are backed up in CPU memory. Please make sure there's enough CPU memory to store the model weights. Level 2 sleep will discard both the model weights and the KV cache (while the model's buffers are kept in CPU, like rope scaling tensors). The content of both the model weights and KV cache is forgotten. Level 2 sleep is good for sleeping and waking up the engine to run a different model or update the model, where previous model weights are not needed, e.g. RLHF weight update.
+## スリープのレベル { #sleep-levels }
 
-## Usage
+レベル 1 のスリープでは、モデルの重みを退避し、KV キャッシュを破棄します。KV キャッシュの内容は失われます。レベル 1 のスリープは、同じモデルを再び動かすためにエンジンをスリープさせて起こす用途に適しています。モデルの重みは CPU メモリにバックアップされるため、重みを保持できるだけの CPU メモリがあることを確認してください。レベル 2 のスリープでは、モデルの重みと KV キャッシュの両方を破棄します（rope スケーリングのテンソルなど、モデルのバッファは CPU 上に保持されます）。モデルの重みと KV キャッシュの内容はどちらも失われます。レベル 2 のスリープは、以前のモデルの重みが不要な場合、たとえば RLHF の重み更新のように、別のモデルを動かしたりモデルを更新したりするためにエンジンをスリープさせて起こす用途に適しています。
 
-### Offline inference
+## 使い方 { #usage }
 
-Enable sleep mode by passing `enable_sleep_mode=True` to the `LLM` class.
+### オフライン推論 { #offline-inference }
+
+`LLM` クラスに `enable_sleep_mode=True` を渡すとスリープモードが有効になります。
 
 ```python
 from vllm import LLM
 llm = LLM("Qwen/Qwen3-0.6B", enable_sleep_mode=True)
 ```
 
-#### Python API
+#### Python API { #python-api }
 
 ```python
 # Sleep level 1
@@ -57,11 +57,11 @@ llm.collective_rpc("reload_weights")
 llm.wake_up(tags=["kv_cache"])
 ```
 
-#### RLHF weight updates
+#### RLHF の重み更新 { #rlhf-weight-updates }
 
-During RLHF training, vLLM allows you to selectively wake up only the model weights or the KV cache using the tags argument in wake_up(). This fine-grained control is especially useful when updating model weights: by waking up just the weights (e.g., llm.wake_up(tags=["weights"])), you avoid allocating memory for the KV cache until after the weight update is complete. This approach helps prevent GPU out-of-memory (OOM) errors, particularly with large models, by minimizing peak memory usage during weight synchronization and update operations.
+RLHF の学習中、vLLM では `wake_up()` の tags 引数を使って、モデルの重みまたは KV キャッシュだけを選択的に起こせます。この細かい制御は、モデルの重みを更新するときに特に有用です。重みだけを起こす（例: `llm.wake_up(tags=["weights"])`）ことで、重みの更新が完了するまで KV キャッシュ用のメモリ確保を先送りできます。これにより、重みの同期・更新処理中のピークメモリ使用量を抑えられ、特に大きなモデルで GPU の out-of-memory（OOM）エラーを防ぐのに役立ちます。
 
-Use `tags=["weights"]` or `tags=["kv_cache"]` to control which resources are restored, useful for RLHF and weight updates. **Note** that `is_sleeping` will report `true` until all components are awake.
+どのリソースを復元するかを制御するには `tags=["weights"]` または `tags=["kv_cache"]` を使います。RLHF や重み更新で便利です。**注意**: すべてのコンポーネントが起きるまで、`is_sleeping` は `true` を返します。
 
 ```python
 # Put engine to deep sleep (level=2)
@@ -74,13 +74,13 @@ llm.wake_up(tags=["weights"])
 llm.wake_up(tags=["kv_cache"])
 ```
 
-### Online Serving
+### オンラインサービング { #online-serving }
 
-To enable sleep mode in a vLLM server you need to initialize it with the flag `VLLM_SERVER_DEV_MODE=1` and pass `--enable-sleep-mode` to the vLLM server.
+vLLM サーバーでスリープモードを有効にするには、`VLLM_SERVER_DEV_MODE=1` を付けて起動し、vLLM サーバーに `--enable-sleep-mode` を渡します。
 
-#### Server in development mode
+#### 開発モードでのサーバー { #server-in-development-mode }
 
-When using the flag `VLLM_SERVER_DEV_MODE=1` you enable development endpoints, and these endpoints should not be exposed to users.
+`VLLM_SERVER_DEV_MODE=1` を指定すると開発用エンドポイントが有効になります。これらのエンドポイントは利用者に公開すべきではありません。
 
 ```bash
 VLLM_SERVER_DEV_MODE=1 vllm serve Qwen/Qwen3-0.6B \
@@ -88,14 +88,14 @@ VLLM_SERVER_DEV_MODE=1 vllm serve Qwen/Qwen3-0.6B \
   --port 8000
 ```
 
-Below is an example of how to sleep and wake up a model in level 1.
+レベル 1 でモデルをスリープさせて起こす例は次のとおりです。
 
 ```bash
 curl -X POST 'http://localhost:8000/sleep?level=1'
 curl -X POST 'http://localhost:8000/wake_up'
 ```
 
-And this is an example of how to sleep and wake up a model in level 2.
+レベル 2 でモデルをスリープさせて起こす例は次のとおりです。
 
 ```bash
 curl -X POST 'http://localhost:8000/sleep?level=2'
@@ -107,16 +107,16 @@ curl -X POST 'http://localhost:8000/collective_rpc' -H 'Content-Type: applicatio
 curl -X POST 'http://localhost:8000/wake_up?tags=kv_cache'
 ```
 
-#### HTTP endpoints
+#### HTTP エンドポイント { #http-endpoints }
 
-- `POST /sleep?level=1` — Put the model to sleep (`level=1`).
-- `POST /wake_up` — Wake up the model. Supports optional `tags` query parameters for partial wake-up (e.g., `?tags=weights`).
-- `POST /collective_rpc` — Perform a collective remote procedure call (RPC).
-- `GET /is_sleeping` — Check if the model is sleeping.
+- `POST /sleep?level=1` — モデルをスリープさせます（`level=1`）。
+- `POST /wake_up` — モデルを起こします。部分的に起こすための任意のクエリパラメータ `tags` に対応しています（例: `?tags=weights`）。
+- `POST /collective_rpc` — 集団リモートプロシージャコール（RPC）を実行します。
+- `GET /is_sleeping` — モデルがスリープ中かどうかを確認します。
 
 !!! note
-    These endpoints are only available when passing `VLLM_SERVER_DEV_MODE=1`.
+    これらのエンドポイントは `VLLM_SERVER_DEV_MODE=1` を指定した場合にのみ利用できます。
 
-## Limitation
+## 制限事項 { #limitation }
 
-On ROCm, the virtual memory allocation on ROCm is done through chunked memory allocation. You can control the chunk size through `VLLM_ROCM_SLEEP_MEM_CHUNK_SIZE` (in MB). The default value is set at 256MB. The larger the chunk size the faster the performance. However, setting it too large will cause OOM. So if you encounter OOM when using sleep mode. Try reducing the chunk size. It is recommended to define the chunk size as a power of 2.
+ROCm では、仮想メモリの確保がチャンク単位で行われます。チャンクサイズは `VLLM_ROCM_SLEEP_MEM_CHUNK_SIZE`（単位: MB）で制御できます。既定値は 256MB です。チャンクサイズが大きいほど性能は上がりますが、大きくしすぎると OOM を引き起こします。スリープモードの利用中に OOM が発生した場合は、チャンクサイズを小さくしてみてください。チャンクサイズは 2 のべき乗で指定することを推奨します。

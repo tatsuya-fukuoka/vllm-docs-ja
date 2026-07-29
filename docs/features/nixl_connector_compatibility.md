@@ -1,20 +1,22 @@
-# NixlConnector Compatibility Matrix
+# NixlConnector 互換性マトリクス { #nixlconnector-compatibility-matrix }
 
-This page documents the feature compatibility of **disaggregated prefilling with the NixlConnector**. For general usage instructions, see the [NixlConnector Usage Guide](nixl_connector_usage.md). For an overview of disaggregated prefilling, see [Disaggregated Prefilling](disagg_prefill.md).
+このページは、**NixlConnector を使ったプレフィル分離**における機能の互換性をまとめたものです。一般的な使い方は [NixlConnector 利用ガイド](nixl_connector_usage.md)を、プレフィル分離の概要は[プレフィル分離](disagg_prefill.md)を参照してください。
 
 !!! note
-    This page reflects the current state of the codebase and is subject to change as features evolve. Entries marked 🟠 or ❌ may link to tracking issues. See the [NIXL connector roadmap](https://github.com/vllm-project/vllm/issues/33702) for upcoming feature development.
+    このページは現時点のコードベースの状態を反映しており、機能の進展に伴って変わる可能性があります。
+    🟠 や ❌ が付いた項目は、追跡用 issue にリンクしている場合があります。今後の機能開発については
+    [NIXL コネクタのロードマップ](https://github.com/vllm-project/vllm/issues/33702)を参照してください。
 
-**Legend:**
+**凡例:**
 
-- ✅ = Fully supported
-- 🟠 = Partial support (see footnotes)
-- ❌ = Not supported
-- ❔ = Unknown / not yet validated
-- 🚧 = Work in progress
+- ✅ = 完全にサポート
+- 🟠 = 部分的にサポート（脚注を参照）
+- ❌ = 非対応
+- ❔ = 不明 / 未検証
+- 🚧 = 作業中
 
-!!! info "Universally supported features"
-    The following features work with **all** model architectures when using NixlConnector PD disaggregated serving:
+!!! info "すべてのモデルで共通してサポートされる機能"
+    NixlConnector による PD 分離サービングでは、次の機能が**すべての**モデルアーキテクチャで動作します。
 
     [Chunked Prefill](../configuration/optimization.md#chunked-prefill) |
     [APC (Prefix Caching)](automatic_prefix_caching.md) |
@@ -25,7 +27,7 @@ This page documents the feature compatibility of **disaggregated prefilling with
     [Prompt Embeds](prompt_embeds.md) |
     Multiple NIXL backends (UCX, GDS, LIBFABRIC, etc.)
 
-## Model Architecture x Capability
+## モデルアーキテクチャ × 機能 { #model-architecture-x-capability }
 
 <style>
 td:not(:first-child) {
@@ -47,7 +49,7 @@ th:not(:first-child) {
 }
 </style>
 
-| Model type | <abbr title="Basic Prefill/Decode disaggregation">Basic PD</abbr> | <abbr title="Speculative Decoding">Spec Decode</abbr> | <abbr title="Heterogeneous Tensor Parallelism (P TP != D TP)">Hetero TP</abbr> | <abbr title="Cross-layer blocks optimization">Cross-layer blocks</abbr> | <abbr title="Sliding Window Attention">SWA</abbr> | <abbr title="CPU host buffer offload (e.g. TPU)">Host buffer</abbr> | <abbr title="Different block sizes on P and D">Hetero block size</abbr> |
+| モデル種別 | <abbr title="Basic Prefill/Decode disaggregation">Basic PD</abbr> | <abbr title="Speculative Decoding">Spec Decode</abbr> | <abbr title="Heterogeneous Tensor Parallelism (P TP != D TP)">Hetero TP</abbr> | <abbr title="Cross-layer blocks optimization">Cross-layer blocks</abbr> | <abbr title="Sliding Window Attention">SWA</abbr> | <abbr title="CPU host buffer offload (e.g. TPU)">Host buffer</abbr> | <abbr title="Different block sizes on P and D">Hetero block size</abbr> |
 | - | - | - | - | - | - | - | - |
 | Dense Transformers | ✅ | ✅<sup>1</sup> | ✅ | ✅<sup>2</sup> | ✅ | ✅ | 🟠<sup>3</sup> |
 | MLA (e.g. DeepSeek-V2/V3) | ✅ | ✅<sup>1</sup> | 🟠<sup>4</sup> | ✅<sup>2</sup> | ✅ | ✅ | 🟠<sup>3</sup> |
@@ -57,48 +59,49 @@ th:not(:first-child) {
 | Multimodal | ❔ | ❔ | ❔ | ❔ | ❔ | ❔ | ❔ |
 | Encoder-Decoder | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
-<sup>1</sup> P and D instances must use the same speculation configuration.
+<sup>1</sup> P と D のインスタンスは同じ投機（speculation）設定を使う必要があります。
 
-<sup>2</sup> Requires `FLASH_ATTN` or `FLASHINFER` backend **and** `HND` KV cache layout. Enable via `--kv-transfer-config '{"kv_connector_extra_config": {"enable_cross_layers_blocks": "True"}}'`.
+<sup>2</sup> `FLASH_ATTN` または `FLASHINFER` バックエンドと、`HND` の KV キャッシュレイアウトの**両方**が必要です。`--kv-transfer-config '{"kv_connector_extra_config": {"enable_cross_layers_blocks": "True"}}'` で有効にします。
 
-<sup>3</sup> Supported only when HMA is **not** required (i.e., non-hybrid models). Block IDs are remapped automatically. Only P block size < D block size is supported.
+<sup>3</sup> HMA が**不要**な場合（つまり hybrid でないモデル）にのみサポートされます。ブロック ID は自動的に再マッピングされます。サポートされるのは P のブロックサイズ < D のブロックサイズの場合のみです。
 
-<sup>4</sup> MLA KV cache is replicated across TP workers, so heterogeneous TP works but there is no head-splitting. When P TP > D TP, only a single read is executed (redundant ranks are skipped). D TP > P TP also works.
+<sup>4</sup> MLA の KV キャッシュは TP ワーカー間で複製されるため、異種 TP は動作しますがヘッドの分割は行われません。P TP > D TP の場合、読み出しは 1 回だけ実行されます（冗長なランクはスキップされます）。D TP > P TP も動作します。
 
-<sup>5</sup> Hybrid SSM (Mamba) models require **homogeneous TP** (`P TP == D TP`). Heterogeneous TP is not yet supported for Mamba layers.
+<sup>5</sup> Hybrid SSM（Mamba）系のモデルは**同種の TP**（`P TP == D TP`）を必要とします。Mamba 層では異種 TP はまだサポートされていません。
 
-<sup>6</sup> HMA (required by hybrid models) does not support different remote block sizes.
+<sup>6</sup> HMA（hybrid モデルで必要）は、リモート側と異なるブロックサイズをサポートしていません。
 
-## Configuration Notes
+## 設定に関する注意 { #configuration-notes }
 
-### What must match between P and D
+### P と D で一致させる必要があるもの { #what-must-match-between-p-and-d }
 
-By default, a **compatibility hash** is checked during handshake. P and D instances must agree on:
+既定では、ハンドシェイク時に**互換性ハッシュ**が検証されます。P と D のインスタンスは次の点で一致している必要があります。
 
-- vLLM version and NIXL connector version
-- Model (architecture, dtype, number of KV heads, head size, number of hidden layers)
-- Attention backend
-- KV cache dtype (`cache_dtype`)
+- vLLM のバージョンと NIXL コネクタのバージョン
+- モデル（アーキテクチャ、dtype、KV ヘッド数、ヘッドサイズ、隠れ層の数）
+- Attention バックエンド
+- KV キャッシュの dtype（`cache_dtype`）
 
 !!! warning
-    Disable the hash check with `--kv-transfer-config '{"kv_connector_extra_config": {"enforce_handshake_compat": false}}'` at your own risk.
+    `--kv-transfer-config '{"kv_connector_extra_config": {"enforce_handshake_compat": false}}'` で
+    ハッシュ検証を無効にできますが、自己責任で行ってください。
 
-### What can safely differ between P and D
+### P と D で異なっていても問題ないもの { #what-can-safely-differ-between-p-and-d }
 
-- `tensor-parallel-size` (heterogeneous TP, subject to model restrictions above)
-- `block-size` (heterogeneous block size, subject to restrictions above)
-- Number of KV cache blocks (determined by available memory on each instance)
+- `tensor-parallel-size`（異種 TP。上記のモデルごとの制約に従います）
+- `block-size`（異種ブロックサイズ。上記の制約に従います）
+- KV キャッシュのブロック数（各インスタンスの利用可能メモリによって決まります）
 
-### KV cache layout
+### KV キャッシュのレイアウト { #kv-cache-layout }
 
-- NixlConnector defaults to **`HND`** layout for optimal transfer performance (non-MLA models).
-- `NHD` layout is supported but does **not** allow heterogeneous TP head splitting.
-- Experimental `HND` ↔ `NHD` permute: enable via `--kv-transfer-config '{"enable_permute_local_kv": true}'`. Not supported with HMA.
+- NixlConnector は、転送性能を最適化するため既定で **`HND`** レイアウトを使います（MLA 以外のモデル）。
+- `NHD` レイアウトもサポートされますが、異種 TP でのヘッド分割は**できません**。
+- 実験的な `HND` ↔ `NHD` の permute: `--kv-transfer-config '{"enable_permute_local_kv": true}'` で有効にします。HMA との併用はサポートされていません。
 
-### Quantized KV cache
+### 量子化された KV キャッシュ { #quantized-kv-cache }
 
-[Quantized KV cache](quantization/quantized_kvcache.md) (e.g., FP8) requires both P and D instances to use the **same** `cache_dtype`. Mismatched cache dtypes will fail the compatibility hash check during handshake.
+[量子化 KV キャッシュ](quantization/quantized_kvcache.md)（FP8 など）を使う場合、P と D の両インスタンスが**同じ** `cache_dtype` を使う必要があります。cache dtype が食い違うと、ハンドシェイク時の互換性ハッシュ検証に失敗します。
 
-- **Static quantization** (scales loaded from checkpoint): ✅ Supported. Scales are loaded independently by each instance from the model checkpoint.
-- **Dynamic quantization** (scales computed at runtime): ❌ Not supported. Per-block scales are not transferred alongside KV cache data.
-- **Packed-layout scales** (scales stored inline with weights): ✅ Supported. Scales are transferred together with the KV cache blocks.
+- **静的量子化**（スケールをチェックポイントから読み込む）: ✅ サポート。各インスタンスがモデルのチェックポイントから独立にスケールを読み込みます。
+- **動的量子化**（スケールを実行時に計算する）: ❌ 非対応。ブロック単位のスケールは KV キャッシュデータと一緒には転送されません。
+- **packed レイアウトのスケール**（スケールを重みとインラインで保持）: ✅ サポート。スケールは KV キャッシュのブロックと一緒に転送されます。

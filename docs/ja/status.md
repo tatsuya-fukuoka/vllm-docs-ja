@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **144 ページ**を翻訳済みです（63.7%）。
+全 226 ページ中 **148 ページ**を翻訳済みです（65.5%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -16,17 +16,17 @@
 | CLI リファレンス | 15 | 0 | 0 | 15 |
 | コミュニティ | 3 | 0 | 0 | 3 |
 | 設定 | 7 | 0 | 0 | 7 |
-| 開発者ガイド | 6 | 0 | 10 | 16 |
+| 開発者ガイド | 8 | 0 | 8 | 16 |
 | デプロイ | 35 | 0 | 0 | 35 |
 | 設計ドキュメント | 1 | 0 | 28 | 29 |
-| 機能 | 32 | 0 | 20 | 52 |
+| 機能 | 34 | 0 | 18 | 52 |
 | はじめに | 5 | 0 | 8 | 13 |
 | ガバナンス | 1 | 0 | 2 | 3 |
 | モデル | 6 | 0 | 10 | 16 |
 | 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **144** | **0** | **82** | **226** |
+| **合計** | **148** | **0** | **78** | **226** |
 
 ## 翻訳済みのページ
 
@@ -57,8 +57,10 @@
 - `configuration/model_resolution.md`
 - `configuration/optimization.md`
 - `configuration/serve_args.md`
+- `contributing/ci/failures.md`
 - `contributing/deprecation_policy.md`
 - `contributing/dockerfile/dockerfile.md`
+- `contributing/editing-agent-instructions.md`
 - `contributing/model/README.md`
 - `contributing/model/registration.md`
 - `contributing/model/tests.md`
@@ -108,6 +110,7 @@
 - `features/index_cache.md`
 - `features/interleaved_thinking.md`
 - `features/mooncake_connector_usage.md`
+- `features/nixl_connector_compatibility.md`
 - `features/per_request_metrics.md`
 - `features/prompt_embeds.md`
 - `features/quantization/README.md`
@@ -121,6 +124,7 @@
 - `features/quantization/modelopt.md`
 - `features/quantization/online.md`
 - `features/quantization/torchao.md`
+- `features/sleep_mode.md`
 - `features/speculative_decoding/draft_model.md`
 - `features/speculative_decoding/dynamic_speculative_decoding.md`
 - `features/speculative_decoding/eagle.md`

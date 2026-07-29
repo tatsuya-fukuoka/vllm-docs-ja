@@ -215,8 +215,10 @@
       "upstream_sha": "d8fdd6aba34e2fee"
     },
     "contributing/ci/failures.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "cc925624dec7a0d0",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "cc925624dec7a0d0"
     },
     "contributing/ci/nightly_builds.md": {
@@ -244,8 +246,10 @@
       "upstream_sha": "736222b63a7ecb34"
     },
     "contributing/editing-agent-instructions.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d2916dcd6d97d111",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "d2916dcd6d97d111"
     },
     "contributing/incremental_build.md": {
@@ -792,8 +796,10 @@
       "upstream_sha": "2cc00101af5826bd"
     },
     "features/nixl_connector_compatibility.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "262bcc65bd96f86b",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "262bcc65bd96f86b"
     },
     "features/nixl_connector_usage.md": {
@@ -928,8 +934,10 @@
       "upstream_sha": "3f2be4e99e0174d2"
     },
     "features/sleep_mode.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1b74c99de4e82896",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "1b74c99de4e82896"
     },
     "features/speculative_decoding/README.md": {
