@@ -583,8 +583,10 @@
       "upstream_sha": "605e97451fea181e"
     },
     "design/cuda_graphs.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "31cf9507c13aafdb",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "31cf9507c13aafdb"
     },
     "design/cuda_graphs_multimodal.md": {
