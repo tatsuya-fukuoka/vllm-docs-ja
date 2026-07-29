@@ -818,8 +818,10 @@
       "upstream_sha": "592f52ddb9dd73f3"
     },
     "features/kv_offloading_usage.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "a509bb3aca70755e",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "a509bb3aca70755e"
     },
     "features/lora.md": {
