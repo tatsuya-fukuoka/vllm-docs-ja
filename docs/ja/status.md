@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **171 ページ**を翻訳済みです（75.7%）。
+全 226 ページ中 **173 ページ**を翻訳済みです（76.5%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -18,15 +18,15 @@
 | 設定 | 7 | 0 | 0 | 7 |
 | 開発者ガイド | 11 | 0 | 5 | 16 |
 | デプロイ | 35 | 0 | 0 | 35 |
-| 設計ドキュメント | 8 | 0 | 21 | 29 |
-| 機能 | 40 | 0 | 12 | 52 |
+| 設計ドキュメント | 9 | 0 | 20 | 29 |
+| 機能 | 41 | 0 | 11 | 52 |
 | はじめに | 5 | 0 | 8 | 13 |
 | ガバナンス | 3 | 0 | 0 | 3 |
 | モデル | 10 | 0 | 6 | 16 |
 | 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **171** | **0** | **55** | **226** |
+| **合計** | **173** | **0** | **53** | **226** |
 
 ## 翻訳済みのページ
 
@@ -110,6 +110,7 @@
 - `design/io_processor_plugins.md`
 - `design/lora_resolver_plugins.md`
 - `design/mm_processing.md`
+- `design/model_runner_v2.md`
 - `design/optimization_levels.md`
 - `design/torch_compile_multimodal.md`
 - `features/README.md`
@@ -145,6 +146,7 @@
 - `features/speculative_decoding/draft_model.md`
 - `features/speculative_decoding/dynamic_speculative_decoding.md`
 - `features/speculative_decoding/eagle.md`
+- `features/speculative_decoding/extract_hidden_states.md`
 - `features/speculative_decoding/mlp.md`
 - `features/speculative_decoding/mtp.md`
 - `features/speculative_decoding/n_gram.md`

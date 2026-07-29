@@ -656,8 +656,10 @@
       "upstream_sha": "2be6b62e473b6df3"
     },
     "design/model_runner_v2.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1ef00c68fcc82b5d",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "1ef00c68fcc82b5d"
     },
     "design/moe_kernel_features.md": {
@@ -1001,8 +1003,10 @@
       "upstream_sha": "7492f3892f169135"
     },
     "features/speculative_decoding/extract_hidden_states.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "381923f15317cb4b",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "381923f15317cb4b"
     },
     "features/speculative_decoding/mlp.md": {

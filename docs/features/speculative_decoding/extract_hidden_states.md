@@ -1,11 +1,12 @@
-# Hidden State Extraction
+# 隠れ状態の抽出 { #hidden-state-extraction }
 
-The Hidden State Extraction feature allows vLLM to save intermediate layer activations from a target model during inference. This is useful for training [EAGLE](eagle.md)-style draft models, knowledge distillation, or offline analysis of model internals.
+隠れ状態の抽出（Hidden State Extraction）機能を使うと、推論中にターゲットモデルの中間層の活性値を vLLM に保存させられます。[EAGLE](eagle.md) 形式のドラフトモデルの学習、知識蒸留、モデル内部のオフライン分析などに役立ちます。
 
 !!! note
-    It is possible to save the last-layer's output hidden states by passing `num_hidden_layers` as a layer id. Note that these are _not_ normalized using the output norm.
+    レイヤー ID として `num_hidden_layers` を渡すと、最終層の出力隠れ状態を保存できます。これらは
+    出力側の正規化（output norm）が適用されて_いない_点に注意してください。
 
-## Offline Example
+## オフラインの例 { #offline-example }
 
 ```python
 import tempfile
@@ -49,11 +50,11 @@ with tempfile.TemporaryDirectory() as tmpdir:
         print(f"hidden_states: {obj['hidden_states'].shape}")
 ```
 
-A complete example is available at [`examples/features/speculative_decoding/extract_hidden_states_offline.py`](../../../examples/features/speculative_decoding/extract_hidden_states_offline.py).
+完全な例は [`examples/features/speculative_decoding/extract_hidden_states_offline.py`](../../../examples/features/speculative_decoding/extract_hidden_states_offline.py) にあります。
 
-## Online Example
+## オンラインの例 { #online-example }
 
-For improved performance, it is recommended to use a RAM-mounted file system such as `/dev/shm/` for online usage in which the client cleans up the files soon after they are generated.
+性能を上げるため、オンラインで利用する場合は `/dev/shm/` のような RAM 上のファイルシステムを使い、クライアントが生成後すぐにファイルを削除する運用を推奨します。
 
 ```bash
 vllm serve Qwen/Qwen3-8B \
@@ -61,18 +62,18 @@ vllm serve Qwen/Qwen3-8B \
     --kv_transfer_config '{"kv_connector": "ExampleHiddenStatesConnector", "kv_role": "kv_producer", "kv_connector_extra_config": {"shared_storage_path": "/dev/shm/hidden_states"}}'
 ```
 
-## Per-Request Options
+## リクエストごとのオプション { #per-request-options }
 
-Both offline and online modes support per-request options via `kv_transfer_params`:
+オフライン・オンラインのどちらのモードでも、`kv_transfer_params` を通じてリクエストごとのオプションを指定できます。
 
-| Parameter | Default | Description |
+| パラメータ | 既定値 | 説明 |
 | --- | --- | --- |
-| `hidden_states_path` | Auto-generated | Custom file path for saving hidden states. If not set, files are saved to `<shared_storage_path>/<request_id>.safetensors`. Requires `allow_custom_save_path` to be enabled in the server config. |
-| `include_output_tokens` | `False` | When `True`, save hidden states for both prompt and generated output tokens. When `False`, only prompt token hidden states are saved. |
+| `hidden_states_path` | 自動生成 | 隠れ状態を保存するファイルパスを指定します。未設定の場合は `<shared_storage_path>/<request_id>.safetensors` に保存されます。サーバー設定で `allow_custom_save_path` が有効になっている必要があります。 |
+| `include_output_tokens` | `False` | `True` の場合、プロンプトと生成された出力トークンの両方について隠れ状態を保存します。`False` の場合はプロンプトのトークンの隠れ状態のみを保存します。 |
 
-### Offline usage
+### オフラインでの使い方 { #offline-usage }
 
-Pass per-request options via `extra_args` on `SamplingParams`:
+リクエストごとのオプションは `SamplingParams` の `extra_args` で渡します。
 
 ```python
 SamplingParams(
@@ -86,9 +87,9 @@ SamplingParams(
 )
 ```
 
-### Online usage
+### オンラインでの使い方 { #online-usage }
 
-Pass `kv_transfer_params` as a top-level field in the API request:
+API リクエストのトップレベルのフィールドとして `kv_transfer_params` を渡します。
 
 ```json
 {
@@ -102,25 +103,25 @@ Pass `kv_transfer_params` as a top-level field in the API request:
 }
 ```
 
-## Configuration
+## 設定 { #configuration }
 
-The `kv_connector_extra_config` dict accepts these server-level options:
+`kv_connector_extra_config` の辞書では、次のサーバーレベルのオプションを指定できます。
 
-| Parameter | Default | Description |
+| パラメータ | 既定値 | 説明 |
 | --- | --- | --- |
-| `shared_storage_path` | `/tmp` | Directory where hidden state files are saved (used when `hidden_states_path` is not set per-request) |
-| `allow_custom_save_path` | `False` | Allow API clients to specify custom file paths via `hidden_states_path`. When disabled, client-provided paths are ignored with a warning. Enable only with trusted clients — custom paths can write to arbitrary locations on the server. |
-| `num_writer_threads` | `8` | Thread pool size for async disk writes |
-| `use_synchronization_lock` | `True` | Use file locks so concurrent readers block until writes complete. Can be disabled for batch generation where synchronization is not needed. |
+| `shared_storage_path` | `/tmp` | 隠れ状態のファイルを保存するディレクトリ（リクエストごとに `hidden_states_path` が指定されていない場合に使用） |
+| `allow_custom_save_path` | `False` | API クライアントが `hidden_states_path` で任意のファイルパスを指定できるようにします。無効の場合、クライアントが指定したパスは警告とともに無視されます。任意のパスはサーバー上の任意の場所に書き込めるため、信頼できるクライアントに対してのみ有効にしてください。 |
+| `num_writer_threads` | `8` | 非同期のディスク書き込みに使うスレッドプールのサイズ |
+| `use_synchronization_lock` | `True` | ファイルロックを使い、書き込みが完了するまで同時に読み込むプロセスをブロックします。同期が不要なバッチ生成では無効にできます。 |
 
-## Output Format
+## 出力形式 { #output-format }
 
-Each request produces a `.safetensors` file containing:
+各リクエストは、次を含む `.safetensors` ファイルを生成します。
 
-- **`hidden_states`** — shape `[num_tokens, num_extracted_layers, hidden_size]`
-- **`token_ids`** — shape `[num_tokens]`
+- **`hidden_states`** — 形状 `[num_tokens, num_extracted_layers, hidden_size]`
+- **`token_ids`** — 形状 `[num_tokens]`
 
-The file path is returned in `output.kv_transfer_params["hidden_states_path"]`. Use `load_hidden_states()` from the connector module to read the file with proper synchronization.
+ファイルパスは `output.kv_transfer_params["hidden_states_path"]` で返されます。適切な同期のもとでファイルを読むには、コネクタモジュールの `load_hidden_states()` を使ってください。
 
 !!! note
-    Chunked prefill is not compatible with this feature and must be disabled.
+    チャンク化プレフィルはこの機能と併用できないため、無効にする必要があります。
