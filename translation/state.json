@@ -303,8 +303,10 @@
       "upstream_sha": "7c9109c6b91df091"
     },
     "contributing/model/transcription.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "529771f89d321209",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "529771f89d321209"
     },
     "contributing/profiling.md": {
