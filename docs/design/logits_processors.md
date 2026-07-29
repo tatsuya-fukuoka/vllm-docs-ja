@@ -1,32 +1,31 @@
-# Logits Processors
+# ロジットプロセッサ { #logits-processors }
 
 !!! important
-    Some logits processors design changes are still in progress and the API may
-    change in the near future. We hope to stabilize this part of the API soon
+    ロジットプロセッサの設計変更の一部はまだ進行中で、API は近い将来変わる可能性があります。この部分の API は近いうちに安定させたいと考えています。
 
-This document describes how the vLLM engine interacts with logits processors, and the programming model which vLLM supports for implementing logits processors.
+このドキュメントでは、vLLM エンジンがロジットプロセッサとどのようにやり取りするか、そして vLLM がロジットプロセッサの実装に対してサポートするプログラミングモデルを説明します。
 
-## Logits Processors Background
+## ロジットプロセッサの背景 { #logits-processors-background }
 
-A logits processor adjusts the next-token probability distribution, usually with the intention of steering the model towards a desired type of behavior.
+ロジットプロセッサは次トークンの確率分布を調整するもので、通常はモデルを望ましい振る舞いへ誘導することを目的とします。
 
-In vLLM, logits processors operate at batch granularity. During a given engine step, the logits processor consumes a `(num_requests) x (vocab_size)` tensor of raw logits output by the model. For all requests which enable the logits processor, the logits processor applies a transformation to the corresponding row of the logits tensor, while leaving other rows unmodified. The transformed logits tensor is then passed to softmax.  
+vLLM では、ロジットプロセッサはバッチ単位で動作します。あるエンジンステップにおいて、ロジットプロセッサはモデルが出力した生のロジットの `(num_requests) x (vocab_size)` テンソルを受け取ります。そのロジットプロセッサを有効にしているすべてのリクエストについて、対応するロジットテンソルの行に変換を適用し、それ以外の行は変更しません。変換後のロジットテンソルは softmax に渡されます。
 
-## Logits Processors in the vLLM engine
+## vLLM エンジンにおけるロジットプロセッサ { #logits-processors-in-the-vllm-engine }
 
-The vLLM engine's persistent batch data structure maintains a list of loaded logits processors.
+vLLM エンジンの永続バッチ（persistent batch）のデータ構造は、読み込まれたロジットプロセッサのリストを保持します。
 
-In order to operate on the entire batch at once, each logits processor may maintain metadata about the requests in the batch (i.e. each request's logits-processor-specific configuration settings). Therefore, logits processors are stateful.
+バッチ全体を一度に処理するため、各ロジットプロセッサはバッチ内のリクエストに関するメタデータ（すなわち、リクエストごとのロジットプロセッサ固有の設定）を保持することがあります。したがって、ロジットプロセッサはステートフルです。
 
-In each engine step, the vLLM engine will (1) update each logits processor's internal state and (2) apply logits processors to the model output logits.
+各エンジンステップで、vLLM エンジンは (1) 各ロジットプロセッサの内部状態を更新し、(2) モデル出力のロジットにロジットプロセッサを適用します。
 
-### Updating Logits Processor Internal State
+### ロジットプロセッサの内部状態の更新 { #updating-logits-processor-internal-state }
 
-At the beginning of each engine step, the persistent batch may add, discard and/or reorder requests in response to the scheduler output. After the persistent batch has reorganized, the vLLM engine invokes each logits processor's `update_state()` method. This is necessary to ensure that logits processors' internal states are reorganized to match the new persistent batch state at the beginning of the engine step.
+各エンジンステップの開始時、永続バッチはスケジューラの出力に応じてリクエストの追加・破棄・並べ替えを行うことがあります。永続バッチが再構成されたあと、vLLM エンジンは各ロジットプロセッサの `update_state()` メソッドを呼び出します。これは、エンジンステップ開始時の新しい永続バッチの状態に合わせて、ロジットプロセッサの内部状態を並べ替えるために必要です。
 
-The pseudocode below shows the process by which the vLLM persistent batch notifies each logits processor of changes in batch state:
+以下の疑似コードは、vLLM の永続バッチが各ロジットプロセッサにバッチ状態の変更を通知する流れを示しています。
 
-??? code "Model Runner Updates Logits Processor States"
+??? code "モデルランナーがロジットプロセッサの状態を更新する"
 
     ``` python
     # gpu_model_runner.py
@@ -85,13 +84,13 @@ The pseudocode below shows the process by which the vLLM persistent batch notifi
     
     ```
 
-### Applying Logits Processors to the Model Output Logits
+### モデル出力のロジットへのロジットプロセッサの適用 { #applying-logits-processors-to-the-model-output-logits }
 
-After updating persistent batch state, the vLLM model runner performs model inference to obtain logits. Then, the model runner invokes the sampler against the logits. In turn, part of the sampler's operation is to invoke the logits processors' `apply()` methods against the model output logit processors, yielding transformed logits (the `apply()` methods may modify the logits in-place or out-of-place, although in-place is more memory-efficient). This process is shown in the pseudocode below.
+永続バッチの状態を更新したあと、vLLM のモデルランナーはモデル推論を実行してロジットを得ます。続いて、モデルランナーはそのロジットに対してサンプラーを呼び出します。サンプラーの処理の一部として、モデル出力のロジットに対してロジットプロセッサの `apply()` メソッドが呼ばれ、変換後のロジットが得られます（`apply()` はロジットをインプレースでもアウトオブプレースでも変更できますが、インプレースのほうがメモリ効率に優れます）。この流れを以下の疑似コードに示します。
 
-Note that the sampler will access the logits processors via `SamplingMetadata.logitsprocs`. When the vLLM engine constructs `SamplingMetadata` (not shown in the code below), the reference to the list of logits processors is passed from the persistent batch data structure to `SamplingMetadata`.
+サンプラーは `SamplingMetadata.logitsprocs` を通じてロジットプロセッサにアクセスします。vLLM エンジンが `SamplingMetadata` を構築する際（以下のコードには示していません）、ロジットプロセッサのリストへの参照が永続バッチのデータ構造から `SamplingMetadata` へ渡されます。
 
-??? code "Apply logits processors to model output logits"
+??? code "モデル出力のロジットにロジットプロセッサを適用する"
 
     ``` python
     # gpu_model_runner.py
@@ -155,19 +154,19 @@ Note that the sampler will access the logits processors via `SamplingMetadata.lo
             # ...perform sampling and return sampling result...
     ``` 
 
-At sampling time, the sampler checks whether all requests in the persistent batch employ greedy sampling. If that is the case, the sampler saves compute by skipping "argmax-invariant" logits processors. Here, "argmax" is shorthand for the token ID with the highest logit value in a given row of the logits tensor (i.e. the token which the model weighted the highest for a given request).
+サンプリング時、サンプラーは永続バッチ内のすべてのリクエストが貪欲サンプリングを使っているかを確認します。そうであれば、サンプラーは「argmax 不変」のロジットプロセッサをスキップして計算を節約します。ここで「argmax」とは、ロジットテンソルのある行で最も高いロジット値を持つトークン ID（つまり、そのリクエストについてモデルが最も高く評価したトークン）を指す略語です。
 
-* An **argmax-invariant logits processor** is a logits processor (such as Min-P) which does not modify the argmax. For example, a logits processor which masks out the lowest-probability tokens will not change which token ID has the max logit. Greedy sampling always picks the highest-logit-value token ID, and so conceptually an argmax-invariant logits processor can be skipped for greedy sampling requests.
+* **argmax 不変のロジットプロセッサ**とは、argmax を変えないロジットプロセッサ（Min-P など）です。たとえば、確率の最も低いトークンをマスクするロジットプロセッサは、どのトークン ID が最大のロジットを持つかを変えません。貪欲サンプリングは常に最大のロジット値を持つトークン ID を選ぶため、概念上、argmax 不変のロジットプロセッサは貪欲サンプリングのリクエストではスキップできます。
 
-* A **non-argmax-invariant logits processor** is a logits processor which may modify the argmax. For example, a logits processor which masks all tokens except for EOS after a certain number of steps in order to force decoding to terminate might end up masking the max-logit-value token and therefore change the argmax. Conceptually, these logits processors cannot be skipped for greedy sampling requests.
+* **argmax 不変でないロジットプロセッサ**とは、argmax を変える可能性があるロジットプロセッサです。たとえば、デコードを強制的に終了させるために一定ステップ数を過ぎたら EOS 以外のすべてのトークンをマスクするロジットプロセッサは、最大ロジット値のトークンをマスクしてしまい、結果として argmax を変えることがあります。概念上、こうしたロジットプロセッサは貪欲サンプリングのリクエストでもスキップできません。
 
-The vLLM logits processor abstraction requires the engine to apply logits processors at batch granularity; therefore in practice the argmax-invariant logits processors can only be skipped when the entire batch uses greedy sampling.
+vLLM のロジットプロセッサの抽象は、エンジンがバッチ単位でロジットプロセッサを適用することを前提としています。したがって実際には、argmax 不変のロジットプロセッサをスキップできるのは、バッチ全体が貪欲サンプリングを使っている場合だけです。
 
-## Logits Processor Programming Model
+## ロジットプロセッサのプログラミングモデル { #logits-processor-programming-model }
 
-The previous sections alluded to the interfaces which vLLM logits processors must support. This section introduces in full the programming model for implementing logits processors that are compatible with the vLLM engine, including the `LogitsProcessor` base class and its interface methods as well as the `BatchUpdate` data structure for representing persistent batch state changes, both of which are shown in the code below:
+前の節では、vLLM のロジットプロセッサがサポートすべきインターフェースに触れました。この節では、vLLM エンジンと互換なロジットプロセッサを実装するためのプログラミングモデルを、`LogitsProcessor` 基底クラスとそのインターフェースメソッド、および永続バッチの状態変化を表す `BatchUpdate` データ構造を含めて全体的に説明します。いずれも以下のコードに示します。
 
-??? code "`LogitsProcessor` base class and `BatchUpdate` data structure"
+??? code "`LogitsProcessor` 基底クラスと `BatchUpdate` データ構造"
 
     ``` python
     from abc import ABC, abstractmethod
@@ -265,300 +264,300 @@ The previous sections alluded to the interfaces which vLLM logits processors mus
 
     ```
 
-A vLLM logits processor must subclass `LogitsProcessor` and define (at minimum) the following methods:
+vLLM のロジットプロセッサは `LogitsProcessor` を継承し、少なくとも次のメソッドを定義する必要があります。
 
 * `__init__(self, vllm_config: VllmConfig, device: torch.device, is_pin_memory: bool)`
-    * `vllm_config`: engine configuration data structure
-    * `device`: hardware accelerator device info
-    * `is_pin_memory`: flag indicating whether pin memory is available to support logits processor implementation
+    * `vllm_config`: エンジンの設定データ構造
+    * `device`: ハードウェアアクセラレータのデバイス情報
+    * `is_pin_memory`: ロジットプロセッサの実装のために pin メモリが利用できるかを示すフラグ
 
 * `apply(self, logits: torch.Tensor) -> torch.Tensor`:
-    * Consume a `(num_requests) x (vocab_size)` logits tensor (`logits`)
-    * Apply logits processor transformation at batch granularity
-    * Return a transformed `(num_requests) x (vocab_size)` logits tensor
-    * You can modify the input logits processors in-place or out-of-place; in-place is more memory-efficient
+    * `(num_requests) x (vocab_size)` のロジットテンソル（`logits`）を受け取ります
+    * バッチ単位でロジットプロセッサの変換を適用します
+    * 変換後の `(num_requests) x (vocab_size)` のロジットテンソルを返します
+    * 入力のロジットはインプレースでもアウトオブプレースでも変更できます。インプレースのほうがメモリ効率に優れます
 
 * `is_argmax_invariant(self) -> bool`:
-    * Return `True` if the logits processor is argmax invariant (never changes what is the highest-logit-value token ID for a given request), `False` if the logits processor may modify argmax
-    * `is_argmax_invariant()` is evaluated once at startup; if `True`, vLLM will skip applying this logits processor in a given step when all requests use greedy sampling
+    * そのロジットプロセッサが argmax 不変（あるリクエストについて最大ロジット値を持つトークン ID を決して変えない）であれば `True`、argmax を変える可能性があれば `False` を返します
+    * `is_argmax_invariant()` は起動時に一度だけ評価されます。`True` の場合、すべてのリクエストが貪欲サンプリングを使うステップでは、vLLM はこのロジットプロセッサの適用をスキップします
 
 * `update_state(self, batch_update: "BatchUpdate" | None) -> None`:
-    * Consume a `BatchUpdate` data structure representing persistent batch state changes at the beginning of the current engine step
-    * Use the `BatchUpdate` members to update logits processor internal state
-    * **Note:** batch update data structure may be `None`, signaling no change to the batch constituents. In this case, the LogitsProcessor might still want to update its state based on the updated `output_token_ids` lists that it could have retained when they were added.
+    * 現在のエンジンステップ開始時の永続バッチの状態変化を表す `BatchUpdate` データ構造を受け取ります
+    * `BatchUpdate` のメンバを使ってロジットプロセッサの内部状態を更新します
+    * **注:** バッチ更新のデータ構造は `None` になることがあり、これはバッチの構成に変化がないことを示します。この場合でも、ロジットプロセッサは、追加時に保持した `output_token_ids` のリストが更新されているのを踏まえて状態を更新したい場合があります。
 
 * `validate_params(cls, sampling_params: SamplingParams)`:
-    * Raise `ValueError` if `SamplingParams` has invalid arguments (especially custom arguments) used by logits processor.
-    * When request is sent to entrypoint, `validate_params()` will validate `SamplingParams` and refuse request with invalid arguments.
+    * ロジットプロセッサが使う `SamplingParams` の引数（とくにカスタム引数）が不正な場合に `ValueError` を送出します。
+    * リクエストがエントリポイントに送られると、`validate_params()` が `SamplingParams` を検証し、不正な引数を含むリクエストを拒否します。
 
-### `BatchUpdate` data structure
+### `BatchUpdate` データ構造 { #batchupdate-data-structure }
 
-The `BatchUpdate` abstraction models the persistent batch as a list of requests, supporting the following operations to change batch state (note that the order in which the operations are mentioned below reflects the order in which they should be processed in `update_state()`):
+`BatchUpdate` の抽象は、永続バッチをリクエストのリストとしてモデル化し、バッチ状態を変更する次の操作をサポートします（以下で操作を挙げる順序は、`update_state()` 内でそれらを処理すべき順序を反映しています）。
 
-* **Remove:** remove (without replacement) request at index `i`
+* **Remove:** インデックス `i` のリクエストを（置き換えなしで）削除します
 
-    * A Remove is represented in `Batchupdate.removed` by an `int` (representing `i`)
+    * Remove は `Batchupdate.removed` の `int`（`i` を表す）として表現されます
 
-    * Effect of remove-at-index on batch:
+    * インデックス指定の削除がバッチに与える影響:
 
         ``` text
-        Batch: [A,B,C]
+        バッチ: [A,B,C]
         Remove @ i:  1
 
         =>
 
-        New Batch: [A,x,C] # Discard B and leave an empty slot
+        新しいバッチ: [A,x,C] # B を破棄し、空きスロットを残す
         ```
 
-* **Add:** add (or replace existing request with) a new request at index `i`. If a request is replaced, its associated state should be discarded.
+* **Add:** インデックス `i` に新しいリクエストを追加（または既存のリクエストを置き換え）します。リクエストが置き換えられた場合、それに紐づく状態は破棄すべきです。
 
-    * An Add is represented in `Batchupdate.added` as a tuple of
+    * Add は `Batchupdate.added` のタプルとして表現されます
 
         ``` text
-        (index, new request SamplingParams, prompt token ids, output token ids)
+        (インデックス, 新しいリクエストの SamplingParams, プロンプトのトークン ID, 出力のトークン ID)
         ```
 
-    * `prompt token ids` and `output token ids` are references to the request's prompt token ids and output token ids lists, respectively. Note that the output token ids list grows with each engine step, and this growth is visible to the logits processor because output token ids are passed by reference. **This is important for LogitsProcessors that take into account the tokens generated so far**.
+    * `プロンプトのトークン ID` と `出力のトークン ID` は、それぞれリクエストのプロンプトトークン ID リストと出力トークン ID リストへの参照です。出力トークン ID のリストはエンジンステップごとに伸びていき、参照渡しであるためロジットプロセッサからその伸長が見えます。**これは、これまでに生成されたトークンを考慮するロジットプロセッサにとって重要です**。
 
-    * The implementation of the particular logits processor subclass determines whether or how the fields in the added request tuple are digested into an internal representation. For example, a logits processor that does not utilize prompt or output token ids may only need to utilize `index` and `SamplingParams` and discard the other tuple fields
+    * 追加されたリクエストのタプルのフィールドを内部表現へどう取り込むか（あるいは取り込まないか）は、個々のロジットプロセッサのサブクラスの実装によって決まります。たとえば、プロンプトや出力のトークン ID を利用しないロジットプロセッサは、`index` と `SamplingParams` だけを使い、残りのフィールドを破棄すればよいでしょう
 
-    * If index `i` currently holds a request, a replacement occurs:
+    * インデックス `i` に現在リクエストが入っている場合、置き換えが発生します。
 
         ``` text
-        Batch: [A,B,C]
-        New request to be added @ i: D @ 1
+        バッチ: [A,B,C]
+        追加する新しいリクエスト @ i: D @ 1
 
         =>
 
-        New Batch: [A,D,C] # Add D, discard B
+        新しいバッチ: [A,D,C] # D を追加し、B を破棄
         ```
 
-    * If index `i` does not currently hold a request (because `i` is out of bounds of the current batch size):
+    * インデックス `i` に現在リクエストが入っていない場合（`i` が現在のバッチサイズの範囲外の場合）:
 
         ``` text
-        Batch: [A,B,C]
-        New request to be added @ i: D @ 3
+        バッチ: [A,B,C]
+        追加する新しいリクエスト @ i: D @ 3
 
         =>
 
-        New Batch: [A,B,C,D] # Add D, extending batch
+        新しいバッチ: [A,B,C,D] # D を追加し、バッチを拡張
         ```
 
-* **Move:** move request at index `s` to index `d` OR swap requests at indices `s` and `d`
+* **Move:** インデックス `s` のリクエストをインデックス `d` へ移動する、またはインデックス `s` と `d` のリクエストを交換します
 
-    * A Move is represented in `Batchupdate.moved` as a tuple of
+    * Move は `Batchupdate.moved` のタプルとして表現されます
 
         ``` text
-        (s, d, UNIDIRECTIONAL or SWAP)
+        (s, d, UNIDIRECTIONAL または SWAP)
         ```
 
-    * If the Move specifies `UNIDIRECTIONAL`:
+    * Move が `UNIDIRECTIONAL` を指定する場合:
 
-        * The request at index `s` is moved to index `d`; index `s` becomes an empty slot
+        * インデックス `s` のリクエストがインデックス `d` へ移動し、インデックス `s` は空きスロットになります
 
             ``` text
-            Batch: [A,x,C,D]
-            Unidirectionally Move s -> d:  3 -> 1
+            バッチ: [A,x,C,D]
+            一方向の Move s -> d:  3 -> 1
 
             =>
 
-            New Batch: [A,D,C,x] # Move D to 1, leaving empty slot at 3
+            新しいバッチ: [A,D,C,x] # D を 1 へ移動し、3 に空きスロットを残す
             ```
 
-        * If another request already resided at index `d`, it is replaced and discarded
+        * インデックス `d` にすでに別のリクエストがあった場合、それは置き換えられて破棄されます
 
             ``` text
-            Batch: [A,B,C,D]
-            Unidirectionally Move s -> d:  3 -> 1
+            バッチ: [A,B,C,D]
+            一方向の Move s -> d:  3 -> 1
 
             =>
 
-            New Batch: [A,D,C,x] # Move D to 1, discarding B and leaving empty slot at 3
+            新しいバッチ: [A,D,C,x] # D を 1 へ移動し、B を破棄して 3 に空きスロットを残す
             ```
 
-    * If the Move specifies `SWAP`, the requests at `s` and `d` exchange indices
+    * Move が `SWAP` を指定する場合、`s` と `d` のリクエストがインデックスを交換します
 
         ``` text
-        Batch: [A,B,C,D]
-        Swap Move s <-> d:  3 <-> 1
+        バッチ: [A,B,C,D]
+        Swap の Move s <-> d:  3 <-> 1
 
         =>
 
-        New Batch: [A,D,C,B] # Swap B and D
+        新しいバッチ: [A,D,C,B] # B と D を交換
         ```
 
-Additionally, the `BatchUpdate` data structure includes a representation (`batch_size`) of the size of the persistent batch at the beginning of the engine step.
+さらに `BatchUpdate` データ構造には、エンジンステップ開始時点の永続バッチのサイズを表す `batch_size` が含まれます。
 
-### How the vLLM engine builds the `BatchUpdate` data structure
+### vLLM エンジンが `BatchUpdate` データ構造を構築する方法 { #how-the-vllm-engine-builds-the-batchupdate-data-structure }
 
-Logits processor `update_state()` implementations should assume the following model for how the model runner updates persistent batch state (expressed here in terms of the `BatchUpdate` abstraction):
+ロジットプロセッサの `update_state()` の実装は、モデルランナーが永続バッチの状態を更新する方法として、次のモデル（ここでは `BatchUpdate` の抽象で表現）を前提とすべきです。
 
-1. Identify indices of requests which finished in the current engine step
+1. 現在のエンジンステップで完了したリクエストのインデックスを特定する
 
-2. Identify new requests introduced in the current step
+2. 現在のステップで新たに投入されたリクエストを特定する
 
-3. Use Add operations to replace as many finished requests with new requests, in order of increasing index of the replaced request starting with the lowest index
+3. Add 操作により、完了したリクエストをできるだけ多く新しいリクエストで置き換える。置き換えるリクエストのインデックスが小さい順に処理する
 
-4. Based on the relative number of new and finished requests:
+4. 新規リクエストと完了リクエストの数の関係に応じて:
 
-    1. If the numbers of new and finished requests are the same, proceed to next step
+    1. 新規と完了の数が同じであれば、次のステップへ進む
 
-    2. *If there are more new requests than finished requests:* apply Add operations to extend the batch with the remaining new requests which did not replace finished requests. Assign consecutive indices to these new requests, starting with `current_max_batch_index + 1`
+    2. *新規リクエストのほうが完了リクエストより多い場合:* 完了リクエストを置き換えなかった残りの新規リクエストで、Add 操作によりバッチを拡張する。これらの新規リクエストには `current_max_batch_index + 1` から始まる連続したインデックスを割り当てる
 
-    3. *If there are fewer new requests than finished requests:*
+    3. *新規リクエストのほうが完了リクエストより少ない場合:*
 
-        * Apply Remove operations to finished requests which were not replaced with new requests. These removed request indices will necessarily be greater than the greatest index of the finished requests which were replaced in the previous step. The Removes may leave the batch in a non-contiguous state
+        * 新規リクエストで置き換えられなかった完了リクエストに Remove 操作を適用する。これら削除されるリクエストのインデックスは、必ず前のステップで置き換えられた完了リクエストの最大インデックスより大きくなる。Remove によりバッチは非連続な状態になることがある
 
-        * **"Condense" the batch to be contiguous:** starting with the lowest-index empty slot (which was caused by a Remove), apply a Unidirectional Move from the current highest non-empty slot in the batch to fill the empty slot. Proceed with additional Unidirectional Move operations in order of increasing empty slot destination index and decreasing non-empty slot source index until the batch is contiguous
+        * **バッチを連続にするよう「圧縮」する:** （Remove により生じた）最も小さいインデックスの空きスロットから始め、バッチ内で現在最も大きいインデックスの非空スロットから一方向の Move を適用して空きスロットを埋める。バッチが連続になるまで、空きスロットの宛先インデックスは昇順、非空スロットの元インデックスは降順の順で一方向の Move を続ける
 
-        * **Shrink the batch:** a side effect of condensing the batch is that empty slots resulting from Remove operations are grouped in a contiguous block at the end of the batch array. Thus, after condensing, update `BatchUpdate.batch_size` to reflect the number of non-empty slots
+        * **バッチを縮小する:** バッチの圧縮の副作用として、Remove により生じた空きスロットはバッチ配列の末尾に連続したブロックとしてまとまる。したがって圧縮後は、非空スロットの数を反映するよう `BatchUpdate.batch_size` を更新する
 
-5. Reorder the batch for improved efficiency. Depending on the attention backend implementation and the current characteristics of the batch, zero or more Swap Move operations may be applied to reorder the batch
+5. 効率を高めるためにバッチを並べ替える。attention バックエンドの実装と現在のバッチの特性に応じて、バッチの並べ替えのために 0 個以上の Swap の Move 操作が適用されることがある
 
-Notes:
+注意点:
 
-* A logits processor `update_state()` method must process batch update operations in the following order: removes, adds, moves
+* ロジットプロセッサの `update_state()` メソッドは、バッチ更新の操作を「remove、add、move」の順で処理しなければなりません
 
-* The index argument for Add operations refers to the index *at the time the Add occurred*, i.e. before any Move operations
-    * Example: if a request is Added at index 5 and then swapped with index 3, the Add operation in `BatchUpdate.added` will be associated with index 5 not 3
-    * In other words Move operations can be assumed to be applied after Adds and Removes
+* Add 操作のインデックス引数は、*その Add が発生した時点*の、すなわち Move 操作より前のインデックスを指します
+    * 例: あるリクエストがインデックス 5 で Add され、その後インデックス 3 と交換された場合、`BatchUpdate.added` の Add 操作はインデックス 3 ではなく 5 に対応づけられます
+    * 言い換えると、Move 操作は Add と Remove のあとに適用されると仮定できます
 
-* Move operations can be assumed to be applied in the order in which they appear in `BatchUpdate.moved`
+* Move 操作は `BatchUpdate.moved` に現れる順序で適用されると仮定できます
 
-* If there are no new/finished requests and there is no batch reordering, then the batch update for the logits processors will be `None`
+* 新規 / 完了のリクエストがなく、バッチの並べ替えもない場合、ロジットプロセッサへのバッチ更新は `None` になります
 
-#### Example: Batch Update with Fewer New Requests Than Finished Requests
+#### 例: 新規リクエストが完了リクエストより少ない場合のバッチ更新 { #example-batch-update-with-fewer-new-requests-than-finished-requests }
 
-The following example models an engine step where 1 new request is introduced and 2 finished requests are eliminated, additionally the attention backend performs a swap to optimize the batch ordering.
+次の例は、新規リクエストが 1 件投入され、完了したリクエストが 2 件除かれ、さらに attention バックエンドがバッチの並び順を最適化するために交換を行うエンジンステップをモデル化したものです。
 
 ``` text
-Batch state (beginning of engine step): [A,B,C,D]
-Batch size: 4
+バッチの状態（エンジンステップ開始時）: [A,B,C,D]
+バッチサイズ: 4
 
-New requests: E
+新規リクエスト: E
 
-Finished requests: A, C
+完了したリクエスト: A, C
 
-Processing steps (using BatchUpdate abstraction):
+処理の手順（BatchUpdate の抽象を使用）:
 
-1. Add E at index 0
+1. インデックス 0 に E を Add
 
-[E,B,C,D] # Discard A
-Batch size: 4
+[E,B,C,D] # A を破棄
+バッチサイズ: 4
 
-2. Remove at index 2
+2. インデックス 2 を Remove
 
-[E,B,x,D] # Discard C, empty slot at index 2
-Batch size: 4
+[E,B,x,D] # C を破棄、インデックス 2 が空きスロット
+バッチサイズ: 4
 
-3. Condense batch with a Unidirectional Move 3 -> 2 operation and shrink batch
+3. 一方向の Move 3 -> 2 でバッチを圧縮し、バッチを縮小
 
-[E,B,D] x # Empty slot is now outside batch
-Batch size: 3
+[E,B,D] x # 空きスロットはバッチの外側になった
+バッチサイズ: 3
 
-4. Attention backend optimization: reorder batch with Swap 0 <-> 1
+4. attention バックエンドの最適化: Swap 0 <-> 1 でバッチを並べ替え
 
 [B,E,D]
-Batch size: 3
+バッチサイズ: 3
 
 ```
 
-The resulting `BatchUpdate` data structure will look like
+得られる `BatchUpdate` データ構造は次のようになります。
 
 ``` text
-BatchUpdate instance
-* added: [(0,E's SamplingParams,E's prompt tokens ref,E's output tokens ref)]
-* removed: [2] # request C was removed without replacement
+BatchUpdate のインスタンス
+* added: [(0, E の SamplingParams, E のプロンプトトークンへの参照, E の出力トークンへの参照)]
+* removed: [2] # リクエスト C は置き換えなしで削除された
 * moved: [(3,2,UNIDIRECTIONAL),(0,1,SWAP)]
 ```
 
-#### Example: Batch Update with More New Requests Than Finished Requests
+#### 例: 新規リクエストが完了リクエストより多い場合のバッチ更新 { #example-batch-update-with-more-new-requests-than-finished-requests }
 
-The following example models an engine step where 2 new requests are introduced and 1 finished request is eliminated, additionally the attention backend performs a swap to optimize the batch ordering.
+次の例は、新規リクエストが 2 件投入され、完了したリクエストが 1 件除かれ、さらに attention バックエンドがバッチの並び順を最適化するために交換を行うエンジンステップをモデル化したものです。
 
 ``` text
-Batch state (beginning of engine step): [A,B,C,D]
-Batch size: 4
+バッチの状態（エンジンステップ開始時）: [A,B,C,D]
+バッチサイズ: 4
 
-New requests: E,F
+新規リクエスト: E,F
 
-Finished requests: C
+完了したリクエスト: C
 
-Processing steps (using BatchUpdate abstraction):
+処理の手順（BatchUpdate の抽象を使用）:
 
-1. Add E at index 2
+1. インデックス 2 に E を Add
 
-[A,B,E,D] # Discard C
-Batch size: 4
+[A,B,E,D] # C を破棄
+バッチサイズ: 4
 
-2. Add F at index 4 (current max batch index + 1)
+2. インデックス 4（現在の最大バッチインデックス + 1）に F を Add
 
-[A,B,E,D,F] # Extend batch by 1
-Batch size: 5
+[A,B,E,D,F] # バッチを 1 つ拡張
+バッチサイズ: 5
 
-4. Attention backend optimization: reorder batch with Swap 0 <-> 1
+4. attention バックエンドの最適化: Swap 0 <-> 1 でバッチを並べ替え
 
 [B,A,E,D,F]
-Batch size: 5
+バッチサイズ: 5
 
 ```
 
-Note that batch condensation is skipped because there are no empty slots left behind by Remove operations.
+Remove 操作による空きスロットが残らないため、バッチの圧縮はスキップされる点に注意してください。
 
-The resulting `BatchUpdate` data structure will look like
+得られる `BatchUpdate` データ構造は次のようになります。
 
 ``` text
-BatchUpdate instance
-* added: [(2,E's SamplingParams,E's prompt tokens ref,E's output tokens ref),(4,F's SamplingParams,F's prompt tokens ref,F's output tokens ref)]
-* removed: [] # no requests were removed without replacement
+BatchUpdate のインスタンス
+* added: [(2, E の SamplingParams, E のプロンプトトークンへの参照, E の出力トークンへの参照),(4, F の SamplingParams, F のプロンプトトークンへの参照, F の出力トークンへの参照)]
+* removed: [] # 置き換えなしで削除されたリクエストはない
 * moved: [(0,1,SWAP)]
 ```
 
-## How to Introduce a New Logits Processor to vLLM
+## vLLM に新しいロジットプロセッサを追加する方法 { #how-to-introduce-a-new-logits-processor-to-vllm }
 
-### Best Practices for Writing Built-In Logits Processors
+### 組み込みロジットプロセッサを書く際のベストプラクティス { #best-practices-for-writing-built-in-logits-processors }
 
-* Write efficient `apply()` and `update_state()` implementations in light of the fact that logits processors operate at batch granularity
-    * For example, you may be able to use efficient vectorized operations to implement `apply()` or update internal state vectors in `update_state()`
-    * However, if you think that a logits processor may be used infrequently, it may be appropriate to use a "sparse" representation of request state i.e. the class can represent request configuration using a dictionary which only stores metadata about requests that enable the logits processor
+* ロジットプロセッサがバッチ単位で動作することを踏まえ、効率的な `apply()` と `update_state()` の実装を書いてください
+    * たとえば、`apply()` の実装や `update_state()` での内部状態ベクトルの更新に、効率的なベクトル化演算を使えるかもしれません
+    * ただし、そのロジットプロセッサが使われる頻度が低いと考えられる場合は、リクエスト状態を「疎な」表現で持つほうが適切なこともあります。すなわち、そのロジットプロセッサを有効にしているリクエストのメタデータだけを辞書で保持する、といった方法です
 
-* It is up to the logits processor author to determine:
+* 次の点はロジットプロセッサの作者が決めることです。
 
-    1. **The per-request attributes which configure the logits processor's behavior against that request.** For example, if you are writing a new built-in logits processor for vLLM, you may or may not need to add additional fields to `SamplingParams` and the vLLM REST API
+    1. **そのリクエストに対するロジットプロセッサの挙動を設定する、リクエストごとの属性。** たとえば vLLM 向けに新しい組み込みロジットプロセッサを書く場合、`SamplingParams` と vLLM の REST API にフィールドを追加する必要があるかもしれませんし、ないかもしれません
 
-    2. **The conditions under which the logits processor is or is not enabled on a per-request basis.** Unless your intention is for the built-in logits processor to act on all requests all the time, you should write your logits processor in such a way that it is possible to disable the logits processor for a given request, i.e. by defaulting an argument to `None` or by passing in a specific do-nothing argument value i.e. `0.0`. Try to save compute and memory for requests which disable the logits processor
+    2. **リクエストごとにロジットプロセッサを有効 / 無効にする条件。** 組み込みのロジットプロセッサを常にすべてのリクエストに作用させるつもりでない限り、あるリクエストについてロジットプロセッサを無効にできるように書くべきです。たとえば引数の既定値を `None` にする、あるいは何もしないことを表す特定の値（`0.0` など）を渡す、といった方法です。ロジットプロセッサを無効にしたリクエストでは計算とメモリを節約するようにしてください
 
-    3. **The conditions under which the logits processor is short-circuited at the batch level.** Even if you have defined a way to disable the built-in logits processor at the request level, it may be difficult to translate this into compute savings i.e. if your `update_state()` and `apply()` implementations use efficient vectorized implementations that operate on the whole persistent batch in a single command. For example, you cannot skip an entire vectorized operation in `apply()` just because one request disabled the logits processor. To save compute in the edge-case where no running requests utilize the built-in logits processor, we recommend designing `apply()` to return the unmodified input tensor if all requests have the logits processor disabled. Similarly, consider whether steps can be skipped in `update_state()` if no requests enable the logits processor
+    3. **バッチレベルでロジットプロセッサを短絡（スキップ）する条件。** リクエスト単位で組み込みロジットプロセッサを無効にする方法を定義したとしても、それを計算量の削減につなげるのは難しい場合があります。たとえば `update_state()` と `apply()` が永続バッチ全体を 1 コマンドで処理する効率的なベクトル化実装を使っている場合です。1 件のリクエストがロジットプロセッサを無効にしているというだけで、`apply()` のベクトル化演算全体をスキップすることはできません。実行中のどのリクエストもその組み込みロジットプロセッサを使っていないという端のケースで計算を節約するには、すべてのリクエストでロジットプロセッサが無効な場合に `apply()` が入力テンソルをそのまま返すよう設計することを推奨します。同様に、どのリクエストもロジットプロセッサを有効にしていない場合に `update_state()` の処理をスキップできないか検討してください
 
-        * Additionally, an easy way to save compute in `update_state()` is to exit early when the batch_update is `None`
+        * さらに、`update_state()` で計算を節約する簡単な方法は、batch_update が `None` のときに早期リターンすることです
 
-* Ensure that the logits processor `update_state` method discards information about finished requests (i.e. requests which are replaced by an Add or which are subject to a Remove)
+* ロジットプロセッサの `update_state` メソッドが、完了したリクエスト（Add により置き換えられた、あるいは Remove の対象となったリクエスト）の情報を確実に破棄するようにしてください
 
-* `is_argmax_invariant()` can be hard-coded to `True` or `False` if the logits processor has consistent behavior. However the argmax invariance may also be determined programmatically (i.e. if your logits processor is user-customizable in some way that impacts whether the logits processor is argmax invariant). For this reason, `is_argmax_invariant()` is not a class method
+* ロジットプロセッサの挙動が一貫している場合、`is_argmax_invariant()` は `True` または `False` にハードコードできます。ただし、argmax 不変性はプログラム的に判定することもできます（たとえば、ロジットプロセッサがユーザーによってカスタマイズ可能で、それが argmax 不変性に影響する場合など）。このため、`is_argmax_invariant()` はクラスメソッドではありません
 
-### Built-In Logits Processors
+### 組み込みのロジットプロセッサ { #built-in-logits-processors }
 
-Built-in logits processors are always loaded when the vLLM engine starts. See the existing vLLM built-in logits processors in `vllm/v1/sample/logits_processor/builtin.py` for examples of how to write a new built-in vLLM logits processor. It makes sense to write a PR to introduce a new logits processor as a built-in if it is likely to be useful to a wide audience. vLLM currently employs the following built-in logits processors based on the programming model described above:
+組み込みのロジットプロセッサは、vLLM エンジンの起動時に常に読み込まれます。新しい組み込みロジットプロセッサの書き方の例は、`vllm/v1/sample/logits_processor/builtin.py` にある既存の vLLM 組み込みロジットプロセッサを参照してください。幅広い利用者にとって有用と考えられる場合は、新しいロジットプロセッサを組み込みとして追加する PR を書く意義があります。vLLM は現在、上記のプログラミングモデルにもとづく次の組み込みロジットプロセッサを採用しています。
 
 * Min-P
 
-* Logit bias
+* ロジットバイアス
 
 * Min-tokens
 
-Review these logits processor implementations for guidance on writing built-in logits processors.
+組み込みロジットプロセッサを書く際の参考として、これらの実装を確認してください。
 
-Additionally, the following logits-processor-like functionalities are hard-coded into the sampler and do not yet utilize the programming model described above. Most of them will be refactored to use the aforementioned logits processor programming model.
+さらに、次のロジットプロセッサ相当の機能はサンプラーにハードコードされており、まだ上記のプログラミングモデルを使っていません。これらの多くは、前述のロジットプロセッサのプログラミングモデルを使うようリファクタリングされる予定です。
 
-* Allowed token IDs
+* 許可するトークン ID
 
 * Bad words
 
-* Repetition penalty
+* 繰り返しペナルティ
 
-* Frequency penalty
+* 頻度ペナルティ
 
-* Presence penalty
+* 出現ペナルティ
 
 * Temperature
 
@@ -566,6 +565,6 @@ Additionally, the following logits-processor-like functionalities are hard-coded
 
 * Top-P
 
-### Custom Logits Processors
+### カスタムのロジットプロセッサ { #custom-logits-processors }
 
-vLLM can be augmented with [user-provided custom logits processors](../features/custom_logitsprocs.md).
+vLLM は[ユーザー提供のカスタムロジットプロセッサ](../features/custom_logitsprocs.md)で拡張できます。

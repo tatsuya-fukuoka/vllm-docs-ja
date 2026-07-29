@@ -660,8 +660,10 @@
       "upstream_sha": "1e8bb70115d4a28c"
     },
     "design/logits_processors.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4d55b77d8fd25b75",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "4d55b77d8fd25b75"
     },
     "design/lora_resolver_plugins.md": {

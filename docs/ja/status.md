@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **218 ページ**を翻訳済みです（96.5%）。
+全 226 ページ中 **219 ページ**を翻訳済みです（96.9%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -18,7 +18,7 @@
 | 設定 | 7 | 0 | 0 | 7 |
 | 開発者ガイド | 15 | 0 | 1 | 16 |
 | デプロイ | 35 | 0 | 0 | 35 |
-| 設計ドキュメント | 27 | 0 | 2 | 29 |
+| 設計ドキュメント | 28 | 0 | 1 | 29 |
 | 機能 | 49 | 0 | 3 | 52 |
 | はじめに | 13 | 0 | 0 | 13 |
 | ガバナンス | 3 | 0 | 0 | 3 |
@@ -26,7 +26,7 @@
 | 推論とサービング | 16 | 0 | 0 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **218** | **0** | **8** | **226** |
+| **合計** | **219** | **0** | **7** | **226** |
 
 ## 翻訳済みのページ
 
@@ -122,6 +122,7 @@
 - `design/huggingface_integration.md`
 - `design/hybrid_kv_cache_manager.md`
 - `design/io_processor_plugins.md`
+- `design/logits_processors.md`
 - `design/lora_resolver_plugins.md`
 - `design/mm_processing.md`
 - `design/model_runner_v2.md`
