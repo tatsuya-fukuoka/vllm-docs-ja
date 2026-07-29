@@ -621,8 +621,10 @@
       "upstream_sha": "ef8420a9ef758d9b"
     },
     "design/fused_moe_modular_kernel.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "c848cbcbc0670dd7",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "c848cbcbc0670dd7"
     },
     "design/fusions.md": {
