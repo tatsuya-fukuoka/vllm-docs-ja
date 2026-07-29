@@ -692,8 +692,10 @@
       "upstream_sha": "8a6b40fef18aae88"
     },
     "design/nixl_kv_push_connector.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "b0c4fdde741fb87d",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "b0c4fdde741fb87d"
     },
     "design/optimization_levels.md": {
