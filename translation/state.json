@@ -588,8 +588,10 @@
       "upstream_sha": "2660e00f5e82c69c"
     },
     "design/endpoint_plugins.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "ef8420a9ef758d9b",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "ef8420a9ef758d9b"
     },
     "design/fused_moe_modular_kernel.md": {
@@ -603,8 +605,10 @@
       "upstream_sha": "4b5e3a3774aa4d13"
     },
     "design/huggingface_integration.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "a1d49d8e66ece0fe",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "a1d49d8e66ece0fe"
     },
     "design/hybrid_kv_cache_manager.md": {
@@ -625,8 +629,10 @@
       "upstream_sha": "4d55b77d8fd25b75"
     },
     "design/lora_resolver_plugins.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "5021358e3e200fd8",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "5021358e3e200fd8"
     },
     "design/metrics.md": {
