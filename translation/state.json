@@ -277,8 +277,10 @@
       "upstream_sha": "8c5645c1355e6f3d"
     },
     "contributing/model/basic.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "5fdcaccdf8c758ed",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "5fdcaccdf8c758ed"
     },
     "contributing/model/multimodal.md": {

@@ -1,28 +1,26 @@
-# Basic Model
+# 基本的なモデル { #basic-model }
 
-This guide walks you through the steps to implement a basic vLLM model.
+このガイドでは、基本的な vLLM のモデルを実装する手順を説明します。
 
-## 1. Bring your model code
+## 1. モデルのコードを持ち込む { #1-bring-your-model-code }
 
-First, clone the PyTorch model code from the source repository.
-For instance, vLLM's [OPT model](../../../vllm/model_executor/models/opt.py) was adapted from
-HuggingFace's [modeling_opt.py](https://github.com/huggingface/transformers/blob/main/src/transformers/models/opt/modeling_opt.py) file.
+まず、元のリポジトリから PyTorch のモデルコードをクローンします。たとえば、vLLM の [OPT モデル](../../../vllm/model_executor/models/opt.py)は HuggingFace の [modeling_opt.py](https://github.com/huggingface/transformers/blob/main/src/transformers/models/opt/modeling_opt.py) をもとに作られています。
 
 !!! warning
-    Make sure to review and adhere to the original code's copyright and licensing terms!
+    元のコードの著作権とライセンス条項を必ず確認し、遵守してください。
 
-## 2. Make your code compatible with vLLM
+## 2. コードを vLLM と互換にする { #2-make-your-code-compatible-with-vllm }
 
-To ensure compatibility with vLLM, your model must meet the following requirements:
+vLLM との互換性を確保するため、モデルは次の要件を満たす必要があります。
 
-### Initialization Code
+### 初期化のコード { #initialization-code }
 
-All vLLM modules within the model must include a `prefix` argument in their constructor. This `prefix` is typically the full name of the module in the model's state dictionary and is crucial for:
+モデル内のすべての vLLM モジュールは、コンストラクタに `prefix` 引数を持つ必要があります。この `prefix` は通常、モデルの state dict におけるそのモジュールの完全な名前で、次の点で重要です。
 
-- Runtime support: vLLM's attention operators are registered in a model's state by their full names. Each attention operator must have a unique prefix as its layer name to avoid conflicts.
-- Non-uniform quantization support: A quantized checkpoint can selectively quantize certain layers while keeping others in full precision. By providing the `prefix` during initialization, vLLM can match the current layer's `prefix` with the quantization configuration to determine if the layer should be initialized in quantized mode.
+- 実行時のサポート: vLLM の Attention 演算子は、完全な名前でモデルの状態に登録されます。衝突を避けるため、各 Attention 演算子は層名として一意の prefix を持つ必要があります。
+- 不均一な量子化のサポート: 量子化されたチェックポイントは、一部の層だけを量子化し、他の層を完全な精度のまま保つことができます。初期化時に `prefix` を渡すことで、vLLM は現在の層の `prefix` を量子化の設定と照合し、その層を量子化モードで初期化すべきかを判断できます。
 
-The initialization code should look like this:
+初期化のコードは次のようになります。
 
 ??? code
 
@@ -54,9 +52,9 @@ The initialization code should look like this:
             self.model = MyModel(vllm_config, prefix=f"{prefix}.model")
     ```
 
-### Computation Code
+### 計算のコード { #computation-code }
 
-- Add a `embed_input_ids` method inside `MyModel` module that returns the text embeddings given `input_ids`. This is equivalent to directly calling the text embedding layer, but provides a unified interface in case `MyModel` is used within a composite multimodal model.
+- `MyModel` モジュールに、`input_ids` からテキストの埋め込みを返す `embed_input_ids` メソッドを追加します。これはテキスト埋め込み層を直接呼び出すのと同等ですが、`MyModel` が複合的なマルチモーダルモデルの中で使われる場合に統一的なインターフェースを提供します。
 
 ```python
 class MyModel(nn.Module):
@@ -66,7 +64,7 @@ class MyModel(nn.Module):
         ... 
 ```
 
-- Rewrite the [forward][torch.nn.Module.forward] method of your model to remove any unnecessary code, such as training-specific code. Modify the input parameters to treat `input_ids` and `positions` as flattened tensors with a single batch size dimension, without a max-sequence length dimension.
+- モデルの [forward][torch.nn.Module.forward] メソッドを書き換え、学習専用のコードなど不要なものを取り除きます。入力パラメータは、`input_ids` と `positions` を、最大シーケンス長の次元を持たない、単一のバッチサイズ次元を持つ平坦化されたテンソルとして扱うように変更します。
 
 ```python
 def forward(
@@ -80,69 +78,53 @@ def forward(
 ```
 
 !!! note
-    Currently, vLLM supports the basic multi-head attention mechanism and its variant with rotary positional embeddings.
-    If your model employs a different attention mechanism, you will need to implement a new attention layer in vLLM.
+    現時点で vLLM は、基本的なマルチヘッド Attention と、rotary positional embedding を用いるその変種を
+    サポートしています。モデルが異なる Attention の仕組みを使っている場合は、vLLM に新しい Attention 層を
+    実装する必要があります。
 
-For reference, check out our [Llama implementation](../../../vllm/model_executor/models/llama.py). vLLM already supports a large number of models. It is recommended to find a model similar to yours and adapt it to your model's architecture. Check out [vllm/model_executor/models](../../../vllm/model_executor/models) for more examples.
+参考として、vLLM の [Llama の実装](../../../vllm/model_executor/models/llama.py)を確認してください。vLLM はすでに多数のモデルをサポートしています。自分のモデルに近いモデルを見つけ、それを自分のモデルのアーキテクチャに合わせて修正することを推奨します。その他の例は [vllm/model_executor/models](../../../vllm/model_executor/models) を参照してください。
 
-## 3. (Optional) Implement tensor parallelism and quantization support
+## 3. （任意）テンソル並列と量子化のサポートを実装する { #3-optional-implement-tensor-parallelism-and-quantization-support }
 
-If your model is too large to fit into a single GPU, you can use tensor parallelism to manage it.
-To do this, substitute your model's linear and embedding layers with their tensor-parallel versions.
-For the embedding layer, you can simply replace [torch.nn.Embedding][] with `VocabParallelEmbedding`. For the output LM head, you can use `ParallelLMHead`.
-When it comes to the linear layers, we provide the following options to parallelize them:
+モデルが大きすぎて 1 台の GPU に収まらない場合は、テンソル並列を使って対応できます。そのためには、モデルの Linear 層と埋め込み層をテンソル並列版に置き換えます。埋め込み層は [torch.nn.Embedding][] を `VocabParallelEmbedding` に置き換えるだけで済みます。出力側の LM ヘッドには `ParallelLMHead` を使えます。Linear 層については、並列化のために次の選択肢を提供しています。
 
-- `ReplicatedLinear`: Replicates the inputs and weights across multiple GPUs. No memory saving.
-- `RowParallelLinear`: The input tensor is partitioned along the hidden dimension. The weight matrix is partitioned along the rows (input dimension). An *all-reduce* operation is performed after the matrix multiplication to reduce the results. Typically used for the second FFN layer and the output linear transformation of the attention layer.
-- `ColumnParallelLinear`: The input tensor is replicated. The weight matrix is partitioned along the columns (output dimension). The result is partitioned along the column dimension. Typically used for the first FFN layer and the separated QKV transformation of the attention layer in the original Transformer.
-- `MergedColumnParallelLinear`: Column-parallel linear that merges multiple `ColumnParallelLinear` operators. Typically used for the first FFN layer with weighted activation functions (e.g., SiLU). This class handles the sharded weight loading logic of multiple weight matrices.
-- `QKVParallelLinear`: Parallel linear layer for the query, key, and value projections of the multi-head and grouped-query attention mechanisms. When number of key/value heads are less than the world size, this class replicates the key/value heads properly. This class handles the weight loading and replication of the weight matrices.
+- `ReplicatedLinear`: 入力と重みを複数の GPU に複製します。メモリの削減効果はありません。
+- `RowParallelLinear`: 入力テンソルを隠れ次元に沿って分割します。重み行列は行方向（入力次元）に分割されます。行列積のあとに *all-reduce* を実行して結果を集約します。通常、FFN の 2 層目と Attention 層の出力側の線形変換に使われます。
+- `ColumnParallelLinear`: 入力テンソルは複製されます。重み行列は列方向（出力次元）に分割されます。結果は列方向に分割されます。通常、FFN の 1 層目と、元の Transformer における Attention 層の分離された QKV 変換に使われます。
+- `MergedColumnParallelLinear`: 複数の `ColumnParallelLinear` 演算子を統合した column-parallel の Linear 層です。通常、SiLU などの重み付き活性化関数を伴う FFN の 1 層目に使われます。このクラスは複数の重み行列のシャード化された読み込みロジックを扱います。
+- `QKVParallelLinear`: マルチヘッド Attention およびグループ化クエリ Attention の query / key / value の射影のための並列 Linear 層です。key/value ヘッドの数が world size より少ない場合、このクラスは key/value ヘッドを適切に複製します。重みの読み込みと重み行列の複製を扱います。
 
-Note that all the linear layers above take `linear_method` as an input. vLLM will set this parameter according to different quantization schemes to support weight quantization.
+上記のすべての Linear 層は `linear_method` を入力として受け取る点に注意してください。重みの量子化をサポートするため、vLLM は量子化方式に応じてこのパラメータを設定します。
 
-## 4. Implement the weight loading logic
+## 4. 重みの読み込みロジックを実装する { #4-implement-the-weight-loading-logic }
 
-You now need to implement the `load_weights` method in your `*ForCausalLM` class.
-This method should load the weights from the HuggingFace's checkpoint file and assign them to the corresponding layers in your model. Specifically, for `MergedColumnParallelLinear` and `QKVParallelLinear` layers, if the original model has separated weight matrices, you need to load the different parts separately.
+次に、`*ForCausalLM` クラスに `load_weights` メソッドを実装する必要があります。このメソッドは HuggingFace のチェックポイントファイルから重みを読み込み、モデル内の対応する層に割り当てます。特に `MergedColumnParallelLinear` と `QKVParallelLinear` の層については、元のモデルで重み行列が分かれている場合、それぞれの部分を個別に読み込む必要があります。
 
-## 5. Register your model
+## 5. モデルを登録する { #5-register-your-model }
 
-See [this page](registration.md) for instructions on how to register your new model to be used by vLLM.
+新しいモデルを vLLM から使えるように登録する手順は、[このページ](registration.md)を参照してください。
 
-## Frequently Asked Questions
+## よくある質問 { #frequently-asked-questions }
 
-### How to support models with interleaving sliding windows?
+### interleaved sliding window を使うモデルへの対応方法 { #how-to-support-models-with-interleaving-sliding-windows }
 
-To support a model with interleaving sliding windows, we need to take care of the following details:
+interleaved sliding window を使うモデルに対応するには、次の点に注意する必要があります。
 
-- Make sure the model's `config.json` contains `layer_types`.
-- In the modeling code, parse the correct sliding window value for every layer, and pass it to the attention layer's `per_layer_sliding_window` argument. For reference, check [this line](https://github.com/vllm-project/vllm/blob/996357e4808ca5eab97d4c97c7d25b3073f46aab/vllm/model_executor/models/llama.py#L171).
+- モデルの `config.json` に `layer_types` が含まれていることを確認します。
+- モデリングのコードで、各層について正しい sliding window の値を解析し、Attention 層の `per_layer_sliding_window` 引数に渡します。参考として[この行](https://github.com/vllm-project/vllm/blob/996357e4808ca5eab97d4c97c7d25b3073f46aab/vllm/model_executor/models/llama.py#L171)を確認してください。
 
-With these two steps, interleaved sliding windows should work with the model.
+この 2 つの手順で、interleaved sliding window がモデルで動作するようになります。
 
-### How to support models that use Mamba?
+### Mamba を使うモデルへの対応方法 { #how-to-support-models-that-use-mamba }
 
-We consider 3 different scenarios:
+3 つのシナリオを考えます。
 
-1. Models that use Mamba layers (either Mamba-1 or Mamba-2) but do not use attention layers.
-2. Models that combine Mamba layers (either Mamba-1 or Mamba-2) together with attention layers.
-3. Models that combine Mamba-like mechanisms (e.g., Linear Attention, ShortConv) together with attention layers.
+1. Mamba 層（Mamba-1 または Mamba-2）を使い、Attention 層は使わないモデル。
+2. Mamba 層（Mamba-1 または Mamba-2）と Attention 層を組み合わせたモデル。
+3. Mamba に似た仕組み（Linear Attention、ShortConv など）と Attention 層を組み合わせたモデル。
 
-For case (1), we recommend looking at the implementation of [`MambaForCausalLM`](../../../vllm/model_executor/models/mamba.py) (for Mamba-1) or [`Mamba2ForCausalLM`](../../../vllm/model_executor/models/mamba2.py) (for Mamba-2) as a reference.
-The model should inherit protocol `IsAttentionFree` and also implement class methods `get_mamba_state_dtype_from_config` and `get_mamba_state_shape_from_config` to calculate the state shapes and data types from the config.
-For the mamba layers themselves, please use the [`MambaMixer`](../../../vllm/model_executor/layers/mamba/mamba_mixer.py) (for Mamba-1) or [`MambaMixer2`](../../../vllm/model_executor/layers/mamba/mamba_mixer2.py) (for Mamba-2) classes.
-The model should also be added to the `MODELS_CONFIG_MAP` dictionary in [vllm/model_executor/models/config.py](../../../vllm/model_executor/models/config.py) to ensure that the runtime defaults are optimized.
+ケース (1) では、[`MambaForCausalLM`](../../../vllm/model_executor/models/mamba.py)（Mamba-1 の場合）または [`Mamba2ForCausalLM`](../../../vllm/model_executor/models/mamba2.py)（Mamba-2 の場合）の実装を参考にすることを推奨します。モデルはプロトコル `IsAttentionFree` を継承し、設定から状態の形状とデータ型を計算するクラスメソッド `get_mamba_state_dtype_from_config` と `get_mamba_state_shape_from_config` も実装する必要があります。Mamba 層そのものには、[`MambaMixer`](../../../vllm/model_executor/layers/mamba/mamba_mixer.py)（Mamba-1）または [`MambaMixer2`](../../../vllm/model_executor/layers/mamba/mamba_mixer2.py)（Mamba-2）のクラスを使ってください。実行時の既定値が最適化されるよう、モデルを [vllm/model_executor/models/config.py](../../../vllm/model_executor/models/config.py) の `MODELS_CONFIG_MAP` 辞書にも追加してください。
 
-For case (2), we recommend using as a reference the implementation of [`JambaForCausalLM`](../../../vllm/model_executor/models/jamba.py) (for an example of a model that uses Mamba-1 and attention together) or [`NemotronHForCausalLM`](../../../vllm/model_executor/models/nemotron_h.py) (for an example of a model that uses Mamba-2 and attention together).
-These models should follow the same instructions as case (1), but they should inherit protocol `IsHybrid` (instead of `IsAttentionFree`) and it is *not* necessary to add them to the `MODELS_CONFIG_MAP` (their runtime defaults will be inferred from the protocol).
+ケース (2) では、[`JambaForCausalLM`](../../../vllm/model_executor/models/jamba.py)（Mamba-1 と Attention を併用するモデルの例）や [`NemotronHForCausalLM`](../../../vllm/model_executor/models/nemotron_h.py)（Mamba-2 と Attention を併用するモデルの例）の実装を参考にすることを推奨します。これらのモデルはケース (1) と同じ手順に従いますが、（`IsAttentionFree` ではなく）プロトコル `IsHybrid` を継承する必要があり、`MODELS_CONFIG_MAP` への追加は*不要*です（実行時の既定値はプロトコルから推測されます）。
 
-For case (3), we recommend looking at the implementation of [`Lfm2ForCausalLM`](../../../vllm/model_executor/models/lfm2.py) as a reference, which uses a custom "mamba-like" layer `ShortConv`.
-Please follow the same guidelines as case (2) for implementing these models.
-We use "mamba-like" to refer to layers that possess a state that is updated in-place, rather than being appended-to (like KV cache for attention).
-For implementing new custom mamba-like layers, one should inherit from `MambaBase` and implement the methods `get_state_dtype`, `get_state_shape` to calculate the data types and state shapes at runtime, as well as `mamba_type` and `get_attn_backend`.
-It is also necessary to implement the "attention meta-data" class which handles the meta-data that is common across all layers.
-Please see [`LinearAttentionMetadata`](../../../vllm/v1/attention/backends/linear_attn.py) or [`ShortConvAttentionMetadata`](../../../vllm/v1/attention/backends/short_conv_attn.py) for examples of this.
-It is also worth noting that we should update `MambaAttentionBackendEnum` in [`registry.py`](../../../vllm/v1/attention/backends/registry.py) when adding a new mamba backend.
-Finally, if one wants to support torch compile and CUDA graphs, it necessary to wrap the call to the mamba-like layer inside a custom op and register it.
-Please see the calls to `direct_register_custom_op` in [vllm/model_executor/layers/mamba/linear/minimax_linear_attn.py](../../../vllm/model_executor/layers/mamba/linear/minimax_linear_attn.py) or [vllm/model_executor/layers/mamba/short_conv.py](../../../vllm/model_executor/layers/mamba/short_conv.py) for examples of this.
-The new custom op should then be added to the list `_attention_ops` in [vllm/config/compilation.py](../../../vllm/config/compilation.py) to ensure that piecewise CUDA graphs works as intended.
+ケース (3) では、カスタムの「Mamba に似た」層 `ShortConv` を使う [`Lfm2ForCausalLM`](../../../vllm/model_executor/models/lfm2.py) の実装を参考にすることを推奨します。これらのモデルの実装にはケース (2) と同じ指針に従ってください。ここでいう「Mamba に似た」とは、（Attention の KV キャッシュのように）追記されるのではなく、その場で更新される状態を持つ層を指します。新しいカスタムの Mamba に似た層を実装する場合は、`MambaBase` を継承し、実行時にデータ型と状態の形状を計算する `get_state_dtype`、`get_state_shape` の各メソッドに加え、`mamba_type` と `get_attn_backend` も実装してください。すべての層に共通するメタデータを扱う「attention メタデータ」クラスの実装も必要です。その例として [`LinearAttentionMetadata`](../../../vllm/v1/attention/backends/linear_attn.py) や [`ShortConvAttentionMetadata`](../../../vllm/v1/attention/backends/short_conv_attn.py) を参照してください。新しい Mamba のバックエンドを追加する際は、[`registry.py`](../../../vllm/v1/attention/backends/registry.py) の `MambaAttentionBackendEnum` も更新すべき点に注意してください。最後に、torch compile と CUDA graph をサポートしたい場合は、Mamba に似た層への呼び出しをカスタム op で包み、それを登録する必要があります。その例は [vllm/model_executor/layers/mamba/linear/minimax_linear_attn.py](../../../vllm/model_executor/layers/mamba/linear/minimax_linear_attn.py) や [vllm/model_executor/layers/mamba/short_conv.py](../../../vllm/model_executor/layers/mamba/short_conv.py) の `direct_register_custom_op` の呼び出しを参照してください。その後、piecewise CUDA graph が意図どおり動作するよう、新しいカスタム op を [vllm/config/compilation.py](../../../vllm/config/compilation.py) の `_attention_ops` のリストに追加してください。
