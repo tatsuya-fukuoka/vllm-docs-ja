@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **225 ページ**を翻訳済みです（99.6%）。
+全 226 ページ中 **226 ページ**を翻訳済みです（100.0%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -22,11 +22,11 @@
 | 機能 | 52 | 0 | 0 | 52 |
 | はじめに | 13 | 0 | 0 | 13 |
 | ガバナンス | 3 | 0 | 0 | 3 |
-| モデル | 15 | 0 | 1 | 16 |
+| モデル | 16 | 0 | 0 | 16 |
 | 推論とサービング | 16 | 0 | 0 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **225** | **0** | **1** | **226** |
+| **合計** | **226** | **0** | **0** | **226** |
 
 ## 翻訳済みのページ
 
@@ -223,6 +223,7 @@
 - `models/pooling_models/specific_models.md`
 - `models/pooling_models/token_classify.md`
 - `models/pooling_models/token_embed.md`
+- `models/supported_models.md`
 - `serving/context_parallel_deployment.md`
 - `serving/data_parallel_deployment.md`
 - `serving/distributed_troubleshooting.md`

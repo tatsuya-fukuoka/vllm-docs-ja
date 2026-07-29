@@ -1357,8 +1357,10 @@
       "upstream_sha": "66955944d8aaa343"
     },
     "models/supported_models.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d98ae69e11f196b9",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "d98ae69e11f196b9"
     },
     "serving/context_parallel_deployment.md": {
