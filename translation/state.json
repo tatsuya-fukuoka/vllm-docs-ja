@@ -569,8 +569,10 @@
       "upstream_sha": "213b7c7c4455a235"
     },
     "design/arch_overview.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d710d381f4b3e024",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "d710d381f4b3e024"
     },
     "design/attention_backends.md": {
