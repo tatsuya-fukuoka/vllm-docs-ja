@@ -1,12 +1,12 @@
-# Incremental Compilation Workflow
+# インクリメンタルビルドのワークフロー { #incremental-compilation-workflow }
 
-When working on vLLM's C++/CUDA kernels located in the `csrc/` directory, recompiling the entire project with `uv pip install -e .` for every change can be time-consuming. An incremental compilation workflow using CMake allows for faster iteration by only recompiling the necessary components after an initial setup. This guide details how to set up and use such a workflow, which complements your editable Python installation.
+`csrc/` ディレクトリにある vLLM の C++/CUDA カーネルを開発していると、変更のたびに `uv pip install -e .` でプロジェクト全体を再コンパイルするのは時間がかかります。CMake を使ったインクリメンタルコンパイルのワークフローなら、最初のセットアップ以降は必要なコンポーネントだけを再コンパイルできるため、より速く反復できます。このガイドでは、editable な Python インストールを補完するこのワークフローのセットアップ方法と使い方を説明します。
 
-## Prerequisites
+## 前提条件 { #prerequisites }
 
-Before setting up the incremental build:
+インクリメンタルビルドをセットアップする前に、次を確認してください。
 
-1. **vLLM Editable Install:** Ensure you have vLLM installed from source in an editable mode. Using pre-compiled wheels for the initial editable setup can be faster, as the CMake workflow will handle subsequent kernel recompilations.
+1. **vLLM の editable インストール:** vLLM をソースから editable モードでインストールしておいてください。最初の editable セットアップにビルド済み wheel を使うと速く済みます。以降のカーネルの再コンパイルは CMake のワークフローが担当します。
 
     ```console
     uv venv --python 3.12 --seed
@@ -14,47 +14,47 @@ Before setting up the incremental build:
     VLLM_USE_PRECOMPILED=1 uv pip install -U -e . --torch-backend=auto
     ```
 
-2. **CUDA Toolkit:** Verify that the NVIDIA CUDA Toolkit is correctly installed and `nvcc` is accessible in your `PATH`. CMake relies on `nvcc` to compile CUDA code. You can typically find `nvcc` in `$CUDA_HOME/bin/nvcc` or by running `which nvcc`. If you encounter issues, refer to the [official CUDA Toolkit installation guides](https://developer.nvidia.com/cuda-toolkit-archive) and vLLM's main [GPU installation documentation](../getting_started/installation/gpu.md#troubleshooting) for troubleshooting. The `CMAKE_CUDA_COMPILER` variable in your `CMakeUserPresets.json` should also point to your `nvcc` binary.
+2. **CUDA Toolkit:** NVIDIA CUDA Toolkit が正しくインストールされ、`nvcc` が `PATH` から利用できることを確認してください。CMake は CUDA コードのコンパイルに `nvcc` を使います。`nvcc` は通常 `$CUDA_HOME/bin/nvcc` にあり、`which nvcc` でも確認できます。問題が起きた場合は、[CUDA Toolkit の公式インストールガイド](https://developer.nvidia.com/cuda-toolkit-archive)と vLLM の [GPU インストールドキュメント](../getting_started/installation/gpu.md#troubleshooting)のトラブルシューティングを参照してください。`CMakeUserPresets.json` の `CMAKE_CUDA_COMPILER` 変数も `nvcc` のバイナリを指している必要があります。
 
-3. **Build Tools:** It is highly recommended to install `ccache` for fast rebuilds by caching compilation results (e.g., `sudo apt install ccache` or `conda install ccache`). Also, ensure the core build dependencies like `cmake` and `ninja` are installed. These are installable through `requirements/build/cuda.txt` or your system's package manager.
+3. **ビルドツール:** コンパイル結果をキャッシュして再ビルドを高速化するため、`ccache` のインストールを強く推奨します（`sudo apt install ccache` や `conda install ccache` など）。また、`cmake` や `ninja` といった基本的なビルド依存パッケージもインストールしてください。これらは `requirements/build/cuda.txt` またはシステムのパッケージマネージャからインストールできます。
 
     ```console
     uv pip install -r requirements/build/cuda.txt --torch-backend=auto
     ```
 
-## Setting up the CMake Build Environment
+## CMake ビルド環境のセットアップ { #setting-up-the-cmake-build-environment }
 
-The incremental build process is managed through CMake. You can configure your build settings using a `CMakeUserPresets.json` file at the root of the vLLM repository.
+インクリメンタルビルドは CMake を通じて管理します。ビルド設定は、vLLM リポジトリのルートに置く `CMakeUserPresets.json` ファイルで指定できます。
 
-### Generate `CMakeUserPresets.json` using the helper script
+### ヘルパースクリプトで `CMakeUserPresets.json` を生成する { #generate-cmakeuserpresetsjson-using-the-helper-script }
 
-To simplify the setup, vLLM provides a helper script that attempts to auto-detect your system's configuration (like CUDA path, Python environment, and CPU cores) and generates the `CMakeUserPresets.json` file for you.
+セットアップを簡単にするため、vLLM にはシステムの構成（CUDA のパス、Python 環境、CPU コア数など）を自動検出して `CMakeUserPresets.json` を生成するヘルパースクリプトが用意されています。
 
-**Run the script:**
+**スクリプトの実行:**
 
-Navigate to the root of your vLLM clone and execute the following command:
+vLLM のクローンのルートに移動し、次のコマンドを実行します。
 
 ```console
 python tools/generate_cmake_presets.py
 ```
 
-The script will prompt you if it cannot automatically determine certain paths (e.g., `nvcc` or a specific Python executable for your vLLM development environment). Follow the on-screen prompts. If an existing `CMakeUserPresets.json` is found, the script will ask for confirmation before overwriting it.
+一部のパス（`nvcc` や vLLM 開発環境の Python 実行ファイルなど）を自動的に判定できない場合、スクリプトが入力を求めます。画面の指示に従ってください。既存の `CMakeUserPresets.json` が見つかった場合、上書きの前に確認を求められます。
 
-**Force overwrite existing file:**
+**既存ファイルを強制的に上書きする:**
 
-To automatically overwrite an existing `CMakeUserPresets.json` without prompting, use the `--force-overwrite` flag:
+確認なしで既存の `CMakeUserPresets.json` を上書きするには、`--force-overwrite` フラグを使います。
 
 ```console
 python tools/generate_cmake_presets.py --force-overwrite
 ```
 
-This is particularly useful in automated scripts or CI/CD environments where interactive prompts are not desired.
+これは、対話的なプロンプトを避けたい自動化スクリプトや CI/CD 環境で特に便利です。
 
-After running the script, a `CMakeUserPresets.json` file will be created in the root of your vLLM repository.
+スクリプトを実行すると、vLLM リポジトリのルートに `CMakeUserPresets.json` が作成されます。
 
-### Example `CMakeUserPresets.json`
+### `CMakeUserPresets.json` の例 { #example-cmakeuserpresetsjson }
 
-Below is an example of what the generated `CMakeUserPresets.json` might look like. The script will tailor these values based on your system and any input you provide.
+次は、生成される `CMakeUserPresets.json` の例です。実際の値は、システムの構成と入力内容に応じて調整されます。
 
 ```json
 {
@@ -93,43 +93,43 @@ Below is an example of what the generated `CMakeUserPresets.json` might look lik
 }
 ```
 
-**What do the various configurations mean?**
+**各設定の意味**
 
-- `CMAKE_CUDA_COMPILER`: Path to your `nvcc` binary. The script attempts to find this automatically.
-- `CMAKE_C_COMPILER_LAUNCHER`, `CMAKE_CXX_COMPILER_LAUNCHER`, `CMAKE_CUDA_COMPILER_LAUNCHER`: Setting these to `ccache` (or `sccache`) significantly speeds up rebuilds by caching compilation results. Ensure `ccache` is installed (e.g., `sudo apt install ccache` or `conda install ccache`). The script sets these by default.
-- `VLLM_PYTHON_EXECUTABLE`: Path to the Python executable in your vLLM development environment. The script will prompt for this, defaulting to the current Python environment if suitable.
-- `CMAKE_INSTALL_PREFIX: "${sourceDir}"`: Specifies that the compiled components should be installed back into your vLLM source directory. This is crucial for the editable install, as it makes the newly built kernels immediately available to your Python environment.
-- `CMAKE_JOB_POOLS` and `jobs` in build presets: Control the parallelism of the build. The script sets these based on the number of CPU cores detected on your system.
-- `binaryDir`: Specifies where the build artifacts will be stored (e.g., `cmake-build-release`).
+- `CMAKE_CUDA_COMPILER`: `nvcc` バイナリへのパス。スクリプトが自動検出を試みます。
+- `CMAKE_C_COMPILER_LAUNCHER`、`CMAKE_CXX_COMPILER_LAUNCHER`、`CMAKE_CUDA_COMPILER_LAUNCHER`: これらを `ccache`（または `sccache`）に設定すると、コンパイル結果がキャッシュされ再ビルドが大幅に高速化します。`ccache` がインストールされていることを確認してください（`sudo apt install ccache` や `conda install ccache` など）。スクリプトは既定でこれらを設定します。
+- `VLLM_PYTHON_EXECUTABLE`: vLLM 開発環境の Python 実行ファイルへのパス。スクリプトが入力を求め、適切であれば現在の Python 環境が既定値になります。
+- `CMAKE_INSTALL_PREFIX: "${sourceDir}"`: コンパイル済みのコンポーネントを vLLM のソースディレクトリに戻してインストールすることを指定します。これは editable インストールにとって重要で、新しくビルドされたカーネルがすぐに Python 環境から利用できるようになります。
+- ビルドプリセットの `CMAKE_JOB_POOLS` と `jobs`: ビルドの並列度を制御します。スクリプトはシステムで検出した CPU コア数にもとづいて設定します。
+- `binaryDir`: ビルド成果物の格納先を指定します（`cmake-build-release` など）。
 
-## Building and Installing with CMake
+## CMake でのビルドとインストール { #building-and-installing-with-cmake }
 
-Once your `CMakeUserPresets.json` is configured:
+`CMakeUserPresets.json` を設定したら、次のようにします。
 
-1. **Initialize the CMake build environment:**
-   This step configures the build system according to your chosen preset (e.g., `release`) and creates the build directory at `binaryDir`
+1. **CMake のビルド環境を初期化する:**
+   このステップでは、選んだプリセット（`release` など）に従ってビルドシステムを構成し、`binaryDir` にビルドディレクトリを作成します。
 
     ```console
     cmake --preset release
     ```
 
-2. **Build and install the vLLM components:**
-   This command compiles the code and installs the resulting binaries into your vLLM source directory, making them available to your editable Python installation.
+2. **vLLM のコンポーネントをビルドしてインストールする:**
+   このコマンドはコードをコンパイルし、生成されたバイナリを vLLM のソースディレクトリにインストールして、editable な Python インストールから利用できるようにします。
 
     ```console
     cmake --build --preset release --target install
     ```
 
-3. **Make changes and repeat!**
-    Now you start using your editable install of vLLM, testing and making changes as needed. If you need to build again to update based on changes, simply run the CMake command again to build only the affected files.
+3. **変更して繰り返す**
+    これで editable インストールした vLLM を使い、必要に応じてテストや変更を行えます。変更を反映するために再ビルドが必要になったら、CMake のコマンドをもう一度実行するだけで、影響を受けたファイルだけがビルドされます。
 
     ```console
     cmake --build --preset release --target install
     ```
 
-## Verifying the Build
+## ビルドの確認 { #verifying-the-build }
 
-After a successful build, you will find a populated build directory (e.g., `cmake-build-release/` if you used the `release` preset and the example configuration).
+ビルドに成功すると、ファイルが生成されたビルドディレクトリができます（`release` プリセットと上記の設定例を使った場合は `cmake-build-release/` など）。
 
 ```console
 > ls cmake-build-release/
@@ -140,10 +140,10 @@ CMakeCache.txt  ctest                    _flashmla_C.abi3.so                  mo
 CMakeFiles      cumem_allocator.abi3.so  install_local_manifest.txt           vllm-flash-attn
 ```
 
-The `cmake --build ... --target install` command copies the compiled shared libraries (like `_C.abi3.so`, `_moe_C.abi3.so`, etc.) into the appropriate `vllm` package directory within your source tree. This updates your editable installation with the newly compiled kernels.
+`cmake --build ... --target install` コマンドは、コンパイル済みの共有ライブラリ（`_C.abi3.so`、`_moe_C.abi3.so` など）を、ソースツリー内の適切な `vllm` パッケージディレクトリにコピーします。これにより、editable インストールが新しくコンパイルされたカーネルで更新されます。
 
-## Additional Tips
+## その他のヒント { #additional-tips }
 
-- **Adjust Parallelism:** Fine-tune the `CMAKE_JOB_POOLS` in `configurePresets` and `jobs` in `buildPresets` in your `CMakeUserPresets.json`. Too many jobs can overload systems with limited RAM or CPU cores, leading to slower builds or system instability. Too few won't fully utilize available resources.
-- **Clean Builds When Necessary:** If you encounter persistent or strange build errors, especially after significant changes or switching branches, consider removing the CMake build directory (e.g., `rm -rf cmake-build-release`) and re-running the `cmake --preset` and `cmake --build` commands.
-- **Specific Target Builds:** For even faster iterations when working on a specific module, you can sometimes build a specific target instead of the full `install` target, though `install` ensures all necessary components are updated in your Python environment. Refer to CMake documentation for more advanced target management.
+- **並列度の調整:** `CMakeUserPresets.json` の `configurePresets` にある `CMAKE_JOB_POOLS` と `buildPresets` にある `jobs` を調整してください。ジョブ数が多すぎると、RAM や CPU コアが限られたシステムでは負荷が高くなり、ビルドが遅くなったりシステムが不安定になったりします。少なすぎるとリソースを活かしきれません。
+- **必要に応じてクリーンビルドする:** 大きな変更のあとやブランチを切り替えたあとなどに、ビルドエラーが解消しない、あるいは不可解な場合は、CMake のビルドディレクトリを削除して（`rm -rf cmake-build-release` など）、`cmake --preset` と `cmake --build` を実行し直すことを検討してください。
+- **特定ターゲットのビルド:** 特定のモジュールを開発しているときは、`install` ターゲット全体ではなく特定のターゲットだけをビルドすることで、さらに速く反復できる場合があります。ただし、Python 環境で必要なコンポーネントがすべて更新されることを保証するのは `install` です。より高度なターゲット管理については CMake のドキュメントを参照してください。

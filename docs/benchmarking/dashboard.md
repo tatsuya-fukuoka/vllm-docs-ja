@@ -1,16 +1,14 @@
-# Performance Dashboard
+# 性能ダッシュボード { #performance-dashboard }
 
-The performance dashboard is used to confirm whether new changes improve/degrade performance under various workloads.
-It is updated by triggering benchmark runs on every commit with both the `perf-benchmarks` and `ready` labels, and when a PR is merged into vLLM.
+性能ダッシュボードは、新しい変更がさまざまなワークロードで性能を改善するか、あるいは悪化させるかを確認するために使います。`perf-benchmarks` と `ready` の両方のラベルが付いたコミット、および PR が vLLM にマージされたタイミングでベンチマークの実行がトリガーされ、ダッシュボードが更新されます。
 
-The results are automatically published to the public [vLLM Performance Dashboard](https://hud.pytorch.org/benchmark/llms?repoName=vllm-project%2Fvllm).
+結果は公開されている [vLLM Performance Dashboard](https://hud.pytorch.org/benchmark/llms?repoName=vllm-project%2Fvllm) に自動的に公開されます。
 
-## Manually Trigger the benchmark
+## ベンチマークを手動でトリガーする { #manually-trigger-the-benchmark }
 
-Use [vllm-ci-test-repo images](https://gallery.ecr.aws/q9t5s3a7/vllm-ci-test-repo) with vLLM benchmark suite.
-For x86 CPU environment, please use the image with "-cpu" postfix. For AArch64 CPU environment, please use the image with "-arm64-cpu" postfix.
+vLLM のベンチマークスイートと一緒に [vllm-ci-test-repo のイメージ](https://gallery.ecr.aws/q9t5s3a7/vllm-ci-test-repo)を使ってください。x86 CPU 環境では末尾が "-cpu" のイメージを、AArch64 CPU 環境では末尾が "-arm64-cpu" のイメージを使います。
 
-Here is an example for docker run command for CPU. For GPUs skip setting the `ON_CPU` env var.
+次は CPU 向けの docker run コマンドの例です。GPU の場合は `ON_CPU` 環境変数の設定を省略してください。
 
 ```bash
 export VLLM_COMMIT=7f42dc20bb2800d09faa72b26f25d54e26f1b694 # use full commit hash from the main branch
@@ -23,45 +21,39 @@ fi
 docker run -it --entrypoint /bin/bash -v /data/huggingface:/root/.cache/huggingface -e HF_TOKEN=$HF_TOKEN -e ON_CPU=1 --shm-size=16g --name vllm-cpu-ci public.ecr.aws/q9t5s3a7/vllm-ci-test-repo:${VLLM_COMMIT}-${IMG_SUFFIX}
 ```
 
-Then, run below command inside the docker instance.
+次に、docker インスタンス内で以下のコマンドを実行します。
 
 ```bash
 bash .buildkite/performance-benchmarks/scripts/run-performance-benchmarks.sh
 ```
 
-When run, benchmark script generates results under **benchmark/results** folder, along with the benchmark_results.md and benchmark_results.json.
+実行すると、ベンチマークスクリプトは **benchmark/results** フォルダ以下に結果を生成し、benchmark_results.md と benchmark_results.json も出力します。
 
-### Runtime environment variables
+### 実行時の環境変数 { #runtime-environment-variables }
 
-- `ON_CPU`: set the value to '1' on Intel® Xeon® and Arm® Neoverse™ Processors. Default value is 0.
-- `SERVING_JSON`: JSON file to use for the serving tests. Default value is empty string (use default file).
-- `LATENCY_JSON`: JSON file to use for the latency tests. Default value is empty string (use default file).
-- `THROUGHPUT_JSON`: JSON file to use for the throughout tests. Default value is empty string (use default file).
-- `REMOTE_HOST`: IP for the remote vLLM service to benchmark. Default value is empty string.
-- `REMOTE_PORT`: Port for the remote vLLM service to benchmark. Default value is empty string.
-- `PROMPTS_PER_CONCURRENCY`: Multiplier to compute `num_prompts` for serving tests (`num_prompts = max_concurrency × value`). Overrides JSON `num_prompts`. Default is NULL.
-- `ENABLE_ADAPTIVE_CONCURRENCY`: set the value to '1' to enable adaptive SLA-based concurrency search after the static serving max_concurrency sweep. Default value is 0.
-- `SLA_TTFT_MS`: default TTFT SLA threshold in milliseconds for adaptive concurrency search. Default value is 3000.
-- `SLA_TPOT_MS`: default TPOT SLA threshold in milliseconds for adaptive concurrency search. Default value is 100.
-- `ADAPTIVE_MAX_PROBES`: maximum number of extra adaptive search probes. Default value is 8.
-- `ADAPTIVE_MAX_CONCURRENCY`: maximum allowed concurrency during adaptive search. Default value is 1024.
+- `ON_CPU`: Intel® Xeon® および Arm® Neoverse™ プロセッサでは '1' を設定します。既定値は 0。
+- `SERVING_JSON`: サービングテストに使う JSON ファイル。既定値は空文字列（既定のファイルを使用）。
+- `LATENCY_JSON`: レイテンシテストに使う JSON ファイル。既定値は空文字列（既定のファイルを使用）。
+- `THROUGHPUT_JSON`: スループットテストに使う JSON ファイル。既定値は空文字列（既定のファイルを使用）。
+- `REMOTE_HOST`: ベンチマーク対象のリモート vLLM サービスの IP。既定値は空文字列。
+- `REMOTE_PORT`: ベンチマーク対象のリモート vLLM サービスのポート。既定値は空文字列。
+- `PROMPTS_PER_CONCURRENCY`: サービングテストの `num_prompts` を計算するための倍率（`num_prompts = max_concurrency × 値`）。JSON の `num_prompts` を上書きします。既定値は NULL。
+- `ENABLE_ADAPTIVE_CONCURRENCY`: '1' を設定すると、静的なサービングの max_concurrency スイープのあとに、SLA にもとづく適応的な並行度探索が有効になります。既定値は 0。
+- `SLA_TTFT_MS`: 適応的な並行度探索における既定の TTFT の SLA しきい値（ミリ秒）。既定値は 3000。
+- `SLA_TPOT_MS`: 適応的な並行度探索における既定の TPOT の SLA しきい値（ミリ秒）。既定値は 100。
+- `ADAPTIVE_MAX_PROBES`: 適応的探索で追加するプローブの最大回数。既定値は 8。
+- `ADAPTIVE_MAX_CONCURRENCY`: 適応的探索で許容する最大の並行度。既定値は 1024。
 
-### Visualization
+### 可視化 { #visualization }
 
-The `convert-results-json-to-markdown.py` helps you put the benchmarking results inside a markdown table with real benchmarking results.
-You can find the result presented as a table inside the `buildkite/performance-benchmark` job page.
-If you do not see the table, please wait till the benchmark finish running.
-The json version of the table (together with the json version of the benchmark) will be also attached to the markdown file.
-The raw benchmarking results (in the format of json files) are in the `Artifacts` tab of the benchmarking.
+`convert-results-json-to-markdown.py` を使うと、実際のベンチマーク結果を Markdown の表にまとめられます。結果の表は `buildkite/performance-benchmark` のジョブページで確認できます。表が表示されない場合は、ベンチマークの実行が終わるまで待ってください。表の JSON 版（およびベンチマークの JSON 版）も Markdown ファイルに添付されます。生のベンチマーク結果（JSON ファイル）は、ベンチマークの `Artifacts` タブにあります。
 
-#### Performance Results Comparison
+#### 性能結果の比較 { #performance-results-comparison }
 
-The `compare-json-results.py` helps to compare benchmark results JSON files converted using `convert-results-json-to-markdown.py`.
-When run, benchmark script generates results under `benchmark/results` folder, along with the `benchmark_results.md` and `benchmark_results.json`.
-`compare-json-results.py` compares two `benchmark_results.json` files and provides performance ratio e.g. for Output Tput, Median TTFT and Median TPOT.  
-If only one benchmark_results.json is passed, `compare-json-results.py` compares different TP and PP configurations in the benchmark_results.json instead.
+`compare-json-results.py` を使うと、`convert-results-json-to-markdown.py` で変換したベンチマーク結果の JSON ファイルを比較できます。実行すると、ベンチマークスクリプトは `benchmark/results` フォルダ以下に結果を生成し、`benchmark_results.md` と `benchmark_results.json` も出力します。`compare-json-results.py` は 2 つの `benchmark_results.json` を比較し、Output Tput、Median TTFT、Median TPOT などの性能比を出力します。  
+benchmark_results.json を 1 つだけ渡した場合、`compare-json-results.py` は代わりにその中の異なる TP / PP 構成を比較します。
 
-Here is an example using the script to compare result_a and result_b with max concurrency and qps for same Model, Dataset name, input/output length.
+次は、同じモデル・データセット名・入出力長について、最大並行度と qps ごとに result_a と result_b を比較する例です。
 `python3 compare-json-results.py -f results_a/benchmark_results.json -f results_b/benchmark_results.json`
 
 ***Output Tput (tok/s) — Model : [ meta-llama/Llama-3.1-8B-Instruct ] , Dataset Name : [ random ] , Input Len : [ 2048.0 ] , Output Len : [ 2048.0 ]***
@@ -73,50 +65,49 @@ Here is an example using the script to compare result_a and result_b with max co
 | 2 | 24 | inf | 27.74 | 293.34 |  10.57 |
 | 3 | 32 | inf | 28.61 |306.69 | 10.72 |
 
-***compare-json-results.py – Command-Line Parameters***  
+***compare-json-results.py – コマンドラインパラメータ***  
 
-compare-json-results.py provides configurable parameters to compare one or more benchmark_results.json files and generate summary tables and plots.  
-In most cases, users only need to specify --file to parse the desired benchmark results.
+compare-json-results.py には、1 つ以上の benchmark_results.json を比較してサマリー表とグラフを生成するための設定可能なパラメータがあります。多くの場合、対象のベンチマーク結果を読み込むために `--file` を指定するだけで十分です。
 
-| Parameter              | Type               | Default Value           | Description                                                                                           |
+| パラメータ              | 型               | 既定値           | 説明                                                                                           |
 | ---------------------- | ------------------ | ----------------------- | ----------------------------------------------------------------------------------------------------- |
-| `--file`               | `str` (appendable) | *None*                  | Input JSON result file(s). Can be specified multiple times to compare multiple benchmark outputs.     |
-| `--debug`              | `bool`             | `False`                 | Enables debug mode. When set, prints all available information to aid troubleshooting and validation. |
-| `--plot` / `--no-plot` | `bool`             | `True`                  | Controls whether performance plots are generated. Use `--no-plot` to disable graph generation.        |
-| `--xaxis`              | `str`              | `# of max concurrency.` | Column name used as the X-axis in comparison plots (for example, concurrency or batch size).          |
-| `--latency`            | `str`              | `p99`                   | Latency aggregation method used for TTFT/TPOT. Supported values: `median` or `p99`.                   |
-| `--ttft-max-ms`        | `float`            | `3000.0`                | Reference upper bound (milliseconds) for TTFT plots, typically used to visualize SLA thresholds.      |
-| `--tpot-max-ms`        | `float`            | `100.0`                 | Reference upper bound (milliseconds) for TPOT plots, typically used to visualize SLA thresholds.      |
+| `--file`               | `str`（複数指定可） | *なし*                  | 入力となる JSON 結果ファイル。複数回指定して複数のベンチマーク結果を比較できます。     |
+| `--debug`              | `bool`             | `False`                 | デバッグモードを有効にします。設定すると、トラブルシューティングと検証に役立つ情報をすべて出力します。 |
+| `--plot` / `--no-plot` | `bool`             | `True`                  | 性能グラフを生成するかどうかを制御します。グラフ生成を無効にするには `--no-plot` を使います。        |
+| `--xaxis`              | `str`              | `# of max concurrency.` | 比較グラフの X 軸に使う列名（並行度やバッチサイズなど）。          |
+| `--latency`            | `str`              | `p99`                   | TTFT / TPOT に使うレイテンシの集計方法。指定可能な値: `median` または `p99`。                   |
+| `--ttft-max-ms`        | `float`            | `3000.0`                | TTFT グラフの参照上限（ミリ秒）。通常は SLA のしきい値を可視化するために使います。      |
+| `--tpot-max-ms`        | `float`            | `100.0`                 | TPOT グラフの参照上限（ミリ秒）。通常は SLA のしきい値を可視化するために使います。      |
 
-***Valid Max Concurrency Summary***  
+***有効な最大並行度のサマリー***  
 
-Based on the configured TTFT and TPOT SLA thresholds, compare-json-results.py computes the maximum valid concurrency for each benchmark result.  
-The “Max # of max concurrency. (Both)” column represents the highest concurrency level that satisfies both TTFT and TPOT constraints simultaneously.  
-This value is typically used in capacity planning and sizing guides.  
+設定された TTFT と TPOT の SLA しきい値にもとづき、compare-json-results.py は各ベンチマーク結果について有効な最大並行度を計算します。  
+「Max # of max concurrency. (Both)」の列は、TTFT と TPOT の両方の制約を同時に満たす最も高い並行度を表します。  
+この値は通常、キャパシティプランニングやサイジングのガイドに使われます。  
 
 | # | Configuration  | Max # of max concurrency. (TTFT ≤ 10000 ms) | Max # of max concurrency. (TPOT ≤ 100 ms) | Max # of max concurrency. (Both) | Output Tput @ Both (tok/s) | TTFT @ Both (ms) | TPOT @ Both (ms) |
 | - | -------------- | ------------------------------------------- | ----------------------------------------- | -------------------------------- | -------------------------- | ---------------- | ---------------- |
 | 0 | results-a      | 128.00                                      | 12.00                                     | 12.00                            | 127.76                     | 3000.82          | 93.24            |
 | 1 | results-b      | 128.00                                      | 32.00                                     | 32.00                            | 371.42                     | 2261.53          | 81.74            |
 
-More information on the performance benchmarks and their parameters can be found in [Benchmark README](https://github.com/intel-ai-tce/vllm/blob/more_cpu_models/.buildkite/nightly-benchmarks/README.md) and [performance benchmark description](../../.buildkite/performance-benchmarks/performance-benchmarks-descriptions.md).
+性能ベンチマークとそのパラメータの詳細は、[ベンチマークの README](https://github.com/intel-ai-tce/vllm/blob/more_cpu_models/.buildkite/nightly-benchmarks/README.md) と[性能ベンチマークの説明](../../.buildkite/performance-benchmarks/performance-benchmarks-descriptions.md)を参照してください。
 
-## Continuous Benchmarking
+## 継続的ベンチマーク { #continuous-benchmarking }
 
-The continuous benchmarking provides automated performance monitoring for vLLM across different models and GPU devices. This helps track vLLM's performance characteristics over time and identify any performance regressions or improvements.
+継続的ベンチマークは、さまざまなモデルと GPU デバイスにわたる vLLM の性能を自動的に監視します。これにより、vLLM の性能特性を時系列で追跡し、性能のリグレッションや改善を把握できます。
 
-### How It Works
+### 仕組み { #how-it-works }
 
-The continuous benchmarking is triggered via a [GitHub workflow CI](https://github.com/pytorch/pytorch-integration-testing/actions/workflows/vllm-benchmark.yml) in the PyTorch infrastructure repository, which runs automatically every 4 hours. The workflow executes three types of performance tests:
+継続的ベンチマークは、PyTorch のインフラリポジトリにある [GitHub ワークフロー CI](https://github.com/pytorch/pytorch-integration-testing/actions/workflows/vllm-benchmark.yml) からトリガーされ、4 時間ごとに自動実行されます。このワークフローは 3 種類の性能テストを実行します。
 
-- **Serving tests**: Measure request handling and API performance
-- **Throughput tests**: Evaluate token generation rates
-- **Latency tests**: Assess response time characteristics
+- **サービングテスト**: リクエスト処理と API の性能を測定します
+- **スループットテスト**: トークン生成のレートを評価します
+- **レイテンシテスト**: 応答時間の特性を評価します
 
-### Benchmark Configuration
+### ベンチマークの設定 { #benchmark-configuration }
 
-The benchmarking currently runs on a predefined set of models configured in the [vllm-benchmarks directory](https://github.com/pytorch/pytorch-integration-testing/tree/main/vllm-benchmarks/benchmarks). To add new models for benchmarking:
+現在、ベンチマークは [vllm-benchmarks ディレクトリ](https://github.com/pytorch/pytorch-integration-testing/tree/main/vllm-benchmarks/benchmarks)で設定された、あらかじめ定義されたモデル群に対して実行されます。ベンチマーク対象のモデルを追加するには次のようにします。
 
-1. Navigate to the appropriate GPU directory in the benchmarks configuration
-2. Add your model specifications to the corresponding configuration files
-3. The new models will be included in the next scheduled benchmark run
+1. ベンチマーク設定の中の該当する GPU ディレクトリに移動する
+2. 対応する設定ファイルにモデルの仕様を追加する
+3. 追加したモデルは、次回のスケジュール実行に含まれます
