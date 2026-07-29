@@ -724,8 +724,10 @@
       "upstream_sha": "ccd48ed50c640286"
     },
     "design/paged_attention.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "0a8cab1d4ed29976",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "0a8cab1d4ed29976"
     },
     "design/plugin_system.md": {
