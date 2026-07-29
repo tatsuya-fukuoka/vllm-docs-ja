@@ -977,8 +977,10 @@
       "upstream_sha": "038a4b8d77bb22bf"
     },
     "features/quantization/quark.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "12ccb5ba4f15aa29",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "12ccb5ba4f15aa29"
     },
     "features/quantization/torchao.md": {
