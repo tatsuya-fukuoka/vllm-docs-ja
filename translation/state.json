@@ -892,8 +892,10 @@
       "upstream_sha": "404672c2a77ff6e2"
     },
     "features/quantization/llm_compressor/fp8.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "39d11b7504e65e50",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "39d11b7504e65e50"
     },
     "features/quantization/llm_compressor/int4.md": {
@@ -907,8 +909,10 @@
       "upstream_sha": "fe0b50a902e716ba"
     },
     "features/quantization/llm_compressor/int8_w8a8.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "05f407950c06a582",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "05f407950c06a582"
     },
     "features/quantization/modelopt.md": {
@@ -926,8 +930,10 @@
       "upstream_sha": "224bbb9e7c22b6ad"
     },
     "features/quantization/quantized_kvcache.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "038a4b8d77bb22bf",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "038a4b8d77bb22bf"
     },
     "features/quantization/quark.md": {
