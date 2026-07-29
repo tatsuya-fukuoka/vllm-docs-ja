@@ -1,98 +1,98 @@
-# Disaggregated Prefilling (experimental)
+# プレフィル分離（実験的） { #disaggregated-prefilling-experimental }
 
-This page introduces you to the disaggregated prefilling feature in vLLM.
-
-!!! note
-    This feature is experimental and subject to change.
-
-## Why disaggregated prefilling?
-
-Two main reasons:
-
-- **Tuning time-to-first-token (TTFT) and inter-token-latency (ITL) separately**. Disaggregated prefilling put prefill and decode phase of LLM inference inside different vLLM instances. This gives you the flexibility to assign different parallel strategies (e.g. `tp` and `pp`) to tune TTFT without affecting ITL, or to tune ITL without affecting TTFT.
-- **Controlling tail ITL**. Without disaggregated prefilling, vLLM may insert some prefill jobs during the decoding of one request. This results in higher tail latency. Disaggregated prefilling helps you solve this issue and control tail ITL. Chunked prefill with a proper chunk size also can achieve the same goal, but in practice it's hard to figure out the correct chunk size value. So disaggregated prefilling is a much more reliable way to control tail ITL.
+このページでは、vLLM のプレフィル分離（disaggregated prefilling）機能を紹介します。
 
 !!! note
-    Disaggregated prefill DOES NOT improve throughput.
+    この機能は実験的であり、変更される可能性があります。
 
-## Usage example
+## なぜプレフィルを分離するのか { #why-disaggregated-prefilling }
 
-Now supports 9 types of connectors:
+主な理由は 2 つあります。
 
-- **ExampleConnector**: refer to [examples/disaggregated/example_connector/run.sh](../../examples/disaggregated/example_connector/run.sh) for the example usage of ExampleConnector disaggregated prefilling.
-- **LMCacheConnectorV1**: refer to [examples/disaggregated/lmcache/disagg_prefill_lmcache_v1/disagg_example_nixl.sh](../../examples/disaggregated/lmcache/disagg_prefill_lmcache_v1/disagg_example_nixl.sh) for the example usage of LMCacheConnectorV1 disaggregated prefilling which uses NIXL as the underlying KV transmission. LMCache also offers a multi-process (MP) mode via `LMCacheMPConnector`, where a standalone `lmcache server` holds the KV cache shared by one or more vLLM instances; see the [LMCache examples](https://docs.vllm.ai/en/v0.26.0/examples/disaggregated/lmcache/) and the [LMCache docs](https://docs.lmcache.ai) for setup.
-- **NixlConnector**: refer to [tests/v1/kv_connector/nixl_integration/run_accuracy_test.sh](../../tests/v1/kv_connector/nixl_integration/run_accuracy_test.sh) for the example usage of NixlConnector disaggregated prefilling which support fully async send/recv. For detailed usage guide, see [NixlConnector Usage Guide](nixl_connector_usage.md). For feature compatibility details, see [NixlConnector Compatibility Matrix](nixl_connector_compatibility.md). You may specify one or multiple NIXL transfer backends, such as:
+- **TTFT（time-to-first-token）と ITL（inter-token-latency）を個別に調整できる**。プレフィル分離では、LLM 推論のプレフィル段とデコード段を別々の vLLM インスタンスに配置します。これにより、異なる並列戦略（`tp` や `pp` など）を割り当てられるようになり、ITL に影響を与えずに TTFT を調整したり、TTFT に影響を与えずに ITL を調整したりできます。
+- **テールの ITL を制御できる**。プレフィル分離をしない場合、vLLM はあるリクエストのデコード中にプレフィルのジョブを差し込むことがあります。これはテールレイテンシの悪化につながります。プレフィル分離はこの問題を解決し、テールの ITL を制御するのに役立ちます。適切なチャンクサイズを設定したチャンク化プレフィルでも同じ目的は達成できますが、実際には正しいチャンクサイズを見つけるのは困難です。そのため、テールの ITL を制御するにはプレフィル分離のほうがはるかに信頼できる方法です。
+
+!!! note
+    プレフィル分離はスループットを向上させるものでは**ありません**。
+
+## 使用例 { #usage-example }
+
+現在、9 種類のコネクタをサポートしています。
+
+- **ExampleConnector**: ExampleConnector を使ったプレフィル分離の例は [examples/disaggregated/example_connector/run.sh](../../examples/disaggregated/example_connector/run.sh) を参照してください。
+- **LMCacheConnectorV1**: NIXL を基盤の KV 転送に使う LMCacheConnectorV1 のプレフィル分離の例は [examples/disaggregated/lmcache/disagg_prefill_lmcache_v1/disagg_example_nixl.sh](../../examples/disaggregated/lmcache/disagg_prefill_lmcache_v1/disagg_example_nixl.sh) を参照してください。LMCache は `LMCacheMPConnector` によるマルチプロセス（MP）モードも提供しており、この場合は独立した `lmcache server` が 1 つ以上の vLLM インスタンスで共有される KV キャッシュを保持します。セットアップ方法は [LMCache のサンプル](https://docs.vllm.ai/en/v0.26.0/examples/disaggregated/lmcache/)と [LMCache のドキュメント](https://docs.lmcache.ai)を参照してください。
+- **NixlConnector**: 完全な非同期送受信をサポートする NixlConnector のプレフィル分離の例は [tests/v1/kv_connector/nixl_integration/run_accuracy_test.sh](../../tests/v1/kv_connector/nixl_integration/run_accuracy_test.sh) を参照してください。詳しい使い方は [NixlConnector 利用ガイド](nixl_connector_usage.md)を、機能の互換性については [NixlConnector 互換性マトリクス](nixl_connector_compatibility.md)を参照してください。NIXL の転送バックエンドは 1 つまたは複数指定できます。例:
 
   ```bash
   --kv-transfer-config '{"kv_connector":"NixlConnector","kv_role":"kv_both", "kv_buffer_device":"cuda", "kv_connector_extra_config":{"backends":["UCX", "GDS"]}}'
   ```
 
-- **MooncakeConnector**: refer to [examples/disaggregated/mooncake_connector/run_mooncake_connector.sh](../../examples/disaggregated/mooncake_connector/run_mooncake_connector.sh) for the example usage of MooncakeConnector disaggregated prefilling. For detailed usage guide, see [MooncakeConnector Usage Guide](mooncake_connector_usage.md).
-- **MoRIIOConnector** (ROCm only): see [MoRI-IO Usage Guide](moriio_connector_usage.md) for example usage and detailed documentation.
-- **MultiConnector**: take advantage of the kv_connector_extra_config: dict[str, Any] already present in KVTransferConfig to stash all the connectors we want in an ordered list of kwargs.such as:
+- **MooncakeConnector**: MooncakeConnector を使ったプレフィル分離の例は [examples/disaggregated/mooncake_connector/run_mooncake_connector.sh](../../examples/disaggregated/mooncake_connector/run_mooncake_connector.sh) を参照してください。詳しい使い方は [MooncakeConnector 利用ガイド](mooncake_connector_usage.md)を参照してください。
+- **MoRIIOConnector**（ROCm 専用）: 使用例と詳細なドキュメントは [MoRI-IO 利用ガイド](moriio_connector_usage.md)を参照してください。
+- **MultiConnector**: KVTransferConfig にすでにある `kv_connector_extra_config: dict[str, Any]` を活用し、使いたいコネクタをキーワード引数の順序付きリストとしてまとめて指定します。例:
 
   ```bash
   --kv-transfer-config '{"kv_connector":"MultiConnector","kv_role":"kv_both","kv_connector_extra_config":{"connectors":[{"kv_connector":"NixlConnector","kv_role":"kv_both"},{"kv_connector":"ExampleConnector","kv_role":"kv_both","kv_connector_extra_config":{"shared_storage_path":"local_storage"}}]}}'
   ```
 
-- **OffloadingConnector**: enable offloading of KV data to CPU memory, customizing the CPU block size (in tokens) and total CPU memory bytes to allocate:
+- **OffloadingConnector**: KV データの CPU メモリへのオフロードを有効にします。CPU 側のブロックサイズ（トークン単位）と確保する CPU メモリの総バイト数を指定できます。
 
   ```bash
   --kv-transfer-config '{"kv_connector":"OffloadingConnector","kv_role":"kv_both","kv_connector_extra_config":{"block_size": 64, "cpu_bytes_to_use": 1000000000}}'
   ```
 
-  For multi-tier offloading (e.g., CPU + filesystem tier) and the full configuration reference, see the [KV Offloading Usage Guide](kv_offloading_usage.md).
+  多階層のオフロード（CPU + ファイルシステム階層など）と設定の完全なリファレンスについては、[KV オフロード利用ガイド](kv_offloading_usage.md)を参照してください。
 
-- **FlexKVConnectorV1**: refer to [examples/disaggregated/flexkv_connector/prefix_caching_flexkv.py](../../examples/disaggregated/flexkv_connector/prefix_caching_flexkv.py) for the example usage of FlexKVConnectorV1. FlexKV is a distributed KV Store and multi-level cache management system for ultra-large-scale LLM inference.
+- **FlexKVConnectorV1**: FlexKVConnectorV1 の使用例は [examples/disaggregated/flexkv_connector/prefix_caching_flexkv.py](../../examples/disaggregated/flexkv_connector/prefix_caching_flexkv.py) を参照してください。FlexKV は、超大規模な LLM 推論向けの分散 KV ストアおよび多階層キャッシュ管理システムです。
 
   ```bash
   --kv-transfer-config '{"kv_connector":"FlexKVConnectorV1","kv_role":"kv_both"}'
   ```
 
-## Development
+## 開発 { #development }
 
-We implement disaggregated prefilling by running 2 vLLM instances. One for prefill (we call it prefill instance) and one for decode (we call it decode instance), and then use a connector to transfer the prefill KV caches and results from prefill instance to decode instance.
+プレフィル分離は、2 つの vLLM インスタンスを動かすことで実現します。1 つはプレフィル用（プレフィルインスタンスと呼びます）、もう 1 つはデコード用（デコードインスタンスと呼びます）で、コネクタを使ってプレフィルの KV キャッシュと結果をプレフィルインスタンスからデコードインスタンスへ転送します。
 
-All disaggregated prefilling implementation is under `vllm/distributed/kv_transfer`.
+プレフィル分離の実装はすべて `vllm/distributed/kv_transfer` 以下にあります。
 
-Key abstractions for disaggregated prefilling:
+プレフィル分離における主要な抽象は次のとおりです。
 
-- **Connector**: Connector allows **kv consumer** to retrieve the KV caches of a batch of request from **kv producer**.
-- **LookupBuffer**: LookupBuffer provides two API: `insert` KV cache and `drop_select` KV cache. The semantics of `insert` and `drop_select` are similar to SQL, where `insert` inserts a KV cache into the buffer, and `drop_select` returns the KV cache that matches the given condition and drop it from the buffer.
-- **Pipe**: A single-direction FIFO pipe for tensor transmission. It supports `send_tensor` and `recv_tensor`.
+- **Connector**: **kv consumer** が **kv producer** からリクエストのバッチの KV キャッシュを取得できるようにします。
+- **LookupBuffer**: KV キャッシュの `insert` と `drop_select` という 2 つの API を提供します。`insert` と `drop_select` のセマンティクスは SQL に似ており、`insert` は KV キャッシュをバッファに挿入し、`drop_select` は指定した条件に一致する KV キャッシュを返してバッファから削除します。
+- **Pipe**: テンソル転送のための単方向 FIFO パイプです。`send_tensor` と `recv_tensor` をサポートします。
 
 !!! note
-    `insert` is non-blocking operation but `drop_select` is blocking operation.
+    `insert` は非ブロッキングな操作ですが、`drop_select` はブロッキングな操作です。
 
-Here is a figure illustrating how the above 3 abstractions are organized:
+上記 3 つの抽象がどのように構成されているかを示す図は次のとおりです。
 
 ![Disaggregated prefilling abstractions](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/features/disagg_prefill/abstraction.jpg)
 
-The workflow of disaggregated prefilling is as follows:
+プレフィル分離のワークフローは次のとおりです。
 
 ![Disaggregated prefilling workflow](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/features/disagg_prefill/overview.jpg)
 
-The `buffer` corresponds to `insert` API in LookupBuffer, and the `drop_select` corresponds to `drop_select` API in LookupBuffer.
+`buffer` は LookupBuffer の `insert` API に、`drop_select` は LookupBuffer の `drop_select` API に対応します。
 
-Now every process in vLLM will have a corresponding connector. Specifically, we have:
+現在、vLLM のすべてのプロセスが対応するコネクタを持ちます。具体的には次のとおりです。
 
-- Scheduler connector: the connector that locates in the same process as the scheduler process. It schedules the KV cache transfer ops.
-- Worker connectors: the connectors that locate in the worker processes. They execute KV cache transfer ops.
+- スケジューラコネクタ: スケジューラプロセスと同じプロセスに配置されるコネクタです。KV キャッシュの転送操作をスケジュールします。
+- ワーカーコネクタ: ワーカープロセスに配置されるコネクタです。KV キャッシュの転送操作を実行します。
 
-Here is a figure illustrating how the above 2 connectors are organized:
+上記 2 つのコネクタがどのように構成されているかを示す図は次のとおりです。
 
 ![Disaggregated prefilling high level design](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/features/disagg_prefill/high_level_design.png)
 
-The figure below shows how the worker connector works with the attention module to achieve layer-by-layer KV cache store and load:
+次の図は、ワーカーコネクタが Attention モジュールと連携して、層ごとの KV キャッシュの保存と読み込みを実現する様子を示しています。
 
 ![Disaggregated prefilling workflow](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/features/disagg_prefill/workflow.png)
 
-## Third-party contributions
+## サードパーティによる貢献 { #third-party-contributions }
 
-Disaggregated prefilling is highly related to infrastructure, so vLLM relies on third-party connectors for production-level disaggregated prefilling (and vLLM team will actively review and merge new PRs for third-party connectors).
+プレフィル分離はインフラと密接に関係するため、本番レベルのプレフィル分離では vLLM はサードパーティのコネクタに依存しています（vLLM チームはサードパーティコネクタの新しい PR を積極的にレビュー・マージします）。
 
-We recommend three ways of implementations:
+実装方法として次の 3 つを推奨します。
 
-- **Fully-customized connector**: Implement your own `Connector`, and call third-party libraries to send and receive KV caches, and many many more (like editing vLLM's model input to perform customized prefilling, etc.). This approach gives you the most control, but at the risk of being incompatible with future vLLM versions.
-- **Database-like connector**: Implement your own `LookupBuffer` and support the `insert` and `drop_select` APIs just like SQL.
-- **Distributed P2P connector**: Implement your own `Pipe` and support the `send_tensor` and `recv_tensor` APIs, just like `torch.distributed`.
+- **完全にカスタマイズしたコネクタ**: 独自の `Connector` を実装し、サードパーティのライブラリを呼び出して KV キャッシュを送受信します。それ以外にも、カスタマイズしたプレフィルを行うために vLLM のモデル入力を編集するなど、多くのことができます。この方法は最も自由度が高い一方、将来の vLLM のバージョンと非互換になるリスクがあります。
+- **データベース的なコネクタ**: 独自の `LookupBuffer` を実装し、SQL のように `insert` と `drop_select` の API をサポートします。
+- **分散 P2P コネクタ**: 独自の `Pipe` を実装し、`torch.distributed` のように `send_tensor` と `recv_tensor` の API をサポートします。

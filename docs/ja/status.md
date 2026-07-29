@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **163 ページ**を翻訳済みです（72.1%）。
+全 226 ページ中 **166 ページ**を翻訳済みです（73.5%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -16,17 +16,17 @@
 | CLI リファレンス | 15 | 0 | 0 | 15 |
 | コミュニティ | 3 | 0 | 0 | 3 |
 | 設定 | 7 | 0 | 0 | 7 |
-| 開発者ガイド | 8 | 0 | 8 | 16 |
+| 開発者ガイド | 9 | 0 | 7 | 16 |
 | デプロイ | 35 | 0 | 0 | 35 |
 | 設計ドキュメント | 8 | 0 | 21 | 29 |
-| 機能 | 39 | 0 | 13 | 52 |
+| 機能 | 40 | 0 | 12 | 52 |
 | はじめに | 5 | 0 | 8 | 13 |
 | ガバナンス | 1 | 0 | 2 | 3 |
-| モデル | 9 | 0 | 7 | 16 |
+| モデル | 10 | 0 | 6 | 16 |
 | 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **163** | **0** | **63** | **226** |
+| **合計** | **166** | **0** | **60** | **226** |
 
 ## 翻訳済みのページ
 
@@ -58,6 +58,7 @@
 - `configuration/optimization.md`
 - `configuration/serve_args.md`
 - `contributing/ci/failures.md`
+- `contributing/ci/update_pytorch_version.md`
 - `contributing/deprecation_policy.md`
 - `contributing/dockerfile/dockerfile.md`
 - `contributing/editing-agent-instructions.md`
@@ -114,6 +115,7 @@
 - `features/context_extension.md`
 - `features/custom_arguments.md`
 - `features/disagg_encoder.md`
+- `features/disagg_prefill.md`
 - `features/index_cache.md`
 - `features/interleaved_thinking.md`
 - `features/mooncake_connector_usage.md`
@@ -159,6 +161,7 @@
 - `models/extensions/tensorizer.md`
 - `models/generative_models.md`
 - `models/hardware_supported_models/cpu.md`
+- `models/hardware_supported_models/xpu.md`
 - `models/pooling_models/reward.md`
 - `models/pooling_models/token_classify.md`
 - `models/pooling_models/token_embed.md`

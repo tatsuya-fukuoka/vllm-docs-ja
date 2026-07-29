@@ -227,8 +227,10 @@
       "upstream_sha": "30a44da411204d21"
     },
     "contributing/ci/update_pytorch_version.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "f8dba4db5fed89f4",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "f8dba4db5fed89f4"
     },
     "contributing/deprecation_policy.md": {
@@ -759,8 +761,10 @@
       "upstream_sha": "964f03b4a4f13c74"
     },
     "features/disagg_prefill.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "925d6b629de17495",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "925d6b629de17495"
     },
     "features/index_cache.md": {
@@ -1184,8 +1188,10 @@
       "upstream_sha": "61178dfca26962ec"
     },
     "models/hardware_supported_models/xpu.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "efa162096eb57f8c",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "efa162096eb57f8c"
     },
     "models/pooling_models/README.md": {
