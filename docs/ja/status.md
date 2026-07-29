@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **188 ページ**を翻訳済みです（83.2%）。
+全 226 ページ中 **189 ページ**を翻訳済みです（83.6%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -16,7 +16,7 @@
 | CLI リファレンス | 15 | 0 | 0 | 15 |
 | コミュニティ | 3 | 0 | 0 | 3 |
 | 設定 | 7 | 0 | 0 | 7 |
-| 開発者ガイド | 13 | 0 | 3 | 16 |
+| 開発者ガイド | 14 | 0 | 2 | 16 |
 | デプロイ | 35 | 0 | 0 | 35 |
 | 設計ドキュメント | 13 | 0 | 16 | 29 |
 | 機能 | 43 | 0 | 9 | 52 |
@@ -26,7 +26,7 @@
 | 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **188** | **0** | **38** | **226** |
+| **合計** | **189** | **0** | **37** | **226** |
 
 ## 翻訳済みのページ
 
@@ -71,6 +71,7 @@
 - `contributing/model/basic.md`
 - `contributing/model/registration.md`
 - `contributing/model/tests.md`
+- `contributing/profiling.md`
 - `contributing/vulnerability_management.md`
 - `deployment/docker.md`
 - `deployment/frameworks/anyscale.md`
