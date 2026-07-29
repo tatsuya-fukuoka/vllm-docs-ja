@@ -1129,8 +1129,10 @@
       "upstream_sha": "16ebc96db92b6881"
     },
     "getting_started/installation/cpu.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "77c7a9a771c8986e",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "77c7a9a771c8986e"
     },
     "getting_started/installation/cpu.s390x.inc.md": {
