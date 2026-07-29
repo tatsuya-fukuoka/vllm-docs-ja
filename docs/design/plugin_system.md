@@ -1,14 +1,14 @@
-# Plugin System
+# プラグインシステム { #plugin-system }
 
-The community frequently requests the ability to extend vLLM with custom features. To facilitate this, vLLM includes a plugin system that allows users to add custom features without modifying the vLLM codebase. This document explains how plugins work in vLLM and how to create a plugin for vLLM.
+コミュニティからは、独自機能で vLLM を拡張したいという要望が頻繁に寄せられます。これに応えるため、vLLM には vLLM のコードベースを変更せずに独自機能を追加できるプラグインシステムが用意されています。このドキュメントでは、vLLM におけるプラグインの仕組みと、vLLM 向けプラグインの作り方を説明します。
 
-## How Plugins Work in vLLM
+## vLLM におけるプラグインの仕組み { #how-plugins-work-in-vllm }
 
-Plugins are user-registered code that vLLM executes. Given vLLM's architecture (see [Arch Overview](arch_overview.md)), multiple processes may be involved, especially when using distributed inference with various parallelism techniques. To enable plugins successfully, every process created by vLLM needs to load the plugin. This is done by the [`load_plugins_by_group`](https://docs.vllm.ai/en/v0.26.0/api/vllm/plugins/#vllm.plugins.load_plugins_by_group) function in the `vllm.plugins` module.
+プラグインは、ユーザーが登録し vLLM が実行するコードです。vLLM のアーキテクチャ（[アーキテクチャ概要](arch_overview.md)を参照）を考えると、特にさまざまな並列化手法を用いた分散推論では複数のプロセスが関わります。プラグインを正しく有効にするには、vLLM が作成するすべてのプロセスがそのプラグインを読み込む必要があります。これは `vllm.plugins` モジュールの [`load_plugins_by_group`](https://docs.vllm.ai/en/v0.26.0/api/vllm/plugins/#vllm.plugins.load_plugins_by_group) 関数によって行われます。
 
-## How vLLM Discovers Plugins
+## vLLM がプラグインを見つける仕組み { #how-vllm-discovers-plugins }
 
-vLLM's plugin system uses the standard Python `entry_points` mechanism. This mechanism allows developers to register functions in their Python packages for use by other packages. An example of a plugin:
+vLLM のプラグインシステムは、標準の Python の `entry_points` の仕組みを使います。この仕組みにより、開発者は自分の Python パッケージ内の関数を、他のパッケージから利用できるよう登録できます。プラグインの例を示します。
 
 ??? code
 
@@ -35,33 +35,33 @@ vLLM's plugin system uses the standard Python `entry_points` mechanism. This mec
             )
     ```
 
-For more information on adding entry points to your package, please check the [official documentation](https://setuptools.pypa.io/en/latest/userguide/entry_point.html).
+パッケージへのエントリポイントの追加については、[公式ドキュメント](https://setuptools.pypa.io/en/latest/userguide/entry_point.html)を参照してください。
 
-Every plugin has three parts:
+すべてのプラグインは 3 つの要素からなります。
 
-1. **Plugin group**: The name of the entry point group. vLLM uses the entry point group `vllm.general_plugins` to register general plugins. This is the key of `entry_points` in the `setup.py` file. Always use `vllm.general_plugins` for vLLM's general plugins.
-2. **Plugin name**: The name of the plugin. This is the value in the dictionary of the `entry_points` dictionary. In the example above, the plugin name is `register_dummy_model`. Plugins can be filtered by their names using the `VLLM_PLUGINS` environment variable. To load only a specific plugin, set `VLLM_PLUGINS` to the plugin name.
-3. **Plugin value**: The fully qualified name of the function or module to register in the plugin system. In the example above, the plugin value is `vllm_add_dummy_model:register`, which refers to a function named `register` in the `vllm_add_dummy_model` module.
+1. **プラグイングループ**: エントリポイントグループの名前です。vLLM は一般的なプラグインを登録するために、エントリポイントグループ `vllm.general_plugins` を使います。これは `setup.py` の `entry_points` のキーにあたります。vLLM の一般的なプラグインでは常に `vllm.general_plugins` を使ってください。
+2. **プラグイン名**: プラグインの名前です。これは `entry_points` の辞書内の値にあたります。上の例では、プラグイン名は `register_dummy_model` です。プラグインは環境変数 `VLLM_PLUGINS` によって名前で絞り込めます。特定のプラグインだけを読み込むには、`VLLM_PLUGINS` にそのプラグイン名を設定します。
+3. **プラグインの値**: プラグインシステムに登録する関数またはモジュールの完全修飾名です。上の例では、プラグインの値は `vllm_add_dummy_model:register` で、`vllm_add_dummy_model` モジュール内の `register` という関数を指します。
 
-## Types of supported plugins
+## サポートされるプラグインの種類 { #types-of-supported-plugins }
 
-- **General plugins** (with group name `vllm.general_plugins`): The primary use case for these plugins is to register custom, out-of-the-tree models into vLLM. This is done by calling `ModelRegistry.register_model` to register the model inside the plugin function. For an example of an official model plugin, see the [bart-plugin](https://github.com/vllm-project/bart-plugin) which adds support for `BartForConditionalGeneration`.
+- **一般プラグイン**（グループ名 `vllm.general_plugins`）: 主な用途は、ツリー外の独自モデルを vLLM に登録することです。プラグイン関数の中で `ModelRegistry.register_model` を呼び出してモデルを登録します。公式のモデルプラグインの例としては、`BartForConditionalGeneration` のサポートを追加する [bart-plugin](https://github.com/vllm-project/bart-plugin) を参照してください。
 
-- **Platform plugins** (with group name `vllm.platform_plugins`): The primary use case for these plugins is to register custom, out-of-the-tree platforms into vLLM. The plugin function should return `None` when the platform is not supported in the current environment, or the platform class's fully qualified name when the platform is supported.
+- **プラットフォームプラグイン**（グループ名 `vllm.platform_plugins`）: 主な用途は、ツリー外の独自プラットフォームを vLLM に登録することです。プラグイン関数は、現在の環境でそのプラットフォームがサポートされていない場合は `None` を、サポートされている場合はプラットフォームクラスの完全修飾名を返します。
 
-- **IO Processor plugins** (with group name `vllm.io_processor_plugins`): The primary use case for these plugins is to register custom pre-/post-processing of the model prompt and model output for pooling models. The plugin function returns the IOProcessor's class fully qualified name.
+- **IO プロセッサプラグイン**（グループ名 `vllm.io_processor_plugins`）: 主な用途は、プーリングモデルに対するモデルプロンプトとモデル出力の独自の前処理・後処理を登録することです。プラグイン関数は IOProcessor のクラスの完全修飾名を返します。
 
-- **Stat logger plugins** (with group name `vllm.stat_logger_plugins`): The primary use case for these plugins is to register custom, out-of-the-tree loggers into vLLM. The entry point should be a class that subclasses StatLoggerBase.
+- **統計ロガープラグイン**（グループ名 `vllm.stat_logger_plugins`）: 主な用途は、ツリー外の独自ロガーを vLLM に登録することです。エントリポイントは StatLoggerBase を継承したクラスである必要があります。
 
-- **Endpoint plugins** (with group name `vllm.endpoint_plugins`): The primary use case for these plugins is to register custom, out-of-the-tree HTTP routes on the OpenAI compatible API server. Unlike the other plugin groups above, endpoint plugins are loaded only in the API server front end process and are **not loaded by default**. See [Endpoint Plugins](endpoint_plugins.md) for the interface and [Security](../usage/security.md#endpoint-plugins) for the opt-in and trust model.
+- **エンドポイントプラグイン**（グループ名 `vllm.endpoint_plugins`）: 主な用途は、OpenAI 互換 API サーバーにツリー外の独自 HTTP ルートを登録することです。上記の他のプラグイングループとは異なり、エンドポイントプラグインは API サーバーのフロントエンドプロセスでのみ読み込まれ、**既定では読み込まれません**。インターフェースについては[エンドポイントプラグイン](endpoint_plugins.md)を、オプトインと信頼モデルについては[セキュリティ](../usage/security.md#endpoint-plugins)を参照してください。
 
-## Guidelines for Writing Plugins
+## プラグインを書く際の指針 { #guidelines-for-writing-plugins }
 
-- **Being re-entrant**: The function specified in the entry point should be re-entrant, meaning it can be called multiple times without causing issues. This is necessary because the function might be called multiple times in some processes.
+- **再入可能であること**: エントリポイントに指定する関数は再入可能、つまり複数回呼び出されても問題が起きないようにしてください。一部のプロセスでは関数が複数回呼ばれる可能性があるため、これが必要です。
 
-### Platform plugins guidelines
+### プラットフォームプラグインの指針 { #platform-plugins-guidelines }
 
-1. Create a platform plugin project, for example, `vllm_add_dummy_platform`. The project structure should look like this:
+1. プラットフォームプラグインのプロジェクト（例: `vllm_add_dummy_platform`）を作成します。プロジェクトの構成は次のようになります。
 
     ```shell
     vllm_add_dummy_platform/
@@ -75,7 +75,7 @@ Every plugin has three parts:
     ├── setup.py
     ```
 
-2. In the `setup.py` file, add the following entry point:
+2. `setup.py` に次のエントリポイントを追加します。
 
     ```python
     setup(
@@ -90,71 +90,71 @@ Every plugin has three parts:
     )
     ```
 
-    Please make sure `vllm_add_dummy_platform:register` is a callable function and returns the platform class's fully qualified name. for example:
+    `vllm_add_dummy_platform:register` が呼び出し可能な関数であり、プラットフォームクラスの完全修飾名を返すことを確認してください。例:
 
     ```python
     def register():
         return "vllm_add_dummy_platform.my_dummy_platform.MyDummyPlatform"
     ```
 
-3. Implement the platform class `MyDummyPlatform` in `my_dummy_platform.py`. The platform class should inherit from `vllm.platforms.interface.Platform`. Please follow the interface to implement the functions one by one. There are some important functions and properties that should be implemented at least:
+3. `my_dummy_platform.py` にプラットフォームクラス `MyDummyPlatform` を実装します。プラットフォームクラスは `vllm.platforms.interface.Platform` を継承する必要があります。インターフェースに従って関数を 1 つずつ実装してください。少なくとも実装すべき重要な関数とプロパティは次のとおりです。
 
-    - `_enum`: This property is the device enumeration from [`PlatformEnum`](https://docs.vllm.ai/en/v0.26.0/api/vllm/platforms/interface/#vllm.platforms.interface.PlatformEnum). Usually, it should be `PlatformEnum.OOT`, which means the platform is out-of-tree.
-    - `device_type`: This property should return the type of the device which pytorch uses. For example, `"cpu"`, `"cuda"`, etc.
-    - `device_name`: This property is set the same as `device_type` usually. It's mainly used for logging purposes.
-    - `check_and_update_config`: This function is called very early in the vLLM's initialization process. It's used for plugins to update the vllm configuration. For example, the block size, graph mode config, etc., can be updated in this function. The most important thing is that the **worker_cls** should be set in this function to let vLLM know which worker class to use for the worker process.
-    - `get_attn_backend_cls`: This function should return the attention backend class's fully qualified name.
-    - `get_device_communicator_cls`: This function should return the device communicator class's fully qualified name.
+    - `_enum`: [`PlatformEnum`](https://docs.vllm.ai/en/v0.26.0/api/vllm/platforms/interface/#vllm.platforms.interface.PlatformEnum) によるデバイスの列挙値を表すプロパティです。通常は、ツリー外のプラットフォームを意味する `PlatformEnum.OOT` にします。
+    - `device_type`: PyTorch が使うデバイスの種類を返すプロパティです。たとえば `"cpu"`、`"cuda"` などです。
+    - `device_name`: 通常は `device_type` と同じ値を設定します。主にログ出力の用途で使われます。
+    - `check_and_update_config`: vLLM の初期化プロセスの非常に早い段階で呼ばれる関数です。プラグインが vLLM の設定を更新するために使います。たとえば、ブロックサイズやグラフモードの設定などをこの関数で更新できます。最も重要なのは、ワーカープロセスでどのワーカークラスを使うかを vLLM に伝えるため、この関数で **worker_cls** を設定することです。
+    - `get_attn_backend_cls`: Attention バックエンドクラスの完全修飾名を返します。
+    - `get_device_communicator_cls`: デバイスコミュニケータクラスの完全修飾名を返します。
 
-4. Implement the worker class `MyDummyWorker` in `my_dummy_worker.py`. The worker class should inherit from [`WorkerBase`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/worker/worker_base/#vllm.v1.worker.worker_base.WorkerBase). Please follow the interface to implement the functions one by one. Basically, all interfaces in the base class should be implemented, since they are called here and there in vLLM. To make sure a model can be executed, the basic functions should be implemented are:
+4. `my_dummy_worker.py` にワーカークラス `MyDummyWorker` を実装します。ワーカークラスは [`WorkerBase`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/worker/worker_base/#vllm.v1.worker.worker_base.WorkerBase) を継承する必要があります。インターフェースに従って関数を 1 つずつ実装してください。基本的に、基底クラスのすべてのインターフェースは vLLM のさまざまな箇所から呼ばれるため実装すべきです。モデルを実行できるようにするために最低限実装すべき関数は次のとおりです。
 
-    - `init_device`: This function is called to set up the device for the worker.
-    - `initialize_cache`: This function is called to set cache config for the worker.
-    - `load_model`: This function is called to load the model weights to device.
-    - `get_kv_cache_spec`: This function is called to generate the kv cache spec for the model.
-    - `determine_available_memory`: This function is called to profiles the peak memory usage of the model to determine how much memory can be used for KV cache without OOMs.
-    - `initialize_from_config`: This function is called to allocate device KV cache with the specified kv_cache_config
-    - `execute_model`: This function is called every step to inference the model.
+    - `init_device`: ワーカーのデバイスをセットアップするために呼ばれます。
+    - `initialize_cache`: ワーカーのキャッシュ設定を行うために呼ばれます。
+    - `load_model`: モデルの重みをデバイスに読み込むために呼ばれます。
+    - `get_kv_cache_spec`: モデルの KV キャッシュ仕様を生成するために呼ばれます。
+    - `determine_available_memory`: モデルのピークメモリ使用量をプロファイルし、OOM を起こさずに KV キャッシュへ割り当てられるメモリ量を判断するために呼ばれます。
+    - `initialize_from_config`: 指定された kv_cache_config でデバイス側の KV キャッシュを確保するために呼ばれます。
+    - `execute_model`: モデルの推論のために毎ステップ呼ばれます。
 
-    Additional functions that can be implemented are:
+    追加で実装できる関数は次のとおりです。
 
-    - If the plugin wants to support sleep mode feature, please implement the `sleep` and `wakeup` functions.
-    - If the plugin wants to support graph mode feature, please implement the `compile_or_warm_up_model` function.
-    - If the plugin wants to support speculative decoding feature, please implement the `take_draft_token_ids` function.
-    - If the plugin wants to support lora feature, please implement the `add_lora`,`remove_lora`,`list_loras` and `pin_lora` functions.
-    - If the plugin wants to support data parallelism feature, please implement the `execute_dummy_batch` functions.
+    - スリープモード機能をサポートしたい場合は、`sleep` と `wakeup` を実装してください。
+    - グラフモード機能をサポートしたい場合は、`compile_or_warm_up_model` を実装してください。
+    - 投機的デコーディング機能をサポートしたい場合は、`take_draft_token_ids` を実装してください。
+    - LoRA 機能をサポートしたい場合は、`add_lora`、`remove_lora`、`list_loras`、`pin_lora` を実装してください。
+    - データ並列機能をサポートしたい場合は、`execute_dummy_batch` を実装してください。
 
-    Please look at the worker base class [`WorkerBase`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/worker/worker_base/#vllm.v1.worker.worker_base.WorkerBase) for more functions that can be implemented.
+    実装できる関数の詳細は、ワーカーの基底クラス [`WorkerBase`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/worker/worker_base/#vllm.v1.worker.worker_base.WorkerBase) を参照してください。
 
-5. Implement the attention backend class `MyDummyAttention` in `my_dummy_attention.py`. The attention backend class should inherit from [`AttentionBackend`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/attention/backend/#vllm.v1.attention.backend.AttentionBackend). It's used to calculate attentions with your device. Take `vllm.v1.attention.backends` as examples, it contains many attention backend implementations.
+5. `my_dummy_attention.py` に Attention バックエンドクラス `MyDummyAttention` を実装します。Attention バックエンドクラスは [`AttentionBackend`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/attention/backend/#vllm.v1.attention.backend.AttentionBackend) を継承する必要があります。これは自分のデバイスで Attention を計算するために使われます。`vllm.v1.attention.backends` には多くの Attention バックエンドの実装が含まれているので、参考にしてください。
 
-6. Implement custom ops for high performance. Most ops can be run by pytorch native implementation, while the performance may not be good. In this case, you can implement specific custom ops for your plugins. Currently, there are kinds of custom ops vLLM supports:
+6. 高い性能を得るためにカスタム op を実装します。ほとんどの op は PyTorch のネイティブ実装で動作しますが、性能が十分でない場合があります。その場合は、プラグイン向けに専用のカスタム op を実装できます。現在 vLLM がサポートするカスタム op の種類は次のとおりです。
 
-    - pytorch ops
-      there are 3 kinds of pytorch ops:
+    - PyTorch の op
+      PyTorch の op には 3 種類あります。
 
-        - `communicator ops`: Device communicator op. Such as all-reduce, all-gather, etc.
-          Please implement the device communicator class `MyDummyDeviceCommunicator` in `my_dummy_device_communicator.py`. The device communicator class should inherit from [`DeviceCommunicatorBase`](https://docs.vllm.ai/en/v0.26.0/api/vllm/distributed/device_communicators/base_device_communicator/#vllm.distributed.device_communicators.base_device_communicator.DeviceCommunicatorBase).
-        - `common ops`: Common ops. Such as matmul, softmax, etc.
-          Please implement the common ops by register oot way. See more detail in [`CustomOp`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/custom_op/#vllm.model_executor.custom_op.CustomOp) class.
-        - `csrc ops`: C++ ops. This kind of ops are implemented in C++ and are registered as torch custom ops.
-          Following csrc module and `vllm._custom_ops` to implement your ops.
+        - `communicator ops`: デバイスコミュニケータの op です。all-reduce、all-gather などが該当します。
+          `my_dummy_device_communicator.py` にデバイスコミュニケータクラス `MyDummyDeviceCommunicator` を実装してください。デバイスコミュニケータクラスは [`DeviceCommunicatorBase`](https://docs.vllm.ai/en/v0.26.0/api/vllm/distributed/device_communicators/base_device_communicator/#vllm.distributed.device_communicators.base_device_communicator.DeviceCommunicatorBase) を継承する必要があります。
+        - `common ops`: 一般的な op です。matmul、softmax などが該当します。
+          ツリー外（oot）として登録する方法で実装してください。詳細は [`CustomOp`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/custom_op/#vllm.model_executor.custom_op.CustomOp) クラスを参照してください。
+        - `csrc ops`: C++ の op です。C++ で実装され、torch のカスタム op として登録されます。
+          csrc モジュールと `vllm._custom_ops` を参考に自分の op を実装してください。
 
-    - triton ops
-      Custom way doesn't work for triton ops now.
+    - Triton の op
+      Triton の op については、現時点でカスタムの方法は使えません。
 
-7. (optional) Implement other pluggable modules, such as lora, graph backend, quantization, mamba attention backend, etc.
+7. （任意）LoRA、グラフバックエンド、量子化、Mamba の Attention バックエンドなど、その他の差し替え可能なモジュールを実装します。
 
-## Compatibility Guarantee
+## 互換性の保証 { #compatibility-guarantee }
 
-vLLM guarantees the interface of documented plugins, such as `ModelRegistry.register_model`, will always be available for plugins to register models. However, it is the responsibility of plugin developers to ensure their plugins are compatible with the version of vLLM they are targeting. For example, `"vllm_add_dummy_model.my_llava:MyLlava"` should be compatible with the version of vLLM that the plugin targets.
+vLLM は、`ModelRegistry.register_model` のようにドキュメント化されたプラグインのインターフェースが、モデル登録のために常に利用可能であることを保証します。ただし、プラグインが対象とする vLLM のバージョンとの互換性を担保するのは、プラグイン開発者の責任です。たとえば `"vllm_add_dummy_model.my_llava:MyLlava"` は、そのプラグインが対象とする vLLM のバージョンと互換である必要があります。
 
-The interface for the model/module may change during vLLM's development. If you see any deprecation log info, please upgrade your plugin to the latest version.
+モデルやモジュールのインターフェースは、vLLM の開発の過程で変わる可能性があります。非推奨のログが表示された場合は、プラグインを最新版に更新してください。
 
-## Deprecation announcement
+## 非推奨のお知らせ { #deprecation-announcement }
 
-!!! warning "Deprecations"
-    - `use_v1` parameter in `Platform.get_attn_backend_cls` is deprecated. It has been removed in v0.13.0.
-    - `_Backend` in `vllm.attention` is deprecated. It has been removed in v0.13.0. Please use `vllm.v1.attention.backends.registry.register_backend` to add new attention backend to `AttentionBackendEnum` instead.
-    - `seed_everything` platform interface is deprecated. It has been removed in v0.16.0. Please use `vllm.utils.torch_utils.set_random_seed` instead.
-    - `prompt` in `Platform.validate_request` is deprecated. It has been removed in v0.18.0.
+!!! warning "非推奨"
+    - `Platform.get_attn_backend_cls` の `use_v1` パラメータは非推奨です。v0.13.0 で削除されました。
+    - `vllm.attention` の `_Backend` は非推奨です。v0.13.0 で削除されました。新しい Attention バックエンドを `AttentionBackendEnum` に追加するには、代わりに `vllm.v1.attention.backends.registry.register_backend` を使ってください。
+    - `seed_everything` のプラットフォームインターフェースは非推奨です。v0.16.0 で削除されました。代わりに `vllm.utils.torch_utils.set_random_seed` を使ってください。
+    - `Platform.validate_request` の `prompt` は非推奨です。v0.18.0 で削除されました。

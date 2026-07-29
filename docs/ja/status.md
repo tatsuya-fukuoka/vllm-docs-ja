@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **181 ページ**を翻訳済みです（80.1%）。
+全 226 ページ中 **183 ページ**を翻訳済みです（81.0%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -16,9 +16,9 @@
 | CLI リファレンス | 15 | 0 | 0 | 15 |
 | コミュニティ | 3 | 0 | 0 | 3 |
 | 設定 | 7 | 0 | 0 | 7 |
-| 開発者ガイド | 11 | 0 | 5 | 16 |
+| 開発者ガイド | 12 | 0 | 4 | 16 |
 | デプロイ | 35 | 0 | 0 | 35 |
-| 設計ドキュメント | 12 | 0 | 17 | 29 |
+| 設計ドキュメント | 13 | 0 | 16 | 29 |
 | 機能 | 41 | 0 | 11 | 52 |
 | はじめに | 9 | 0 | 4 | 13 |
 | ガバナンス | 3 | 0 | 0 | 3 |
@@ -26,7 +26,7 @@
 | 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **181** | **0** | **45** | **226** |
+| **合計** | **183** | **0** | **43** | **226** |
 
 ## 翻訳済みのページ
 
@@ -58,6 +58,7 @@
 - `configuration/model_resolution.md`
 - `configuration/optimization.md`
 - `configuration/serve_args.md`
+- `contributing/README.md`
 - `contributing/ci/failures.md`
 - `contributing/ci/nightly_builds.md`
 - `contributing/ci/update_pytorch_version.md`
@@ -114,6 +115,7 @@
 - `design/multiprocessing.md`
 - `design/nixl_kv_cache_lease.md`
 - `design/optimization_levels.md`
+- `design/plugin_system.md`
 - `design/prefix_caching.md`
 - `design/torch_compile_multimodal.md`
 - `features/README.md`

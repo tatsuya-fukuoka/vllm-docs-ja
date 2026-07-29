@@ -212,8 +212,10 @@
       "upstream_sha": "fcfa8185d671493c"
     },
     "contributing/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d8fdd6aba34e2fee",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "d8fdd6aba34e2fee"
     },
     "contributing/ci/failures.md": {
@@ -699,8 +701,10 @@
       "upstream_sha": "0a8cab1d4ed29976"
     },
     "design/plugin_system.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d1e80796c029bfaf",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "d1e80796c029bfaf"
     },
     "design/prefix_caching.md": {
