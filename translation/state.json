@@ -899,13 +899,17 @@
       "upstream_sha": "39d11b7504e65e50"
     },
     "features/quantization/llm_compressor/int4.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1dc7656c9b78b81b",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "1dc7656c9b78b81b"
     },
     "features/quantization/llm_compressor/int8_w4a8.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "fe0b50a902e716ba",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "fe0b50a902e716ba"
     },
     "features/quantization/llm_compressor/int8_w8a8.md": {

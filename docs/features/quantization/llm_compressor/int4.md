@@ -1,40 +1,40 @@
-# INT4 W4A16
+# INT4 W4A16 { #int4-w4a16 }
 
-vLLM supports quantizing weights to INT4 for memory savings and inference acceleration. This quantization method is particularly useful for reducing model size and maintaining low latency in workloads with low queries per second (QPS).
+vLLM は、メモリ削減と推論の高速化のために、重みを INT4 に量子化することをサポートしています。この量子化手法は、モデルサイズを削減しつつ、QPS（1 秒あたりのクエリ数）が低いワークロードで低レイテンシを保ちたい場合に特に有用です。
 
-Please visit the HF collection of [quantized INT4 checkpoints of popular LLMs ready to use with vLLM](https://huggingface.co/collections/neuralmagic/int4-llms-for-vllm-668ec34bf3c9fa45f857df2c).
+vLLM ですぐに使える[人気 LLM の INT4 量子化済みチェックポイント](https://huggingface.co/collections/neuralmagic/int4-llms-for-vllm-668ec34bf3c9fa45f857df2c)の HF コレクションもご覧ください。
 
 !!! note
-    INT4 computation is supported on NVIDIA GPUs with compute capability > 8.0 (Ampere, Ada Lovelace, Hopper, Blackwell).
+    INT4 の演算は compute capability 8.0 より上の NVIDIA GPU（Ampere、Ada Lovelace、Hopper、Blackwell）でサポートされます。
 
-## Prerequisites
+## 前提条件 { #prerequisites }
 
-To use INT4 quantization with vLLM, you'll need to install the [llm-compressor](https://github.com/vllm-project/llm-compressor/) library:
+vLLM で INT4 量子化を使うには、[llm-compressor](https://github.com/vllm-project/llm-compressor/) ライブラリをインストールする必要があります。
 
 ```bash
 (venv-llm-compressor) pip install llmcompressor
 ```
 
-Additionally, install `vllm` and `lm-evaluation-harness` for evaluation:
+さらに、評価のために `vllm` と `lm-evaluation-harness` をインストールします。
 
 ```bash
 (venv-vllm) pip install vllm "lm-eval[api]>=0.4.12"
 ```
 
-Please use separate environments for vLLM and llm-compressor as they might not work together.
+vLLM と llm-compressor は同時に動作しない場合があるため、それぞれ別の環境を使ってください。
 
-## Quantization Process
+## 量子化の手順 { #quantization-process }
 
-The quantization process involves four main steps:
+量子化の手順は主に 4 ステップです。
 
-1. Loading the model
-2. Preparing calibration data
-3. Applying quantization
-4. Evaluating accuracy in vLLM
+1. モデルの読み込み
+2. キャリブレーションデータの準備
+3. 量子化の適用
+4. vLLM での精度評価
 
-### 1. Loading the Model
+### 1. モデルの読み込み { #1-loading-the-model }
 
-Load your model and tokenizer using the standard `transformers` AutoModel classes:
+標準の `transformers` の AutoModel クラスを使って、モデルとトークナイザーを読み込みます。
 
 ```python
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -48,11 +48,9 @@ model = AutoModelForCausalLM.from_pretrained(
 tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
 ```
 
-### 2. Preparing Calibration Data
+### 2. キャリブレーションデータの準備 { #2-preparing-calibration-data }
 
-When quantizing weights to INT4, you need sample data to estimate the weight updates and calibrated scales.
-It's best to use calibration data that closely matches your deployment data.
-For a general-purpose instruction-tuned model, you can use a dataset like `ultrachat`:
+重みを INT4 に量子化する場合、重みの更新量とキャリブレーション済みスケールを推定するためのサンプルデータが必要です。実際のデプロイで扱うデータに近いキャリブレーションデータを使うのが理想的です。汎用の instruction チューニング済みモデルであれば、`ultrachat` のようなデータセットを使えます。
 
 ```python
 from datasets import load_dataset
@@ -73,9 +71,9 @@ def tokenize(sample):
 ds = ds.map(tokenize, remove_columns=ds.column_names)
 ```
 
-### 3. Applying Quantization
+### 3. 量子化の適用 { #3-applying-quantization }
 
-Now, apply the quantization algorithms:
+次に、量子化アルゴリズムを適用します。
 
 ```python
 from llmcompressor import oneshot
@@ -100,11 +98,11 @@ model.save_pretrained(SAVE_DIR, save_compressed=True)
 tokenizer.save_pretrained(SAVE_DIR)
 ```
 
-This process creates a W4A16 model with weights quantized to 4-bit integers.
+この処理により、重みが 4 ビット整数に量子化された W4A16 モデルが作成されます。
 
-### 4. Evaluating Accuracy
+### 4. 精度の評価 { #4-evaluating-accuracy }
 
-After quantization, you can load and run the model in vLLM:
+量子化後は、vLLM でモデルを読み込んで実行できます。
 
 ```python
 from vllm import LLM
@@ -112,7 +110,7 @@ from vllm import LLM
 llm = LLM("./Meta-Llama-3-8B-Instruct-W4A16-G128")
 ```
 
-To evaluate accuracy, you can use `lm_eval`:
+精度を評価するには `lm_eval` を使います。
 
 ```bash
 lm_eval --model vllm \
@@ -124,20 +122,21 @@ lm_eval --model vllm \
 ```
 
 !!! note
-    Quantized models can be sensitive to the presence of the `bos` token. Make sure to include the `add_bos_token=True` argument when running evaluations.
+    量子化されたモデルは `bos` トークンの有無に敏感な場合があります。評価を実行するときは必ず
+    `add_bos_token=True` 引数を含めてください。
 
-## Best Practices
+## ベストプラクティス { #best-practices }
 
-- Start with 512 samples for calibration data, and increase if accuracy drops
-- Ensure the calibration data contains a high variety of samples to prevent overfitting towards a specific use case
-- Use a sequence length of 2048 as a starting point
-- Employ the chat template or instruction template that the model was trained with
-- If you've fine-tuned a model, consider using a sample of your training data for calibration
-- Tune key hyperparameters to the quantization algorithm:
-    - `dampening_frac` sets how much influence the GPTQ algorithm has. Lower values can improve accuracy, but can lead to numerical instabilities that cause the algorithm to fail.
-    - `actorder` sets the activation ordering. When compressing the weights of a layer weight, the order in which channels are quantized matters. Setting `actorder="weight"` can improve accuracy without added latency.
+- キャリブレーションデータはまず 512 サンプルから始め、精度が落ちる場合は増やす
+- 特定のユースケースへの過剰適合を防ぐため、キャリブレーションデータには多様なサンプルを含める
+- シーケンス長は 2048 を出発点にする
+- モデルの学習に使われたチャットテンプレートまたは instruction テンプレートを使う
+- モデルをファインチューニングしている場合は、学習データの一部をキャリブレーションに使うことを検討する
+- 量子化アルゴリズムの主要なハイパーパラメータを調整する:
+    - `dampening_frac` は GPTQ アルゴリズムの影響度を決めます。値を小さくすると精度が向上することがありますが、数値的な不安定さを招いてアルゴリズムが失敗する場合があります。
+    - `actorder` は活性値の順序付けを設定します。層の重みを圧縮する際、チャネルを量子化する順序が結果に影響します。`actorder="weight"` を設定すると、レイテンシを増やさずに精度を改善できます。
 
-The following is an example of an expanded quantization recipe you can tune to your own use case:
+次は、自分のユースケースに合わせて調整できる、より詳細な量子化レシピの例です。
 
 ```python
 from compressed_tensors.quantization import (
@@ -168,6 +167,6 @@ recipe = GPTQModifier(
 )
 ```
 
-## Troubleshooting and Support
+## トラブルシューティングとサポート { #troubleshooting-and-support }
 
-If you encounter any issues or have feature requests, please open an issue on the [vllm-project/llm-compressor](https://github.com/vllm-project/llm-compressor/issues) GitHub repository. The full INT4 quantization example in `llm-compressor` is available [here](https://github.com/vllm-project/llm-compressor/blob/main/examples/quantization_w4a16/llama3_example.py).
+問題が発生した場合や機能のリクエストがある場合は、[vllm-project/llm-compressor](https://github.com/vllm-project/llm-compressor/issues) の GitHub リポジトリで issue を作成してください。 `llm-compressor` における INT4 量子化の完全な例は[こちら](https://github.com/vllm-project/llm-compressor/blob/main/examples/quantization_w4a16/llama3_example.py)にあります。

@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **158 ページ**を翻訳済みです（69.9%）。
+全 226 ページ中 **160 ページ**を翻訳済みです（70.8%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -19,14 +19,14 @@
 | 開発者ガイド | 8 | 0 | 8 | 16 |
 | デプロイ | 35 | 0 | 0 | 35 |
 | 設計ドキュメント | 8 | 0 | 21 | 29 |
-| 機能 | 37 | 0 | 15 | 52 |
+| 機能 | 39 | 0 | 13 | 52 |
 | はじめに | 5 | 0 | 8 | 13 |
 | ガバナンス | 1 | 0 | 2 | 3 |
 | モデル | 6 | 0 | 10 | 16 |
 | 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **158** | **0** | **68** | **226** |
+| **合計** | **160** | **0** | **66** | **226** |
 
 ## 翻訳済みのページ
 
@@ -129,6 +129,8 @@
 - `features/quantization/inc.md`
 - `features/quantization/llm_compressor/README.md`
 - `features/quantization/llm_compressor/fp8.md`
+- `features/quantization/llm_compressor/int4.md`
+- `features/quantization/llm_compressor/int8_w4a8.md`
 - `features/quantization/llm_compressor/int8_w8a8.md`
 - `features/quantization/modelopt.md`
 - `features/quantization/online.md`
