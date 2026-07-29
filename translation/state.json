@@ -607,8 +607,10 @@
       "upstream_sha": "0f293ff4351197f3"
     },
     "design/debug_vllm_compile.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "2660e00f5e82c69c",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "2660e00f5e82c69c"
     },
     "design/endpoint_plugins.md": {
