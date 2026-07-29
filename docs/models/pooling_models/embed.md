@@ -1,41 +1,41 @@
-# Embedding Usages
+# 埋め込みの使い方 { #embedding-usages }
 
-Embedding models are a class of machine learning models designed to transform unstructured data—such as text, images, or audio—into a structured numerical representation known as an embedding.
+埋め込みモデルは、テキスト・画像・音声などの非構造データを、埋め込み（embedding）と呼ばれる構造化された数値表現へ変換するために設計された機械学習モデルの一種です。
 
-## Summary
+## 概要 { #summary }
 
-- Model Usage: (sequence) embedding
-- Pooling Task: `embed`
-- Offline APIs:
+- モデルの用途: （シーケンス）埋め込み
+- プーリングタスク: `embed`
+- オフライン API:
     - `LLM.embed(...)`
     - `LLM.encode(..., pooling_task="embed")`
     - `LLM.score(...)`
-- Online APIs:
-    - [Cohere Embed API](embed.md#cohere-embed-api) (`/v2/embed`)
-    - [OpenAI-compatible Embeddings API](embed.md#openai-compatible-embeddings-api) (`/v1/embeddings`)
-    - Pooling API (`/pooling`)
+- オンライン API:
+    - [Cohere Embed API](embed.md#cohere-embed-api)（`/v2/embed`）
+    - [OpenAI 互換 Embeddings API](embed.md#openai-compatible-embeddings-api)（`/v1/embeddings`）
+    - Pooling API（`/pooling`）
 
-The primary distinction between (sequence) embedding and token embedding lies in their output granularity: (sequence) embedding produces a single embedding vector for an entire input sequence, whereas token embedding generates an embedding for each individual token within the sequence.
+（シーケンス）埋め込みとトークン埋め込みの主な違いは出力の粒度にあります。（シーケンス）埋め込みは入力シーケンス全体に対して 1 つの埋め込みベクトルを生成し、トークン埋め込みはシーケンス内の各トークンごとに埋め込みを生成します。
 
-Many embedding models support both (sequence) embedding and token embedding. For further details on token embedding, please refer to [this page](token_embed.md).
+多くの埋め込みモデルは（シーケンス）埋め込みとトークン埋め込みの両方をサポートします。トークン埋め込みの詳細は[このページ](token_embed.md)を参照してください。
 
-## Typical Use Cases
+## 代表的なユースケース { #typical-use-cases }
 
-### Embedding
+### 埋め込み { #embedding }
 
-The most basic use case of embedding models is to embed the inputs, e.g. for RAG.
+埋め込みモデルの最も基本的なユースケースは、入力を埋め込むことです（RAG などが典型です）。
 
-### Pairwise Similarity
+### ペアごとの類似度 { #pairwise-similarity }
 
-You can compute pairwise similarity scores to build a similarity matrix using the [Score API](scoring.md).
+[Score API](scoring.md) を使って、ペアごとの類似度スコアを計算し、類似度行列を構築できます。
 
-## Supported Models
+## サポートされるモデル { #supported-models }
 
 --8<-- [start:supported-embed-models]
 
-### Text-only Models
+### テキストのみのモデル { #text-only-models }
 
-| Architecture | Models | Example HF Models | [LoRA](../../features/lora.md) | [PP](../../serving/parallelism_scaling.md) |
+| アーキテクチャ | モデル | HF モデルの例 | [LoRA](../../features/lora.md) | [PP](../../serving/parallelism_scaling.md) |
 | ------------ | ------ | ----------------- | ------------------------------ | ------------------------------------------ |
 | `BertModel` | BERT-based | `BAAI/bge-base-en-v1.5`, `Snowflake/snowflake-arctic-embed-xs`, etc. | | |
 | `BertSpladeSparseEmbeddingModel` | SPLADE | `naver/splade-v3` | | |
@@ -57,34 +57,34 @@ You can compute pairwise similarity scores to build a similarity matrix using th
 | `*Model`<sup>C</sup>, `*ForCausalLM`<sup>C</sup>, etc. | Generative models | N/A | \* | \* |
 
 !!! note
-    The second-generation GTE model (mGTE-TRM) is named `NewModel`. The name `NewModel` is too generic, you should set `--hf-overrides '{"architectures": ["GteNewModel"]}'` to specify the use of the `GteNewModel` architecture.
+    第 2 世代の GTE モデル（mGTE-TRM）は `NewModel` という名前です。`NewModel` という名称は汎用的すぎるため、`GteNewModel` アーキテクチャを使うことを明示するには `--hf-overrides '{"architectures": ["GteNewModel"]}'` を指定してください。
 
 !!! note
-    `ssmits/Qwen2-7B-Instruct-embed-base` has an improperly defined Sentence Transformers config.
-    You need to manually set mean pooling by passing `--pooler-config '{"pooling_type": "MEAN"}'`.
+    `ssmits/Qwen2-7B-Instruct-embed-base` は Sentence Transformers の設定が正しく定義されていません。
+    `--pooler-config '{"pooling_type": "MEAN"}'` を渡して平均プーリングを手動で設定する必要があります。
 
 !!! note
-    For `Alibaba-NLP/gte-Qwen2-*`, you need to enable `--trust-remote-code` for the correct tokenizer to be loaded.
-    See [relevant issue on HF Transformers](https://github.com/huggingface/transformers/issues/34882).
+    `Alibaba-NLP/gte-Qwen2-*` では、正しいトークナイザーを読み込むために `--trust-remote-code` を有効にする必要があります。
+    [HF Transformers の関連 issue](https://github.com/huggingface/transformers/issues/34882) を参照してください。
 
 !!! note
-    The `BAAI/bge-m3` model comes with extra weights for sparse and colbert embeddings, See [this page](specific_models.md#baaibge-m3) for more information.
+    `BAAI/bge-m3` モデルには、スパース埋め込みと colbert 埋め込みのための追加の重みが含まれています。詳細は[このページ](specific_models.md#baaibge-m3)を参照してください。
 
 !!! note
-    `jinaai/jina-embeddings-v3` supports multiple tasks through LoRA, while vllm temporarily only supports text-matching tasks by merging LoRA weights.
+    `jinaai/jina-embeddings-v3` は LoRA により複数のタスクをサポートしますが、vLLM では当面、LoRA の重みをマージすることで text-matching タスクのみをサポートします。
 
 !!! note
-    `jinaai/jina-embeddings-v5-text-small` ships with four task-specific LoRA adapters
-    (`retrieval`, `text-matching`, `classification`, `clustering`). vLLM merges the
-    selected adapter into the base weights at load time. Choose the task with
-    `--hf-overrides '{"jina_task": "<task>"}'`; the default is `retrieval`.
+    `jinaai/jina-embeddings-v5-text-small` には、タスク別の LoRA アダプタが 4 つ
+    （`retrieval`、`text-matching`、`classification`、`clustering`）同梱されています。vLLM は
+    ロード時に選択されたアダプタをベースの重みにマージします。タスクは
+    `--hf-overrides '{"jina_task": "<task>"}'` で選択します。既定は `retrieval` です。
 
-### Multimodal Models
+### マルチモーダルモデル { #multimodal-models }
 
 !!! note
-    For more information about multimodal models inputs, see [this page](../supported_models.md#list-of-multimodal-language-models).
+    マルチモーダルモデルの入力について詳しくは、[このページ](../supported_models.md#list-of-multimodal-language-models)を参照してください。
 
-| Architecture | Models | Inputs | Example HF Models | [LoRA](../../features/lora.md) | [PP](../../serving/parallelism_scaling.md) |
+| アーキテクチャ | モデル | 入力 | HF モデルの例 | [LoRA](../../features/lora.md) | [PP](../../serving/parallelism_scaling.md) |
 | ------------ | ------ | ------ | ----------------- | ------------------------------ | ------------------------------------------ |
 | `CLIPModel` | CLIP | T / I | `openai/clip-vit-base-patch32`, `openai/clip-vit-large-patch14`, etc. | | |
 | `LlamaNemotronVLModel` | Llama Nemotron Embedding + SigLIP | T + I | `nvidia/llama-nemotron-embed-vl-1b-v2` | | |
@@ -94,35 +94,33 @@ You can compute pairwise similarity scores to build a similarity matrix using th
 | `SiglipModel` | SigLIP, SigLIP2 | T / I | `google/siglip-base-patch16-224`, `google/siglip2-base-patch16-224` | | |
 | `*ForConditionalGeneration`<sup>C</sup>, `*ForCausalLM`<sup>C</sup>, etc. | Generative models | \* | N/A | \* | \* |
 
-<sup>C</sup> Automatically converted into an embedding model via `--convert embed`. ([details](./README.md#model-conversion))  
-\* Feature support is the same as that of the original model.
+<sup>C</sup> `--convert embed` により自動的に埋め込みモデルへ変換されます。（[詳細](./README.md#model-conversion)）
+\* 機能のサポート状況は元のモデルと同じです。
 
-If your model is not in the above list, we will try to automatically convert the model using
-[`as_embedding_model`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/adapters/#vllm.model_executor.models.adapters.as_embedding_model). By default, the embeddings
-of the whole prompt are extracted from the normalized hidden state corresponding to the last token.
+お使いのモデルが上記の一覧にない場合、vLLM は [`as_embedding_model`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/adapters/#vllm.model_executor.models.adapters.as_embedding_model) を使ってモデルの自動変換を試みます。既定では、プロンプト全体の埋め込みは、最後のトークンに対応する正規化済みの hidden state から抽出されます。
 
 !!! note
-    `Qwen3-VL-Embedding` officially uses `qwen_vl_utils` for image preprocessing, while vLLM uses `transformers`' `video_processing_qwen3_vl`, which leads to slightly different results compared to the official Hugging Face repository examples. Example code for offline inference using `qwen_vl_utils` can be found in the [vision_embedding_offline.py](../../../examples/pooling/embed/vision_embedding_offline.py) example.
+    `Qwen3-VL-Embedding` は公式には画像の前処理に `qwen_vl_utils` を使いますが、vLLM は `transformers` の `video_processing_qwen3_vl` を使うため、公式の Hugging Face リポジトリの例とはわずかに結果が異なります。`qwen_vl_utils` を使ったオフライン推論のサンプルコードは [vision_embedding_offline.py](../../../examples/pooling/embed/vision_embedding_offline.py) にあります。
 
 !!! note
-    Although vLLM supports automatically converting models of any architecture into embedding models via --convert embed, to get the best results, you should use pooling models that are specifically trained as such.
+    vLLM は `--convert embed` により任意のアーキテクチャのモデルを埋め込みモデルへ自動変換できますが、最良の結果を得るには、そのために専用に学習されたプーリングモデルを使うべきです。
 
 --8<-- [end:supported-embed-models]
 
-## Offline Inference
+## オフライン推論 { #offline-inference }
 
-### Pooling Parameters
+### プーリングのパラメータ { #pooling-parameters }
 
-The following [`pooling parameters`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.PoolingParams) are supported.
+次の[プーリングパラメータ](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.PoolingParams)がサポートされています。
 
 ```python
 --8<-- "vllm/pooling_params.py:common-pooling-params"
 --8<-- "vllm/pooling_params.py:embed-pooling-params"
 ```
 
-### `LLM.embed`
+### `LLM.embed` { #llmembed }
 
-The [`embed`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.embed) method outputs an embedding vector for each prompt.
+[`embed`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.embed) メソッドは、プロンプトごとに埋め込みベクトルを出力します。
 
 ```python
 from vllm import LLM
@@ -134,13 +132,13 @@ embeds = output.outputs.embedding
 print(f"Embeddings: {embeds!r} (size={len(embeds)})")
 ```
 
-A code example can be found here: [examples/basic/offline_inference/embed.py](../../../examples/basic/offline_inference/embed.py)
+コード例は [examples/basic/offline_inference/embed.py](../../../examples/basic/offline_inference/embed.py) にあります。
 
-### `LLM.encode`
+### `LLM.encode` { #llmencode }
 
-The [`encode`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.encode) method is available to all pooling models in vLLM.
+[`encode`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.encode) メソッドは、vLLM のすべてのプーリングモデルで利用できます。
 
-Set `pooling_task="embed"` when using `LLM.encode` for embedding Models:
+埋め込みモデルで `LLM.encode` を使う場合は `pooling_task="embed"` を指定します。
 
 ```python
 from vllm import LLM
@@ -152,11 +150,11 @@ data = output.outputs.data
 print(f"Data: {data!r}")
 ```
 
-### `LLM.score`
+### `LLM.score` { #llmscore }
 
-The [`score`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.score) method outputs similarity scores between sentence pairs.
+[`score`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.score) メソッドは、文のペア間の類似度スコアを出力します。
 
-All models that support embedding task also support using the score API to compute similarity scores by calculating the cosine similarity of two input prompt's embeddings.
+埋め込みタスクをサポートするすべてのモデルは、2 つの入力プロンプトの埋め込みのコサイン類似度を計算して類似度スコアを求める形で、score API も利用できます。
 
 ```python
 from vllm import LLM
@@ -171,18 +169,17 @@ score = output.outputs.score
 print(f"Score: {score}")
 ```
 
-## Online Serving
+## オンラインサービング { #online-serving }
 
-### OpenAI-Compatible Embeddings API
+### OpenAI 互換 Embeddings API { #openai-compatible-embeddings-api }
 
-Our Embeddings API is compatible with [OpenAI's Embeddings API](https://platform.openai.com/docs/api-reference/embeddings);
-you can use the [official OpenAI Python client](https://github.com/openai/openai-python) to interact with it.
+vLLM の Embeddings API は [OpenAI の Embeddings API](https://platform.openai.com/docs/api-reference/embeddings) と互換であり、[公式の OpenAI Python クライアント](https://github.com/openai/openai-python)から利用できます。
 
-Code example: [examples/pooling/embed/openai_embedding_client.py](../../../examples/pooling/embed/openai_embedding_client.py)
+コード例: [examples/pooling/embed/openai_embedding_client.py](../../../examples/pooling/embed/openai_embedding_client.py)
 
-#### Completion Parameters
+#### Completion のパラメータ { #completion-parameters }
 
-The following Classification API parameters are supported:
+次の Classification API のパラメータがサポートされています。
 
 ??? code
 
@@ -193,7 +190,7 @@ The following Classification API parameters are supported:
     --8<-- "vllm/entrypoints/pooling/base/protocol.py:embed-params"
     ```
 
-The following extra parameters are supported:
+次の追加パラメータがサポートされています。
 
 ??? code
 
@@ -204,9 +201,9 @@ The following extra parameters are supported:
     --8<-- "vllm/entrypoints/pooling/base/protocol.py:embed-extra-params"
     ```
 
-#### Chat Parameters
+#### Chat のパラメータ { #chat-parameters }
 
-For chat-like input (i.e. if `messages` is passed), the following parameters are supported:
+チャット形式の入力（つまり `messages` を渡す場合）では、次のパラメータがサポートされています。
 
 ??? code
 
@@ -217,7 +214,7 @@ For chat-like input (i.e. if `messages` is passed), the following parameters are
     --8<-- "vllm/entrypoints/pooling/base/protocol.py:embed-params"
     ```
 
-these extra parameters are supported instead:
+代わりに、次の追加パラメータがサポートされます。
 
 ??? code
 
@@ -228,10 +225,9 @@ these extra parameters are supported instead:
     --8<-- "vllm/entrypoints/pooling/base/protocol.py:embed-extra-params"
     ```
 
-#### Examples
+#### 例 { #examples }
 
-If the model has a [chat template](../../serving/online_serving/README.md#chat-template), you can replace `inputs` with a list of `messages` (same schema as [Chat API](../../serving/online_serving/openai_compatible_server.md#chat-api))
-which will be treated as a single prompt to the model. Here is a convenience function for calling the API while retaining OpenAI's type annotations:
+モデルに[チャットテンプレート](../../serving/online_serving/README.md#chat-template)がある場合、`inputs` の代わりに `messages` のリスト（[Chat API](../../serving/online_serving/openai_compatible_server.md#chat-api) と同じスキーマ）を渡せます。これはモデルへの単一のプロンプトとして扱われます。OpenAI の型注釈を保ったまま API を呼び出す便利な関数を次に示します。
 
 ??? code
 
@@ -255,14 +251,13 @@ which will be treated as a single prompt to the model. Here is a convenience fun
         )
     ```
 
-##### Multi-modal inputs
+##### マルチモーダル入力 { #multi-modal-inputs }
 
-You can pass multi-modal inputs to embedding models by defining a custom chat template for the server
-and passing a list of `messages` in the request. Refer to the examples below for illustration.
+サーバー用のカスタムチャットテンプレートを定義し、リクエストで `messages` のリストを渡すことで、埋め込みモデルにマルチモーダル入力を与えられます。具体例は以下を参照してください。
 
 === "VLM2Vec"
 
-    To serve the model:
+    モデルをサービングするには次のようにします。
 
     ```bash
     vllm serve TIGER-Lab/VLM2Vec-Full --runner pooling \
@@ -272,13 +267,13 @@ and passing a list of `messages` in the request. Refer to the examples below for
     ```
 
     !!! important
-        Since VLM2Vec has the same model architecture as Phi-3.5-Vision, we have to explicitly pass `--runner pooling`
-        to run this model in embedding mode instead of text generation mode.
+        VLM2Vec は Phi-3.5-Vision と同じモデルアーキテクチャを持つため、テキスト生成モードではなく
+        埋め込みモードでこのモデルを実行するには、`--runner pooling` を明示的に渡す必要があります。
 
-        The custom chat template is completely different from the original one for this model,
-        and can be found here: [examples/pooling/embed/template/vlm2vec_phi3v.jinja](../../../examples/pooling/embed/template/vlm2vec_phi3v.jinja)
+        このモデル用のカスタムチャットテンプレートは元のものとまったく異なります。
+        テンプレートは [examples/pooling/embed/template/vlm2vec_phi3v.jinja](../../../examples/pooling/embed/template/vlm2vec_phi3v.jinja) にあります。
 
-    Since the request schema is not defined by OpenAI client, we post a request to the server using the lower-level `requests` library:
+    リクエストのスキーマは OpenAI クライアントで定義されていないため、より低レベルの `requests` ライブラリを使ってサーバーにリクエストを送ります。
 
     ??? code
 
@@ -310,7 +305,7 @@ and passing a list of `messages` in the request. Refer to the examples below for
 
 === "DSE-Qwen2-MRL"
 
-    To serve the model:
+    モデルをサービングするには次のようにします。
 
     ```bash
     vllm serve MrLight/dse-qwen2-2b-mrl-v1 --runner pooling \
@@ -320,35 +315,35 @@ and passing a list of `messages` in the request. Refer to the examples below for
     ```
 
     !!! important
-        Like with VLM2Vec, we have to explicitly pass `--runner pooling`.
+        VLM2Vec と同様に、`--runner pooling` を明示的に渡す必要があります。
 
-        Additionally, `MrLight/dse-qwen2-2b-mrl-v1` requires an EOS token for embeddings, which is handled
-        by a custom chat template: [examples/pooling/embed/template/dse_qwen2_vl.jinja](../../../examples/pooling/embed/template/dse_qwen2_vl.jinja)
+        さらに `MrLight/dse-qwen2-2b-mrl-v1` は埋め込みに EOS トークンを必要とし、これはカスタムチャットテンプレート
+        [examples/pooling/embed/template/dse_qwen2_vl.jinja](../../../examples/pooling/embed/template/dse_qwen2_vl.jinja) で処理されます。
 
     !!! important
-        `MrLight/dse-qwen2-2b-mrl-v1` requires a placeholder image of the minimum image size for text query embeddings. See the full code
-        example below for details.
+        `MrLight/dse-qwen2-2b-mrl-v1` は、テキストクエリの埋め込みに最小サイズのプレースホルダー画像を必要とします。
+        詳細は下記の完全なコード例を参照してください。
 
-Full example: [examples/pooling/embed/vision_embedding_online.py](../../../examples/pooling/embed/vision_embedding_online.py)
+完全な例: [examples/pooling/embed/vision_embedding_online.py](../../../examples/pooling/embed/vision_embedding_online.py)
 
-### Cohere Embed API
+### Cohere Embed API { #cohere-embed-api }
 
-Our API is also compatible with [Cohere's Embed v2 API](https://docs.cohere.com/reference/embed) which adds support for some modern embedding feature such as truncation, output dimensions, embedding types, and input types. This endpoint works with any embedding model (including multimodal models).
+vLLM の API は [Cohere の Embed v2 API](https://docs.cohere.com/reference/embed) とも互換です。この API は、切り詰め、出力次元数、埋め込みの型、入力の種類といった近年の埋め込み機能をサポートします。このエンドポイントは、（マルチモーダルモデルを含む）任意の埋め込みモデルで動作します。
 
-#### Cohere Embed API request parameters
+#### Cohere Embed API のリクエストパラメータ { #cohere-embed-api-request-parameters }
 
-| Parameter | Type | Required | Description |
+| パラメータ | 型 | 必須 | 説明 |
 | --------- | ---- | -------- | ----------- |
-| `model` | string | Yes | Model name |
-| `input_type` | string | No | Prompt prefix key (model-dependent, see below) |
-| `texts` | list[string] | No | Text inputs (use one of `texts`, `images`, or `inputs`) |
-| `images` | list[string] | No | Base64 data URI images |
-| `inputs` | list[object] | No | Mixed text and image content objects |
-| `embedding_types` | list[string] | No | Output types (default: `["float"]`) |
-| `output_dimension` | int | No | Truncate embeddings to this dimension (Matryoshka) |
-| `truncate` | string | No | `END`, `START`, or `NONE` (default: `END`) |
+| `model` | string | はい | モデル名 |
+| `input_type` | string | いいえ | プロンプト接頭辞のキー（モデル依存。下記参照） |
+| `texts` | list[string] | いいえ | テキスト入力（`texts`、`images`、`inputs` のいずれか 1 つを使います） |
+| `images` | list[string] | いいえ | Base64 のデータ URI 形式の画像 |
+| `inputs` | list[object] | いいえ | テキストと画像が混在したコンテンツオブジェクト |
+| `embedding_types` | list[string] | いいえ | 出力の型（既定: `["float"]`） |
+| `output_dimension` | int | いいえ | 埋め込みをこの次元数に切り詰めます（Matryoshka） |
+| `truncate` | string | いいえ | `END`、`START`、`NONE`（既定: `END`） |
 
-#### Text embedding
+#### テキストの埋め込み { #text-embedding }
 
 ```bash
 curl -X POST "http://localhost:8000/v2/embed" \
@@ -361,7 +356,7 @@ curl -X POST "http://localhost:8000/v2/embed" \
   }'
 ```
 
-??? console "Response"
+??? console "レスポンス"
 
     ```json
     {
@@ -380,9 +375,9 @@ curl -X POST "http://localhost:8000/v2/embed" \
     }
     ```
 
-#### Mixed text and image inputs
+#### テキストと画像の混在入力 { #mixed-text-and-image-inputs }
 
-For multimodal models, you can embed images by passing base64 data URIs. The `inputs` field accepts a list of objects with mixed text and image content:
+マルチモーダルモデルでは、base64 のデータ URI を渡すことで画像を埋め込めます。`inputs` フィールドは、テキストと画像のコンテンツが混在したオブジェクトのリストを受け取ります。
 
 ```bash
 curl -X POST "http://localhost:8000/v2/embed" \
@@ -401,16 +396,16 @@ curl -X POST "http://localhost:8000/v2/embed" \
   }'
 ```
 
-#### Embedding types
+#### 埋め込みの型 { #embedding-types }
 
-The `embedding_types` parameter controls the output format. Multiple types can be requested in a single call:
+`embedding_types` パラメータは出力の形式を制御します。1 回の呼び出しで複数の型を要求できます。
 
-| Type | Description |
+| 型 | 説明 |
 | ---- | ----------- |
-| `float` | Raw float32 embeddings (default) |
-| `binary` | Bit-packed signed binary |
-| `ubinary` | Bit-packed unsigned binary |
-| `base64` | Little-endian float32 encoded as base64 |
+| `float` | 生の float32 の埋め込み（既定） |
+| `binary` | ビットパックされた符号付きバイナリ |
+| `ubinary` | ビットパックされた符号なしバイナリ |
+| `base64` | リトルエンディアンの float32 を base64 でエンコードしたもの |
 
 ```bash
 curl -X POST "http://localhost:8000/v2/embed" \
@@ -423,7 +418,7 @@ curl -X POST "http://localhost:8000/v2/embed" \
   }'
 ```
 
-??? console "Response"
+??? console "レスポンス"
 
     ```json
     {
@@ -440,66 +435,62 @@ curl -X POST "http://localhost:8000/v2/embed" \
     }
     ```
 
-#### Truncation
+#### 切り詰め { #truncation }
 
-The `truncate` parameter controls how inputs exceeding the model's maximum sequence length are handled:
+`truncate` パラメータは、モデルの最大シーケンス長を超える入力の扱いを制御します。
 
-| Value | Behavior |
+| 値 | 挙動 |
 | ----- | --------- |
-| `END` (default) | Keep the first tokens, drop the end |
-| `START` | Keep the last tokens, drop the beginning |
-| `NONE` | Return an error if the input is too long |
+| `END`（既定） | 先頭のトークンを残し、末尾を切り捨てます |
+| `START` | 末尾のトークンを残し、先頭を切り捨てます |
+| `NONE` | 入力が長すぎる場合はエラーを返します |
 
-#### Input type and prompt prefixes
+#### input type とプロンプト接頭辞 { #input-type-and-prompt-prefixes }
 
-The `input_type` field selects a prompt prefix to prepend to each text input. The available values
-depend on the model:
+`input_type` フィールドは、各テキスト入力の先頭に付けるプロンプト接頭辞を選択します。指定できる値はモデルによって異なります。
 
-- **Models with `task_instructions` in `config.json`**: The keys from the `task_instructions` dict are
-  the valid `input_type` values and the corresponding value is prepended to each text.
-- **Models with `config_sentence_transformers.json` prompts**: The keys from the `prompts` dict are
-  the valid `input_type` values. For example, `Snowflake/snowflake-arctic-embed-xs` defines `"query"`,
-  so setting `input_type: "query"` prepends `"Represent this sentence for searching relevant passages: "`.
-- **Other models**: `input_type` is not accepted and will raise a validation error if passed.
+- **`config.json` に `task_instructions` を持つモデル**: `task_instructions` 辞書のキーが有効な `input_type` の値であり、対応する値が各テキストの先頭に付加されます。
+- **`config_sentence_transformers.json` に prompts を持つモデル**: `prompts` 辞書のキーが有効な `input_type` の値です。たとえば `Snowflake/snowflake-arctic-embed-xs` は `"query"` を定義しているため、`input_type: "query"` を設定すると `"Represent this sentence for searching relevant passages: "` が先頭に付加されます。
+- **その他のモデル**: `input_type` は受け付けられず、渡すとバリデーションエラーになります。
 
-## More examples
+## その他の例 { #more-examples }
 
-More examples can be found here: [examples/pooling/embed](../../../examples/pooling/embed)
+その他の例は [examples/pooling/embed](../../../examples/pooling/embed) にあります。
 
-## Supported Features
+## サポートされる機能 { #supported-features }
 
-### Enable/disable normalize
+### 正規化の有効化 / 無効化 { #enabledisable-normalize }
 
-You can enable or disable normalize via `use_activation`.
+`use_activation` により正規化の有効・無効を切り替えられます。
 
-### Matryoshka Embeddings
+### Matryoshka 埋め込み { #matryoshka-embeddings }
 
-[Matryoshka Embeddings](https://sbert.net/examples/sentence_transformer/training/matryoshka/README.html#matryoshka-embeddings) or [Matryoshka Representation Learning (MRL)](https://arxiv.org/abs/2205.13147) is a technique used in training embedding models. It allows users to trade off between performance and cost.
+[Matryoshka Embeddings](https://sbert.net/examples/sentence_transformer/training/matryoshka/README.html#matryoshka-embeddings)（[Matryoshka Representation Learning（MRL）](https://arxiv.org/abs/2205.13147)）は、埋め込みモデルの学習に用いられる手法です。これにより、性能とコストのトレードオフを調整できます。
 
 !!! warning
-    Not all embedding models are trained using Matryoshka Representation Learning. To avoid misuse of the `dimensions` parameter, vLLM returns an error for requests that attempt to change the output dimension of models that do not support Matryoshka Embeddings.
+    すべての埋め込みモデルが Matryoshka Representation Learning で学習されているわけではありません。`dimensions` パラメータの誤用を避けるため、vLLM は Matryoshka 埋め込みをサポートしないモデルの出力次元数を変更しようとするリクエストに対してエラーを返します。
 
-    For example, setting `dimensions` parameter while using the `BAAI/bge-m3` model will result in the following error.
+    たとえば `BAAI/bge-m3` モデルを使いながら `dimensions` パラメータを設定すると、次のエラーになります。
 
     ```json
     {"object":"error","message":"Model \"BAAI/bge-m3\" does not support matryoshka representation, changing output dimensions will lead to poor results.","type":"BadRequestError","param":null,"code":400}
     ```
 
-#### Manually enable Matryoshka Embeddings
+#### Matryoshka 埋め込みを手動で有効にする { #manually-enable-matryoshka-embeddings }
 
-There is currently no official interface for specifying support for Matryoshka Embeddings. In vLLM, if `is_matryoshka` is `True` in `config.json`, you can change the output dimension to arbitrary values. Use `matryoshka_dimensions` to control the allowed output dimensions.
+現時点で、Matryoshka 埋め込みのサポートを示す公式のインターフェースはありません。vLLM では、`config.json` の `is_matryoshka` が `True` であれば、出力次元数を任意の値に変更できます。許容される出力次元数は `matryoshka_dimensions` で制御します。
 
-For models that support Matryoshka Embeddings but are not recognized by vLLM, manually override the config using `hf_overrides={"is_matryoshka": True}` or `hf_overrides={"matryoshka_dimensions": [<allowed output dimensions>]}` (offline), or `--hf-overrides '{"is_matryoshka": true}'` or `--hf-overrides '{"matryoshka_dimensions": [<allowed output dimensions>]}'` (online).
+Matryoshka 埋め込みをサポートしているものの vLLM がそれを認識できないモデルでは、設定を手動で上書きしてください。オフラインでは `hf_overrides={"is_matryoshka": True}` または `hf_overrides={"matryoshka_dimensions": [<許容する出力次元数>]}`、オンラインでは `--hf-overrides '{"is_matryoshka": true}'` または `--hf-overrides '{"matryoshka_dimensions": [<許容する出力次元数>]}'` を使います。
 
-Here is an example to serve a model with Matryoshka Embeddings enabled.
+Matryoshka 埋め込みを有効にしてモデルをサービングする例を次に示します。
 
 ```bash
 vllm serve Snowflake/snowflake-arctic-embed-m-v1.5 --hf-overrides '{"matryoshka_dimensions":[256]}'
 ```
 
-#### Offline Inference
+#### オフライン推論 { #offline-inference_1 }
 
-You can change the output dimensions of embedding models that support Matryoshka Embeddings by using the dimensions parameter in [`PoolingParams`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.PoolingParams).
+Matryoshka 埋め込みをサポートする埋め込みモデルでは、[`PoolingParams`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.PoolingParams) の dimensions パラメータで出力次元数を変更できます。
 
 ```python
 from vllm import LLM, PoolingParams
@@ -516,17 +507,17 @@ outputs = llm.embed(
 print(outputs[0].outputs)
 ```
 
-A code example can be found here: [examples/pooling/embed/embed_matryoshka_fy_offline.py](../../../examples/pooling/embed/embed_matryoshka_fy_offline.py)
+コード例は [examples/pooling/embed/embed_matryoshka_fy_offline.py](../../../examples/pooling/embed/embed_matryoshka_fy_offline.py) にあります。
 
-#### Online Inference
+#### オンライン推論 { #online-inference }
 
-Use the following command to start the vLLM server.
+次のコマンドで vLLM サーバーを起動します。
 
 ```bash
 vllm serve jinaai/jina-embeddings-v3 --trust-remote-code
 ```
 
-You can change the output dimensions of embedding models that support Matryoshka Embeddings by using the dimensions parameter.
+Matryoshka 埋め込みをサポートする埋め込みモデルでは、dimensions パラメータで出力次元数を変更できます。
 
 ```bash
 curl http://127.0.0.1:8000/v1/embeddings \
@@ -540,16 +531,16 @@ curl http://127.0.0.1:8000/v1/embeddings \
   }'
 ```
 
-Expected output:
+想定される出力:
 
 ```json
 {"id":"embd-5c21fc9a5c9d4384a1b021daccaf9f64","object":"list","created":1745476417,"model":"jinaai/jina-embeddings-v3","data":[{"index":0,"object":"embedding","embedding":[-0.3828125,-0.1357421875,0.03759765625,0.125,0.21875,0.09521484375,-0.003662109375,0.1591796875,-0.130859375,-0.0869140625,-0.1982421875,0.1689453125,-0.220703125,0.1728515625,-0.2275390625,-0.0712890625,-0.162109375,-0.283203125,-0.055419921875,-0.0693359375,0.031982421875,-0.04052734375,-0.2734375,0.1826171875,-0.091796875,0.220703125,0.37890625,-0.0888671875,-0.12890625,-0.021484375,-0.0091552734375,0.23046875]}],"usage":{"prompt_tokens":8,"total_tokens":8,"completion_tokens":0,"prompt_tokens_details":null}}
 ```
 
-An OpenAI client example can be found here: [examples/pooling/embed/openai_embedding_matryoshka_fy_client.py](../../../examples/pooling/embed/openai_embedding_matryoshka_fy_client.py)
+OpenAI クライアントを使った例は [examples/pooling/embed/openai_embedding_matryoshka_fy_client.py](../../../examples/pooling/embed/openai_embedding_matryoshka_fy_client.py) にあります。
 
-## Removed Features
+## 削除された機能 { #removed-features }
 
-### Remove `normalize` from PoolingParams
+### PoolingParams からの `normalize` の削除 { #remove-normalize-from-poolingparams }
 
-We have already removed `normalize` from PoolingParams, use `use_activation` instead.
+`normalize` は PoolingParams からすでに削除されています。代わりに `use_activation` を使ってください。

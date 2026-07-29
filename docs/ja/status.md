@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **216 ページ**を翻訳済みです（95.6%）。
+全 226 ページ中 **217 ページ**を翻訳済みです（96.0%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -22,11 +22,11 @@
 | 機能 | 49 | 0 | 3 | 52 |
 | はじめに | 13 | 0 | 0 | 13 |
 | ガバナンス | 3 | 0 | 0 | 3 |
-| モデル | 14 | 0 | 2 | 16 |
+| モデル | 15 | 0 | 1 | 16 |
 | 推論とサービング | 16 | 0 | 0 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **216** | **0** | **10** | **226** |
+| **合計** | **217** | **0** | **9** | **226** |
 
 ## 翻訳済みのページ
 
@@ -209,6 +209,7 @@
 - `models/hardware_supported_models/xpu.md`
 - `models/pooling_models/README.md`
 - `models/pooling_models/classify.md`
+- `models/pooling_models/embed.md`
 - `models/pooling_models/reward.md`
 - `models/pooling_models/scoring.md`
 - `models/pooling_models/specific_models.md`

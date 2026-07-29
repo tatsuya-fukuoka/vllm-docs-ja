@@ -1299,8 +1299,10 @@
       "upstream_sha": "d567545ecdce0c38"
     },
     "models/pooling_models/embed.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1d253b9157a86c9f",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "1d253b9157a86c9f"
     },
     "models/pooling_models/reward.md": {
