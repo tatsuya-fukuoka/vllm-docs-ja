@@ -576,8 +576,10 @@
       "upstream_sha": "9c1a13f340fab468"
     },
     "design/dbo.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "0f293ff4351197f3",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "0f293ff4351197f3"
     },
     "design/debug_vllm_compile.md": {
@@ -611,8 +613,10 @@
       "upstream_sha": "751fd1ef3cf5b414"
     },
     "design/io_processor_plugins.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1e8bb70115d4a28c",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "1e8bb70115d4a28c"
     },
     "design/logits_processors.md": {
@@ -631,8 +635,10 @@
       "upstream_sha": "38aea80bdc173518"
     },
     "design/mm_processing.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "2be6b62e473b6df3",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "2be6b62e473b6df3"
     },
     "design/model_runner_v2.md": {
@@ -688,8 +694,10 @@
       "upstream_sha": "45cb6b8664e99261"
     },
     "design/torch_compile_multimodal.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "c22709b9b2b6133a",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "c22709b9b2b6133a"
     },
     "design/vllm_ir.md": {

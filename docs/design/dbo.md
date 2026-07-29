@@ -1,16 +1,16 @@
-# Dual Batch Overlap
+# デュアルバッチオーバーラップ { #dual-batch-overlap }
 
-## Motivation
+## 動機 { #motivation }
 
-The core motivation of the DBO system in vLLM is to overlap the sparse all-to-all communication in the MoE layer with the surrounding computation. This system currently only targets DP+EP deployments.
+vLLM における DBO（Dual Batch Overlap）の中心的な狙いは、MoE 層のスパースな all-to-all 通信を、その前後の計算とオーバーラップさせることです。現時点でこの仕組みは DP + EP のデプロイのみを対象としています。
 
-## Introduction
+## はじめに { #introduction }
 
-The Dual Batch Overlap system works by splitting the batch in the model runner, creating two worker threads, and then running the model on each of these worker threads. When DBO is enabled, yield points within the `FusedMoEModularKernel` allow the two CPU worker threads (also called UBatch threads) to ping-pong between each other so that when one is running compute, the other is waiting on communication. Throughout the code, ubatch may be used as a short form of microbatch; this is an ASCII-friendly version of the short form µ-batch.
+デュアルバッチオーバーラップは、モデルランナーでバッチを分割し、2 つのワーカースレッドを作成して、それぞれのワーカースレッドでモデルを実行することで動作します。DBO が有効な場合、`FusedMoEModularKernel` 内の yield ポイントによって 2 つの CPU ワーカースレッド（UBatch スレッドとも呼びます）が交互に切り替わり、一方が計算を実行している間に、もう一方は通信を待つ形になります。コード全体を通じて、microbatch の短縮形として ubatch が使われることがあります。これは短縮形 µ-batch を ASCII で表したものです。
 
-The DBO system includes modifications to `GpuModelRunner` and `ModularKernel`, and defines two utility classes: `UBatchWrapper` and `UBatchContext`. `UBatchWrapper` manages thread lifecycle and CUDA graph execution of the model. `UBatchContext` wraps `ForwardContext` to coordinate synchronization between the two UBatch threads.
+DBO の仕組みには `GpuModelRunner` と `ModularKernel` への変更が含まれ、`UBatchWrapper` と `UBatchContext` という 2 つのユーティリティクラスが定義されています。`UBatchWrapper` はスレッドのライフサイクルとモデルの CUDA graph 実行を管理します。`UBatchContext` は `ForwardContext` をラップし、2 つの UBatch スレッド間の同期を調整します。
 
-Below is the overlap schedule that is currently implemented in vLLM.
+現在 vLLM に実装されているオーバーラップのスケジュールは次のとおりです。
 
 ```python
 # Schedule notation legend:
@@ -27,62 +27,62 @@ Below is the overlap schedule that is currently implemented in vLLM.
 # MLP_SHARED_OVERLAP = "mlp_shared_overlap"
 ```
 
-## Running with DBO
+## DBO を有効にして実行する { #running-with-dbo }
 
-To enable the DBO system pass in the `--enable-dbo` argument to your vllm serve command. This must be run in conjunction with `--data-parallel-size N` where N is greater than 1 and `--enable-expert-parallel`. Additionally, there are two configuration knobs.
+DBO を有効にするには、vllm serve コマンドに `--enable-dbo` 引数を渡します。これは `--data-parallel-size N`（N は 1 より大きい）および `--enable-expert-parallel` と併用する必要があります。さらに、2 つの設定つまみがあります。
 
-* `--dbo-decode-token-threshold` the minimum number of tokens in a decode-only batch required to enable DBO for that batch
-* `--dbo-prefill-token-threshold` the minimum number of tokens in a batch containing at least one prefill required to enable DBO for that batch
+* `--dbo-decode-token-threshold` そのバッチで DBO を有効にするために必要な、デコードのみのバッチにおける最小トークン数
+* `--dbo-prefill-token-threshold` そのバッチで DBO を有効にするために必要な、プレフィルを 1 つ以上含むバッチにおける最小トークン数
 
-Currently, DBO is only supported with DeepEP, so DeepEP must be installed and the `--all2all-backend` argument must be set to `deepep_low_latency` if your workload is primarily decode requests, or `deepep_high_throughput` if your workload is primarily prefill requests.
+現時点で DBO は DeepEP でのみサポートされているため、DeepEP をインストールしたうえで、`--all2all-backend` 引数を、ワークロードが主にデコードリクエストなら `deepep_low_latency`、主にプレフィルリクエストなら `deepep_high_throughput` に設定する必要があります。
 
-Below is a command that will spin up a two DP rank server with expert parallelism and DBO enabled.
-EX: `vllm serve deepseek-ai/DeepSeek-V2-Lite --trust-remote-code --data-parallel-size 2 --enable-expert-parallel --enable-dbo --all2all-backend deepep_low_latency`
+次は、DP ランク 2 のサーバーをエキスパート並列と DBO 有効で起動するコマンドの例です。
+例: `vllm serve deepseek-ai/DeepSeek-V2-Lite --trust-remote-code --data-parallel-size 2 --enable-expert-parallel --enable-dbo --all2all-backend deepep_low_latency`
 
-Note that there must be at least two GPUs visible in `CUDA_VISIBLE_DEVICES`
+`CUDA_VISIBLE_DEVICES` に少なくとも 2 台の GPU が見えている必要がある点に注意してください。
 
-## DBO Components
+## DBO のコンポーネント { #dbo-components }
 
 * GPUModelRunner
 * UBatchWrapper
 * UBatchContext
 
-### GPU Model Runner
+### GPU モデルランナー { #gpu-model-runner }
 
-The batch is split into microbatches by the `GPUModelRunner` class. This is accomplished in two steps. First, coordination across all DP ranks is performed to determine whether microbatching will be applied. Microbatching must be uniform across all DP ranks. If microbatching is not feasible for any DP rank, it is disabled for all ranks. If all DP ranks are going to microbatch, the total number of tokens is padded up to the max number of tokens amongst all ranks. If any rank would end up with an empty second microbatch after the padding is applied, microbatching will be aborted and no ranks will microbatch. Once microbatching has been initiated by all ranks, the second step is performed. The `CommonAttentionMetadata` is sliced in half by the `GPUModelRunner` so that there is one attention metadata per-microbatch.
+バッチは `GPUModelRunner` クラスによってマイクロバッチに分割されます。これは 2 つのステップで行われます。まず、マイクロバッチ化を適用するかどうかを判断するために、すべての DP ランク間で調整が行われます。マイクロバッチ化はすべての DP ランクで一様でなければなりません。いずれかの DP ランクでマイクロバッチ化が実行できない場合、すべてのランクで無効になります。すべての DP ランクがマイクロバッチ化を行う場合、合計トークン数は全ランク中の最大トークン数までパディングされます。パディング適用後に、いずれかのランクで 2 つ目のマイクロバッチが空になってしまう場合、マイクロバッチ化は中止され、どのランクもマイクロバッチ化を行いません。すべてのランクでマイクロバッチ化が開始されたら、2 つ目のステップが実行されます。`GPUModelRunner` が `CommonAttentionMetadata` を半分にスライスし、マイクロバッチごとに 1 つの attention メタデータが用意されます。
 
-### UBatchWrapper
+### UBatchWrapper { #ubatchwrapper }
 
 gpu_ubatch_wrapper
 
-The `UBatchWrapper` class is a model wrapper that's responsible for all of the thread, UBatchContext, and CUDA graph management for DBO. It's designed to be relatively transparent to the GPU Model Runner.
+`UBatchWrapper` クラスは、DBO のためのスレッド、UBatchContext、CUDA graph の管理をすべて担うモデルのラッパーです。GPU モデルランナーからは比較的透過的に見えるよう設計されています。
 
-The implementation runs the model twice, once for each microbatch. Each model invocation occurs within a UBatch thread. These threads are launched in parallel and are synchronized using the `UBatchContext`. Each thread is provided with a sliced version of the attention metadata that is used to run its half of the batch.
+実装では、マイクロバッチごとに 1 回ずつ、モデルを合計 2 回実行します。各モデル呼び出しは UBatch スレッド内で行われます。これらのスレッドは並列に起動され、`UBatchContext` を使って同期されます。各スレッドには、自分が担当する半分のバッチを実行するためにスライスされた attention メタデータが渡されます。
 
-CUDA graphs for DBO are entirely managed by the `UBatchWrapper`. Because of this, DBO only supports running with Full CUDA graphs. However, once a DBO CUDA graph has been captured, it can be replayed without any multithreading or CPU synchronization.
+DBO の CUDA graph は完全に `UBatchWrapper` が管理します。そのため、DBO は Full CUDA graph でのみ実行できます。ただし、DBO の CUDA graph がいったんキャプチャされれば、マルチスレッドや CPU の同期なしにリプレイできます。
 
-#### Interfaces
+#### インターフェース { #interfaces }
 
-The `__init__` method takes in the model, VllmConfig, CUDAGraphMode, and device.
+`__init__` メソッドは、モデル、VllmConfig、CUDAGraphMode、device を受け取ります。
 
-The `forward` method exclusively takes in model arguments. It determines whether or not to run with DBO based on whether a `ubatch_slices` object is present in the `forward_context`. Otherwise, the model is run without DBO.
+`forward` メソッドはモデルの引数のみを受け取ります。`forward_context` に `ubatch_slices` オブジェクトが存在するかどうかで、DBO 付きで実行するかどうかを判断します。存在しない場合、モデルは DBO なしで実行されます。
 
-### UBatchContext
+### UBatchContext { #ubatchcontext }
 
 ubatch_context
 
-The `UBatchContext` class is a `ForwardContext` wrapper class that is used by the `UBatchWrapper` class to synchronize the two UBatch threads. It should only be instantiated by using `make_ubatch_contexts`.
+`UBatchContext` クラスは `ForwardContext` のラッパークラスで、`UBatchWrapper` クラスが 2 つの UBatch スレッドを同期するために使います。インスタンス化は `make_ubatch_contexts` を通じてのみ行うべきです。
 
-When one of the UBatch threads reaches a `dbo_yield` call, it pauses, and starts the other thread which will run until it reaches the same `dbo_yield` call. This "ping-pong" dynamic continues, with threads swapping at each `dbo_yield call`, until the model's execution is complete.
+いずれかの UBatch スレッドが `dbo_yield` の呼び出しに到達すると、そのスレッドは一時停止し、もう一方のスレッドを開始します。もう一方のスレッドは同じ `dbo_yield` の呼び出しに到達するまで実行されます。この「ピンポン」の動きは、モデルの実行が完了するまで、`dbo_yield` の呼び出しごとにスレッドを入れ替えながら続きます。
 
-The current implementation has all `dbo_yield` and `dbo_maybe_run_recv_hook` calls in the `FusedMoEModularKernel.forward` method.
+現在の実装では、`dbo_yield` と `dbo_maybe_run_recv_hook` の呼び出しはすべて `FusedMoEModularKernel.forward` メソッド内にあります。
 
-#### Interfaces
+#### インターフェース { #interfaces_1 }
 
-The `make_ubatch_context` function initializes two `UBatchContexts`, one for each UBatch thread. It takes two CUDA streams, the preexisting `ForwardContexts` and a CPU thread barrier. This function should be used exclusively to instantiate `UBatchContexts`. It will handle all of the event initialization.
+`make_ubatch_context` 関数は、UBatch スレッドごとに 1 つずつ、2 つの `UBatchContexts` を初期化します。この関数は 2 つの CUDA ストリーム、既存の `ForwardContexts`、および CPU スレッドのバリアを受け取ります。`UBatchContexts` のインスタンス化にはこの関数のみを使うべきです。イベントの初期化はすべてこの関数が行います。
 
-The `dbo_register_recv_hook` method registers a callback that can be returned by the `FusedMoEPrepareAndFinalizeModular` class in the other UBatch thread’s `UBatchContext`. The callback will be run when the other thread calls `dbo_maybe_run_recv_hook`. This is typically used to wait on an all-to-all kernel.
+`dbo_register_recv_hook` メソッドは、もう一方の UBatch スレッドの `UBatchContext` において `FusedMoEPrepareAndFinalizeModular` クラスが返しうるコールバックを登録します。このコールバックは、もう一方のスレッドが `dbo_maybe_run_recv_hook` を呼び出したときに実行されます。通常は all-to-all カーネルの完了を待つために使われます。
 
-The `dbo_maybe_run_recv_hook` method runs a callback that’s set by the `dbo_register_recv_hook` function if that callback exists.
+`dbo_maybe_run_recv_hook` メソッドは、`dbo_register_recv_hook` 関数で設定されたコールバックが存在する場合に、それを実行します。
 
-The `dbo_yield` method puts the current thread to sleep and wakes up the other UBatch thread.
+`dbo_yield` メソッドは、現在のスレッドをスリープさせ、もう一方の UBatch スレッドを起こします。

@@ -2,7 +2,7 @@
 
 追随中の上流バージョン: **v0.26.0**（最終同期: 2026-07-28）
 
-全 226 ページ中 **148 ページ**を翻訳済みです（65.5%）。
+全 226 ページ中 **152 ページ**を翻訳済みです（67.3%）。
 
 未翻訳のページは英語原文をそのまま掲載しています。
 翻訳の追加・修正は [GitHub リポジトリ](https://github.com/tatsuya-fukuoka/vllm-docs-ja) へ Pull Request を歓迎します。
@@ -18,7 +18,7 @@
 | 設定 | 7 | 0 | 0 | 7 |
 | 開発者ガイド | 8 | 0 | 8 | 16 |
 | デプロイ | 35 | 0 | 0 | 35 |
-| 設計ドキュメント | 1 | 0 | 28 | 29 |
+| 設計ドキュメント | 5 | 0 | 24 | 29 |
 | 機能 | 34 | 0 | 18 | 52 |
 | はじめに | 5 | 0 | 8 | 13 |
 | ガバナンス | 1 | 0 | 2 | 3 |
@@ -26,7 +26,7 @@
 | 推論とサービング | 15 | 0 | 1 | 16 |
 | 学習 | 8 | 0 | 0 | 8 |
 | 使い方 | 8 | 0 | 0 | 8 |
-| **合計** | **148** | **0** | **78** | **226** |
+| **合計** | **152** | **0** | **74** | **226** |
 
 ## 翻訳済みのページ
 
@@ -100,7 +100,11 @@
 - `deployment/integrations/production-stack.md`
 - `deployment/k8s.md`
 - `deployment/nginx.md`
+- `design/dbo.md`
+- `design/io_processor_plugins.md`
+- `design/mm_processing.md`
 - `design/optimization_levels.md`
+- `design/torch_compile_multimodal.md`
 - `features/README.md`
 - `features/automatic_prefix_caching.md`
 - `features/batch_invariance.md`
