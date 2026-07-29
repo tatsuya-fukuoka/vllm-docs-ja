@@ -1,33 +1,33 @@
 <!-- markdownlint-disable MD041 -->
 --8<-- [start:installation]
 
-vLLM initially supports basic model inference and serving on Intel GPU platform.
+vLLM は、Intel GPU プラットフォーム上での基本的なモデル推論とサービングを初期段階でサポートしています。
 
 --8<-- [end:installation]
 --8<-- [start:requirements]
 
-- Supported Hardware: Intel Data Center GPU, Intel ARC GPU
-- Dependency: [vllm-xpu-kernels](https://github.com/vllm-project/vllm-xpu-kernels): a package provide all necessary vllm custom kernel when running vLLM on Intel GPU platform,
+- サポートされるハードウェア: Intel Data Center GPU、Intel ARC GPU
+- 依存パッケージ: [vllm-xpu-kernels](https://github.com/vllm-project/vllm-xpu-kernels) — Intel GPU プラットフォーム上で vLLM を実行する際に必要な vLLM のカスタムカーネルをすべて提供するパッケージ
 - Python: 3.12
 !!! warning
-    The provided vllm-xpu-kernels whl is Python3.12 specific so this version is a MUST.
+    提供されている vllm-xpu-kernels の whl は Python 3.12 専用のため、このバージョンが必須です。
 
 --8<-- [end:requirements]
 --8<-- [start:set-up-using-python]
 
-There is no extra information on creating a new Python environment for this device.
+このデバイス向けに新しい Python 環境を作成する際の追加情報はありません。
 
 --8<-- [end:set-up-using-python]
 --8<-- [start:pre-built-wheels]
 
-Currently, there are no pre-built XPU wheels.
+現時点では、XPU 向けのビルド済み wheel はありません。
 
 --8<-- [end:pre-built-wheels]
 --8<-- [start:build-wheel-from-source]
 
-- First, install required [driver](https://dgpu-docs.intel.com/driver/installation.html#installing-gpu-drivers).
-- Second, install Python packages for vLLM XPU backend building (Intel OneAPI dependencies are installed automatically as part of `torch-xpu`, see [PyTorch XPU get started](https://docs.pytorch.org/docs/stable/notes/get_start_xpu.html)):
-- Start from vllm-xpu-kernels v0.1.10, we recommend user upgrade driver to [compute runtime 26.18](https://github.com/intel/compute-runtime/releases/tag/26.14.37833.4) release, to avoid potential compatibility issue.
+- まず、必要な[ドライバ](https://dgpu-docs.intel.com/driver/installation.html#installing-gpu-drivers)をインストールします。
+- 次に、vLLM の XPU バックエンドをビルドするための Python パッケージをインストールします（Intel OneAPI の依存パッケージは `torch-xpu` の一部として自動的にインストールされます。[PyTorch XPU の入門](https://docs.pytorch.org/docs/stable/notes/get_start_xpu.html)を参照）。
+- vllm-xpu-kernels v0.1.10 以降では、互換性の問題を避けるため、ドライバを [compute runtime 26.18](https://github.com/intel/compute-runtime/releases/tag/26.14.37833.4) リリースにアップグレードすることを推奨します。
 
 ```bash
 git clone https://github.com/vllm-project/vllm.git
@@ -36,9 +36,9 @@ pip install --upgrade pip
 pip install -v -r requirements/xpu.txt
 ```
 
-- Then, install the correct Triton package for Intel XPU.
+- 次に、Intel XPU 用の正しい Triton パッケージをインストールします。
 
-    The default `triton` package (for NVIDIA GPUs) may be installed as a transitive dependency (e.g., via `xgrammar`). For Intel XPU, you must replace it with `triton-xpu`:
+    既定の `triton` パッケージ（NVIDIA GPU 向け）が推移的な依存関係として（`xgrammar` 経由などで）インストールされることがあります。Intel XPU では、これを `triton-xpu` に置き換える必要があります。
 
     ```bash
     pip uninstall -y triton triton-xpu
@@ -46,10 +46,10 @@ pip install -v -r requirements/xpu.txt
     ```
 
     !!! note
-        - `triton` (without suffix) is for NVIDIA GPUs only. On XPU, using it instead of `triton-xpu` can cause correctness or runtime issues.
-        - For torch 2.12 (the version used in `requirements/xpu.txt`), the matching package is `triton-xpu==3.7.1`. If you use a different version of torch, check the corresponding `triton-xpu` version in [docker/Dockerfile.xpu](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.xpu).
+        - 接尾辞のない `triton` は NVIDIA GPU 専用です。XPU で `triton-xpu` の代わりにこれを使うと、正しさや実行時の問題を引き起こす可能性があります。
+        - torch 2.12（`requirements/xpu.txt` で使われているバージョン）に対応するパッケージは `triton-xpu==3.7.1` です。別のバージョンの torch を使う場合は、[docker/Dockerfile.xpu](https://github.com/vllm-project/vllm/blob/main/docker/Dockerfile.xpu) で対応する `triton-xpu` のバージョンを確認してください。
 
-- Finally, build and install vLLM XPU backend:
+- 最後に、vLLM の XPU バックエンドをビルド・インストールします。
 
 ```bash
 VLLM_TARGET_DEVICE=xpu pip install --no-build-isolation -e . -v
@@ -58,7 +58,7 @@ VLLM_TARGET_DEVICE=xpu pip install --no-build-isolation -e . -v
 --8<-- [end:build-wheel-from-source]
 --8<-- [start:pre-built-images]
 
-Currently, we release prebuilt XPU images at docker [hub](https://hub.docker.com/r/intel/vllm/tags) based on vLLM released version. For more information, please refer release [note](https://github.com/intel/ai-containers/blob/main/vllm).
+現在、vLLM のリリースバージョンにもとづくビルド済みの XPU イメージを Docker [Hub](https://hub.docker.com/r/intel/vllm/tags) で公開しています。詳細はリリース[ノート](https://github.com/intel/ai-containers/blob/main/vllm)を参照してください。
 
 --8<-- [end:pre-built-images]
 --8<-- [start:build-image-from-source]
@@ -78,7 +78,7 @@ docker run -it \
 --8<-- [end:build-image-from-source]
 --8<-- [start:supported-features]
 
-XPU platform supports **tensor parallel** inference/serving and also supports **pipeline parallel** as a beta feature for online serving. For **pipeline parallel**, we support it on single node with mp as the backend. For example, a reference execution like following:
+XPU プラットフォームは**テンソル並列**の推論 / サービングをサポートし、オンラインサービングではベータ機能として**パイプライン並列**もサポートしています。**パイプライン並列**については、バックエンドに mp を使う単一ノード構成をサポートしています。実行例は次のとおりです。
 
 ```bash
 vllm serve facebook/opt-13b \
@@ -89,11 +89,11 @@ vllm serve facebook/opt-13b \
      -tp=8
 ```
 
-By default, a ray instance will be launched automatically if no existing one is detected in the system, with `num-gpus` equals to `parallel_config.world_size`. We recommend properly starting a ray cluster before execution, referring to the [examples/ray_serving/run_cluster.sh](https://github.com/vllm-project/vllm/blob/main/examples/ray_serving/run_cluster.sh) helper script.
+既定では、システム上に既存の ray インスタンスが検出されない場合、`num-gpus` を `parallel_config.world_size` として ray インスタンスが自動的に起動されます。実行前に [examples/ray_serving/run_cluster.sh](https://github.com/vllm-project/vllm/blob/main/examples/ray_serving/run_cluster.sh) のヘルパースクリプトを参考に、ray クラスタを適切に起動しておくことを推奨します。
 
 --8<-- [end:supported-features]
 --8<-- [start:distributed-backend]
 
-XPU platform uses **torch-ccl** for torch<2.8 and **xccl** for torch>=2.8 as distributed backend, since torch 2.8 supports **xccl** as built-in backend for XPU.
+XPU プラットフォームでは、分散バックエンドとして torch 2.8 未満では **torch-ccl** を、torch 2.8 以降では **xccl** を使います。torch 2.8 以降では XPU 向けの組み込みバックエンドとして **xccl** がサポートされているためです。
 
 --8<-- [end:distributed-backend]

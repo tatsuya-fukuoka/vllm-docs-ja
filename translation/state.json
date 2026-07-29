@@ -1075,8 +1075,10 @@
       "upstream_sha": "dc7a7b0d79f1fe51"
     },
     "getting_started/installation/cpu.apple.inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "00e3ec14d5de01fb",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "00e3ec14d5de01fb"
     },
     "getting_started/installation/cpu.arm.inc.md": {
@@ -1090,8 +1092,10 @@
       "upstream_sha": "77c7a9a771c8986e"
     },
     "getting_started/installation/cpu.s390x.inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "954250d563d7a40b",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "954250d563d7a40b"
     },
     "getting_started/installation/cpu.x86.inc.md": {
@@ -1100,8 +1104,10 @@
       "upstream_sha": "c5b646e00e86b9c9"
     },
     "getting_started/installation/gpu.apple.inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "f785255f9ff6c780",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "f785255f9ff6c780"
     },
     "getting_started/installation/gpu.cuda.inc.md": {
@@ -1124,8 +1130,10 @@
       "upstream_sha": "82a8fbed3d0b03e8"
     },
     "getting_started/installation/gpu.xpu.inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "0d0a98a738cc9ddf",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "0d0a98a738cc9ddf"
     },
     "getting_started/installation/python_env_setup.inc.md": {
