@@ -1,48 +1,48 @@
 <!-- markdownlint-disable MD041 -->
 --8<-- [start:installation]
 
-For GPU-accelerated inference on Apple Silicon, use [vLLM-Metal](https://github.com/vllm-project/vllm-metal), a community-maintained hardware plugin that uses MLX as the compute backend and provides native GPU acceleration via Apple's Metal framework.
+Apple Silicon 上で GPU アクセラレーション推論を行うには、[vLLM-Metal](https://github.com/vllm-project/vllm-metal) を使います。これは MLX を計算バックエンドとして使い、Apple の Metal フレームワークを通じてネイティブな GPU アクセラレーションを提供する、コミュニティ管理のハードウェアプラグインです。
 
-vLLM-Metal works with MLX-optimized models from the [mlx-community](https://huggingface.co/mlx-community) organization on Hugging Face, which provides quantized versions of popular models optimized for Apple Silicon.
+vLLM-Metal は、Hugging Face の [mlx-community](https://huggingface.co/mlx-community) organization にある MLX 最適化済みモデルで動作します。ここでは、Apple Silicon 向けに最適化された人気モデルの量子化版が提供されています。
 
 !!! tip
-    For installation and usage instructions, see the [Set up using vLLM-Metal](#set-up-using-vllm-metal) section below.
+    インストールと使い方については、後述の [vLLM-Metal を使ったセットアップ](#set-up-using-vllm-metal)のセクションを参照してください。
 
 --8<-- [end:installation]
 --8<-- [start:requirements]
 
-- OS: macOS Sonoma or later
-- Hardware: Apple Silicon
-- Metal support enabled
+- OS: macOS Sonoma 以降
+- ハードウェア: Apple Silicon
+- Metal のサポートが有効であること
 
 !!! note
-    See the [Set up using vLLM-Metal](#set-up-using-vllm-metal) section below for installation instructions.
+    インストール手順は、後述の [vLLM-Metal を使ったセットアップ](#set-up-using-vllm-metal)のセクションを参照してください。
 
 --8<-- [end:requirements]
 --8<-- [start:set-up-using-python]
 
-## Set up using vLLM-Metal
+## vLLM-Metal を使ったセットアップ { #set-up-using-vllm-metal }
 
-vLLM-Metal is distributed as a separate package that provides native GPU acceleration on Apple Silicon.
+vLLM-Metal は、Apple Silicon 上でネイティブな GPU アクセラレーションを提供する独立したパッケージとして配布されています。
 
-To install vLLM-Metal, follow the installation instructions in the [vLLM-Metal documentation](https://github.com/vllm-project/vllm-metal#installation).
+vLLM-Metal をインストールするには、[vLLM-Metal のドキュメント](https://github.com/vllm-project/vllm-metal#installation)のインストール手順に従ってください。
 
-The installation will:
+インストールでは次のことが行われます。
 
-1. Set up the appropriate Python environment
-2. Install MLX and required dependencies
-3. Install the vLLM-Metal package
+1. 適切な Python 環境をセットアップする
+2. MLX と必要な依存パッケージをインストールする
+3. vLLM-Metal パッケージをインストールする
 
-After installation, you can start using vLLM with Metal GPU acceleration.
+インストール後は、Metal による GPU アクセラレーションを使って vLLM を利用できます。
 
 !!! tip
-    When using vLLM-Metal, use models from the [mlx-community](https://huggingface.co/mlx-community) on Hugging Face for best performance. These models are optimized for MLX and often include quantized versions (4-bit, 8-bit) that run efficiently on Apple Silicon.
+    vLLM-Metal を使う場合、最良の性能を得るには Hugging Face の [mlx-community](https://huggingface.co/mlx-community) のモデルを使ってください。これらのモデルは MLX 向けに最適化されており、Apple Silicon 上で効率的に動作する量子化版（4 ビット、8 ビット）が用意されていることも多いです。
 
-    Example model: `mlx-community/Qwen2.5-0.5B-Instruct-4bit`
+    モデルの例: `mlx-community/Qwen2.5-0.5B-Instruct-4bit`
 
-### Using vLLM-Metal
+### vLLM-Metal の使い方 { #using-vllm-metal }
 
-After installation, vLLM-Metal provides an easy-to-use CLI for running an OpenAI-compatible API server:
+インストール後、vLLM-Metal は OpenAI 互換 API サーバーを起動するための使いやすい CLI を提供します。
 
 ```bash
 # Activate the vLLM-Metal environment
@@ -52,18 +52,18 @@ source ~/.venv-vllm-metal/bin/activate
 vllm serve
 ```
 
-Once the server is running, you have multiple options to interact with it:
+サーバーが起動したら、いくつかの方法でやり取りできます。
 
-#### Option 1: Interactive chat
+#### 方法 1: 対話的なチャット { #option-1-interactive-chat }
 
-Open a new terminal and start an interactive chat session:
+新しいターミナルを開き、対話的なチャットセッションを開始します。
 
 ```bash
 source ~/.venv-vllm-metal/bin/activate
 vllm chat
 ```
 
-#### Option 2: API requests with curl
+#### 方法 2: curl による API リクエスト { #option-2-api-requests-with-curl }
 
 ```bash
 curl http://localhost:8000/v1/chat/completions \
@@ -74,7 +74,7 @@ curl http://localhost:8000/v1/chat/completions \
   }'
 ```
 
-#### Option 3: Python with OpenAI SDK
+#### 方法 3: OpenAI SDK を使った Python { #option-3-python-with-openai-sdk }
 
 ```python
 from openai import OpenAI
@@ -92,17 +92,17 @@ response = client.chat.completions.create(
 print(response.choices[0].message.content)
 ```
 
-For more details on the `vllm` CLI commands, see the [OpenAI-compatible server documentation](../../serving/online_serving/openai_compatible_server.md).
+`vllm` の CLI コマンドの詳細は、[OpenAI 互換サーバーのドキュメント](../../serving/online_serving/openai_compatible_server.md)を参照してください。
 
 --8<-- [end:set-up-using-python]
 --8<-- [start:pre-built-wheels]
 
-vLLM-Metal is installed via the vLLM-Metal package. See the [Set up using vLLM-Metal](#set-up-using-vllm-metal) section above.
+vLLM-Metal は vLLM-Metal パッケージとしてインストールします。上記の [vLLM-Metal を使ったセットアップ](#set-up-using-vllm-metal)のセクションを参照してください。
 
 --8<-- [end:pre-built-wheels]
 --8<-- [start:build-wheel-from-source]
 
-For build instructions from source, refer to the [vLLM-Metal documentation](https://github.com/vllm-project/vllm-metal#installation).
+ソースからのビルド手順は、[vLLM-Metal のドキュメント](https://github.com/vllm-project/vllm-metal#installation)を参照してください。
 
 --8<-- [end:build-wheel-from-source]
 --8<-- [start:pre-built-images]
@@ -113,13 +113,13 @@ For build instructions from source, refer to the [vLLM-Metal documentation](http
 --8<-- [end:build-image-from-source]
 --8<-- [start:supported-features]
 
-vLLM-Metal provides:
+vLLM-Metal は次を提供します。
 
-- Native GPU acceleration using Metal
-- MLX-based compute backend optimized for Apple Silicon
-- OpenAI-compatible API server
-- Support for popular model architectures
+- Metal を使ったネイティブな GPU アクセラレーション
+- Apple Silicon 向けに最適化された MLX ベースの計算バックエンド
+- OpenAI 互換の API サーバー
+- 主要なモデルアーキテクチャのサポート
 
-For specific feature support and limitations, refer to the [vLLM-Metal documentation](https://github.com/vllm-project/vllm-metal).
+個別の機能サポートと制限については、[vLLM-Metal のドキュメント](https://github.com/vllm-project/vllm-metal)を参照してください。
 
 --8<-- [end:supported-features]

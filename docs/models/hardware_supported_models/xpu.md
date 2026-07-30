@@ -1,16 +1,16 @@
-# XPU - Intel® GPUs
+# XPU - Intel® GPU { #xpu-intel-gpus }
 
-## Validated Hardware
+## 検証済みハードウェア { #validated-hardware }
 
-| Hardware |
+| ハードウェア |
 | -------- |
 | [Intel® Arc™ Pro B-Series Graphics](https://www.intel.com/content/www/us/en/products/docs/discrete-gpus/arc/workstations/b-series/overview.html) |
 
-## Recommended Models
+## 推奨モデル { #recommended-models }
 
-### Text-only Language Models
+### テキストのみの言語モデル { #text-only-language-models }
 
-| Model                                              | Architecture                                     | BF16/FP16/Dynamic FP8 | Compressed_tensors FP8 | MXFP4 |
+| モデル                                              | アーキテクチャ                                     | BF16/FP16/動的 FP8 | Compressed_tensors FP8 | MXFP4 |
 | -------------------------------------------------- | ------------------------------------------------ | --------------------- | ---------------------- | ----- |
 | openai/gpt-oss-20b                                 | GPTForCausalLM                                   |                       |                        | ✅    |
 | openai/gpt-oss-120b                                | GPTForCausalLM                                   |                       |                        | ✅    |
@@ -39,9 +39,9 @@
 | Qwen/Qwen1.5-32B-Chat                              | QwenForCausalLM                                  | ✅                    |                        |       |
 | RedHatAI/Meta-Llama-3.1-8B-Instruct-FP8-dynamic    | LlamaForCausalLM                                 |                       | ✅                     |       |
 
-### Multimodal Language Models
+### マルチモーダル言語モデル { #multimodal-language-models }
 
-| Model                        | Architecture                     | BF16 | Dynamic FP8 | MXFP4 |
+| モデル                        | アーキテクチャ                     | BF16 | 動的 FP8 | MXFP4 |
 | ---------------------------- | -------------------------------- | ---- | ----------- | ----- |
 | OpenGVLab/InternVL3_5-8B     | InternVLForConditionalGeneration | ✅   | ✅          |       |
 | OpenGVLab/InternVL3_5-14B    | InternVLForConditionalGeneration | ✅   | ✅          |       |
@@ -52,13 +52,13 @@
 | THUDM/GLM-4v-9B              | GLM4vForConditionalGeneration    | ✅   | ✅          |       |
 | openbmb/MiniCPM-V-4          | MiniCPMVForConditionalGeneration | ✅   | ✅          |       |
 
-### Embedding and Reranker Language Models
+### 埋め込み・リランカー言語モデル { #embedding-and-reranker-language-models }
 
-| Model                   | Architecture                   | BF16 | Dynamic FP8 | MXFP4 |
+| モデル                   | アーキテクチャ                   | BF16 | 動的 FP8 | MXFP4 |
 | ----------------------- | ------------------------------ | ---- | ----------- | ----- |
 | Qwen/Qwen3-Embedding-8B | Qwen3ForTextEmbedding          | ✅   | ✅          |       |
 | Qwen/Qwen3-Reranker-8B  | Qwen3ForSequenceClassification | ✅   | ✅          |       |
 
-✅ Runs and optimized.  
-🟨 Runs and correct but not optimized to green yet.  
-❌ Does not pass accuracy test or does not run.  
+✅ 動作し、最適化済み。  
+🟨 動作し結果も正しいが、まだ十分に最適化されていない。  
+❌ 精度テストに合格しない、または動作しない。  

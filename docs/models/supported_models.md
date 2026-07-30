@@ -1,40 +1,40 @@
-# Supported Models
+# サポートされるモデル { #supported-models }
 
-vLLM supports [generative](./generative_models.md) and [pooling](./pooling_models/README.md) models across various tasks.
+vLLM は、さまざまなタスクにわたって[生成](./generative_models.md)モデルと[プーリング](./pooling_models/README.md)モデルをサポートしています。
 
-For each task, we list the model architectures that have been implemented in vLLM.
-Alongside each architecture, we include some popular models that use it.
+タスクごとに、vLLM で実装済みのモデルアーキテクチャを一覧にしています。
+各アーキテクチャには、それを利用している代表的なモデルもあわせて記載しています。
 
-## Model Implementation
+## モデルの実装 { #model-implementation }
 
 ### vLLM
 
-If vLLM natively supports a model, its implementation can be found in [vllm/model_executor/models](../../vllm/model_executor/models).
+vLLM がモデルをネイティブにサポートしている場合、その実装は [vllm/model_executor/models](../../vllm/model_executor/models) にあります。
 
-These models are what we list in [supported text models](#list-of-text-only-language-models) and [supported multimodal models](#list-of-multimodal-language-models).
+これらのモデルが、[サポートされるテキストモデル](#list-of-text-only-language-models)および[サポートされるマルチモーダルモデル](#list-of-multimodal-language-models)に一覧されているものです。
 
 ### Transformers
 
-vLLM also supports model implementations that are available in Transformers. We call this feature the "Transformers modeling backend". The performance of models loaded with the Transformers modeling backend should be identical to a dedicated vLLM model implementation.
+vLLM は Transformers で利用できるモデル実装もサポートしています。この機能を「Transformers モデリングバックエンド」と呼びます。Transformers モデリングバックエンドで読み込んだモデルの性能は、vLLM 専用のモデル実装と同等になるはずです。
 
-Currently, the Transformers modeling backend works for the following:
+現時点で、Transformers モデリングバックエンドは以下に対応しています。
 
-- Modalities: embedding models, language models and vision-language models*
-- Architectures: encoder-only, decoder-only, mixture-of-experts
-- Attention types: full attention and/or sliding attention
+- モダリティ: 埋め込みモデル、言語モデル、視覚言語モデル*
+- アーキテクチャ: エンコーダのみ、デコーダのみ、mixture-of-experts
+- attention の種類: full attention および / または sliding attention
 
-_*Vision-language models currently accept only image inputs. Support for video inputs will be added in a future release._
+_*視覚言語モデルは現時点で画像入力のみを受け付けます。動画入力のサポートは今後のリリースで追加されます。_
 
-If the Transformers model implementation follows all the steps in [writing a custom model](#writing-custom-models) then, when used with the Transformers modeling backend, it will be compatible with the following features of vLLM:
+Transformers のモデル実装が[カスタムモデルの記述](#writing-custom-models)の手順をすべて満たしていれば、Transformers モデリングバックエンドで使ったときに vLLM の次の機能と互換になります。
 
-- All the features listed in the [compatibility matrix](../features/README.md#feature-x-feature)
-- Any combination of the following vLLM parallelisation schemes:
-    - Data parallel
-    - Tensor parallel
-    - Expert parallel
-    - Pipeline parallel
+- [互換性マトリクス](../features/README.md#feature-x-feature)に記載されたすべての機能
+- 以下の vLLM の並列化方式の任意の組み合わせ
+    - データ並列
+    - テンソル並列
+    - エキスパート並列
+    - パイプライン並列
 
-Checking if the modeling backend is Transformers is as simple as:
+モデリングバックエンドが Transformers かどうかは、次のように簡単に確認できます。
 
 ```python
 from vllm import LLM
@@ -42,49 +42,49 @@ llm = LLM(model=...)  # Name or path of your model
 llm.apply_model(lambda model: print(type(model)))
 ```
 
-If the printed type starts with `Transformers...` then it's using the Transformers model implementation!
+表示された型が `Transformers...` で始まっていれば、Transformers のモデル実装が使われています。
 
-If a model has a vLLM implementation but you would prefer to use the Transformers implementation via the Transformers modeling backend, set `model_impl="transformers"` for [offline inference](../serving/offline_inference.md) or `--model-impl transformers` for the [online serving](../serving/online_serving/README.md).
+vLLM の実装があるモデルでも、Transformers モデリングバックエンド経由で Transformers の実装を使いたい場合は、[オフライン推論](../serving/offline_inference.md)では `model_impl="transformers"` を、[オンラインサービング](../serving/online_serving/README.md)では `--model-impl transformers` を指定してください。
 
 !!! note
-    For vision-language models, if you are loading with `dtype="auto"`, vLLM loads the whole model with config's `dtype` if it exists. In contrast the native Transformers will respect the `dtype` attribute of each backbone in the model. That might cause a slight difference in performance.
+    視覚言語モデルでは、`dtype="auto"` で読み込む場合、config に `dtype` があれば vLLM はモデル全体をその `dtype` で読み込みます。一方、ネイティブの Transformers はモデル内の各バックボーンの `dtype` 属性を尊重します。そのため性能にわずかな差が生じることがあります。
 
-#### Custom models
+#### カスタムモデル { #custom-models }
 
-If a model is neither supported natively by vLLM nor Transformers, it can still be used in vLLM!
+vLLM でも Transformers でもネイティブにサポートされていないモデルでも、vLLM で使うことができます。
 
-For a model to be compatible with the Transformers modeling backend for vLLM it must:
+モデルを vLLM の Transformers モデリングバックエンドと互換にするには、次を満たす必要があります。
 
-- be a Transformers compatible custom model (see [Transformers - Customizing models](https://huggingface.co/docs/transformers/en/custom_models)):
-    - The model directory must have the correct structure (e.g. `config.json` is present).
-    - `config.json` must contain `auto_map.AutoModel`.
-- be a Transformers modeling backend for vLLM compatible model (see [Writing custom models](#writing-custom-models)):
-    - Customisation should be done in the base model (e.g. in `MyModel`, not `MyModelForCausalLM`).
+- Transformers 互換のカスタムモデルであること（[Transformers - Customizing models](https://huggingface.co/docs/transformers/en/custom_models) を参照）
+    - モデルディレクトリが正しい構造になっていること（例: `config.json` が存在する）。
+    - `config.json` に `auto_map.AutoModel` が含まれること。
+- vLLM の Transformers モデリングバックエンドと互換なモデルであること（[カスタムモデルの記述](#writing-custom-models)を参照）
+    - カスタマイズはベースモデル側で行うこと（例: `MyModelForCausalLM` ではなく `MyModel`）。
 
-If the compatible model is:
+互換なモデルが次の場所にある場合は、
 
-- on the Hugging Face Model Hub, simply set `trust_remote_code=True` for [offline-inference](../serving/offline_inference.md) or `--trust-remote-code` for the [online serving](../serving/online_serving/README.md).
-- in a local directory, simply pass directory path to `model=<MODEL_DIR>` for [offline-inference](../serving/offline_inference.md) or `vllm serve <MODEL_DIR>` for the [online serving](../serving/online_serving/README.md).
+- Hugging Face Model Hub 上にある場合は、[オフライン推論](../serving/offline_inference.md)では `trust_remote_code=True` を、[オンラインサービング](../serving/online_serving/README.md)では `--trust-remote-code` を指定するだけです。
+- ローカルディレクトリにある場合は、[オフライン推論](../serving/offline_inference.md)では `model=<MODEL_DIR>` にディレクトリパスを渡し、[オンラインサービング](../serving/online_serving/README.md)では `vllm serve <MODEL_DIR>` とするだけです。
 
-This means that, with the Transformers modeling backend for vLLM, new models can be used before they are officially supported in Transformers or vLLM!
+つまり vLLM の Transformers モデリングバックエンドを使えば、Transformers や vLLM で正式にサポートされる前の新しいモデルを利用できます。
 
-#### Writing custom models
+#### カスタムモデルの記述 { #writing-custom-models }
 
-This section details the necessary modifications to make to a Transformers compatible custom model that make it compatible with the Transformers modeling backend for vLLM. (We assume that a Transformers compatible custom model has already been created, see [Transformers - Customizing models](https://huggingface.co/docs/transformers/en/custom_models)).
+この節では、Transformers 互換のカスタムモデルを vLLM の Transformers モデリングバックエンドと互換にするために必要な変更点を説明します（Transformers 互換のカスタムモデルはすでに作成済みであることを前提とします。[Transformers - Customizing models](https://huggingface.co/docs/transformers/en/custom_models) を参照してください）。
 
-To make your model compatible with the Transformers modeling backend, it needs:
+モデルを Transformers モデリングバックエンドと互換にするには、次が必要です。
 
-1. `kwargs` passed down through all modules from `MyModel` to `MyAttention`.
-    - If your model is encoder-only:
-        1. Add `is_causal = False` to `MyAttention`.
-    - If your model is mixture-of-experts (MoE):
-        1. Your sparse MoE block must have an attribute called `experts`.
-        2. The class of `experts` (`MyExperts`) must either:
-            - Inherit from `nn.ModuleList` (naive).
-            - Or contain all 3D `nn.Parameters` (packed).
-        3. `MyExperts.forward` must accept `hidden_states`, `top_k_index`, `top_k_weights`.
-2. `MyAttention` must use `ALL_ATTENTION_FUNCTIONS` to call attention.
-3. `MyModel` must contain `_supports_attention_backend = True`.
+1. `MyModel` から `MyAttention` まで、すべてのモジュールを通して `kwargs` を渡すこと。
+    - モデルがエンコーダのみの場合
+        1. `MyAttention` に `is_causal = False` を追加します。
+    - モデルが mixture-of-experts（MoE）の場合
+        1. sparse MoE ブロックに `experts` という属性が必要です。
+        2. `experts` のクラス（`MyExperts`）は次のいずれかである必要があります。
+            - `nn.ModuleList` を継承する（naive）。
+            - あるいは 3D の `nn.Parameters` のみを持つ（packed）。
+        3. `MyExperts.forward` は `hidden_states`、`top_k_index`、`top_k_weights` を受け取る必要があります。
+2. `MyAttention` は attention の呼び出しに `ALL_ATTENTION_FUNCTIONS` を使う必要があります。
+3. `MyModel` に `_supports_attention_backend = True` が含まれている必要があります。
 
 <details class="code">
 <summary>modeling_my_model.py</summary>
@@ -132,15 +132,15 @@ class MyModel(PreTrainedModel):
 
 </details>
 
-Here is what happens in the background when this model is loaded:
+このモデルを読み込むと、背後では次のことが起こります。
 
-1. The config is loaded.
-2. `MyModel` Python class is loaded from the `auto_map` in config, and we check that the model `is_backend_compatible()`.
-3. `MyModel` is loaded into one of the Transformers modeling backend classes in [vllm/model_executor/models/transformers](../../vllm/model_executor/models/transformers) which sets `self.config._attn_implementation = "vllm"` so that vLLM's attention layer is used.
+1. config が読み込まれます。
+2. config の `auto_map` から `MyModel` の Python クラスが読み込まれ、そのモデルが `is_backend_compatible()` であることを確認します。
+3. `MyModel` は [vllm/model_executor/models/transformers](../../vllm/model_executor/models/transformers) にある Transformers モデリングバックエンドのクラスのいずれかに読み込まれ、そこで `self.config._attn_implementation = "vllm"` が設定されて vLLM の attention 層が使われるようになります。
 
-That's it!
+以上です。
 
-For your model to be compatible with vLLM's tensor parallel and/or pipeline parallel features, you may need to add `base_model_tp_plan` and/or `base_model_pp_plan` to your model's config class:
+モデルを vLLM のテンソル並列やパイプライン並列の機能と互換にするには、モデルの config クラスに `base_model_tp_plan` や `base_model_pp_plan` を追加する必要があるかもしれません。
 
 <details class="code">
 <summary>configuration_my_model.py</summary>
@@ -167,40 +167,40 @@ class MyConfig(PretrainedConfig):
 
 </details>
 
-- `base_model_tp_plan` is a `dict` that maps fully qualified layer name patterns to tensor parallel styles (currently only `"colwise"` and `"rowwise"` are supported).
-    - vLLM infers the tensor parallel style of standard attention (`q`/`k`/`v`/`o_proj`) and gated-MLP/experts (`gate`/`up`/`down_proj`) projections if it can fuse them, so these may not need to be listed. `base_model_tp_plan` is only _required_ for layers that do not follow these patterns; any linear that is neither fused nor named in the plan is replicated.
-- `base_model_pp_plan` is a `dict` that maps direct child layer names to `tuple`s of `list`s of `str`s:
-    - You only need to do this for layers which are not present on all pipeline stages
-    - vLLM assumes that there will be only one `nn.ModuleList`, which is distributed across the pipeline stages
-    - When no `base_model_pp_plan` is provided, the Transformers modelling backend infers the split from the text model's sole `nn.ModuleList`, keeping the parameter-bearing modules around it (input embeddings, final norm) on the first/last stage (depending on declaration order) and parameter-free modules (e.g. rotary embeddings) on every stage
-    - The `list` in the first element of the `tuple` contains the names of the input arguments
-    - The `list` in the last element of the `tuple` contains the names of the variables the layer outputs to in your modeling code
+- `base_model_tp_plan` は、完全修飾の層名のパターンをテンソル並列のスタイル（現時点では `"colwise"` と `"rowwise"` のみサポート）へ対応づける `dict` です。
+    - 標準的な attention（`q`/`k`/`v`/`o_proj`）とゲート付き MLP / experts（`gate`/`up`/`down_proj`）の射影については、融合できる場合に vLLM がテンソル並列のスタイルを推定するため、記載が不要なこともあります。`base_model_tp_plan` が_必要_なのは、これらのパターンに従わない層だけです。融合もされずプランにも記載されていない線形層は複製されます。
+- `base_model_pp_plan` は、直下の子層の名前を、`str` の `list` の `tuple` へ対応づける `dict` です。
+    - これが必要なのは、すべてのパイプラインステージに存在するわけではない層だけです
+    - vLLM は `nn.ModuleList` が 1 つだけ存在し、それがパイプラインステージ間に分散されることを前提とします
+    - `base_model_pp_plan` が指定されない場合、Transformers モデリングバックエンドはテキストモデルの唯一の `nn.ModuleList` から分割を推定し、その周囲のパラメータを持つモジュール（入力埋め込み、最終 norm）を（宣言順に応じて）最初 / 最後のステージに、パラメータを持たないモジュール（回転位置埋め込みなど）をすべてのステージに配置します
+    - `tuple` の最初の要素の `list` には、入力引数の名前が入ります
+    - `tuple` の最後の要素の `list` には、モデリングのコードでその層が出力する変数の名前が入ります
 
-### Plugins
+### プラグイン { #plugins }
 
-Some model architectures are supported via vLLM plugins. These plugins extend vLLM's capabilities through the [plugin system](../design/plugin_system.md).
+一部のモデルアーキテクチャは vLLM のプラグイン経由でサポートされています。これらのプラグインは、[プラグインシステム](../design/plugin_system.md)を通じて vLLM の機能を拡張します。
 
-| Architecture | Models | Plugin Repository |
+| アーキテクチャ | モデル | プラグインのリポジトリ |
 | ------------ | ------ | ----------------- |
 | `BartForConditionalGeneration` | BART | [bart-plugin](https://github.com/vllm-project/bart-plugin) |
 | `Florence2ForConditionalGeneration` | Florence-2 | [bart-plugin](https://github.com/vllm-project/bart-plugin) |
 
-For other model architectures not natively supported, in particular for Encoder-Decoder models, we recommend following a similar pattern by implementing support through the plugin system.
+ネイティブにサポートされていないその他のモデルアーキテクチャ、とくにエンコーダ・デコーダのモデルについては、同様のパターンに従い、プラグインシステムを通じてサポートを実装することを推奨します。
 
-## Loading a Model
+## モデルの読み込み { #loading-a-model }
 
-### Hugging Face Hub
+### Hugging Face Hub { #hugging-face-hub }
 
-By default, vLLM loads models from [Hugging Face (HF) Hub](https://huggingface.co/models). To change the download path for models, you can set the `HF_HOME` environment variable; for more details, refer to [their official documentation](https://huggingface.co/docs/huggingface_hub/package_reference/environment_variables#hfhome).
+既定では、vLLM は [Hugging Face（HF）Hub](https://huggingface.co/models) からモデルを読み込みます。モデルのダウンロード先を変更するには `HF_HOME` 環境変数を設定します。詳細は[公式ドキュメント](https://huggingface.co/docs/huggingface_hub/package_reference/environment_variables#hfhome)を参照してください。
 
-To determine whether a given model is natively supported, you can check the `config.json` file inside the HF repository.
-If the `"architectures"` field contains a model architecture listed below, then it should be natively supported.
+あるモデルがネイティブにサポートされているかどうかは、HF リポジトリ内の `config.json` ファイルで確認できます。
+`"architectures"` フィールドに以下に挙げるモデルアーキテクチャが含まれていれば、ネイティブにサポートされているはずです。
 
-Models do not _need_ to be natively supported to be used in vLLM.
-The [Transformers modeling backend](#transformers) enables you to run models directly using their Transformers implementation (or even remote code on the Hugging Face Model Hub!).
+vLLM で使うために、モデルがネイティブにサポートされている_必要はありません_。
+[Transformers モデリングバックエンド](#transformers)を使えば、Transformers の実装（さらには Hugging Face Model Hub 上のリモートコード）を使ってモデルを直接実行できます。
 
 !!! tip
-    The easiest way to check if your model is really supported at runtime is to run the program below:
+    実行時に本当にモデルがサポートされているかを確認する最も簡単な方法は、以下のプログラムを実行することです。
 
     ```python
     from vllm import LLM
@@ -216,14 +216,14 @@ The [Transformers modeling backend](#transformers) enables you to run models dir
     print(output)
     ```
 
-    If vLLM successfully returns text (for generative models) or hidden states (for pooling models), it indicates that your model is supported.
+    vLLM が（生成モデルなら）テキストを、（プーリングモデルなら）hidden states を正常に返せば、そのモデルはサポートされています。
 
-Otherwise, please refer to [Adding a New Model](../contributing/model/README.md) for instructions on how to implement your model in vLLM.
-Alternatively, you can [open an issue on GitHub](https://github.com/vllm-project/vllm/issues/new/choose) to request vLLM support.
+そうでない場合は、vLLM でモデルを実装する方法について[新しいモデルの追加](../contributing/model/README.md)を参照してください。
+あるいは、[GitHub で issue を作成](https://github.com/vllm-project/vllm/issues/new/choose)して vLLM でのサポートをリクエストすることもできます。
 
-#### Download a model
+#### モデルのダウンロード { #download-a-model }
 
-If you prefer, you can use the Hugging Face CLI to [download a model](https://huggingface.co/docs/huggingface_hub/guides/cli#huggingface-cli-download) or specific files from a model repository:
+必要であれば、Hugging Face CLI を使って[モデルをダウンロード](https://huggingface.co/docs/huggingface_hub/guides/cli#huggingface-cli-download)したり、モデルリポジトリから特定のファイルを取得したりできます。
 
 ```bash
 # Download a model
@@ -236,9 +236,9 @@ hf download HuggingFaceH4/zephyr-7b-beta --cache-dir ./path/to/cache
 hf download HuggingFaceH4/zephyr-7b-beta eval_results.json
 ```
 
-#### List the downloaded models
+#### ダウンロード済みモデルの一覧表示 { #list-the-downloaded-models }
 
-Use the Hugging Face CLI to [manage models](https://huggingface.co/docs/huggingface_hub/guides/manage-cache#scan-your-cache) stored in local cache:
+ローカルキャッシュに保存されたモデルを[管理](https://huggingface.co/docs/huggingface_hub/guides/manage-cache#scan-your-cache)するには、Hugging Face CLI を使います。
 
 ```bash
 # List cached models
@@ -251,27 +251,27 @@ hf cache list
 hf cache list --dir ~/.cache/huggingface/hub
 ```
 
-#### Delete a cached model
+#### キャッシュ済みモデルの削除 { #delete-a-cached-model }
 
-Use the Hugging Face CLI to [delete downloaded model](https://huggingface.co/docs/huggingface_hub/guides/manage-cache#clean-your-cache) from the cache:
+キャッシュから[ダウンロード済みのモデルを削除](https://huggingface.co/docs/huggingface_hub/guides/manage-cache#clean-your-cache)するには、Hugging Face CLI を使います。
 
 ```bash
 # delete all the cached objects
 hf cache rm $(hf cache list -q)
 ```
 
-#### Using a proxy
+#### プロキシを使う { #using-a-proxy }
 
-Here are some tips for loading/downloading models from Hugging Face using a proxy:
+プロキシ経由で Hugging Face からモデルを読み込む / ダウンロードする際のヒントを示します。
 
-- Set the proxy globally for your session (or set it in the profile file):
+- セッション全体にプロキシを設定する（あるいはプロファイルのファイルに設定する）:
 
 ```shell
 export http_proxy=http://your.proxy.server:port
 export https_proxy=http://your.proxy.server:port
 ```
 
-- Set the proxy for just the current command:
+- 現在のコマンドにのみプロキシを設定する:
 
 ```shell
 https_proxy=http://your.proxy.server:port hf download <model_name>
@@ -280,7 +280,7 @@ https_proxy=http://your.proxy.server:port hf download <model_name>
 https_proxy=http://your.proxy.server:port  vllm serve <model_name>
 ```
 
-- Set the proxy in Python interpreter:
+- Python インタプリタ内でプロキシを設定する:
 
 ```python
 import os
@@ -289,15 +289,15 @@ os.environ["http_proxy"] = "http://your.proxy.server:port"
 os.environ["https_proxy"] = "http://your.proxy.server:port"
 ```
 
-### ModelScope
+### ModelScope { #modelscope }
 
-To use models from [ModelScope](https://www.modelscope.cn) instead of Hugging Face Hub, set an environment variable:
+Hugging Face Hub の代わりに [ModelScope](https://www.modelscope.cn) のモデルを使うには、環境変数を設定します。
 
 ```shell
 export VLLM_USE_MODELSCOPE=True
 ```
 
-And use with `trust_remote_code=True`.
+そのうえで `trust_remote_code=True` とともに使います。
 
 ```python
 from vllm import LLM
@@ -313,23 +313,23 @@ output = llm.encode("Hello, my name is")
 print(output)
 ```
 
-## Feature Status Legend
+## 機能の状態の凡例 { #feature-status-legend }
 
-- ✅︎ indicates that the feature is supported for the model.
+- ✅︎ は、そのモデルでその機能がサポートされていることを示します。
 
-- 🚧 indicates that the feature is planned but not yet supported for the model.
+- 🚧 は、その機能が計画されているものの、そのモデルではまだサポートされていないことを示します。
 
-- ⚠️ indicates that the feature is available but may have known issues or limitations.
+- ⚠️ は、その機能は利用できるものの、既知の問題や制限がある可能性を示します。
 
-## List of Text-only Language Models
+## テキストのみの言語モデルの一覧 { #list-of-text-only-language-models }
 
-### Generative Models
+### 生成モデル { #generative-models }
 
-See [this page](generative_models.md) for more information on how to use generative models.
+生成モデルの使い方の詳細は[このページ](generative_models.md)を参照してください。
 
-#### Text Generation
+#### テキスト生成 { #text-generation }
 
-These models primarily accept the [`LLM.generate`](./generative_models.md#llmgenerate) API. Chat/Instruct models additionally support the [`LLM.chat`](./generative_models.md#llmchat) API.
+これらのモデルは主に [`LLM.generate`](./generative_models.md#llmgenerate) API を受け付けます。Chat / Instruct モデルはさらに [`LLM.chat`](./generative_models.md#llmchat) API もサポートします。
 
 <style>
 th {
@@ -338,7 +338,7 @@ th {
 }
 </style>
 
-| Architecture | Models | Example HF Models | [LoRA](../features/lora.md) | [PP](../serving/parallelism_scaling.md) |
+| アーキテクチャ | モデル | HF モデルの例 | [LoRA](../features/lora.md) | [PP](../serving/parallelism_scaling.md) |
 | ------------ | ------ | ----------------- | -------------------- | ------------------------- |
 | `AfmoeForCausalLM` | Afmoe | TBA | ✅︎ | ✅︎ |
 | `ApertusForCausalLM` | Apertus | `swiss-ai/Apertus-8B-2509`, `swiss-ai/Apertus-70B-Instruct-2509`, etc. | ✅︎ | ✅︎ |
@@ -457,9 +457,9 @@ th {
 | `TeleFLMForCausalLM` | TeleFLM | `CofeAI/FLM-2-52B-Instruct-2407`, `CofeAI/Tele-FLM`, etc. | ✅︎ | ✅︎ |
 | `Zamba2ForCausalLM` | Zamba2 | `Zyphra/Zamba2-7B-instruct`, `Zyphra/Zamba2-2.7B-instruct`, `Zyphra/Zamba2-1.2B-instruct`, etc. | | |
 
-Some models are supported only via the [Transformers modeling backend](#transformers). The purpose of the table below is to acknowledge models which we officially support in this way. The logs will say that the Transformers modeling backend is being used, and you will see no warning that this is fallback behaviour. This means that, if you have issues with any of the models listed below, please [make an issue](https://github.com/vllm-project/vllm/issues/new/choose) and we'll do our best to fix it!
+一部のモデルは [Transformers モデリングバックエンド](#transformers)経由でのみサポートされています。以下の表は、この形で公式にサポートしているモデルを示すものです。ログには Transformers モデリングバックエンドが使われている旨が出力されますが、これがフォールバック動作であるという警告は表示されません。つまり、以下に挙げたモデルで問題が発生した場合は、[Issue を作成](https://github.com/vllm-project/vllm/issues/new/choose)していただければ、可能な限り修正に努めます。
 
-| Architecture | Models | Example HF Models | [LoRA](../features/lora.md) | [PP](../serving/parallelism_scaling.md) |
+| アーキテクチャ | モデル | HF モデルの例 | [LoRA](../features/lora.md) | [PP](../serving/parallelism_scaling.md) |
 | ------------ | ------ | ----------------- | -------------------- | ------------------------- |
 | `GPTBigCodeForCausalLM` | StarCoder, SantaCoder, WizardCoder | `bigcode/starcoder`, `bigcode/gpt_bigcode-santacoder`, `WizardLM/WizardCoder-15B-V1.0`, etc. | ✅︎ | |
 | `OlmoForCausalLM` | OLMo | `allenai/OLMo-1B-hf`, `allenai/OLMo-7B-hf`, etc. | ✅︎ | ✅︎ |
@@ -468,42 +468,42 @@ Some models are supported only via the [Transformers modeling backend](#transfor
 | `Starcoder2ForCausalLM` | Starcoder2 | `bigcode/starcoder2-3b`, `bigcode/starcoder2-7b`, `bigcode/starcoder2-15b`, etc. | ✅︎ | ✅︎ |
 
 !!! note
-    Currently, the ROCm version of vLLM supports Mistral and Mixtral only for context lengths up to 4096.
+    現時点で、ROCm 版の vLLM は Mistral と Mixtral について最大 4096 のコンテキスト長のみをサポートしています。
 
-## List of Multimodal Language Models
+## マルチモーダル言語モデルの一覧 { #list-of-multimodal-language-models }
 
-The following modalities are supported depending on the model:
+モデルに応じて、以下のモダリティがサポートされます。
 
-- **T**ext
-- **I**mage
-- **V**ideo
-- **A**udio
+- **T**ext（テキスト）
+- **I**mage（画像）
+- **V**ideo（動画）
+- **A**udio（音声）
 
-Any combination of modalities joined by `+` are supported.
+`+` で結ばれたモダリティは、任意の組み合わせがサポートされます。
 
-- e.g.: `T + I` means that the model supports text-only, image-only, and text-with-image inputs.
+- 例: `T + I` は、テキストのみ、画像のみ、テキストと画像の組み合わせの入力をサポートすることを意味します。
 
-On the other hand, modalities separated by `/` are mutually exclusive.
+一方、`/` で区切られたモダリティは排他的です。
 
-- e.g.: `T / I` means that the model supports text-only and image-only inputs, but not text-with-image inputs.
+- 例: `T / I` は、テキストのみと画像のみの入力はサポートするが、テキストと画像を組み合わせた入力はサポートしないことを意味します。
 
-See [this page](../features/multimodal_inputs.md) on how to pass multi-modal inputs to the model.
+マルチモーダル入力をモデルに渡す方法については[このページ](../features/multimodal_inputs.md)を参照してください。
 
 !!! tip
-    For hybrid-only models such as Llama-4, Step3, Mistral-3 and Qwen-3.5, a text-only mode can be enabled by setting all supported multimodal modalities to 0 (`--language-model-only`) so that their multimodal modules will not be loaded to free up more GPU memory for KV cache.
+    Llama-4、Step3、Mistral-3、Qwen-3.5 のようなハイブリッド専用モデルでは、サポートされるマルチモーダルモダリティをすべて 0 に設定する（`--language-model-only`）ことでテキストのみのモードを有効にできます。これによりマルチモーダルモジュールが読み込まれなくなり、KV キャッシュ用に GPU メモリを多く確保できます。
 
 !!! note
-    vLLM currently supports adding LoRA adapters to the language backbone for most multimodal models. Additionally, vLLM now experimentally supports adding LoRA to the tower and connector modules for some multimodal models. See [this page](../features/lora.md).
+    vLLM は現時点で、ほとんどのマルチモーダルモデルについて言語バックボーンへの LoRA アダプタの追加をサポートしています。さらに、一部のマルチモーダルモデルについては tower モジュールや connector モジュールへの LoRA 追加を実験的にサポートしています。[このページ](../features/lora.md)を参照してください。
 
-### Generative Models
+### 生成モデル { #generative-models_1 }
 
-See [this page](generative_models.md) for more information on how to use generative models.
+生成モデルの使い方の詳細については[このページ](generative_models.md)を参照してください。
 
-#### Text Generation
+#### テキスト生成 { #text-generation_1 }
 
-These models primarily accept the [`LLM.generate`](./generative_models.md#llmgenerate) API. Chat/Instruct models additionally support the [`LLM.chat`](./generative_models.md#llmchat) API.
+これらのモデルは主に [`LLM.generate`](./generative_models.md#llmgenerate) API を受け付けます。Chat / Instruct モデルはさらに [`LLM.chat`](./generative_models.md#llmchat) API もサポートします。
 
-| Architecture | Models | Inputs | Example HF Models | [LoRA](../features/lora.md) | [PP](../serving/parallelism_scaling.md) |
+| アーキテクチャ | モデル | 入力 | HF モデルの例 | [LoRA](../features/lora.md) | [PP](../serving/parallelism_scaling.md) |
 | ------------ | ------ | ------ | ----------------- | -------------------- | ------------------------- |
 | `AriaForConditionalGeneration` | Aria | T + I<sup>+</sup> | `rhymes-ai/Aria` | | |
 | `AudioFlamingo3ForConditionalGeneration` | AudioFlamingo3 | T + A | `nvidia/audio-flamingo-3-hf`, `nvidia/music-flamingo-hf` | ✅︎ | ✅︎ |
@@ -604,64 +604,63 @@ These models primarily accept the [`LLM.generate`](./generative_models.md#llmgen
 | `UltravoxModel` | Ultravox | T + A<sup>E+</sup> | `fixie-ai/ultravox-v0_5-llama-3_2-1b` | ✅︎ | ✅︎ |
 | `UnlimitedOCRForCausalLM` | Unlimited-OCR | T + I<sup>+</sup> | `baidu/Unlimited-OCR`, etc. | ✅︎ | ✅︎ |
 
-Some models are supported only via the [Transformers modeling backend](#transformers). The purpose of the table below is to acknowledge models which we officially support in this way. The logs will say that the Transformers modeling backend is being used, and you will see no warning that this is fallback behaviour. This means that, if you have issues with any of the models listed below, please [make an issue](https://github.com/vllm-project/vllm/issues/new/choose) and we'll do our best to fix it!
+一部のモデルは [Transformers モデリングバックエンド](#transformers)経由でのみサポートされています。以下の表は、この形で公式にサポートしているモデルを示すものです。ログには Transformers モデリングバックエンドが使われている旨が出力されますが、これがフォールバック動作であるという警告は表示されません。つまり、以下に挙げたモデルで問題が発生した場合は、[Issue を作成](https://github.com/vllm-project/vllm/issues/new/choose)していただければ、可能な限り修正に努めます。
 
-| Architecture | Models | Inputs | Example HF Models | [LoRA](../features/lora.md) | [PP](../serving/parallelism_scaling.md) |
+| アーキテクチャ | モデル | 入力 | HF モデルの例 | [LoRA](../features/lora.md) | [PP](../serving/parallelism_scaling.md) |
 | ------------ | ------ | ------ | ----------------- | --------------------------- | --------------------------------------- |
 | `Emu3ForConditionalGeneration` | Emu3 | T + I | `BAAI/Emu3-Chat-hf` | ✅︎ | ✅︎ |
 
-<sup>^</sup> You need to set the architecture name via `--hf-overrides` to match the one in vLLM.</br>
-<sup>E</sup> Pre-computed embeddings can be inputted for this modality.</br>
-<sup>+</sup> Multiple items can be inputted per text prompt for this modality.
-<sup>*</sup> Only specific variants of the model support this modality (see notes below).</br>
-<sup>Q</sup> `Qwen*-VL` officially uses `qwen_vl_utils` for image preprocessing, while vLLM uses `transformers`' `video_processing_qwen*`, which leads to slightly different results compared to the official Hugging Face repository examples.
+<sup>^</sup> vLLM のアーキテクチャ名に合わせるため、`--hf-overrides` でアーキテクチャ名を設定する必要があります。</br>
+<sup>E</sup> このモダリティでは事前計算済みの埋め込みを入力できます。</br>
+<sup>+</sup> このモダリティでは 1 つのテキストプロンプトに対して複数の項目を入力できます。
+<sup>*</sup> このモダリティをサポートするのはモデルの特定のバリアントのみです（下記の注記を参照）。</br>
+<sup>Q</sup> `Qwen*-VL` は公式には画像の前処理に `qwen_vl_utils` を使いますが、vLLM は `transformers` の `video_processing_qwen*` を使うため、公式の Hugging Face リポジトリの例とは結果がわずかに異なります。
 
 !!! note
-    `Gemma3nForConditionalGeneration` is only supported on V1 due to shared KV caching and it depends on `timm>=1.0.17` to make use of its
-    MobileNet-v5 vision backbone.
+    `Gemma3nForConditionalGeneration` は KV キャッシュを共有するため V1 でのみサポートされ、MobileNet-v5 の
+    vision バックボーンを利用するために `timm>=1.0.17` に依存します。
 
-    Performance is not yet fully optimized mainly due to:
+    性能は主に次の理由でまだ十分に最適化されていません。
 
-    - Both audio and vision MM encoders use `transformers.AutoModel` implementation.
-    - There's no PLE caching or out-of-memory swapping support, as described in [Google's blog](https://developers.googleblog.com/en/introducing-gemma-3n/). These features might be too model-specific for vLLM, and swapping in particular may be better suited for constrained setups.
-
-!!! note
-    For `Gemma4ForConditionalGeneration`:
-    - audio input is only supported by the `gemma-4-E2B` and `gemma-4-E4B` variants.
-    - The model does not ingest videos directly. However, vLLM’s Gemma 4 implementation supports video inputs by handling video processing internally. Users can send videos directly in the message structure to vLLM, where they are converted into text and image frames before being passed to the model.
-    - Gemma 4 assistant checkpoints for speculative decoding use vLLM’s Gemma
-      4 MTP path, not generic draft-model speculative decoding. See the
-      [Gemma 4 assistant model MTP example](../features/speculative_decoding/mtp.md#gemma-4-assistant-models).
+    - 音声・視覚のいずれの MM エンコーダも `transformers.AutoModel` の実装を使っています。
+    - [Google のブログ](https://developers.googleblog.com/en/introducing-gemma-3n/)で説明されている PLE キャッシュやメモリ不足時のスワップはサポートされていません。これらの機能は vLLM にとってモデル固有すぎる可能性があり、特にスワップは制約の厳しい環境に向いていると考えられます。
 
 !!! note
-    For `Gemma4UnifiedForConditionalGeneration`:
-    - This is the encoder-free Gemma 4 variant (e.g. `gemma-4-12B-it`). Unlike the tower-based `Gemma4ForConditionalGeneration`, it has **no SigLIP vision encoder** and **no audio encoder**. Raw pixel patches are projected directly into LM space via a Dense+LayerNorm pipeline with factorized positional embeddings, and raw audio waveform frames are projected directly through a multimodal embedder.
-    - All modalities (image, video, audio) are supported.
-    - Gemma 4 Unified assistant checkpoints (`model_type: gemma4_unified_assistant`) use the same MTP path as the tower-based variant. See the [Gemma 4 assistant model MTP example](../features/speculative_decoding/mtp.md#gemma-4-assistant-models).
+    `Gemma4ForConditionalGeneration` について
+    - 音声入力をサポートするのは `gemma-4-E2B` と `gemma-4-E4B` のバリアントのみです。
+    - このモデルは動画を直接取り込みません。ただし vLLM の Gemma 4 実装は、動画処理を内部で行うことで動画入力をサポートします。ユーザーはメッセージ構造の中で動画をそのまま vLLM に送信でき、モデルへ渡される前にテキストと画像フレームへ変換されます。
+    - 投機的デコーディング向けの Gemma 4 アシスタントのチェックポイントは、汎用のドラフトモデルによる投機的デコーディングではなく、vLLM の Gemma
+      4 MTP パスを使います。[Gemma 4 アシスタントモデルの MTP の例](../features/speculative_decoding/mtp.md#gemma-4-assistant-models)を参照してください。
 
 !!! note
-    For `InternVLChatModel`, only InternVL2.5 with Qwen2.5 text backbone (`OpenGVLab/InternVL2.5-1B` etc.), InternVL3 and InternVL3.5 have video inputs support currently.
+    `Gemma4UnifiedForConditionalGeneration` について
+    - これはエンコーダを持たない Gemma 4 のバリアント（例: `gemma-4-12B-it`）です。tower ベースの `Gemma4ForConditionalGeneration` とは異なり、**SigLIP の vision エンコーダを持たず**、**音声エンコーダも持ちません**。生のピクセルパッチは、分解された位置埋め込みを伴う Dense+LayerNorm のパイプラインによって直接 LM 空間へ射影され、生の音声波形フレームもマルチモーダル埋め込み器を通じて直接射影されます。
+    - すべてのモダリティ（画像・動画・音声）がサポートされます。
+    - Gemma 4 Unified のアシスタントチェックポイント（`model_type: gemma4_unified_assistant`）は、tower ベースのバリアントと同じ MTP パスを使います。[Gemma 4 アシスタントモデルの MTP の例](../features/speculative_decoding/mtp.md#gemma-4-assistant-models)を参照してください。
 
 !!! note
-    To use `allenai/MolmoWeb-4B` or `allenai/MolmoWeb-8B`, serve the checkpoint
-    with the Molmo2 architecture and disable multimodal-prefix attention:
-    `--hf-overrides '{"architectures": ["Molmo2ForConditionalGeneration"], "is_mm_prefix_lm": false}'`.
+    `InternVLChatModel` については、現時点で動画入力をサポートするのは Qwen2.5 のテキストバックボーンを持つ InternVL2.5（`OpenGVLab/InternVL2.5-1B` など）、InternVL3、InternVL3.5 のみです。
 
 !!! note
-    `Moondream3ForCausalLM` uses task-specific prompt templates for `query`
-    and `caption`. The native `detect` and `point` skills require custom
-    coordinate decoding and are not exposed by this vLLM implementation.
-    See [Moondream3 prompt recipes](../features/multimodal_inputs.md#moondream3-prompt-recipes).
+    `allenai/MolmoWeb-4B` や `allenai/MolmoWeb-8B` を使うには、Molmo2 アーキテクチャでチェックポイントをサービングし、
+    マルチモーダルプレフィックスの attention を無効化してください。
+    `--hf-overrides '{"architectures": ["Molmo2ForConditionalGeneration"], "is_mm_prefix_lm": false}'`
 
 !!! note
-    The official `openbmb/MiniCPM-V-2` doesn't work yet, so we need to use a fork (`HwwwH/MiniCPM-V-2`) for now.
-    For more details, please see: <https://github.com/vllm-project/vllm/pull/4087#issuecomment-2250397630>
+    `Moondream3ForCausalLM` は `query` と `caption` それぞれに固有のプロンプトテンプレートを使います。
+    ネイティブの `detect` と `point` のスキルは独自の座標デコードを必要とするため、
+    この vLLM 実装では公開していません。
+    [Moondream3 のプロンプトレシピ](../features/multimodal_inputs.md#moondream3-prompt-recipes)を参照してください。
 
-#### Transcription
+!!! note
+    公式の `openbmb/MiniCPM-V-2` はまだ動作しないため、現時点ではフォーク（`HwwwH/MiniCPM-V-2`）を使う必要があります。
+    詳細は <https://github.com/vllm-project/vllm/pull/4087#issuecomment-2250397630> を参照してください。
 
-Speech2Text models trained specifically for Automatic Speech Recognition.
+#### 文字起こし { #transcription }
 
-| Architecture | Models | Example HF Models | [LoRA](../features/lora.md) | [PP](../serving/parallelism_scaling.md) |
+自動音声認識のために専用に学習された Speech2Text モデルです。
+
+| アーキテクチャ | モデル | HF モデルの例 | [LoRA](../features/lora.md) | [PP](../serving/parallelism_scaling.md) |
 | ------------ | ------ | ----------------- | -------------------- | ------------------------- |
 | `CohereAsrForConditionalGeneration` | Cohere-Transcribe | `CohereLabs/cohere-transcribe-03-2026` | | |
 | `FireRedASR2ForConditionalGeneration` | FireRedASR2 | `allendou/FireRedASR2-LLM-vllm`, etc. | | |
@@ -678,68 +677,67 @@ Speech2Text models trained specifically for Automatic Speech Recognition.
 | `WhisperForConditionalGeneration` | Whisper | `openai/whisper-small`, `openai/whisper-large-v3-turbo`, etc. | | |
 
 !!! note
-    `VoxtralForConditionalGeneration` requires `mistral-common[audio]` to be installed.
+    `VoxtralForConditionalGeneration` を使うには `mistral-common[audio]` のインストールが必要です。
 
-#### Realtime Transcription
+#### リアルタイム文字起こし { #realtime-transcription }
 
-Speech models that support streaming transcription via the
 [`/v1/realtime`](../serving/online_serving/speech_to_text.md#realtime-api)
-WebSocket endpoint.
+WebSocket エンドポイント経由でストリーミング文字起こしをサポートする音声モデルです。
 
-| Architecture | Models | Example HF Models | [LoRA](../features/lora.md) | [PP](../serving/parallelism_scaling.md) |
+| アーキテクチャ | モデル | HF モデルの例 | [LoRA](../features/lora.md) | [PP](../serving/parallelism_scaling.md) |
 | ------------ | ------ | ----------------- | -------------------- | ------------------------- |
 | `VoxtralRealtimeGeneration` | Voxtral Realtime | `mistralai/Voxtral-Mini-4B-Realtime-2602` | | |
 | `Qwen3ASRRealtimeGeneration` | Qwen3-ASR Realtime | `Qwen/Qwen3-ASR-0.6B` | | |
 
 !!! note
-    `VoxtralRealtimeGeneration` requires `mistral-common[audio]` to be installed, and must be served with `--tokenizer-mode mistral`.
+    `VoxtralRealtimeGeneration` を使うには `mistral-common[audio]` のインストールが必要で、`--tokenizer-mode mistral` を指定してサービングする必要があります。
 
-    `Qwen3ASRRealtimeGeneration` is not auto-detected from `config.json`.
-    You must pass `--hf-overrides '{"architectures":["Qwen3ASRRealtimeGeneration"]}'`
-    when serving.
+    `Qwen3ASRRealtimeGeneration` は `config.json` から自動検出されません。
+    サービング時に `--hf-overrides '{"architectures":["Qwen3ASRRealtimeGeneration"]}'`
+    を渡す必要があります。
 
-## Pooling Models
+## プーリングモデル { #pooling-models }
 
-See [this page](pooling_models/README.md) for more information on how to use pooling models.
+プーリングモデルの使い方の詳細については[このページ](pooling_models/README.md)を参照してください。
 
 !!! important
-    Since some model architectures support both generative and pooling tasks,
-    you should explicitly specify `--runner pooling` to ensure that the model is used in pooling mode instead of generative mode.
+    一部のモデルアーキテクチャは生成タスクとプーリングタスクの両方をサポートするため、
+    生成モードではなくプーリングモードでモデルを使うことを確実にするには、`--runner pooling` を明示的に指定してください。
 
-See the link below for more information on the models supported for specific pooling tasks.
+特定のプーリングタスクでサポートされるモデルの詳細については、以下のリンクを参照してください。
 
-- [Classification Usages](pooling_models/classify.md)
-- [Embedding Usages](pooling_models/embed.md)
-- [Reward Usages](pooling_models/reward.md)
-- [Token Classification Usages](pooling_models/token_classify.md)
-- [Token Embedding Usages](pooling_models/token_embed.md)
-- [Scoring Usages](pooling_models/scoring.md)
-- [Specific Model Examples](pooling_models/specific_models.md)
+- [分類の使い方](pooling_models/classify.md)
+- [埋め込みの使い方](pooling_models/embed.md)
+- [報酬の使い方](pooling_models/reward.md)
+- [トークン分類の使い方](pooling_models/token_classify.md)
+- [トークン埋め込みの使い方](pooling_models/token_embed.md)
+- [スコアリングの使い方](pooling_models/scoring.md)
+- [個別のモデルの例](pooling_models/specific_models.md)
 
-## Model Support Policy
+## モデルサポートポリシー { #model-support-policy }
 
-At vLLM, we are committed to facilitating the integration and support of third-party models within our ecosystem. Our approach is designed to balance the need for robustness and the practical limitations of supporting a wide range of models. Here’s how we manage third-party model support:
+vLLM では、サードパーティのモデルをエコシステムへ統合しサポートすることを推進しています。私たちのアプローチは、堅牢性の必要性と、幅広いモデルをサポートするうえでの現実的な制約とのバランスを取るよう設計されています。サードパーティモデルのサポートは次のように運用しています。
 
-1. **Community-Driven Support**: We encourage community contributions for adding new models. When a user requests support for a new model, we welcome pull requests (PRs) from the community. These contributions are evaluated primarily on the sensibility of the output they generate, rather than strict consistency with existing implementations such as those in transformers. **Call for contribution:** PRs coming directly from model vendors are greatly appreciated!
+1. **コミュニティ主導のサポート**: 新しいモデルの追加については、コミュニティからの貢献を歓迎します。新しいモデルのサポート要望があった場合、コミュニティからのプルリクエスト（PR）を歓迎します。これらの貢献は、transformers などの既存実装との厳密な一致よりも、生成される出力の妥当性を主な基準として評価されます。**貢献のお願い:** モデルのベンダーから直接寄せられる PR は特に歓迎します。
 
-2. **Best-Effort Consistency**: While we aim to maintain a level of consistency between the models implemented in vLLM and other frameworks like transformers, complete alignment is not always feasible. Factors like acceleration techniques and the use of low-precision computations can introduce discrepancies. Our commitment is to ensure that the implemented models are functional and produce sensible results.
+2. **ベストエフォートの一貫性**: vLLM で実装されたモデルと transformers などの他フレームワークとの間で一定の一貫性を保つことを目指していますが、完全な一致が常に実現できるとは限りません。高速化手法や低精度演算の利用といった要因により差異が生じることがあります。私たちが保証するのは、実装されたモデルが機能し、妥当な結果を生成することです。
 
     !!! tip
-        When comparing the output of `model.generate` from Hugging Face Transformers with the output of `llm.generate` from vLLM, note that the former reads the model's generation config file (i.e., [generation_config.json](https://github.com/huggingface/transformers/blob/19dabe96362803fb0a9ae7073d03533966598b17/src/transformers/generation/utils.py#L1945)) and applies the default parameters for generation, while the latter only uses the parameters passed to the function. Ensure all sampling parameters are identical when comparing outputs.
+        Hugging Face Transformers の `model.generate` の出力と vLLM の `llm.generate` の出力を比較する際は、前者がモデルの生成 config ファイル（[generation_config.json](https://github.com/huggingface/transformers/blob/19dabe96362803fb0a9ae7073d03533966598b17/src/transformers/generation/utils.py#L1945)）を読み込んで既定の生成パラメータを適用するのに対し、後者は関数に渡されたパラメータのみを使う点に注意してください。出力を比較するときは、すべてのサンプリングパラメータが同一であることを確認してください。
 
-3. **Issue Resolution and Model Updates**: Users are encouraged to report any bugs or issues they encounter with third-party models. Proposed fixes should be submitted via PRs, with a clear explanation of the problem and the rationale behind the proposed solution. If a fix for one model impacts another, we rely on the community to highlight and address these cross-model dependencies. Note: for bugfix PRs, it is good etiquette to inform the original author to seek their feedback.
+3. **問題の解決とモデルの更新**: サードパーティモデルで見つけたバグや問題は報告してください。修正案は、問題の内容と提案する解決方法の根拠を明確に説明したうえで PR として提出してください。あるモデルの修正が別のモデルに影響する場合、そうしたモデル間の依存関係の指摘と対処はコミュニティに頼っています。補足: バグ修正の PR では、元の作者に知らせてフィードバックを求めるのが良い作法です。
 
-4. **Monitoring and Updates**: Users interested in specific models should monitor the commit history for those models (e.g., by tracking changes in the main/vllm/model_executor/models directory). This proactive approach helps users stay informed about updates and changes that may affect the models they use.
+4. **モニタリングと更新**: 特定のモデルに関心があるユーザーは、そのモデルのコミット履歴（例: main/vllm/model_executor/models ディレクトリの変更の追跡）を監視してください。こうした能動的な取り組みにより、利用しているモデルに影響しうる更新や変更を把握しやすくなります。
 
-5. **Selective Focus**: Our resources are primarily directed towards models with significant user interest and impact. Models that are less frequently used may receive less attention, and we rely on the community to play a more active role in their upkeep and improvement.
+5. **重点の選択**: 私たちのリソースは、主にユーザーの関心と影響が大きいモデルに向けられます。利用頻度の低いモデルには注力が及ばないことがあり、その保守と改善についてはコミュニティのより積極的な役割に頼っています。
 
-Through this approach, vLLM fosters a collaborative environment where both the core development team and the broader community contribute to the robustness and diversity of the third-party models supported in our ecosystem.
+このアプローチにより、vLLM はコア開発チームと広範なコミュニティの双方が、エコシステムでサポートされるサードパーティモデルの堅牢性と多様性に貢献する協働的な環境を育んでいます。
 
-Note that, as an inference engine, vLLM does not introduce new models. Therefore, all models supported by vLLM are third-party models in this regard.
+なお、推論エンジンである vLLM は新しいモデルを生み出すものではありません。したがって、この観点では vLLM がサポートするすべてのモデルがサードパーティモデルです。
 
-We have the following levels of testing for models:
+モデルのテストには次のレベルがあります。
 
-1. **Strict Consistency**: We compare the output of the model with the output of the model in the HuggingFace Transformers library under greedy decoding. This is the most stringent test. Please refer to [models tests](https://github.com/vllm-project/vllm/blob/main/tests/models) for the models that have passed this test.
-2. **Output Sensibility**: We check if the output of the model is sensible and coherent, by measuring the perplexity of the output and checking for any obvious errors. This is a less stringent test.
-3. **Runtime Functionality**: We check if the model can be loaded and run without errors. This is the least stringent test. Please refer to [functionality tests](../../tests) and [examples](../../examples) for the models that have passed this test.
-4. **Community Feedback**: We rely on the community to provide feedback on the models. If a model is broken or not working as expected, we encourage users to raise issues to report it or open pull requests to fix it. The rest of the models fall under this category.
+1. **厳密な一致**: greedy デコーディングのもとで、モデルの出力を HuggingFace Transformers ライブラリでのモデルの出力と比較します。最も厳しいテストです。このテストに合格したモデルについては [models tests](https://github.com/vllm-project/vllm/blob/main/tests/models) を参照してください。
+2. **出力の妥当性**: 出力のパープレキシティを測定し、明らかな誤りがないかを確認することで、モデルの出力が妥当で一貫しているかを検査します。これはやや緩いテストです。
+3. **実行時の動作**: モデルがエラーなく読み込まれ実行できるかを確認します。最も緩いテストです。このテストに合格したモデルについては[機能テスト](../../tests)と[例](../../examples)を参照してください。
+4. **コミュニティからのフィードバック**: モデルについてのフィードバックはコミュニティに頼っています。モデルが壊れている、あるいは期待どおりに動作しない場合は、Issue を作成して報告するか、修正のプルリクエストを作成していただけると助かります。残りのモデルはこのカテゴリに該当します。

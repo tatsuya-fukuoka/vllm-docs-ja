@@ -13,23 +13,31 @@
       "upstream_sha": "87681113461ee554"
     },
     "benchmarking/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "ed089f4555bbb97f",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "ed089f4555bbb97f"
     },
     "benchmarking/cli.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "48d8171b9de048a3",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "48d8171b9de048a3"
     },
     "benchmarking/dashboard.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1c2dd9f036dc66d1",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "1c2dd9f036dc66d1"
     },
     "benchmarking/sweeps.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4342cc2a183802d9",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "4342cc2a183802d9"
     },
     "cli/README.md": {
@@ -208,83 +216,115 @@
       "upstream_sha": "fcfa8185d671493c"
     },
     "contributing/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d8fdd6aba34e2fee",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "d8fdd6aba34e2fee"
     },
     "contributing/ci/failures.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "cc925624dec7a0d0",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "cc925624dec7a0d0"
     },
     "contributing/ci/nightly_builds.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "30a44da411204d21",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "30a44da411204d21"
     },
     "contributing/ci/update_pytorch_version.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "f8dba4db5fed89f4",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "f8dba4db5fed89f4"
     },
     "contributing/deprecation_policy.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "9d5902603fa78088",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "9d5902603fa78088"
     },
     "contributing/dockerfile/dockerfile.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "736222b63a7ecb34",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "736222b63a7ecb34"
     },
     "contributing/editing-agent-instructions.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d2916dcd6d97d111",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "d2916dcd6d97d111"
     },
     "contributing/incremental_build.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "5b373fd64f025ab4",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "5b373fd64f025ab4"
     },
     "contributing/model/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "8c5645c1355e6f3d",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "8c5645c1355e6f3d"
     },
     "contributing/model/basic.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "5fdcaccdf8c758ed",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "5fdcaccdf8c758ed"
     },
     "contributing/model/multimodal.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "b6b54873fc73278b",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "b6b54873fc73278b"
     },
     "contributing/model/registration.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "8f44d34b939009d3",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "8f44d34b939009d3"
     },
     "contributing/model/tests.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "7c9109c6b91df091",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "7c9109c6b91df091"
     },
     "contributing/model/transcription.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "529771f89d321209",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "529771f89d321209"
     },
     "contributing/profiling.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1560bff48b1597ac",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "1560bff48b1597ac"
     },
     "contributing/vulnerability_management.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "2ee5428a235ff186",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "2ee5428a235ff186"
     },
     "deployment/docker.md": {
@@ -533,148 +573,206 @@
       "upstream_sha": "213b7c7c4455a235"
     },
     "design/arch_overview.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d710d381f4b3e024",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "d710d381f4b3e024"
     },
     "design/attention_backends.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "605e97451fea181e",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "605e97451fea181e"
     },
     "design/cuda_graphs.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "31cf9507c13aafdb",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "31cf9507c13aafdb"
     },
     "design/cuda_graphs_multimodal.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "84a4091a76a8fd78",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "84a4091a76a8fd78"
     },
     "design/custom_op.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "9c1a13f340fab468",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "9c1a13f340fab468"
     },
     "design/dbo.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "0f293ff4351197f3",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "0f293ff4351197f3"
     },
     "design/debug_vllm_compile.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "2660e00f5e82c69c",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "2660e00f5e82c69c"
     },
     "design/endpoint_plugins.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "ef8420a9ef758d9b",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "ef8420a9ef758d9b"
     },
     "design/fused_moe_modular_kernel.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "c848cbcbc0670dd7",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "c848cbcbc0670dd7"
     },
     "design/fusions.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4b5e3a3774aa4d13",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "4b5e3a3774aa4d13"
     },
     "design/huggingface_integration.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "a1d49d8e66ece0fe",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "a1d49d8e66ece0fe"
     },
     "design/hybrid_kv_cache_manager.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "751fd1ef3cf5b414",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "751fd1ef3cf5b414"
     },
     "design/io_processor_plugins.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1e8bb70115d4a28c",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "1e8bb70115d4a28c"
     },
     "design/logits_processors.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4d55b77d8fd25b75",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "4d55b77d8fd25b75"
     },
     "design/lora_resolver_plugins.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "5021358e3e200fd8",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "5021358e3e200fd8"
     },
     "design/metrics.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "38aea80bdc173518",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "38aea80bdc173518"
     },
     "design/mm_processing.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "2be6b62e473b6df3",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "2be6b62e473b6df3"
     },
     "design/model_runner_v2.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1ef00c68fcc82b5d",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "1ef00c68fcc82b5d"
     },
     "design/moe_kernel_features.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "16431be4e40e59e5",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "16431be4e40e59e5"
     },
     "design/multiprocessing.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1959cb563a5decf9",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "1959cb563a5decf9"
     },
     "design/nixl_kv_cache_lease.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "8a6b40fef18aae88",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "8a6b40fef18aae88"
     },
     "design/nixl_kv_push_connector.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "b0c4fdde741fb87d",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "b0c4fdde741fb87d"
     },
     "design/optimization_levels.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "ccd48ed50c640286",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "ccd48ed50c640286"
     },
     "design/paged_attention.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "0a8cab1d4ed29976",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "0a8cab1d4ed29976"
     },
     "design/plugin_system.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d1e80796c029bfaf",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "d1e80796c029bfaf"
     },
     "design/prefix_caching.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "67ee4e2b7bc23d40",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "67ee4e2b7bc23d40"
     },
     "design/torch_compile.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "45cb6b8664e99261",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "45cb6b8664e99261"
     },
     "design/torch_compile_multimodal.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "c22709b9b2b6133a",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "c22709b9b2b6133a"
     },
     "design/vllm_ir.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "18948afec175985f",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "18948afec175985f"
     },
     "features/README.md": {
@@ -692,8 +790,10 @@
       "upstream_sha": "20f69d906f052b69"
     },
     "features/batch_invariance.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "ebe506231f06503b",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "ebe506231f06503b"
     },
     "features/context_extension.md": {
@@ -711,18 +811,24 @@
       "upstream_sha": "a42d402b98104f3c"
     },
     "features/custom_logitsprocs.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "f6a8e87ade51aaf4",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "f6a8e87ade51aaf4"
     },
     "features/disagg_encoder.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "964f03b4a4f13c74",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "964f03b4a4f13c74"
     },
     "features/disagg_prefill.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "925d6b629de17495",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "925d6b629de17495"
     },
     "features/index_cache.md": {
@@ -733,58 +839,80 @@
       "upstream_sha": "ce06dcccc9342215"
     },
     "features/interleaved_thinking.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "592f52ddb9dd73f3",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "592f52ddb9dd73f3"
     },
     "features/kv_offloading_usage.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "a509bb3aca70755e",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "a509bb3aca70755e"
     },
     "features/lora.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "46513bde61b79570",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "46513bde61b79570"
     },
     "features/mooncake_connector_usage.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "457e58b76800d310",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "457e58b76800d310"
     },
     "features/mooncake_store_connector_usage.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "0877f4c334f35fe7",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "0877f4c334f35fe7"
     },
     "features/moriio_connector_usage.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "b3753f1a27ae8566",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "b3753f1a27ae8566"
     },
     "features/multimodal_inputs.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "2cc00101af5826bd",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "2cc00101af5826bd"
     },
     "features/nixl_connector_compatibility.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "262bcc65bd96f86b",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "262bcc65bd96f86b"
     },
     "features/nixl_connector_usage.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d5004353dd9935f2",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "d5004353dd9935f2"
     },
     "features/per_request_metrics.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "b0c36fb19695e6e5",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "b0c36fb19695e6e5"
     },
     "features/prompt_embeds.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4483c6d4a906b03d",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "4483c6d4a906b03d"
     },
     "features/quantization/README.md": {
@@ -809,8 +937,10 @@
       "upstream_sha": "88001a41a119f178"
     },
     "features/quantization/fp8_vit_attn.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "7f9d73231a152d8a",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "7f9d73231a152d8a"
     },
     "features/quantization/gguf.md": {
@@ -842,23 +972,31 @@
       "upstream_sha": "404672c2a77ff6e2"
     },
     "features/quantization/llm_compressor/fp8.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "39d11b7504e65e50",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "39d11b7504e65e50"
     },
     "features/quantization/llm_compressor/int4.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1dc7656c9b78b81b",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "1dc7656c9b78b81b"
     },
     "features/quantization/llm_compressor/int8_w4a8.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "fe0b50a902e716ba",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "fe0b50a902e716ba"
     },
     "features/quantization/llm_compressor/int8_w8a8.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "05f407950c06a582",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "05f407950c06a582"
     },
     "features/quantization/modelopt.md": {
@@ -869,18 +1007,24 @@
       "upstream_sha": "0dd98d206c17c81a"
     },
     "features/quantization/online.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "224bbb9e7c22b6ad",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "224bbb9e7c22b6ad"
     },
     "features/quantization/quantized_kvcache.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "038a4b8d77bb22bf",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "038a4b8d77bb22bf"
     },
     "features/quantization/quark.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "12ccb5ba4f15aa29",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "12ccb5ba4f15aa29"
     },
     "features/quantization/torchao.md": {
@@ -891,23 +1035,31 @@
       "upstream_sha": "be37c7fed4937392"
     },
     "features/reasoning_outputs.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "3f2be4e99e0174d2",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "3f2be4e99e0174d2"
     },
     "features/sleep_mode.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1b74c99de4e82896",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "1b74c99de4e82896"
     },
     "features/speculative_decoding/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "dfa201a461bb7c13",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "dfa201a461bb7c13"
     },
     "features/speculative_decoding/draft_model.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "7f46f52add9ac487",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "7f46f52add9ac487"
     },
     "features/speculative_decoding/dynamic_speculative_decoding.md": {
@@ -925,8 +1077,10 @@
       "upstream_sha": "7492f3892f169135"
     },
     "features/speculative_decoding/extract_hidden_states.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "381923f15317cb4b",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "381923f15317cb4b"
     },
     "features/speculative_decoding/mlp.md": {
@@ -979,8 +1133,10 @@
       "upstream_sha": "0720d1d9b94f77b0"
     },
     "features/tool_calling.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "caa6db0c295aabbf",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "caa6db0c295aabbf"
     },
     "getting_started/installation/README.md": {
@@ -991,33 +1147,45 @@
       "upstream_sha": "dc7a7b0d79f1fe51"
     },
     "getting_started/installation/cpu.apple.inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "00e3ec14d5de01fb",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "00e3ec14d5de01fb"
     },
     "getting_started/installation/cpu.arm.inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "16ebc96db92b6881",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "16ebc96db92b6881"
     },
     "getting_started/installation/cpu.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "77c7a9a771c8986e",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "77c7a9a771c8986e"
     },
     "getting_started/installation/cpu.s390x.inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "954250d563d7a40b",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "954250d563d7a40b"
     },
     "getting_started/installation/cpu.x86.inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "c5b646e00e86b9c9",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "c5b646e00e86b9c9"
     },
     "getting_started/installation/gpu.apple.inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "f785255f9ff6c780",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "f785255f9ff6c780"
     },
     "getting_started/installation/gpu.cuda.inc.md": {
@@ -1035,13 +1203,17 @@
       "upstream_sha": "1bcf504d2c28d4f1"
     },
     "getting_started/installation/gpu.rocm.inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "82a8fbed3d0b03e8",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "82a8fbed3d0b03e8"
     },
     "getting_started/installation/gpu.xpu.inc.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "0d0a98a738cc9ddf",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "0d0a98a738cc9ddf"
     },
     "getting_started/installation/python_env_setup.inc.md": {
@@ -1066,33 +1238,45 @@
       "upstream_sha": "36f23109a3c53cdc"
     },
     "governance/committers.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1bb588417e52f223",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "1bb588417e52f223"
     },
     "governance/process.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "304b81305ba6e324",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "304b81305ba6e324"
     },
     "models/extensions/fastsafetensor.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "08c9412ad070064b",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "08c9412ad070064b"
     },
     "models/extensions/instanttensor.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "fcff94d6512d632e",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "fcff94d6512d632e"
     },
     "models/extensions/runai_model_streamer.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "4a32cdb51c000d31",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "4a32cdb51c000d31"
     },
     "models/extensions/tensorizer.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "e7342a869acbbb02",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "e7342a869acbbb02"
     },
     "models/generative_models.md": {
@@ -1103,58 +1287,80 @@
       "upstream_sha": "00cad3661500f4b4"
     },
     "models/hardware_supported_models/cpu.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "61178dfca26962ec",
+      "status": "translated",
+      "translated_at": "2026-07-28",
+      "translated_by": "manual",
       "upstream_sha": "61178dfca26962ec"
     },
     "models/hardware_supported_models/xpu.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "efa162096eb57f8c",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "efa162096eb57f8c"
     },
     "models/pooling_models/README.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "c31ac72b21efe923",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "c31ac72b21efe923"
     },
     "models/pooling_models/classify.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d567545ecdce0c38",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "d567545ecdce0c38"
     },
     "models/pooling_models/embed.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "1d253b9157a86c9f",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "1d253b9157a86c9f"
     },
     "models/pooling_models/reward.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "577d78450c5847c1",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "577d78450c5847c1"
     },
     "models/pooling_models/scoring.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d4acefdc12ab032f",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "d4acefdc12ab032f"
     },
     "models/pooling_models/specific_models.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "7c76c707919a2b1c",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "7c76c707919a2b1c"
     },
     "models/pooling_models/token_classify.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "b97cde96f41921e3",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "b97cde96f41921e3"
     },
     "models/pooling_models/token_embed.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "66955944d8aaa343",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "66955944d8aaa343"
     },
     "models/supported_models.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "d98ae69e11f196b9",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "d98ae69e11f196b9"
     },
     "serving/context_parallel_deployment.md": {
@@ -1179,8 +1385,10 @@
       "upstream_sha": "256bdc415e859481"
     },
     "serving/expert_parallel_deployment.md": {
-      "source_sha": null,
-      "status": "untranslated",
+      "source_sha": "35421111c5074d9c",
+      "status": "translated",
+      "translated_at": "2026-07-29",
+      "translated_by": "manual",
       "upstream_sha": "35421111c5074d9c"
     },
     "serving/integrations/claude_code.md": {

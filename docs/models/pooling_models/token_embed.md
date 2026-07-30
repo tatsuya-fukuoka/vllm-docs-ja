@@ -1,17 +1,17 @@
-# Token Embedding Usages
+# トークン埋め込みの利用 { #token-embedding-usages }
 
-## Summary
+## 概要 { #summary }
 
-- Model Usage: Token classification models
-- Pooling Tasks: `token_embed`
-- Offline APIs:
+- モデルの用途: トークン分類モデル
+- プーリングタスク: `token_embed`
+- オフライン API:
     - `LLM.encode(..., pooling_task="token_embed")`
-- Online APIs:
-    - Pooling API (`/pooling`)
+- オンライン API:
+    - プーリング API（`/pooling`）
 
-The difference between the (sequence) embedding task and the token embedding task is that (sequence) embedding outputs one embedding for each sequence, while token embedding outputs an embedding for each token.
+（シーケンス）埋め込みタスクとトークン埋め込みタスクの違いは、（シーケンス）埋め込みがシーケンスごとに 1 つの埋め込みを出力するのに対し、トークン埋め込みはトークンごとに埋め込みを出力する点です。
 
-Many embedding models support both (sequence) embedding and token embedding. For further details on (sequence) embedding, please refer to [this page](embed.md).
+多くの埋め込みモデルは、（シーケンス）埋め込みとトークン埋め込みの両方をサポートしています。（シーケンス）埋め込みの詳細については、[このページ](embed.md)を参照してください。
 
 !!! note
 
@@ -19,31 +19,31 @@ Many embedding models support both (sequence) embedding and token embedding. For
     what you want, you need to manually specify it via `PoolerConfig(task="token_embed")` offline or
     `--pooler-config.task token_embed` online.
 
-## Typical Use Cases
+## 代表的なユースケース { #typical-use-cases }
 
-### Multi-Vector Retrieval
+### マルチベクトル検索 { #multi-vector-retrieval }
 
-For implementation examples, see:
+実装例は次を参照してください。
 
-Offline: [examples/pooling/token_embed/multi_vector_retrieval_offline.py](../../../examples/pooling/token_embed/multi_vector_retrieval_offline.py)
+オフライン: [examples/pooling/token_embed/multi_vector_retrieval_offline.py](../../../examples/pooling/token_embed/multi_vector_retrieval_offline.py)
 
-Online: [examples/pooling/token_embed/multi_vector_retrieval_online.py](../../../examples/pooling/token_embed/multi_vector_retrieval_online.py)
+オンライン: [examples/pooling/token_embed/multi_vector_retrieval_online.py](../../../examples/pooling/token_embed/multi_vector_retrieval_online.py)
 
-### Late interaction
+### late interaction { #late-interaction }
 
-Similarity scores can be computed using late interaction between two input prompts via the score API. For more information, see [Score API](scoring.md).
+score API を通じて、2 つの入力プロンプト間の late interaction による類似度スコアを計算できます。詳細は [Score API](scoring.md) を参照してください。
 
-### Extract last hidden states
+### 最終隠れ状態の抽出 { #extract-last-hidden-states }
 
-Models of any architecture can be converted into embedding models using `--convert embed`. Token embedding can then be used to extract the last hidden states from these models.
+任意のアーキテクチャのモデルは、`--convert embed` を使って埋め込みモデルに変換できます。その後、トークン埋め込みを使ってこれらのモデルから最終隠れ状態を抽出できます。
 
-## Supported Models
+## 対応モデル { #supported-models }
 
 --8<-- [start:supported-token-embed-models]
 
-### Text-only Models
+### テキストのみのモデル { #text-only-models }
 
-| Architecture | Models | Example HF Models | [LoRA](../../features/lora.md) | [PP](../../serving/parallelism_scaling.md) |
+| アーキテクチャ | モデル | HF モデルの例 | [LoRA](../../features/lora.md) | [PP](../../serving/parallelism_scaling.md) |
 | ------------ | ------ | ----------------- | -------------------- | ------------------------- |
 | `ColBERTLfm2Model` | LFM2 | `LiquidAI/LFM2-ColBERT-350M` | | |
 | `ColBERTModernBertModel` | ModernBERT | `lightonai/GTE-ModernColBERT-v1` | | |
@@ -51,12 +51,12 @@ Models of any architecture can be converted into embedding models using `--conve
 | `HF_ColBERT` | BERT | `answerdotai/answerai-colbert-small-v1`, `colbert-ir/colbertv2.0` | | |
 | `*Model`<sup>C</sup>, `*ForCausalLM`<sup>C</sup>, etc. | Generative models | N/A | \* | \* |
 
-### Multimodal Models
+### マルチモーダルモデル { #multimodal-models }
 
 !!! note
-    For more information about multimodal models inputs, see [this page](../supported_models.md#list-of-multimodal-language-models).
+    マルチモーダルモデルの入力については、[このページ](../supported_models.md#list-of-multimodal-language-models)を参照してください。
 
-| Architecture | Models | Inputs | Example HF Models | [LoRA](../../features/lora.md) | [PP](../../serving/parallelism_scaling.md) |
+| アーキテクチャ | モデル | 入力 | HF モデルの例 | [LoRA](../../features/lora.md) | [PP](../../serving/parallelism_scaling.md) |
 | ------------ | ------ | ----- | ----------------- | ------------------------------ | ------------------------------------------ |
 | `ColModernVBertForRetrieval` | ColModernVBERT | T / I | `ModernVBERT/colmodernvbert-merged` | | |
 | `ColPaliForRetrieval` | ColPali | T / I | `vidore/colpali-v1.3-hf` | | |
@@ -66,37 +66,37 @@ Models of any architecture can be converted into embedding models using `--conve
 | `Qwen3VLNemotronEmbedModel` | Qwen3-VL | T / I | `nvidia/nemotron-colembed-vl-4b-v2`, `nvidia/nemotron-colembed-vl-8b-v2` | ✅︎ | ✅︎ |
 | `*ForConditionalGeneration`<sup>C</sup>, `*ForCausalLM`<sup>C</sup>, etc. | Generative models | \* | N/A | \* | \* |
 
-<sup>C</sup> Automatically converted into an embedding model via `--convert embed`. ([details](./README.md#model-conversion))  
-\* Feature support is the same as that of the original model.
+<sup>C</sup> `--convert embed` によって自動的に埋め込みモデルへ変換されます。（[詳細](./README.md#model-conversion)）  
+\* 機能のサポート状況は元のモデルと同じです。
 
-If your model is not in the above list, we will try to automatically convert the model using [`as_embedding_model`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/adapters/#vllm.model_executor.models.adapters.as_embedding_model).
+上記の一覧にモデルがない場合は、[`as_embedding_model`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/adapters/#vllm.model_executor.models.adapters.as_embedding_model) を使ってモデルの自動変換を試みます。
 
-### Special models
+### 特殊なモデル { #special-models }
 
-| Architecture | Models | Example HF Models | [LoRA](../../features/lora.md) | [PP](../../serving/parallelism_scaling.md) |
+| アーキテクチャ | モデル | HF モデルの例 | [LoRA](../../features/lora.md) | [PP](../../serving/parallelism_scaling.md) |
 | ------------ | ------ | ----------------- | -------------------- | ------------------------- |
 | `JinaForRanking` | Qwen3-based | `jinaai/jina-reranker-v3` | | |
 
-jina-reranker-v3 is a listwise document reranker model with a novel `last but not late interaction` architecture. More information can be found at: [examples/pooling/token_embed/jina_reranker_v3_offline.py](../../../examples/pooling/token_embed/jina_reranker_v3_offline.py)
+jina-reranker-v3 は、`last but not late interaction` という新しいアーキテクチャを採用したリストワイズの文書リランカーモデルです。詳細は [examples/pooling/token_embed/jina_reranker_v3_offline.py](../../../examples/pooling/token_embed/jina_reranker_v3_offline.py) を参照してください。
 
 --8<-- [end:supported-token-embed-models]
 
-## Offline Inference
+## オフライン推論 { #offline-inference }
 
-### Pooling Parameters
+### プーリングパラメータ { #pooling-parameters }
 
-The following [`pooling parameters`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.PoolingParams) are supported.
+次の[プーリングパラメータ](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.PoolingParams)がサポートされています。
 
 ```python
 --8<-- "vllm/pooling_params.py:common-pooling-params"
 --8<-- "vllm/pooling_params.py:embed-pooling-params"
 ```
 
-### `LLM.encode`
+### `LLM.encode` { #llmencode }
 
-The [`encode`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.encode) method is available to all pooling models in vLLM.
+[`encode`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.encode) メソッドは、vLLM のすべてのプーリングモデルで利用できます。
 
-Set `pooling_task="token_embed"` when using `LLM.encode` for token embedding Models:
+トークン埋め込みモデルで `LLM.encode` を使う場合は `pooling_task="token_embed"` を指定します。
 
 ```python
 from vllm import LLM
@@ -108,11 +108,11 @@ data = output.outputs.data
 print(f"Data: {data!r}")
 ```
 
-### `LLM.score`
+### `LLM.score` { #llmscore }
 
-The [`score`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.score) method outputs similarity scores between sentence pairs.
+[`score`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.score) メソッドは、文のペア間の類似度スコアを出力します。
 
-All models that support token embedding task also support using the score API to compute similarity scores by calculating the late interaction of two input prompts.
+トークン埋め込みタスクをサポートするすべてのモデルは、2 つの入力プロンプトの late interaction を計算することで類似度スコアを求める score API の利用もサポートしています。
 
 ```python
 from vllm import LLM
@@ -127,14 +127,14 @@ score = output.outputs.score
 print(f"Score: {score}")
 ```
 
-## Online Serving
+## オンラインサービング { #online-serving }
 
-Please refer to the [Pooling API](README.md#pooling-api) and use `"task":"token_embed"`.
+[プーリング API](README.md#pooling-api) を参照し、`"task":"token_embed"` を指定してください。
 
-## More examples
+## その他の例 { #more-examples }
 
-More examples can be found here: [examples/pooling/token_embed](../../../examples/pooling/token_embed)
+その他の例はこちらにあります: [examples/pooling/token_embed](../../../examples/pooling/token_embed)
 
-## Supported Features
+## サポートされる機能 { #supported-features }
 
-Token embedding features should be consistent with (sequence) embedding. For more information, see [this page](embed.md#supported-features).
+トークン埋め込みの機能は（シーケンス）埋め込みと一致しているはずです。詳細は[このページ](embed.md#supported-features)を参照してください。

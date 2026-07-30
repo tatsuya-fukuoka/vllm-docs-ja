@@ -1,7 +1,7 @@
-# Benchmark Suites
+# ベンチマークスイート { #benchmark-suites }
 
-vLLM provides comprehensive benchmarking tools for performance testing and evaluation:
+vLLM は、性能テストと評価のための包括的なベンチマークツールを提供しています。
 
-- **[Benchmark CLI](./cli.md)**: `vllm bench` CLI tools and specialized benchmark scripts for interactive performance testing.
-- **[Parameter Sweeps](./sweeps.md)**: Automate `vllm bench` runs for multiple configurations, useful for [optimization and tuning](../configuration/optimization.md).
-- **[Performance Dashboard](./dashboard.md)**: Automated CI that publishes benchmarks on each commit.
+- **[ベンチマーク CLI](./cli.md)**: 対話的な性能テストのための `vllm bench` CLI と、専用のベンチマークスクリプト。
+- **[パラメータスイープ](./sweeps.md)**: 複数の設定に対する `vllm bench` の実行を自動化します。[最適化とチューニング](../configuration/optimization.md)に役立ちます。
+- **[性能ダッシュボード](./dashboard.md)**: コミットごとにベンチマーク結果を公開する自動 CI。

@@ -1,82 +1,81 @@
-# Classification Usages
+# 分類の利用 { #classification-usages }
 
-Classification involves predicting which predefined category, class, or label best corresponds to a given input.
+分類（classification）とは、与えられた入力に最もよく対応する、あらかじめ定義されたカテゴリ・クラス・ラベルを予測することです。
 
-## Summary
+## 概要 { #summary }
 
-- Model Usage: (sequence) classification
-- Pooling Task: `classify`
-- Offline APIs:
+- モデルの用途: （シーケンス）分類
+- プーリングタスク: `classify`
+- オフライン API:
     - `LLM.classify(...)`
     - `LLM.encode(..., pooling_task="classify")`
-- Online APIs:
-    - [Classification API](classify.md#online-serving) (`/classify`)
-    - Pooling API (`/pooling`)
+- オンライン API:
+    - [分類 API](classify.md#online-serving)（`/classify`）
+    - プーリング API（`/pooling`）
 
-The key distinction between (sequence) classification and token classification lies in their output granularity: (sequence) classification produces a single result for an entire input sequence, whereas token classification yields a result for each individual token within the sequence.
+（シーケンス）分類とトークン分類の主な違いは、出力の粒度にあります。（シーケンス）分類は入力シーケンス全体に対して 1 つの結果を出力するのに対し、トークン分類はシーケンス内の各トークンごとに結果を出力します。
 
-Many classification models support both (sequence) classification and token classification. For further details on token classification, please refer to [this page](token_classify.md).
+多くの分類モデルは、（シーケンス）分類とトークン分類の両方をサポートしています。トークン分類の詳細については、[このページ](token_classify.md)を参照してください。
 
-Only when a classification model outputs num_labels equal to 1 can it be used as a scoring model and have its scoring API enabled, please refer to [this page](scoring.md).
+分類モデルの num_labels が 1 の場合に限り、そのモデルをスコアリングモデルとして使い、スコアリング API を有効にできます。詳細は[このページ](scoring.md)を参照してください。
 
-## Typical Use Cases
+## 代表的なユースケース { #typical-use-cases }
 
-### Classification
+### 分類 { #classification }
 
-The most fundamental application of classification models is to categorize input data into predefined classes.
+分類モデルの最も基本的な用途は、入力データをあらかじめ定義されたクラスに分類することです。
 
-## Supported Models
+## 対応モデル { #supported-models }
 
-### Text-only Models
+### テキストのみのモデル { #text-only-models }
 
-| Architecture | Models | Example HF Models | [LoRA](../../features/lora.md) | [PP](../../serving/parallelism_scaling.md) |
+| アーキテクチャ | モデル | HF モデルの例 | [LoRA](../../features/lora.md) | [PP](../../serving/parallelism_scaling.md) |
 | ------------ | ------ | ----------------- | ------------------------------ | ------------------------------------------ |
 | `GPT2ForSequenceClassification` | GPT2 | `nie3e/sentiment-polish-gpt2-small` | | |
 | `Qwen2ForSequenceClassification`<sup>C</sup> | Qwen2-based | `jason9693/Qwen2.5-1.5B-apeach` | | |
 | `*Model`<sup>C</sup>, `*ForCausalLM`<sup>C</sup>, etc. | Generative models | N/A | \* | \* |
 
-### Multimodal Models
+### マルチモーダルモデル { #multimodal-models }
 
 !!! note
-    For more information about multimodal models inputs, see [this page](../supported_models.md#list-of-multimodal-language-models).
+    マルチモーダルモデルの入力については、[このページ](../supported_models.md#list-of-multimodal-language-models)を参照してください。
 
-| Architecture | Models | Inputs | Example HF Models | [LoRA](../../features/lora.md) | [PP](../../serving/parallelism_scaling.md) |
+| アーキテクチャ | モデル | 入力 | HF モデルの例 | [LoRA](../../features/lora.md) | [PP](../../serving/parallelism_scaling.md) |
 | ------------ | ------ | ------ | ----------------- | ------------------------------ | ------------------------------------------ |
 | `Qwen2_5_VLForSequenceClassification`<sup>C</sup> | Qwen2_5_VL-based | T + I<sup>E+</sup> + V<sup>E+</sup> | `muziyongshixin/Qwen2.5-VL-7B-for-VideoCls` | | |
 | `*ForConditionalGeneration`<sup>C</sup>, `*ForCausalLM`<sup>C</sup>, etc. | Generative models | \* | N/A | \* | \* |
 
-<sup>C</sup> Automatically converted into a classification model via `--convert classify`. ([details](./README.md#model-conversion))  
-\* Feature support is the same as that of the original model.
+<sup>C</sup> `--convert classify` によって自動的に分類モデルへ変換されます。（[詳細](./README.md#model-conversion)）  
+\* 機能のサポート状況は元のモデルと同じです。
 
-If your model is not in the above list, we will try to automatically convert the model using
-[`as_seq_cls_model`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/adapters/#vllm.model_executor.models.adapters.as_seq_cls_model). By default, the class probabilities are extracted from the softmaxed hidden state corresponding to the last token.
+上記の一覧にモデルがない場合は、[`as_seq_cls_model`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/adapters/#vllm.model_executor.models.adapters.as_seq_cls_model) を使ってモデルの自動変換を試みます。既定では、最後のトークンに対応する隠れ状態を softmax したものからクラス確率が抽出されます。
 
-### Cross-encoder Models
+### クロスエンコーダモデル { #cross-encoder-models }
 
-Cross-encoder (aka reranker) models are a subset of classification models that accept two prompts as input and output num_labels equal to 1. Most classification models can also be used as [cross-encoder models](scoring.md#cross-encoder-models). For more information on cross-encoder models, please refer to [this page](scoring.md).
+クロスエンコーダ（リランカーとも呼ばれます）は、2 つのプロンプトを入力として受け取り、num_labels が 1 の出力を返す分類モデルの一種です。ほとんどの分類モデルは[クロスエンコーダモデル](scoring.md#cross-encoder-models)としても使えます。クロスエンコーダモデルの詳細は[このページ](scoring.md)を参照してください。
 
 --8<-- "docs/models/pooling_models/scoring.md:supported-cross-encoder-models"
 
-### Reward Models
+### 報酬モデル { #reward-models }
 
-Using (sequence) classification models as reward models. For more information, see [Reward Models](reward.md).
+（シーケンス）分類モデルを報酬モデルとして使う場合です。詳細は[報酬モデル](reward.md)を参照してください。
 
 --8<-- "docs/models/pooling_models/reward.md:supported-sequence-reward-models"
 
-## Offline Inference
+## オフライン推論 { #offline-inference }
 
-### Pooling Parameters
+### プーリングパラメータ { #pooling-parameters }
 
-The following [`pooling parameters`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.PoolingParams) are supported.
+次の[プーリングパラメータ](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.PoolingParams)がサポートされています。
 
 ```python
 --8<-- "vllm/pooling_params.py:common-pooling-params"
 # このコードは上流のソースを参照してください: https://github.com/vllm-project/vllm/blob/v0.26.0/vllm/pooling_params.py
 ```
 
-### `LLM.classify`
+### `LLM.classify` { #llmclassify }
 
-The [`classify`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.classify) method outputs a probability vector for each prompt.
+[`classify`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.classify) メソッドは、各プロンプトに対する確率ベクトルを出力します。
 
 ```python
 from vllm import LLM
@@ -88,13 +87,13 @@ probs = output.outputs.probs
 print(f"Class Probabilities: {probs!r} (size={len(probs)})")
 ```
 
-A code example can be found here: [examples/basic/offline_inference/classify.py](../../../examples/basic/offline_inference/classify.py)
+コード例はこちらにあります: [examples/basic/offline_inference/classify.py](../../../examples/basic/offline_inference/classify.py)
 
-### `LLM.encode`
+### `LLM.encode` { #llmencode }
 
-The [`encode`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.encode) method is available to all pooling models in vLLM.
+[`encode`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.encode) メソッドは、vLLM のすべてのプーリングモデルで利用できます。
 
-Set `pooling_task="classify"` when using `LLM.encode` for classification Models:
+分類モデルで `LLM.encode` を使う場合は `pooling_task="classify"` を指定します。
 
 ```python
 from vllm import LLM
@@ -106,15 +105,15 @@ data = output.outputs.data
 print(f"Data: {data!r}")
 ```
 
-## Online Serving
+## オンラインサービング { #online-serving }
 
-### Classification API
+### 分類 API { #classification-api }
 
-Online `/classify` API is similar to `LLM.classify`.
+オンラインの `/classify` API は `LLM.classify` と同様のものです。
 
-#### Completion Parameters
+#### completion のパラメータ { #completion-parameters }
 
-The following Classification API parameters are supported:
+分類 API では次のパラメータがサポートされています。
 
 ??? code
 
@@ -124,7 +123,7 @@ The following Classification API parameters are supported:
     # このコードは上流のソースを参照してください: https://github.com/vllm-project/vllm/blob/v0.26.0/vllm/entrypoints/pooling/base/protocol.py
     ```
 
-The following extra parameters are supported:
+次の追加パラメータがサポートされています。
 
 ??? code
 
@@ -134,9 +133,9 @@ The following extra parameters are supported:
     --8<-- "vllm/entrypoints/pooling/base/protocol.py:classify-extra-params"
     ```
 
-#### Chat Parameters
+#### chat のパラメータ { #chat-parameters }
 
-For chat-like input (i.e. if `messages` is passed), the following parameters are supported:
+チャット形式の入力（つまり `messages` を渡す場合）では、次のパラメータがサポートされています。
 
 ??? code
 
@@ -146,7 +145,7 @@ For chat-like input (i.e. if `messages` is passed), the following parameters are
     # このコードは上流のソースを参照してください: https://github.com/vllm-project/vllm/blob/v0.26.0/vllm/entrypoints/pooling/base/protocol.py
     ```
 
-these extra parameters are supported instead:
+この場合、代わりに次の追加パラメータがサポートされます。
 
 ??? code
 
@@ -156,11 +155,11 @@ these extra parameters are supported instead:
     --8<-- "vllm/entrypoints/pooling/base/protocol.py:classify-extra-params"
     ```
 
-#### Example Requests
+#### リクエストの例 { #example-requests }
 
-Code example: [examples/pooling/classify/classification_online.py](../../../examples/pooling/classify/classification_online.py)
+コード例: [examples/pooling/classify/classification_online.py](../../../examples/pooling/classify/classification_online.py)
 
-You can classify multiple texts by passing an array of strings:
+文字列の配列を渡すことで、複数のテキストを分類できます。
 
 ```bash
 curl -v "http://127.0.0.1:8000/classify" \
@@ -211,7 +210,7 @@ curl -v "http://127.0.0.1:8000/classify" \
     }
     ```
 
-You can also pass a string directly to the `input` field:
+`input` フィールドに文字列を直接渡すこともできます。
 
 ```bash
 curl -v "http://127.0.0.1:8000/classify" \
@@ -250,36 +249,36 @@ curl -v "http://127.0.0.1:8000/classify" \
     }
     ```
 
-## More examples
+## その他の例 { #more-examples }
 
-More examples can be found here: [examples/pooling/classify](../../../examples/pooling/classify)
+その他の例はこちらにあります: [examples/pooling/classify](../../../examples/pooling/classify)
 
-## Supported Features
+## サポートされる機能 { #supported-features }
 
-### Enable/disable activation
+### 活性化関数の有効化 / 無効化 { #enabledisable-activation }
 
-You can enable or disable activation via `use_activation`.
+活性化関数は `use_activation` で有効・無効を切り替えられます。
 
-### Problem type (e.g. `multi_label_classification`)
+### 問題の種類（`multi_label_classification` など） { #problem-type-eg-multi_label_classification }
 
-You can modify the `problem_type` via problem_type in the Hugging Face config. The supported problem types are: `single_label_classification`, `multi_label_classification`, and `regression`.
+Hugging Face の設定にある problem_type を通じて `problem_type` を変更できます。サポートされる問題の種類は `single_label_classification`、`multi_label_classification`、`regression` です。
 
-Implement alignment with transformers [ForSequenceClassificationLoss](https://github.com/huggingface/transformers/blob/57bb6db6ee4cfaccc45b8d474dfad5a17811ca60/src/transformers/loss/loss_utils.py#L92).
+transformers の [ForSequenceClassificationLoss](https://github.com/huggingface/transformers/blob/57bb6db6ee4cfaccc45b8d474dfad5a17811ca60/src/transformers/loss/loss_utils.py#L92) と整合するように実装されています。
 
-### Affine Score Calibration
+### アフィンによるスコア較正 { #affine-score-calibration }
 
-Affine Score Calibration, also known as [Platt Scaling](https://en.wikipedia.org/wiki/Platt_scaling) (Platt, 1999), is the most widely used method for calibrating classifier outputs into well-calibrated probabilities.
+アフィンによるスコア較正は [Platt スケーリング](https://en.wikipedia.org/wiki/Platt_scaling)（Platt, 1999）としても知られ、分類器の出力を適切に較正された確率へ変換する方法として最も広く使われています。
 
-The calibration follows the transformation:
+較正は次の変換に従います。
 
 `activation((logit - logit_mean) / logit_sigma)`
 
-| Parameter | Default | Description |
+| パラメータ | 既定値 | 説明 |
 | --------- | ------- | ----------- |
-| `logit_mean` | `None` | Mean subtracted from logits (centers scores) |
-| `logit_sigma` | `None` | Standard deviation used to scale logits after mean subtraction |
+| `logit_mean` | `None` | logits から引く平均（スコアを中心化します） |
+| `logit_sigma` | `None` | 平均を引いたあとの logits をスケーリングするための標準偏差 |
 
-The computation order is as follows:
+計算の順序は次のとおりです。
 
 ```python
 logits -= logit_mean   # subtract mean (center scores)
@@ -287,14 +286,14 @@ logits /= logit_sigma  # divide by sigma (scale)
 logits = activation(logits)  # e.g. sigmoid
 ```
 
-Example configuration:
+設定例:
 
 ```bash
 --pooler-config '{"use_activation": true, "logit_mean": 4.5, "logit_sigma": 1.0}'
 ```
 
-## Removed Features
+## 削除された機能 { #removed-features }
 
-### Remove softmax from PoolingParams
+### PoolingParams からの softmax の削除 { #remove-softmax-from-poolingparams }
 
-We have already removed `softmax` and `activation` from PoolingParams. Instead, use `use_activation`, since we allow `classify` and `token_classify` to use any activation function.
+`softmax` と `activation` はすでに PoolingParams から削除されています。`classify` と `token_classify` では任意の活性化関数を使えるようにしたため、代わりに `use_activation` を使ってください。

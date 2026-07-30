@@ -1,18 +1,18 @@
-# KV Offloading Usage Guide
+# KV オフロード利用ガイド { #kv-offloading-usage-guide }
 
-This guide covers configuration of the [`OffloadingConnector`](disagg_prefill.md), which extends the prefix cache by offloading completed KV blocks to slower but larger tiers (CPU host memory, plus optional secondary tiers) as they are produced. Hits in the offload tiers are promoted back to GPU on demand. Transfers between GPU and CPU use DMA (`cudaMemcpyAsync`) and run asynchronously alongside model computation, so offloading adds minimal CPU- and GPU-core overhead.
+このガイドでは、[`OffloadingConnector`](disagg_prefill.md) の設定について説明します。このコネクタは、完成した KV ブロックを生成のたびに、より低速だが容量の大きい階層（CPU のホストメモリと、任意の二次階層）へオフロードすることで、プレフィックスキャッシュを拡張します。オフロード階層でヒットしたブロックは、必要に応じて GPU へ引き上げられます。GPU と CPU の間の転送には DMA（`cudaMemcpyAsync`）が使われ、モデルの計算と並行して非同期に実行されるため、オフロードによる CPU / GPU コアのオーバーヘッドはごくわずかです。
 
 !!! note
-    The `OffloadingConnector` currently supports CUDA, ROCm, and XPU only.
+    `OffloadingConnector` は現時点で CUDA、ROCm、XPU のみをサポートしています。
 
-## Overview
+## 概要 { #overview }
 
-Two specs are available, selected by the `spec_name` key in `kv_connector_extra_config`:
+`kv_connector_extra_config` の `spec_name` キーで選択できる spec が 2 つあります。
 
-- `CPUOffloadingSpec` (default): single CPU tier. Completed GPU blocks are copied into pinned host memory.
-- `TieringOffloadingSpec`: multi-tier. A CPU primary tier plus one or more secondary tiers.
+- `CPUOffloadingSpec`（既定）: 単一の CPU 階層。完成した GPU のブロックが pinned なホストメモリにコピーされます。
+- `TieringOffloadingSpec`: 多階層。CPU の一次階層に加えて、1 つ以上の二次階層を持ちます。
 
-Only the CPU primary tier has direct GPU access. Secondary tiers cannot read from or write to GPU memory; all GPU↔secondary transfers are staged through the CPU primary tier.
+GPU に直接アクセスできるのは CPU の一次階層だけです。二次階層は GPU メモリを読み書きできず、GPU と二次階層の間の転送はすべて CPU の一次階層を経由します。
 
 ```mermaid
 flowchart LR
@@ -22,7 +22,7 @@ flowchart LR
     CPU <--> SN["..."]
 ```
 
-## Single-Tier Setup (CPU Only)
+## 単一階層の構成（CPU のみ） { #single-tier-setup-cpu-only }
 
 ```bash
 vllm serve <model> \
@@ -36,9 +36,9 @@ vllm serve <model> \
   }'
 ```
 
-## Multi-Tier Setup
+## 多階層の構成 { #multi-tier-setup }
 
-Set `spec_name` to `"TieringOffloadingSpec"` and supply a `secondary_tiers` list. Each entry is a dict with a required `type` key plus tier-specific fields. The list is ordered: tier 0 is consulted before tier 1, and so on. See [Secondary Tiers](#secondary-tiers) for tier-specific keys.
+`spec_name` を `"TieringOffloadingSpec"` に設定し、`secondary_tiers` のリストを指定します。各エントリは、必須の `type` キーと階層固有のフィールドを持つ辞書です。このリストには順序があり、階層 0 が階層 1 より先に参照されます。階層固有のキーについては[二次階層](#secondary-tiers)を参照してください。
 
 ```bash
 vllm serve <model> \
@@ -62,49 +62,49 @@ vllm serve <model> \
   }'
 ```
 
-## `kv_connector_extra_config` Reference
+## `kv_connector_extra_config` のリファレンス { #kv_connector_extra_config-reference }
 
-| Key | Required | Default | Scope | Notes |
+| キー | 必須 | 既定値 | 適用範囲 | 備考 |
 | --- | --- | --- | --- | --- |
-| `spec_name` | no | `CPUOffloadingSpec` | both | Set to `TieringOffloadingSpec` for multi-tier. |
-| `cpu_bytes_to_use` | yes | — | both | Total bytes of host memory reserved for the CPU tier across all workers (not per-worker). |
-| `block_size` | no | GPU block size | both | Offloaded block size in tokens; must be a multiple of the GPU block size. |
-| `eviction_policy` | no | `lru` | both | Primary tier policy: `lru` or `arc`. |
-| `store_threshold` | no | `0` | single-tier | Min lookups before a block is offloaded. Values ≥ 2 are rejected by `TieringOffloadingSpec`. |
-| `max_tracker_size` | no | `64000` | single-tier | Max entries in the lookup tracker. |
-| `secondary_tiers` | no | `[]` | multi-tier | List of secondary tier configs (see below). |
-| `offload_prompt_only` | no | `true` | both | If `true`, only prompt (prefill) blocks are offloaded; decode blocks are skipped. |
-| `self_describing_kv_events` | no | `false` | single-tier | Opt-in. When `true` *and* KV cache events are enabled (`--kv-events-config` with `enable_kv_cache_events`), the connector emits self-describing block-granular `BlockStored`/`BlockRemoved` payloads (constituent block hashes, whole-chunk `token_ids`, per-block `block_size`, parent hash, LoRA + group/cache-spec metadata) instead of the placeholder fallback, so external KV-event consumers can index offloaded blocks. Inert unless events are enabled. Currently rejected by `TieringOffloadingSpec`. Full-attention groups only; sliding-window/SSM groups keep the placeholder fallback. In chunk mode (`block_size` > GPU block size), overlapping chunks re-announce shared per-block hashes, so consumers must reference-count (deduplicate) repeated store/remove announcements. |
-| `spec_module_path` | no | — | both | Python import path for a custom `OffloadingSpec` not in the built-in registry. Required only when `spec_name` is not built-in (advanced). |
+| `spec_name` | いいえ | `CPUOffloadingSpec` | 両方 | 多階層にするには `TieringOffloadingSpec` を設定します。 |
+| `cpu_bytes_to_use` | はい | — | 両方 | CPU 階層のために確保するホストメモリの総バイト数（全ワーカー合計であり、ワーカーごとではありません）。 |
+| `block_size` | いいえ | GPU のブロックサイズ | 両方 | オフロードするブロックのサイズ（トークン単位）。GPU のブロックサイズの倍数である必要があります。 |
+| `eviction_policy` | いいえ | `lru` | 両方 | 一次階層のポリシー: `lru` または `arc`。 |
+| `store_threshold` | いいえ | `0` | 単一階層 | ブロックがオフロードされるまでに必要な最小の参照回数。2 以上の値は `TieringOffloadingSpec` では拒否されます。 |
+| `max_tracker_size` | いいえ | `64000` | 単一階層 | 参照トラッカーの最大エントリ数。 |
+| `secondary_tiers` | いいえ | `[]` | 多階層 | 二次階層の設定のリスト（後述）。 |
+| `offload_prompt_only` | いいえ | `true` | 両方 | `true` の場合、プロンプト（プレフィル）のブロックのみがオフロードされ、デコードのブロックはスキップされます。 |
+| `self_describing_kv_events` | いいえ | `false` | 単一階層 | オプトインの設定です。`true` で*かつ* KV キャッシュイベントが有効（`--kv-events-config` の `enable_kv_cache_events`）な場合、コネクタはプレースホルダーのフォールバックではなく、自己記述的でブロック粒度の `BlockStored` / `BlockRemoved` のペイロード（構成ブロックのハッシュ、チャンク全体の `token_ids`、ブロックごとの `block_size`、親のハッシュ、LoRA およびグループ / キャッシュ spec のメタデータ）を発行します。これにより、外部の KV イベント consumer がオフロード済みブロックを索引できます。イベントが有効でない限り何も起こりません。現時点では `TieringOffloadingSpec` では拒否されます。full attention のグループのみが対象で、sliding-window / SSM のグループはプレースホルダーのフォールバックのままです。チャンクモード（`block_size` が GPU のブロックサイズより大きい場合）では、重なり合うチャンクが共有のブロックごとハッシュを再度通知するため、consumer 側で繰り返しの保存 / 削除の通知を参照カウント（重複排除）する必要があります。 |
+| `spec_module_path` | いいえ | — | 両方 | 組み込みのレジストリにないカスタムの `OffloadingSpec` の Python の import パス。`spec_name` が組み込みでない場合にのみ必要です（上級者向け）。 |
 
-## Secondary Tiers
+## 二次階層 { #secondary-tiers }
 
-Each entry in `secondary_tiers` is a dict with a required `type` field plus tier-specific fields.
+`secondary_tiers` の各エントリは、必須の `type` フィールドと階層固有のフィールドを持つ辞書です。
 
-The filesystem and object-store tiers can publish hash-only `BlockStored` KV events for blocks they successfully store, tagged with a stable per-tier `medium` (`FS` for the filesystem tier, `OBJ` for the object-store tier). Set `enable_kv_events: true` in the tier's entry to opt in; events are published only when KV cache events are also enabled globally via `--kv-events-config`.
+ファイルシステム階層とオブジェクトストア階層は、正常に保存したブロックについて、階層ごとに安定した `medium`（ファイルシステム階層は `FS`、オブジェクトストア階層は `OBJ`）を付けたハッシュのみの `BlockStored` の KV イベントを発行できます。オプトインするには、その階層のエントリで `enable_kv_events: true` を設定します。イベントが発行されるのは、`--kv-events-config` によって KV キャッシュイベントが全体としても有効になっている場合のみです。
 
-Set the optional `locality` tier field to `LOCAL` or `REMOTE` to describe the tier's storage location relative to the publishing vLLM instance. `LOCAL` marks storage local to that instance, while `REMOTE` marks storage that is not local to it. When the setting is omitted, locality is unspecified. vLLM does not infer it from the tier type, so an OBJ tier is not implicitly `REMOTE`. A KV event includes `locality` only when the tier explicitly configures it. This metadata describes the tier property without implying that a consumer can already route requests to its blocks.
+任意の `locality` フィールドに `LOCAL` または `REMOTE` を設定すると、発行元の vLLM インスタンスから見たその階層のストレージの位置を表せます。`LOCAL` はそのインスタンスにとってローカルなストレージを、`REMOTE` はローカルでないストレージを表します。この設定を省略した場合、locality は未指定になります。vLLM は階層の種類からこれを推測しないため、OBJ の階層が暗黙に `REMOTE` になることはありません。KV イベントに `locality` が含まれるのは、その階層で明示的に設定した場合のみです。このメタデータは階層の性質を表すだけで、consumer がすでにそのブロックへリクエストをルーティングできることを意味するものではありません。
 
-### Filesystem (FS)
+### ファイルシステム（FS） { #filesystem-fs }
 
-The filesystem tier (`type: "fs"`) writes blocks to a filesystem directory.
+ファイルシステム階層（`type: "fs"`）は、ブロックをファイルシステムのディレクトリに書き込みます。
 
-| Key | Required | Default | Notes |
+| キー | 必須 | 既定値 | 備考 |
 | --- | --- | --- | --- |
-| `type` | yes | — | Must be `fs`. |
-| `root_dir` | yes | — | Base directory; vLLM creates subdirectories beneath it (see [On-Disk Layout](#on-disk-layout)). |
-| `n_read_threads` | no | `16` | Read-priority I/O threads (load path). |
-| `n_write_threads` | no | `16` | Write-priority I/O threads (store path). |
-| `enable_kv_events` | no | `false` | Publish `BlockStored` KV events (medium `FS`) for successfully stored blocks. Requires KV cache events to be enabled globally. |
-| `locality` | no | unspecified | `LOCAL` or `REMOTE` relative to the publishing vLLM instance. Included in the tier's KV events only when explicitly configured. |
+| `type` | はい | — | `fs` である必要があります。 |
+| `root_dir` | はい | — | ベースとなるディレクトリ。vLLM はその下にサブディレクトリを作成します（[ディスク上のレイアウト](#on-disk-layout)を参照）。 |
+| `n_read_threads` | いいえ | `16` | 読み取り優先の I/O スレッド数（読み込み経路）。 |
+| `n_write_threads` | いいえ | `16` | 書き込み優先の I/O スレッド数（保存経路）。 |
+| `enable_kv_events` | いいえ | `false` | 正常に保存したブロックについて `BlockStored` の KV イベント（medium は `FS`）を発行します。KV キャッシュイベントが全体で有効になっている必要があります。 |
+| `locality` | いいえ | 未指定 | 発行元の vLLM インスタンスから見た `LOCAL` または `REMOTE`。明示的に設定した場合のみ、その階層の KV イベントに含まれます。 |
 
-Each thread group prefers its own queue but pulls from the other when its primary queue is empty, so a write-heavy or read-heavy burst won't leave the off-priority queue waiting. Size the totals to your storage's effective concurrency.
+各スレッドグループは自分のキューを優先しますが、自分のキューが空のときはもう一方から取ってきます。そのため、書き込みや読み取りが集中しても、優先度の低い側のキューが待たされたままにはなりません。合計スレッド数は、ストレージが実際に処理できる並行度に合わせて設定してください。
 
-#### On-Disk Layout
+#### ディスク上のレイアウト { #on-disk-layout }
 
-Under `root_dir`, vLLM creates a subdirectory `<model>_<digest>`, where `<model>` is the model name with `/` replaced by `_` (so HuggingFace IDs like `meta-llama/Llama-3-8B` don't nest), and `<digest>` is a short SHA256 prefix derived from the run configuration (model, block size, parallelism, dtype, etc.). Runs with the same configuration share the same subdirectory; runs with different configurations live side-by-side under the same `root_dir` without colliding.
+`root_dir` の下に、vLLM は `<model>_<digest>` というサブディレクトリを作成します。`<model>` はモデル名の `/` を `_` に置き換えたもので（`meta-llama/Llama-3-8B` のような HuggingFace の ID がネストしないようにするため）、`<digest>` は実行時の構成（モデル、ブロックサイズ、並列構成、dtype など）から導かれる短い SHA256 の接頭辞です。同じ構成の実行は同じサブディレクトリを共有し、異なる構成の実行は同じ `root_dir` の下で衝突せずに並存します。
 
-Inside that subdirectory, blocks are sharded across hash-prefix subdirectories to limit directory fan-out:
+そのサブディレクトリ内では、ディレクトリのファンアウトを抑えるため、ブロックがハッシュの接頭辞ごとのサブディレクトリに分散されます。
 
 ```text
 <root_dir>/
@@ -116,85 +116,85 @@ Inside that subdirectory, blocks are sharded across hash-prefix subdirectories t
         <hash_hex>.bin        # full block hash (in hex)
 ```
 
-`config.json` records the run (block size, number of KV groups, etc.) and is written on first start. Each rank writes blocks under its own `_r<rank>` sibling directory, so multiple ranks can safely share the same `root_dir`.
+`config.json` には実行内容（ブロックサイズ、KV グループ数など）が記録され、初回起動時に書き込まれます。各ランクは自分専用の `_r<rank>` という兄弟ディレクトリの下にブロックを書き込むため、複数のランクが同じ `root_dir` を安全に共有できます。
 
-#### Cross-Process Sharing
+#### プロセス間での共有 { #cross-process-sharing }
 
-To enable KV cache sharing between multiple vLLM instances using the same `root_dir` (e.g., via a shared PVC), the `PYTHONHASHSEED` environment variable must be set to the same fixed value (e.g., `"0"`) on every instance. Without this, each process initializes `NONE_HASH` (the chain-hash seed for block content hashes) with random bytes, producing different block filenames for identical token content.
+同じ `root_dir` を使う複数の vLLM インスタンス間で（共有 PVC などを介して）KV キャッシュを共有するには、すべてのインスタンスで環境変数 `PYTHONHASHSEED` を同じ固定値（`"0"` など）に設定する必要があります。設定しない場合、各プロセスが `NONE_HASH`（ブロック内容のハッシュのためのチェーンハッシュのシード）をランダムなバイト列で初期化するため、同一のトークン内容でも異なるブロックのファイル名が生成されてしまいます。
 
 ```bash
 PYTHONHASHSEED=0 vllm serve ...
 ```
 
-### Object Store (OBJ)
+### オブジェクトストア（OBJ） { #object-store-obj }
 
-The object-store tier (`type: "obj"`) offloads blocks to an S3-compatible object store through the NIXL OBJ backend.
+オブジェクトストア階層（`type: "obj"`）は、NIXL の OBJ バックエンドを通じて S3 互換のオブジェクトストアへブロックをオフロードします。
 
-| Key | Required | Default | Notes |
+| キー | 必須 | 既定値 | 備考 |
 | --- | --- | --- | --- |
-| `type` | yes | — | Must be `obj`. |
-| `store_config` | yes | — | Object store connection parameters (see below). |
-| `prefix` | no | `""` | Key prefix prepended to all object keys. |
-| `io_threads` | no | `4` | Number of NIXL OBJ backend I/O threads. |
-| `enable_kv_events` | no | `false` | Publish `BlockStored` KV events (medium `OBJ`) for successfully stored blocks. Requires KV cache events to be enabled globally. |
-| `locality` | no | unspecified | `LOCAL` or `REMOTE` relative to the publishing vLLM instance. Included in the tier's KV events only when explicitly configured; OBJ does not imply `REMOTE`. |
+| `type` | はい | — | `obj` である必要があります。 |
+| `store_config` | はい | — | オブジェクトストアへの接続パラメータ（後述）。 |
+| `prefix` | いいえ | `""` | すべてのオブジェクトキーの先頭に付けるプレフィックス。 |
+| `io_threads` | いいえ | `4` | NIXL の OBJ バックエンドの I/O スレッド数。 |
+| `enable_kv_events` | いいえ | `false` | 正常に保存したブロックについて `BlockStored` の KV イベント（medium は `OBJ`）を発行します。KV キャッシュイベントが全体で有効になっている必要があります。 |
+| `locality` | いいえ | 未指定 | 発行元の vLLM インスタンスから見た `LOCAL` または `REMOTE`。明示的に設定した場合のみ、その階層の KV イベントに含まれます。OBJ であることが `REMOTE` を意味するわけではありません。 |
 
-`store_config` fields:
+`store_config` のフィールド:
 
-| Key | Required | Default | Notes |
+| キー | 必須 | 既定値 | 備考 |
 | --- | --- | --- | --- |
-| `bucket` | yes | — | Bucket name. |
-| `endpoint_override` | yes | — | Object store endpoint host; the URL scheme is set separately via `scheme`. |
-| `scheme` | no | `http` | `http` or `https`. |
-| `access_key`, `secret_key`, `session_token` | no | `""` | Explicit credentials. When left empty, the NIXL OBJ plugin falls back to the AWS SDK default credential provider chain (IAM roles, environment variables, credential files), which enables workload-identity auth on Kubernetes. |
-| `region` | no | `""` | Bucket region, if the endpoint requires one. |
-| `ca_bundle` | no | `""` | CA bundle path for TLS verification. |
+| `bucket` | はい | — | バケット名。 |
+| `endpoint_override` | はい | — | オブジェクトストアのエンドポイントのホスト。URL のスキームは `scheme` で別途指定します。 |
+| `scheme` | いいえ | `http` | `http` または `https`。 |
+| `access_key`、`secret_key`、`session_token` | いいえ | `""` | 明示的な認証情報。空のままにすると、NIXL の OBJ プラグインは AWS SDK の既定の認証情報プロバイダチェーン（IAM ロール、環境変数、認証情報ファイル）にフォールバックします。これにより Kubernetes 上でワークロード ID による認証が可能になります。 |
+| `region` | いいえ | `""` | エンドポイントが要求する場合のバケットのリージョン。 |
+| `ca_bundle` | いいえ | `""` | TLS 検証のための CA バンドルのパス。 |
 
-Object keys follow the same run-configuration digest scheme as the filesystem tier (see [On-Disk Layout](#on-disk-layout)) and are stored under the optional `prefix`. The [Cross-Process Sharing](#cross-process-sharing) requirement (`PYTHONHASHSEED`) applies to shared buckets as well, so instances sharing a bucket produce identical keys for identical content. At startup the tier probes object store connectivity and fails fast with a configuration error if the bucket is unreachable.
+オブジェクトキーは、ファイルシステム階層と同じ実行構成のダイジェスト方式に従い（[ディスク上のレイアウト](#on-disk-layout)を参照）、任意の `prefix` の下に保存されます。[プロセス間での共有](#cross-process-sharing)の要件（`PYTHONHASHSEED`）は共有バケットにも当てはまり、バケットを共有するインスタンスは同一の内容に対して同一のキーを生成します。起動時、この階層はオブジェクトストアへの接続性を確認し、バケットに到達できない場合は設定エラーで即座に失敗します。
 
-### P2P (Including P/D)
+### P2P（P/D を含む） { #p2p-including-pd }
 
-The P2P tier (`type: "p2p"`) shares completed KV blocks between vLLM instances over RDMA via NIXL. Each instance binds a control socket on `host:port` and exchanges blocks directly with peers — no shared filesystem required.
+P2P 階層（`type: "p2p"`）は、NIXL を介した RDMA によって、vLLM インスタンス間で完成した KV ブロックを共有します。各インスタンスは `host:port` に制御用ソケットをバインドし、ピアと直接ブロックをやり取りします。共有ファイルシステムは不要です。
 
-PYTHONHASHSEED environment variable must be set to the same fixed value on all nodes.
+すべてのノードで環境変数 PYTHONHASHSEED を同じ固定値に設定する必要があります。
 
-| Key | Required | Default | Notes |
+| キー | 必須 | 既定値 | 備考 |
 | --- | --- | --- | --- |
-| `type` | yes | — | Must be `p2p`. |
-| `host` | no | `$VLLM_P2P_SIDE_CHANNEL_HOST` (`localhost`) | Address the control socket binds to, used verbatim as the identity peers dial back. When omitted, resolves from the env var below. The `localhost` default binds loopback only — for cross-host P2P you **must** set it to the node's routable IP (see below). |
-| `port` | no | `$VLLM_P2P_SIDE_CHANNEL_PORT` (`5710`) | Base port for the control socket. Must be reachable from peers. The bound port is `base + data_parallel_index` (one socket per DP replica). When omitted, the base resolves from the env var below. |
-| `backends` | no | `["UCX"]` | NIXL transport backends. See [NixlConnector Usage Guide](nixl_connector_usage.md#selecting-a-nixl-transport-backend-plugin) for available backends and selection guidance. |
-| `num_threads` | no | `4` | NIXL agent worker threads. Only used when `backends` is UCX-only; ignored when any non-UCX backend is requested. |
+| `type` | はい | — | `p2p` である必要があります。 |
+| `host` | いいえ | `$VLLM_P2P_SIDE_CHANNEL_HOST`（`localhost`） | 制御用ソケットをバインドするアドレス。ピアが接続し返す際の識別子としてそのまま使われます。省略した場合は後述の環境変数から解決されます。既定の `localhost` はループバックにのみバインドするため、ホストをまたぐ P2P では**必ず**ノードのルーティング可能な IP を設定してください（後述）。 |
+| `port` | いいえ | `$VLLM_P2P_SIDE_CHANNEL_PORT`（`5710`） | 制御用ソケットのベースポート。ピアから到達可能である必要があります。実際にバインドされるポートは `base + data_parallel_index` です（DP レプリカごとに 1 ソケット）。省略した場合、ベース値は後述の環境変数から解決されます。 |
+| `backends` | いいえ | `["UCX"]` | NIXL のトランスポートバックエンド。利用可能なバックエンドと選択の指針は [NixlConnector 利用ガイド](nixl_connector_usage.md#selecting-a-nixl-transport-backend-plugin)を参照してください。 |
+| `num_threads` | いいえ | `4` | NIXL エージェントのワーカースレッド数。`backends` が UCX のみの場合にだけ使われ、UCX 以外のバックエンドが指定されている場合は無視されます。 |
 
-The `backends` and `num_threads` options mirror the conditional logic used by [`NixlConnector`](nixl_connector_usage.md#selecting-a-nixl-transport-backend-plugin): when any non-UCX backend is configured, NIXL is initialised with `backends=...`; otherwise it falls back to a UCX-only agent with the configured `num_threads`. This lets the P2P tier use a different transport (e.g. `MOONCAKE`, `GDS_MT`, `LIBFABRIC`) than the main `NixlConnector` running in the same process.
+`backends` と `num_threads` のオプションは、[`NixlConnector`](nixl_connector_usage.md#selecting-a-nixl-transport-backend-plugin) が使う条件分岐と同じ挙動になります。UCX 以外のバックエンドが設定されている場合、NIXL は `backends=...` で初期化されます。そうでない場合は、設定された `num_threads` を持つ UCX のみのエージェントにフォールバックします。これにより、P2P 階層は同じプロセスで動作するメインの `NixlConnector` とは異なるトランスポート（`MOONCAKE`、`GDS_MT`、`LIBFABRIC` など）を使えます。
 
-#### Environment Variables
+#### 環境変数 { #environment-variables }
 
-Rather than embedding `host`/`port` in each `secondary_tiers` entry, set them once at deploy time via environment variables (mirroring `VLLM_NIXL_SIDE_CHANNEL_HOST`/`VLLM_NIXL_SIDE_CHANNEL_PORT`). Explicit `host`/`port` config keys, when present, take precedence.
+`secondary_tiers` の各エントリに `host` / `port` を埋め込む代わりに、デプロイ時に環境変数で一度だけ設定できます（`VLLM_NIXL_SIDE_CHANNEL_HOST` / `VLLM_NIXL_SIDE_CHANNEL_PORT` と同様）。設定に明示的な `host` / `port` のキーがある場合はそちらが優先されます。
 
-- `VLLM_P2P_SIDE_CHANNEL_HOST` (default `localhost`): address the P2P control socket binds to. It is used **verbatim** as both the bind address and the identity peers dial back — there is no auto-detection (this mirrors `VLLM_NIXL_SIDE_CHANNEL_HOST`). The default binds the loopback interface only, so peers on another host cannot reach it. **For any cross-host P2P deployment you must set this explicitly to the node's routable IP** (e.g. the pod IP) before launching `vllm serve` — otherwise remote peers will fail to connect. The NIXL agent name is a separate per-process identifier, so peers sharing a `host:port` never collide.
-- `VLLM_P2P_SIDE_CHANNEL_PORT` (default `5710`): base port for the P2P control socket. The port actually bound is `VLLM_P2P_SIDE_CHANNEL_PORT + data_parallel_index` — one socket per DP replica, matching NIXL (for DP=1 the offset is 0). The peer's port is passed as `remote_port` in `kv_transfer_params`; the router/EPP that selects the DP rank (e.g. via the `X-data-parallel-rank` header) computes `remote_port = base + rank`. The DP-index offset separates replicas *within* one deployment; two co-located *deployments* (a prefiller and a decoder on the same host) still need distinct base ports (e.g. decoder base `5711`) to avoid a bind collision.
+- `VLLM_P2P_SIDE_CHANNEL_HOST`（既定 `localhost`）: P2P の制御用ソケットがバインドするアドレス。バインドアドレスとしても、ピアが接続し返す識別子としても**そのまま**使われ、自動検出は行われません（`VLLM_NIXL_SIDE_CHANNEL_HOST` と同じ挙動です）。既定ではループバックインターフェースにのみバインドするため、別ホストのピアからは到達できません。**ホストをまたぐ P2P のデプロイでは、`vllm serve` を起動する前に、ノードのルーティング可能な IP（Pod の IP など）を明示的に設定してください。** そうしないとリモートのピアは接続に失敗します。NIXL のエージェント名はプロセスごとの別の識別子であるため、`host:port` を共有するピア同士が衝突することはありません。
+- `VLLM_P2P_SIDE_CHANNEL_PORT`（既定 `5710`）: P2P の制御用ソケットのベースポート。実際にバインドされるポートは `VLLM_P2P_SIDE_CHANNEL_PORT + data_parallel_index` で、NIXL と同様に DP レプリカごとに 1 ソケットとなります（DP=1 の場合オフセットは 0）。ピアのポートは `kv_transfer_params` の `remote_port` として渡されます。DP ランクを選択するルーター / EPP（`X-data-parallel-rank` ヘッダーなど）が `remote_port = base + rank` を計算します。DP インデックスのオフセットは 1 つのデプロイ*内*のレプリカを区別するものです。同じホストに配置された 2 つの*デプロイ*（プレフィル側とデコード側）では、バインドの衝突を避けるために別々のベースポート（デコード側は `5711` など）が必要です。
 
-## Tuning Tips
+## チューニングのヒント { #tuning-tips }
 
-- `cpu_bytes_to_use`: a bigger CPU tier means fewer trips to slower secondary tiers and a higher hit rate. The value is total across all workers, not per-worker. Leave headroom for the rest of the host workload.
-- For single-tier (CPU-only) setups, set `cpu_bytes_to_use` larger than the aggregate GPU KV cache. Because offloading is immediate, a smaller CPU tier just mirrors what the GPU already holds and adds no hit rate.
-- `block_size`: larger offloaded blocks reduce per-block bookkeeping overhead but increase the granularity of lookups. Must be a multiple of the GPU block size.
-- FS thread counts: tune `n_read_threads` and `n_write_threads` to the parallelism your storage can sustain. Reads are latency-sensitive on the prefill path, so prefer more read threads when prefill hit rates are high.
-- Sharing `root_dir` across runs: runs with the same model, `block_size`, parallelism layout, and dtype share files under the same `<digest>` subdirectory. Changing any of these produces a new subdirectory; old ones are orphaned but harmless. Delete them to reclaim disk.
+- `cpu_bytes_to_use`: CPU 階層を大きくすると、より遅い二次階層へのアクセスが減り、ヒット率が上がります。この値は全ワーカーの合計であり、ワーカーごとではありません。ホスト上の他のワークロードのために余裕を残してください。
+- 単一階層（CPU のみ）の構成では、`cpu_bytes_to_use` を GPU の KV キャッシュの合計より大きく設定してください。オフロードは即座に行われるため、CPU 階層が小さいと GPU がすでに保持している内容を写すだけになり、ヒット率は向上しません。
+- `block_size`: オフロードするブロックを大きくすると、ブロックごとの管理オーバーヘッドは減りますが、参照の粒度は粗くなります。GPU のブロックサイズの倍数である必要があります。
+- FS のスレッド数: `n_read_threads` と `n_write_threads` を、ストレージが維持できる並行度に合わせて調整してください。プレフィル経路での読み取りはレイテンシに敏感なので、プレフィルのヒット率が高い場合は読み取りスレッドを多めにするとよいでしょう。
+- 実行間での `root_dir` の共有: モデル、`block_size`、並列構成、dtype が同じ実行は、同じ `<digest>` のサブディレクトリの下でファイルを共有します。いずれかを変更すると新しいサブディレクトリが作られ、古いものは孤立しますが害はありません。ディスクを取り戻すには削除してください。
 
-## Per-Request Selective Offload
+## リクエストごとの選択的オフロード { #per-request-selective-offload }
 
-Individual requests can cap how many of their tokens are eligible for offload by setting `max_offload_tokens` in the request's `kv_transfer_params`. Only the first `max_offload_tokens` tokens of the request are offloaded; blocks beyond that point are skipped on the store path. This is useful when a known prefix (e.g., a system prompt or shared context) is worth caching but later request-specific tokens are not.
+個々のリクエストは、`kv_transfer_params` に `max_offload_tokens` を設定することで、オフロード対象となるトークン数の上限を指定できます。オフロードされるのはリクエストの先頭から `max_offload_tokens` トークンまでで、それ以降のブロックは保存経路でスキップされます。これは、既知のプレフィックス（システムプロンプトや共有コンテキストなど）はキャッシュする価値があるが、その後のリクエスト固有のトークンはそうでない、という場合に有用です。
 
-| Key | Type | Notes |
+| キー | 型 | 備考 |
 | --- | --- | --- |
-| `max_offload_tokens` | non-negative `int` | Upper bound on tokens to offload for this request. `0` disables offload for the request entirely; omit the key (or set to `None`) for no cap. Non-`int`, negative, or `bool` values are rejected with a warning and treated as no cap. |
+| `max_offload_tokens` | 非負の `int` | このリクエストでオフロードするトークン数の上限。`0` にするとそのリクエストのオフロードが完全に無効になります。上限を設けない場合はキーを省略します（または `None` を設定します）。`int` 以外、負の値、`bool` の値は警告とともに拒否され、上限なしとして扱われます。 |
 
 !!! note
-    `max_offload_tokens` is experimental and subject to change.
+    `max_offload_tokens` は実験的な機能であり、変更される可能性があります。
 
-Example (OpenAI-compatible completions request):
+例（OpenAI 互換の completions リクエスト）:
 
 ```json
 {
@@ -206,6 +206,6 @@ Example (OpenAI-compatible completions request):
 }
 ```
 
-## Further Reading
+## さらに読む { #further-reading }
 
-- [vLLM blog: KV Offloading Connector](https://vllm.ai/blog/2026-01-08-kv-offloading-connector) — motivation, architecture (DMA-based async transfer), and benchmarks (TTFT and throughput).
+- [vLLM blog: KV Offloading Connector](https://vllm.ai/blog/2026-01-08-kv-offloading-connector) — 動機、アーキテクチャ（DMA ベースの非同期転送）、ベンチマーク（TTFT とスループット）。

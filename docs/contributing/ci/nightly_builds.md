@@ -1,46 +1,43 @@
-# Nightly Builds of vLLM Wheels
+# vLLM wheel の nightly ビルド { #nightly-builds-of-vllm-wheels }
 
-vLLM maintains a per-commit wheel repository (commonly referred to as "nightly") at `https://wheels.vllm.ai` that provides pre-built wheels for every commit on the `main` branch since `v0.5.3`. This document explains how the nightly wheel index mechanism works.
+vLLM は `https://wheels.vllm.ai` にコミットごとの wheel リポジトリ（一般に「nightly」と呼ばれます）を用意しており、`v0.5.3` 以降の `main` ブランチのすべてのコミットについてビルド済み wheel を提供しています。このドキュメントでは、nightly wheel のインデックスの仕組みを説明します。
 
-## Build and Upload Process on CI
+## CI におけるビルドとアップロードの流れ { #build-and-upload-process-on-ci }
 
-### Wheel Building
+### wheel のビルド { #wheel-building }
 
-Wheels are built in the `Release` pipeline
-(`.buildkite/release-pipeline.yaml`) after a PR is merged into the main branch.
-Regular builds produce the CUDA 13.0 wheels for x86_64 and aarch64. Additional
-wheel variants and ROCm builds can be unblocked on demand and run automatically
-when `NIGHTLY=1`:
+wheel は、PR が main ブランチにマージされたあと `Release` パイプライン（`.buildkite/release-pipeline.yaml`）でビルドされます。通常のビルドでは、x86_64 と aarch64 向けの CUDA 13.0 wheel が生成されます。追加の wheel バリアントと ROCm ビルドは必要に応じてブロック解除でき、`NIGHTLY=1` の場合は自動的に実行されます。
 
-- **Backend variants**: `cpu` and `cuXXX` (e.g., `cu129`, `cu130`).
-- **Architecture variants**: `x86_64` and `aarch64`.
+- **バックエンドのバリアント**: `cpu` と `cuXXX`（`cu129`、`cu130` など）
+- **アーキテクチャのバリアント**: `x86_64` と `aarch64`
 
-Each build step:
+各ビルドステップでは次のことを行います。
 
-1. Builds the wheel in a Docker container.
-2. Renames the wheel filename to use the correct manylinux tag (currently `manylinux_2_28`) for PEP 600 compliance.
-3. Uploads the wheel to S3 bucket `vllm-wheels` under `/{commit_hash}/`.
+1. Docker コンテナ内で wheel をビルドする。
+2. PEP 600 に準拠するため、wheel のファイル名を正しい manylinux タグ（現在は `manylinux_2_28`）に変更する。
+3. wheel を S3 バケット `vllm-wheels` の `/{commit_hash}/` にアップロードする。
 
-### Index Generation
+### インデックスの生成 { #index-generation }
 
-After uploading each wheel, the `.buildkite/scripts/upload-wheels.sh` script:
+各 wheel のアップロード後、`.buildkite/scripts/upload-wheels.sh` スクリプトは次のことを行います。
 
-1. **Lists all existing wheels** in the commit directory from S3
-2. **Generates indices** using `.buildkite/scripts/generate-nightly-index.py`:
-    - Parses wheel filenames to extract metadata (version, variant, platform tags).
-    - Creates HTML index files (`index.html`) for PyPI compatibility.
-    - Generates machine-readable `metadata.json` files.
-3. **Uploads indices** to multiple locations (overriding existing ones):
-    - `/{commit_hash}/` - Always uploaded for commit-specific access.
-    - `/nightly/` - Only for commits on `main` branch (not PRs).
-    - `/{version}/` - Only for release wheels (no `dev` in its version).
+1. **既存のすべての wheel を一覧表示**する（S3 上のそのコミットのディレクトリから）
+2. `.buildkite/scripts/generate-nightly-index.py` を使って**インデックスを生成**する:
+    - wheel のファイル名を解析してメタデータ（バージョン、バリアント、プラットフォームタグ）を抽出する。
+    - PyPI 互換のための HTML インデックスファイル（`index.html`）を作成する。
+    - 機械可読な `metadata.json` ファイルを生成する。
+3. **インデックスを複数の場所にアップロード**する（既存のものは上書き）:
+    - `/{commit_hash}/` - コミット単位でアクセスできるよう常にアップロードされます。
+    - `/nightly/` - `main` ブランチのコミットの場合のみ（PR は対象外）。
+    - `/{version}/` - リリース用 wheel（バージョンに `dev` を含まないもの）の場合のみ。
 
-!!! tip "Handling Concurrent Builds"
-    The index generation script can handle multiple variants being built concurrently by always listing all wheels in the commit directory before generating indices, avoiding race conditions.
+!!! tip "同時ビルドへの対応"
+    インデックス生成スクリプトは、インデックスを生成する前に必ずそのコミットのディレクトリにある
+    すべての wheel を一覧表示するため、複数のバリアントが同時にビルドされても競合状態を避けられます。
 
-## Directory Structure
+## ディレクトリ構造 { #directory-structure }
 
-The S3 bucket structure follows this pattern:
+S3 バケットの構造は次のパターンに従います。
 
 ```text
 s3://vllm-wheels/
@@ -62,103 +59,101 @@ s3://vllm-wheels/
 └── {version}/                  # Release version indices (e.g., 0.11.2)
 ```
 
-All built wheels are stored in `/{commit_hash}/`, while different indices are generated and reference them.
-This avoids duplication of wheel files.
+ビルドされた wheel はすべて `/{commit_hash}/` に格納され、さまざまなインデックスが生成されてそれらを参照します。これにより wheel ファイルの重複を避けられます。
 
-For example, you can specify the following URLs to use different indices:
+たとえば、次のような URL を指定して異なるインデックスを使えます。
 
-- `https://wheels.vllm.ai/nightly/cu130` for the latest main branch wheels built with CUDA 13.0.
-- `https://wheels.vllm.ai/{commit_hash}` for wheels built at a specific commit (default variant).
-- `https://wheels.vllm.ai/0.12.0/cpu` for 0.12.0 release wheels built for CPU variant.
+- `https://wheels.vllm.ai/nightly/cu130` — CUDA 13.0 でビルドされた最新の main ブランチの wheel
+- `https://wheels.vllm.ai/{commit_hash}` — 特定コミットでビルドされた wheel（既定のバリアント）
+- `https://wheels.vllm.ai/0.12.0/cpu` — CPU バリアント向けにビルドされた 0.12.0 リリースの wheel
 
-Please note that not all variants are present on every commit. The available variants are subject to change over time, e.g., changing cu130 to cu131.
+すべてのコミットにすべてのバリアントが存在するわけではない点に注意してください。利用可能なバリアントは、たとえば cu130 が cu131 に変わるなど、時間とともに変化します。
 
-### Variant Organization
+### バリアントの構成 { #variant-organization }
 
-Indices are organized by variant:
+インデックスはバリアントごとに整理されます。
 
-- **Default variant**: Wheels without variant suffix (i.e., built with the current `VLLM_MAIN_CUDA_VERSION`) are placed in the root.
-- **Variant subdirectories**: Wheels with variant suffixes (e.g., `+cu130`, `.cpu`) are organized in subdirectories.
-- **Alias to default**: The default variant can have an alias (e.g., `cu129` for now) for consistency and convenience.
+- **既定のバリアント**: バリアントの接尾辞がない wheel（つまり現在の `VLLM_MAIN_CUDA_VERSION` でビルドされたもの）はルートに置かれます。
+- **バリアントのサブディレクトリ**: バリアントの接尾辞（`+cu130`、`.cpu` など）を持つ wheel はサブディレクトリに整理されます。
+- **既定バリアントのエイリアス**: 一貫性と利便性のため、既定のバリアントにはエイリアス（現時点では `cu129` など）を設けられます。
 
-The variant is extracted from the wheel filename (as described in the [file name convention](https://packaging.python.org/en/latest/specifications/binary-distribution-format/#file-name-convention)):
+バリアントは wheel のファイル名から抽出されます（[ファイル名の規約](https://packaging.python.org/en/latest/specifications/binary-distribution-format/#file-name-convention)を参照）。
 
-- The variant is encoded in the local version identifier (e.g. `+cu129` or `dev<N>+g<hash>.cu130`).
-- Examples:
-    - `vllm-0.11.2.dev278+gdbc3d9991-cp38-abi3-manylinux1_x86_64.whl` → default variant
-    - `vllm-0.10.2rc2+cu129-cp38-abi3-manylinux2014_aarch64.whl` → `cu129` variant
-    - `vllm-0.11.1rc8.dev14+gaa384b3c0.cu130-cp38-abi3-manylinux1_x86_64.whl` → `cu130` variant
+- バリアントはローカルバージョン識別子にエンコードされます（`+cu129` や `dev<N>+g<hash>.cu130` など）。
+- 例:
+    - `vllm-0.11.2.dev278+gdbc3d9991-cp38-abi3-manylinux1_x86_64.whl` → 既定のバリアント
+    - `vllm-0.10.2rc2+cu129-cp38-abi3-manylinux2014_aarch64.whl` → `cu129` バリアント
+    - `vllm-0.11.1rc8.dev14+gaa384b3c0.cu130-cp38-abi3-manylinux1_x86_64.whl` → `cu130` バリアント
 
-## Index Generation Details
+## インデックス生成の詳細 { #index-generation-details }
 
-The `generate-nightly-index.py` script performs the following:
+`generate-nightly-index.py` スクリプトは次のことを行います。
 
-1. **Parses wheel filenames** using regex to extract:
-    - Package name
-    - Version (with variant extracted)
-    - Python tag, ABI tag, platform tag
-    - Build tag (if present)
-2. **Groups wheels by variant**, then by package name:
-    - Currently only `vllm` is built, but the structure supports multiple packages in the future.
-3. **Generates HTML indices** (compliant with the [Simple repository API](https://packaging.python.org/en/latest/specifications/simple-repository-api/#simple-repository-api)):
-    - Top-level `index.html`: Lists all packages and variant subdirectories
-    - Package-level `index.html`: Lists all wheel files for that package
-    - Uses relative paths to wheel files for portability
-4. **Generates metadata.json**:
-    - Machine-readable JSON containing all wheel metadata
-    - Includes `path` field with URL-encoded relative path to wheel file
-    - Used by `setup.py` to locate compatible pre-compiled wheels during Python-only builds
+1. 正規表現で **wheel のファイル名を解析**し、次を抽出します。
+    - パッケージ名
+    - バージョン（バリアントを抽出したもの）
+    - Python タグ、ABI タグ、プラットフォームタグ
+    - ビルドタグ（存在する場合）
+2. **wheel をバリアントごと、次いでパッケージ名ごとにグループ化**します。
+    - 現時点でビルドされるのは `vllm` のみですが、この構造は将来的な複数パッケージにも対応できます。
+3. **HTML インデックスを生成**します（[Simple repository API](https://packaging.python.org/en/latest/specifications/simple-repository-api/#simple-repository-api) に準拠）。
+    - トップレベルの `index.html`: すべてのパッケージとバリアントのサブディレクトリを列挙します
+    - パッケージレベルの `index.html`: そのパッケージのすべての wheel ファイルを列挙します
+    - 可搬性のため、wheel ファイルへは相対パスを使います
+4. **metadata.json を生成**します。
+    - すべての wheel メタデータを含む機械可読な JSON です
+    - wheel ファイルへの URL エンコード済み相対パスを持つ `path` フィールドを含みます
+    - Python のみのビルド時に、互換性のあるビルド済み wheel を見つけるために `setup.py` が使用します
 
-### Special Handling for AWS Services
+### AWS サービスに関する特別な対応 { #special-handling-for-aws-services }
 
-The wheels and indices are directly stored on AWS S3, and we use AWS CloudFront as a CDN in front of the S3 bucket.
+wheel とインデックスは AWS S3 に直接格納され、S3 バケットの前段の CDN として AWS CloudFront を使っています。
 
-Since S3 does not provide proper directory listing, to support PyPI-compatible simple repository API behavior, we deploy a CloudFront Function that:
+S3 には適切なディレクトリ一覧の機能がないため、PyPI 互換の simple repository API の挙動を実現するために、次のことを行う CloudFront Function をデプロイしています。
 
-- redirects any URL that does not end with `/` and does not look like a file (i.e., does not contain a dot `.` in the last path segment) to the same URL with a trailing `/`
-- appends `/index.html` to any URL that ends with `/`
+- `/` で終わらず、ファイルのように見えない URL（最後のパスセグメントにドット `.` を含まないもの）は、末尾に `/` を付けた同じ URL にリダイレクトする
+- `/` で終わる URL には `/index.html` を付加する
 
-For example, the following requests would be handled as:
+たとえば、次のリクエストは以下のように処理されます。
 
 - `/nightly` -> `/nightly/index.html`
 - `/nightly/cu130/` -> `/nightly/cu130/index.html`
-- `/nightly/index.html` or `/nightly/vllm.whl` -> unchanged
+- `/nightly/index.html` や `/nightly/vllm.whl` -> そのまま
 
-!!! note "AWS S3 Filename Escaping"
+!!! note "AWS S3 のファイル名エスケープ"
 
-    S3 will automatically escape filenames upon upload according to its [naming rule](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html). The direct impact on vllm is that `+` in filenames will be converted to `%2B`. We take special care in the index generation script to escape filenames properly when generating the HTML indices and JSON metadata, to ensure the URLs are correct and can be directly used.
+    S3 はアップロード時に、[命名規則](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html)に従ってファイル名を自動的にエスケープします。vLLM への直接的な影響は、ファイル名中の `+` が `%2B` に変換される点です。インデックス生成スクリプトでは、HTML インデックスと JSON メタデータを生成する際にファイル名を適切にエスケープするよう特別な配慮をしており、URL が正しくそのまま使えるようにしています。
 
-## Usage of precompiled wheels in `setup.py` {#precompiled-wheels-usage}
+## `setup.py` におけるビルド済み wheel の利用 { #precompiled-wheels-usage }
 
-When installing vLLM with `VLLM_USE_PRECOMPILED=1`, the `setup.py` script:
+`VLLM_USE_PRECOMPILED=1` を指定して vLLM をインストールすると、`setup.py` スクリプトは次のことを行います。
 
-1. **Determines wheel location** via `precompiled_wheel_utils.determine_wheel_url()`:
-    - Env var `VLLM_PRECOMPILED_WHEEL_LOCATION` (user-specified URL/path) always takes precedence and skips all other steps.
-    - Determines the variant from `VLLM_MAIN_CUDA_VERSION` (can be overridden with env var `VLLM_PRECOMPILED_WHEEL_VARIANT`); the default variant will also be tried as a fallback.
-    - Determines the _base commit_ (explained later) of this branch (can be overridden with env var `VLLM_PRECOMPILED_WHEEL_COMMIT`).
-2. **Fetches metadata** from `https://wheels.vllm.ai/{commit}/vllm/metadata.json` (for the default variant) or `https://wheels.vllm.ai/{commit}/{variant}/vllm/metadata.json` (for a specific variant).
-3. **Selects compatible wheel** based on:
-    - Package name (`vllm`)
-    - Platform tag (architecture match)
-4. **Downloads and extracts** precompiled artifacts from the wheel:
-    - Native extension modules (`.so` files)
-    - The `vllm-rs` Rust frontend binary
-    - Flash Attention Python modules and Triton/FlashMLA Python files
-5. **Patches package_data** to include extracted files in the installation
+1. `precompiled_wheel_utils.determine_wheel_url()` によって **wheel の場所を決定**します。
+    - 環境変数 `VLLM_PRECOMPILED_WHEEL_LOCATION`（ユーザーが指定した URL / パス）が常に優先され、他のステップはすべてスキップされます。
+    - `VLLM_MAIN_CUDA_VERSION` からバリアントを決定します（環境変数 `VLLM_PRECOMPILED_WHEEL_VARIANT` で上書き可能）。フォールバックとして既定のバリアントも試されます。
+    - このブランチの _ベースコミット_（後述）を決定します（環境変数 `VLLM_PRECOMPILED_WHEEL_COMMIT` で上書き可能）。
+2. `https://wheels.vllm.ai/{commit}/vllm/metadata.json`（既定のバリアントの場合）または `https://wheels.vllm.ai/{commit}/{variant}/vllm/metadata.json`（特定のバリアントの場合）から**メタデータを取得**します。
+3. 次にもとづいて**互換性のある wheel を選択**します。
+    - パッケージ名（`vllm`）
+    - プラットフォームタグ（アーキテクチャの一致）
+4. wheel からビルド済みの成果物を**ダウンロードして展開**します。
+    - ネイティブ拡張モジュール（`.so` ファイル）
+    - `vllm-rs` の Rust フロントエンドのバイナリ
+    - Flash Attention の Python モジュールと Triton / FlashMLA の Python ファイル
+5. 展開したファイルをインストールに含めるため **package_data にパッチを当てます**。
 
-!!! note "What is the base commit?"
+!!! note "ベースコミットとは"
 
-    The base commit is determined by finding the merge-base
-    between the current branch and upstream `main`, ensuring
-    compatibility between source code and precompiled binaries.
+    ベースコミットは、現在のブランチと上流の `main` の merge-base を求めることで決定され、
+    ソースコードとビルド済みバイナリの互換性を担保します。
 
-_Note: it's users' responsibility to ensure there is no native code (e.g., C++ or CUDA) changes before using precompiled wheels._
+_注: ビルド済み wheel を使う前に、ネイティブコード（C++ や CUDA など）に変更がないことを確認するのは利用者の責任です。_
 
-## Implementation Files
+## 実装ファイル { #implementation-files }
 
-Key files involved in the nightly wheel mechanism:
+nightly wheel の仕組みに関わる主要なファイルは次のとおりです。
 
-- **`.buildkite/release-pipeline.yaml`**: CI pipeline that builds wheels
-- **`.buildkite/scripts/upload-wheels.sh`**: Script that uploads wheels and generates indices
-- **`.buildkite/scripts/generate-nightly-index.py`**: Python script that generates PyPI-compatible indices
-- **`setup.py`**: Contains `precompiled_wheel_utils` class for fetching and using precompiled wheels
+- **`.buildkite/release-pipeline.yaml`**: wheel をビルドする CI パイプライン
+- **`.buildkite/scripts/upload-wheels.sh`**: wheel をアップロードし、インデックスを生成するスクリプト
+- **`.buildkite/scripts/generate-nightly-index.py`**: PyPI 互換のインデックスを生成する Python スクリプト
+- **`setup.py`**: ビルド済み wheel の取得と利用を行う `precompiled_wheel_utils` クラスを含みます

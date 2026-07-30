@@ -1,55 +1,61 @@
-# Profiling vLLM
+# vLLM のプロファイリング { #profiling-vllm }
 
 !!! warning
-    Profiling is only intended for vLLM developers and maintainers to understand the proportion of time spent in different parts of the codebase. **vLLM end-users should never turn on profiling** as it will significantly slow down the inference.
+    プロファイリングは、vLLM の開発者とメンテナーがコードベースの各部分に費やされる時間の割合を把握するためのものです。
+    推論が大幅に遅くなるため、**vLLM のエンドユーザーはプロファイリングを有効にすべきではありません**。
 
-!!! tip "Choosing a profiler"
-    - Use **Nsight Systems** for low-overhead, performance-critical profiling.
-    - Use **PyTorch Profiler** for medium-overhead profiling with richer debugging information (e.g., stack traces, memory, shapes). Note that enabling these features adds overhead and is not recommended for benchmarking.
+!!! tip "プロファイラの選択"
+    - オーバーヘッドが小さく、性能が重要なプロファイリングには **Nsight Systems** を使ってください。
+    - スタックトレース、メモリ、形状といったより豊富なデバッグ情報を伴う中程度のオーバーヘッドのプロファイリングには
+      **PyTorch Profiler** を使ってください。これらの機能を有効にするとオーバーヘッドが増えるため、
+      ベンチマーク用途には推奨されません。
 
-## Profile with PyTorch Profiler
+## PyTorch Profiler によるプロファイリング { #profile-with-pytorch-profiler }
 
-We support tracing vLLM workers using different profilers. You can enable profiling by setting the `--profiler-config` flag when launching the server.
+vLLM のワーカーは、さまざまなプロファイラでトレースできます。プロファイリングは、サーバー起動時に `--profiler-config` フラグを設定することで有効にできます。
 
 !!! note
-    The `--profiler-config` flag is available in vLLM v0.13.0 and later. If you are using an earlier version, please upgrade to use this feature.
+    `--profiler-config` フラグは vLLM v0.13.0 以降で利用できます。それより前のバージョンを使っている場合は、
+    この機能を使うためにアップグレードしてください。
 
-To use the `torch.profiler` module, set the `profiler` entry to `'torch'` and `torch_profiler_dir` to the directory where you want to save the traces. Additionally, you can control the profiling content by specifying the following additional arguments in the config:
+`torch.profiler` モジュールを使うには、`profiler` の項目を `'torch'` に、`torch_profiler_dir` をトレースの保存先ディレクトリに設定します。さらに、設定で次の追加引数を指定することで、プロファイリングの内容を制御できます。
 
-- `torch_profiler_record_shapes` to enable recording Tensor Shapes, off by default
-- `torch_profiler_with_memory` to record memory, off by default
-- `torch_profiler_with_stack` to enable recording stack information, on by default
-- `torch_profiler_with_flops` to enable recording FLOPs, off by default
-- `torch_profiler_use_gzip` to control gzip-compressing profiling files, on by default
-- `torch_profiler_dump_cuda_time_total` to control dumping and printing the aggregated CUDA self time table, on by default
+- `torch_profiler_record_shapes`: テンソルの形状の記録を有効にします。既定は無効。
+- `torch_profiler_with_memory`: メモリを記録します。既定は無効。
+- `torch_profiler_with_stack`: スタック情報の記録を有効にします。既定は有効。
+- `torch_profiler_with_flops`: FLOPs の記録を有効にします。既定は無効。
+- `torch_profiler_use_gzip`: プロファイリングのファイルを gzip 圧縮するかを制御します。既定は有効。
+- `torch_profiler_dump_cuda_time_total`: 集約された CUDA の self time のテーブルを出力・表示するかを制御します。既定は有効。
 
-When using `vllm bench serve`, you can enable profiling by passing the `--profile` flag.
+`vllm bench serve` を使う場合は、`--profile` フラグを渡すことでプロファイリングを有効にできます。
 
-Traces can be visualized using <https://ui.perfetto.dev/>.
-
-!!! tip
-    You can directly call bench module without installing vLLM using `python -m vllm.entrypoints.cli.main bench`.
+トレースは <https://ui.perfetto.dev/> で可視化できます。
 
 !!! tip
-    Only send a few requests through vLLM when profiling, as the traces can get quite large. Also, no need to untar the traces, they can be viewed directly.
+    `python -m vllm.entrypoints.cli.main bench` を使えば、vLLM をインストールせずに bench モジュールを直接呼び出せます。
 
 !!! tip
-    To stop the profiler - it flushes out all the profile trace files to the directory. This takes time, for example for about 100 requests worth of data for a llama 70b, it takes about 10 minutes to flush out on a H100.
-    The engine client waits for this flush to complete without timing out, so simply allow the stop call to run to completion.
+    トレースはかなり大きくなることがあるため、プロファイリング時に vLLM へ送るリクエストは少数にとどめてください。
+    また、トレースを展開する必要はありません。そのまま閲覧できます。
 
-### Example commands and usage
+!!! tip
+    プロファイラを停止すると、すべてのプロファイルトレースのファイルがディレクトリに書き出されます。これには時間がかかります。
+    たとえば llama 70b で約 100 リクエスト分のデータの場合、H100 では書き出しに約 10 分かかります。
+    エンジンクライアントはこの書き出しの完了をタイムアウトせずに待つため、停止の呼び出しが完了するまでそのまま待ってください。
 
-#### Offline Inference
+### コマンドと使い方の例 { #example-commands-and-usage }
 
-Refer to [examples/features/profiling/simple_profiling_offline.py](../../examples/features/profiling/simple_profiling_offline.py) for an example.
+#### オフライン推論 { #offline-inference }
 
-#### OpenAI Server
+例は [examples/features/profiling/simple_profiling_offline.py](../../examples/features/profiling/simple_profiling_offline.py) を参照してください。
+
+#### OpenAI サーバー { #openai-server }
 
 ```bash
 vllm serve meta-llama/Llama-3.1-8B-Instruct --profiler-config '{"profiler": "torch", "torch_profiler_dir": "./vllm_profile"}'
 ```
 
-vllm bench command:
+vllm bench コマンド:
 
 ```bash
 vllm bench serve \
@@ -61,7 +67,7 @@ vllm bench serve \
     --num-prompts 2
 ```
 
-Or use http request:
+あるいは HTTP リクエストを使います。
 
 ```shell
 # We need first call /start_profile api to start profile.
@@ -84,12 +90,11 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 $ curl -X POST http://localhost:8000/stop_profile
 ```
 
-## Profile with NVIDIA Nsight Systems
+## NVIDIA Nsight Systems によるプロファイリング { #profile-with-nvidia-nsight-systems }
 
-Nsight systems is an advanced tool that exposes more profiling details, such as register and shared memory usage, annotated code regions and low-level CUDA APIs and events.
+Nsight Systems は、レジスタや共有メモリの使用状況、注釈付きのコード領域、低レベルの CUDA API やイベントなど、より詳細なプロファイリング情報を提供する高度なツールです。
 
-[Install nsight-systems](https://docs.nvidia.com/nsight-systems/InstallationGuide/index.html) using your package manager.
-The following block is an example for Ubuntu.
+パッケージマネージャで [nsight-systems をインストール](https://docs.nvidia.com/nsight-systems/InstallationGuide/index.html)してください。次のブロックは Ubuntu の例です。
 
 ```bash
 apt update
@@ -101,17 +106,19 @@ apt install nsight-systems-cli
 ```
 
 !!! tip
-    When profiling with `nsys`, it is advisable to set the environment variable `VLLM_WORKER_MULTIPROC_METHOD=spawn`. The default is to use the `fork` method instead of `spawn`. More information on the topic can be found in the [Nsight Systems release notes](https://docs.nvidia.com/nsight-systems/ReleaseNotes/index.html#general-issues).
+    `nsys` でプロファイリングする際は、環境変数 `VLLM_WORKER_MULTIPROC_METHOD=spawn` を設定することを推奨します。
+    既定では `spawn` ではなく `fork` が使われます。詳細は
+    [Nsight Systems のリリースノート](https://docs.nvidia.com/nsight-systems/ReleaseNotes/index.html#general-issues)を参照してください。
 
-The Nsight Systems profiler can be launched with `nsys profile ...`, with a few recommended flags for vLLM: `--trace-fork-before-exec=true --cuda-graph-trace=node`.
+Nsight Systems のプロファイラは `nsys profile ...` で起動できます。vLLM では `--trace-fork-before-exec=true --cuda-graph-trace=node` のフラグを推奨します。
 
-### Example commands and usage
+### コマンドと使い方の例 { #example-commands-and-usage_1 }
 
-#### Offline Inference
+#### オフライン推論 { #offline-inference_1 }
 
-For basic usage, you can just append the profiling command before any existing script you would run for offline inference.
+基本的な使い方としては、オフライン推論で実行する既存のスクリプトの前にプロファイリングのコマンドを付けるだけです。
 
-The following is an example using the `vllm bench latency` script:
+次は `vllm bench latency` スクリプトを使う例です。
 
 ```bash
 nsys profile  \
@@ -126,9 +133,9 @@ vllm bench latency \
     --output-len 8
 ```
 
-#### OpenAI Server
+#### OpenAI サーバー { #openai-server_1 }
 
-To profile the server, you will want to prepend your `vllm serve` command with `nsys profile` just like for offline inference, but you will need to specify a few other arguments to enable dynamic capture similarly to the Torch Profiler:
+サーバーをプロファイリングするには、オフライン推論と同様に `vllm serve` コマンドの前に `nsys profile` を付けます。ただし、Torch Profiler と同様の動的なキャプチャを有効にするために、いくつか追加の引数を指定する必要があります。
 
 ```bash
 # server
@@ -149,13 +156,13 @@ vllm bench serve \
     --num-prompts 2
 ```
 
-With `--profile`, vLLM will capture a profile for each run of `vllm bench serve`. Once the server is killed, the profiles will all be saved.
+`--profile` を指定すると、vLLM は `vllm bench serve` の実行ごとにプロファイルをキャプチャします。サーバーを終了すると、すべてのプロファイルが保存されます。
 
-#### Analysis
+#### 分析 { #analysis }
 
-You can view these profiles either as summaries in the CLI, using `nsys stats [profile-file]`, or in the GUI by installing Nsight [locally following the directions here](https://developer.nvidia.com/nsight-systems/get-started).
+これらのプロファイルは、`nsys stats [profile-file]` を使って CLI 上でサマリーとして表示するか、[こちらの手順](https://developer.nvidia.com/nsight-systems/get-started)に従ってローカルに Nsight をインストールし、GUI で表示できます。
 
-??? console "CLI example"
+??? console "CLI の例"
 
     ```bash
     nsys stats report1.nsys-rep
@@ -176,36 +183,33 @@ You can view these profiles either as summaries in the CLI, using `nsys stats [p
     ...
     ```
 
-GUI example:
+GUI の例:
 
 <img width="1799" alt="Screenshot 2025-03-05 at 11 48 42 AM" src="https://github.com/user-attachments/assets/c7cff1ae-6d6f-477d-a342-bd13c4fc424c" />
 
-## Continuous Profiling
+## 継続的プロファイリング { #continuous-profiling }
 
-There is a [GitHub CI workflow](https://github.com/pytorch/pytorch-integration-testing/actions/workflows/vllm-profiling.yml) in the PyTorch infrastructure repository that provides continuous profiling for different models on vLLM. This automated profiling helps track performance characteristics over time and across different model configurations.
+PyTorch のインフラリポジトリには、vLLM 上のさまざまなモデルについて継続的なプロファイリングを行う [GitHub CI ワークフロー](https://github.com/pytorch/pytorch-integration-testing/actions/workflows/vllm-profiling.yml)があります。この自動プロファイリングにより、時系列およびモデル構成をまたいだ性能特性を追跡できます。
 
-### How It Works
+### 仕組み { #how-it-works }
 
-The workflow currently runs weekly profiling sessions for selected models, generating detailed performance traces that can be analyzed using different tools to identify performance regressions or optimization opportunities. But, it can be triggered manually as well, using the Github Action tool.
+現在、このワークフローは選定されたモデルについて週次でプロファイリングを実行し、性能のリグレッションや最適化の余地を特定するためにさまざまなツールで分析できる詳細な性能トレースを生成します。GitHub Action のツールを使って手動でトリガーすることもできます。
 
-### Adding New Models
+### 新しいモデルの追加 { #adding-new-models }
 
-To extend the continuous profiling to additional models, you can modify the [profiling-tests.json](https://github.com/pytorch/pytorch-integration-testing/blob/main/vllm-profiling/cuda/profiling-tests.json) configuration file in the PyTorch integration testing repository. Simply add your model specifications to this file to include them in the automated profiling runs.
+継続的プロファイリングの対象にモデルを追加するには、PyTorch の integration testing リポジトリにある [profiling-tests.json](https://github.com/pytorch/pytorch-integration-testing/blob/main/vllm-profiling/cuda/profiling-tests.json) の設定ファイルを変更します。このファイルにモデルの仕様を追加するだけで、自動プロファイリングの実行に含められます。
 
-### Viewing Profiling Results
+### プロファイリング結果の閲覧 { #viewing-profiling-results }
 
-The profiling traces generated by the continuous profiling workflow are publicly available on the [vLLM Performance Dashboard](https://hud.pytorch.org/benchmark/llms?repoName=vllm-project%2Fvllm). Look for the **Profiling traces** table to access and download the traces for different models and runs.
+継続的プロファイリングのワークフローが生成したプロファイリングトレースは、[vLLM Performance Dashboard](https://hud.pytorch.org/benchmark/llms?repoName=vllm-project%2Fvllm) で公開されています。**Profiling traces** の表から、モデルや実行ごとのトレースにアクセスしてダウンロードできます。
 
-## Profiling vLLM Python Code
+## vLLM の Python コードのプロファイリング { #profiling-vllm-python-code }
 
-The Python standard library includes
-[cProfile](https://docs.python.org/3/library/profile.html) for profiling Python
-code.
+Python の標準ライブラリには、Python コードをプロファイリングするための [cProfile](https://docs.python.org/3/library/profile.html) が含まれています。
 
-### Example usage - function call
+### 使用例 - 関数呼び出し { #example-usage-function-call }
 
-If a filename is specified, the profile will be saved to that file. If no
-filename is specified, profile data can be printed to stdout.
+ファイル名を指定すると、プロファイルはそのファイルに保存されます。ファイル名を指定しない場合、プロファイルのデータを標準出力に表示できます。
 
 ```python
 import cProfile
@@ -221,7 +225,7 @@ profiler.runcall(expensive_function)
 profiler.dump_stats("expensive_function.prof")
 ```
 
-### Example usage - context manager style
+### 使用例 - コンテキストマネージャ形式 { #example-usage-context-manager-style }
 
 ```python
 import cProfile
@@ -241,20 +245,19 @@ finally:
     profiler.dump_stats("another_function.prof")
 ```
 
-### Analyzing Profile Results
+### プロファイル結果の分析 { #analyzing-profile-results }
 
-There are multiple tools available that can help analyze the profile results.
-One example is [snakeviz](https://jiffyclub.github.io/snakeviz/).
+プロファイル結果の分析に役立つツールは複数あります。その一例が [snakeviz](https://jiffyclub.github.io/snakeviz/) です。
 
 ```bash
 pip install snakeviz
 snakeviz expensive_function.prof
 ```
 
-### Analyzing Garbage Collection Costs
+### ガベージコレクションのコストの分析 { #analyzing-garbage-collection-costs }
 
-Leverage VLLM_GC_DEBUG environment variable to debug GC costs.
+GC のコストを調べるには、環境変数 VLLM_GC_DEBUG を活用してください。
 
-- VLLM_GC_DEBUG=1: enable GC debugger with gc.collect elapsed times
-- VLLM_GC_DEBUG='{"top_objects":5}': enable GC debugger to log top 5
-  collected objects for each gc.collect
+- VLLM_GC_DEBUG=1: gc.collect の経過時間を出力する GC デバッガを有効にします
+- VLLM_GC_DEBUG='{"top_objects":5}': gc.collect ごとに、回収されたオブジェクトの上位 5 件を
+  ログ出力する GC デバッガを有効にします

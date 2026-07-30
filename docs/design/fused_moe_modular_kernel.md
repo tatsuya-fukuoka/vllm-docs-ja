@@ -1,67 +1,67 @@
-# Fused MoE Modular Kernel
+# Fused MoE モジュラーカーネル { #fused-moe-modular-kernel }
 
-## Introduction
+## はじめに { #introduction }
 
-FusedMoEModularKernel is implemented [here](../../vllm/model_executor/layers/fused_moe/modular_kernel.py)
+FusedMoEModularKernel の実装は[こちら](../../vllm/model_executor/layers/fused_moe/modular_kernel.py)にあります。
 
-Based on the format of the input activations, FusedMoE implementations are broadly classified into 2 types.
+入力アクティベーションの形式にもとづき、FusedMoE の実装は大きく 2 種類に分類されます。
 
-* Contiguous / Standard / Non-Batched, and
+* Contiguous / Standard / Non-Batched
 * Batched
 
 !!! note
-    The terms Contiguous, Standard, and Non-Batched are used interchangeably throughout the document.
+    このドキュメントでは、Contiguous、Standard、Non-Batched という用語を同じ意味で使います。
 
-The input activation format completely depends on the All2All Dispatch being used.
+入力アクティベーションの形式は、使用する All2All Dispatch によって完全に決まります。
 
-* In the Contiguous variant, the All2All Dispatch returns the activations as a contiguous tensor of shape (M, K) along with TopK Ids and TopK weights of shape (M, num_topk). Look at `DeepEPHTPrepareAndFinalize` for an example.
-* In the Batched variant, the All2All Dispatch returns the activations as a tensor of shape (num_experts, max_tokens, K). Here, the activations/tokens that subscribe to the same expert are batched together. Note that not all entries of the tensor are valid. The activations tensor is typically accompanied by an `expert_num_tokens` tensor of size `num_experts`, where `expert_num_tokens[i]` indicates the number of valid tokens that subscribe to the ith expert. Look at `DeepEPLLPrepareAndFinalize` for an example.
+* Contiguous の場合、All2All Dispatch はアクティベーションを形状 (M, K) の連続したテンソルとして返し、あわせて形状 (M, num_topk) の TopK ID と TopK 重みを返します。例としては `DeepEPHTPrepareAndFinalize` を参照してください。
+* Batched の場合、All2All Dispatch はアクティベーションを形状 (num_experts, max_tokens, K) のテンソルとして返します。ここでは、同じエキスパートに割り当てられたアクティベーション / トークンがひとまとめにバッチ化されます。テンソルのすべての要素が有効なわけではない点に注意してください。アクティベーションのテンソルには通常、サイズ `num_experts` の `expert_num_tokens` テンソルが付随し、`expert_num_tokens[i]` が i 番目のエキスパートに割り当てられた有効なトークン数を示します。例としては `DeepEPLLPrepareAndFinalize` を参照してください。
 
-The FusedMoE operation is generally made of multiple operations, in both the Contiguous and Batched variants, as described in the diagrams below
+FusedMoE の処理は、Contiguous と Batched のどちらの場合も、一般に下図のように複数の演算から構成されます。
 
 ![FusedMoE Non-Batched](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/fused_moe_modular_kernel/fused_moe_non_batched.png)
 
 ![FusedMoE Batched](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/fused_moe_modular_kernel/fused_moe_batched.png)
 
 !!! note
-    The main difference, in terms of operations, between the Batched and Non-Batched cases is the Permute / Unpermute operations. All other operations remain.
+    演算という観点で見た Batched と Non-Batched の主な違いは、Permute / Unpermute 演算の有無です。それ以外の演算は共通です。
 
-## Motivation
+## 動機 { #motivation }
 
-As can be seen from the diagrams, there are a lot of operations and there can be a variety of implementations for each operation. The set of ways the operations can be put together to make a valid FusedMoE implementation quickly becomes intractable. The Modular Kernel framework addresses this issue,  by grouping the operations into logical components. This broad categorization makes the combinations manageable and prevents code-duplication. This also decouples the All2All Dispatch & Combine implementations from the FusedMoE implementations and allows for their independent development and testing. Furthermore, the Modular Kernel framework introduces Abstract classes for the different components thus providing a well-defined skeleton for future implementations.
+図から分かるように演算の数は多く、それぞれの演算にさまざまな実装があり得ます。有効な FusedMoE 実装を構成するための演算の組み合わせ方は、すぐに手に負えない規模になります。モジュラーカーネルのフレームワークは、演算を論理的なコンポーネントにまとめることでこの問題に対処します。この大まかな分類により、組み合わせを扱える規模に抑え、コードの重複も防げます。また、All2All Dispatch / Combine の実装を FusedMoE の実装から切り離し、それぞれ独立に開発・テストできるようにします。さらに、モジュラーカーネルのフレームワークは各コンポーネントに対応する抽象クラスを導入し、今後の実装のための明確な骨組みを提供します。
 
-The rest of the document will focus on the Contiguous / Non-Batched case. Extrapolating to the Batched case should be straight-forward.
+このドキュメントの以降では Contiguous / Non-Batched のケースに焦点を当てます。Batched のケースへの拡張は容易なはずです。
 
-## ModularKernel Components
+## モジュラーカーネルのコンポーネント { #modularkernel-components }
 
-FusedMoEModularKernel splits the FusedMoE operation into 3 parts,
+FusedMoEModularKernel は FusedMoE の処理を 3 つの部分に分割します。
 
 1. TopKWeightAndReduce
 2. FusedMoEPrepareAndFinalizeModular
 3. FusedMoEExpertsModular
 
-### TopKWeightAndReduce
+### TopKWeightAndReduce { #topkweightandreduce }
 
-The TopK Weight Application and Reduction components happen right after the Unpermute operation and before the All2All Combine. Note that the `FusedMoEExpertsModular` is responsible for the Unpermute and `FusedMoEPrepareAndFinalizeModular` is responsible for the All2All Combine. There is value in doing the TopK Weight Application and Reduction in the `FusedMoEExpertsModular`. But some implementations choose to do it `FusedMoEPrepareAndFinalizeModular`. In order to enable this flexibility, we have a TopKWeightAndReduce abstract class.
+TopK 重みの適用と reduction のコンポーネントは、Unpermute 演算の直後、All2All Combine の直前で実行されます。Unpermute を担うのは `FusedMoEExpertsModular`、All2All Combine を担うのは `FusedMoEPrepareAndFinalizeModular` である点に注意してください。TopK 重みの適用と reduction を `FusedMoEExpertsModular` の中で行うことには利点がありますが、実装によっては `FusedMoEPrepareAndFinalizeModular` の側で行うことを選びます。この柔軟性を実現するために、TopKWeightAndReduce 抽象クラスがあります。
 
-Please find the implementations of TopKWeightAndReduce [here](../../vllm/model_executor/layers/fused_moe/topk_weight_and_reduce.py).
+TopKWeightAndReduce の実装は[こちら](../../vllm/model_executor/layers/fused_moe/topk_weight_and_reduce.py)にあります。
 
-`FusedMoEPrepareAndFinalizeModular::finalize()` method accepts a `TopKWeightAndReduce` argument that is invoked inside the method.
-The `FusedMoEModularKernel` acts as a bridge between the `FusedMoEExpertsModular` and `FusedMoEPrepareAndFinalize` implementations to determine where the TopK Weight Application and Reduction happens.
+`FusedMoEPrepareAndFinalizeModular::finalize()` メソッドは `TopKWeightAndReduce` 引数を受け取り、メソッド内部でそれを呼び出します。
+`FusedMoEModularKernel` は `FusedMoEExpertsModular` と `FusedMoEPrepareAndFinalize` の実装のあいだの橋渡しとして働き、TopK 重みの適用と reduction をどちらで行うかを決定します。
 
-* `FusedMoEExpertsModular::finalize_weight_and_reduce_impl` method returns `TopKWeightAndReduceNoOp` if the `FusedMoEExpertsModular` implementation does the weight application and reduction itself.
-* `FusedMoEExpertsModular::finalize_weight_and_reduce_impl` method returns `TopKWeightAndReduceContiguous` / `TopKWeightAndReduceNaiveBatched` / `TopKWeightAndReduceDelegate` if the `FusedMoEExpertsModular` implementation needs the `FusedMoEPrepareAndFinalizeModular::finalize()` to do the weight application and reduction.
+* `FusedMoEExpertsModular` の実装が重みの適用と reduction を自前で行う場合、`FusedMoEExpertsModular::finalize_weight_and_reduce_impl` メソッドは `TopKWeightAndReduceNoOp` を返します。
+* `FusedMoEExpertsModular` の実装が `FusedMoEPrepareAndFinalizeModular::finalize()` に重みの適用と reduction を任せる場合、`FusedMoEExpertsModular::finalize_weight_and_reduce_impl` メソッドは `TopKWeightAndReduceContiguous` / `TopKWeightAndReduceNaiveBatched` / `TopKWeightAndReduceDelegate` を返します。
 
-### FusedMoEPrepareAndFinalizeModular
+### FusedMoEPrepareAndFinalizeModular { #fusedmoeprepareandfinalizemodular }
 
-The `FusedMoEPrepareAndFinalizeModular` abstract class exposes `prepare`, `prepare_no_receive`  and `finalize` functions.
-The `prepare` function is responsible for input activation Quantization and All2All Dispatch. If implemented, The `prepare_no_receive` is like `prepare` except it does not wait to receive results from other workers.  Instead it returns a "receiver" callback that must be invoked to wait for the final results of worker. It is not required that this method is supported by all `FusedMoEPrepareAndFinalizeModular` classes, but if it is available, it can be used to interleave work with the initial all to all communication, e.g. interleaving shared experts with fused experts.  The `finalize` function is responsible for invoking the All2All Combine. Additionally the `finalize` function may or may not do the TopK weight application and reduction (Please refer to the TopKWeightAndReduce section)
+`FusedMoEPrepareAndFinalizeModular` 抽象クラスは `prepare`、`prepare_no_receive`、`finalize` の各関数を公開します。
+`prepare` 関数は、入力アクティベーションの量子化と All2All Dispatch を担当します。`prepare_no_receive` は、実装されている場合、`prepare` と同様ですが、他のワーカーからの結果受信を待ちません。代わりに、ワーカーの最終結果を待つために呼び出す必要がある「receiver」コールバックを返します。このメソッドはすべての `FusedMoEPrepareAndFinalizeModular` クラスでサポートされている必要はありませんが、利用できる場合は、最初の all to all 通信と他の処理をインターリーブする（共有エキスパートと fused experts をインターリーブするなど）ために使えます。`finalize` 関数は All2All Combine の呼び出しを担当します。さらに、`finalize` 関数は TopK 重みの適用と reduction を行う場合も行わない場合もあります（TopKWeightAndReduce の節を参照してください）。
 
-![FusedMoEPrepareAndFinalizeModular Blocks](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/fused_moe_modular_kernel/prepare_and_finalize_blocks.png)
+![FusedMoEPrepareAndFinalizeModular のブロック](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/fused_moe_modular_kernel/prepare_and_finalize_blocks.png)
 
-### FusedMoEExpertsModular
+### FusedMoEExpertsModular { #fusedmoeexpertsmodular }
 
-The `FusedMoEExpertsModular` class is where the crux of the MoE operations happen. The `FusedMoEExpertsModular` abstract class exposes a few important functions,
+`FusedMoEExpertsModular` クラスは MoE 処理の中核が実行される場所です。`FusedMoEExpertsModular` 抽象クラスは、いくつかの重要な関数を公開します。
 
 * apply()
 * workspace_shapes()
@@ -69,31 +69,31 @@ The `FusedMoEExpertsModular` class is where the crux of the MoE operations happe
 
 #### apply()
 
-The `apply` method is where the implementations perform
+`apply` メソッドでは、実装が次の処理を行います。
 
 * Permute
-* Matmul with weight W1
+* 重み W1 との matmul
 * Act + Mul
-* Quantization
-* Matmul with weight W2
+* 量子化
+* 重み W2 との matmul
 * Unpermute
-* Maybe TopK Weight Application + Reduction
+* 場合によっては TopK 重みの適用 + reduction
 
 #### workspace_shapes()
 
-The core FusedMoE implementation performs a series of operations. It would be inefficient to create output memory for each of these operations separately. To that effect, implementations are required to declare 2 workspace shapes, the workspace datatype and the FusedMoE output shape as outputs of the workspace_shapes() method. This information is used to allocate the workspace tensors and the output tensor in `FusedMoEModularKernel::forward()` and passed on to the `FusedMoEExpertsModular::apply()` method. The workspaces could then be used as intermediate buffers in the FusedMoE implementation.
+FusedMoE の中核となる実装は一連の演算を行います。これらの演算ごとに個別に出力用メモリを確保するのは非効率です。そこで各実装には、workspace_shapes() メソッドの出力として、2 つのワークスペースの形状、ワークスペースのデータ型、そして FusedMoE の出力形状を宣言することが求められます。この情報は `FusedMoEModularKernel::forward()` でワークスペースのテンソルと出力テンソルを確保するために使われ、`FusedMoEExpertsModular::apply()` メソッドへ渡されます。ワークスペースは、FusedMoE 実装内で中間バッファとして利用できます。
 
 #### finalize_weight_and_reduce_impl()
 
-It is sometimes efficient to perform TopK weight application and Reduction inside the `FusedMoEExpertsModular::apply()`. Find an example [here](https://github.com/vllm-project/vllm/pull/20228). We have a `TopKWeightAndReduce` abstract class to facilitate such implementations. Please refer to the TopKWeightAndReduce section.
-`FusedMoEExpertsModular::finalize_weight_and_reduce_impl()` returns the `TopKWeightAndReduce` object that the implementation wants the `FusedMoEPrepareAndFinalizeModular::finalize()` to use.
+TopK 重みの適用と reduction を `FusedMoEExpertsModular::apply()` の内部で行ったほうが効率的な場合もあります。例は[こちら](https://github.com/vllm-project/vllm/pull/20228)を参照してください。こうした実装を可能にするために `TopKWeightAndReduce` 抽象クラスが用意されています。TopKWeightAndReduce の節を参照してください。
+`FusedMoEExpertsModular::finalize_weight_and_reduce_impl()` は、その実装が `FusedMoEPrepareAndFinalizeModular::finalize()` に使ってほしい `TopKWeightAndReduce` オブジェクトを返します。
 
-![FusedMoEExpertsModular Blocks](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/fused_moe_modular_kernel/fused_experts_blocks.png)
+![FusedMoEExpertsModular のブロック](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/fused_moe_modular_kernel/fused_experts_blocks.png)
 
-### FusedMoEModularKernel
+### FusedMoEModularKernel { #fusedmoemodularkernel }
 
-`FusedMoEModularKernel` is composed of the `FusedMoEPrepareAndFinalizeModular` and `FusedMoEExpertsModular` objects.
-`FusedMoEModularKernel` pseudocode/sketch,
+`FusedMoEModularKernel` は `FusedMoEPrepareAndFinalizeModular` と `FusedMoEExpertsModular` のオブジェクトから構成されます。
+`FusedMoEModularKernel` の疑似コード / スケッチは次のとおりです。
 
 ```py
 class FusedMoEModularKernel:
@@ -126,120 +126,117 @@ class FusedMoEModularKernel:
         return output
 ```
 
-## How-To
+## ハウツー { #how-to }
 
-### How To Add a FusedMoEPrepareAndFinalizeModular Type
+### FusedMoEPrepareAndFinalizeModular 型を追加する方法 { #how-to-add-a-fusedmoeprepareandfinalizemodular-type }
 
-Typically a FusedMoEPrepareAndFinalizeModular type is backed by an All2All Dispatch & Combine implementation / kernel. For example,
+一般に、FusedMoEPrepareAndFinalizeModular 型は All2All Dispatch / Combine の実装（カーネル）に支えられています。たとえば次のとおりです。
 
-* DeepEPHTPrepareAndFinalize type is backed by DeepEP High-Throughput All2All kernels, and
-* DeepEPLLPrepareAndFinalize type is backed by DeepEP Low-Latency All2All kernels.
+* DeepEPHTPrepareAndFinalize 型は DeepEP の High-Throughput All2All カーネルに支えられています。
+* DeepEPLLPrepareAndFinalize 型は DeepEP の Low-Latency All2All カーネルに支えられています。
 
-#### Step 1: Add an All2All manager
+#### ステップ 1: All2All マネージャを追加する { #step-1-add-an-all2all-manager }
 
-The purpose of the All2All Manager is to set up the All2All kernel implementations. The `FusedMoEPrepareAndFinalizeModular` implementations typically fetch a kernel-implementation "handle" from the All2All Manager to invoke the Dispatch and Combine functions. Please look at the All2All Manager implementations [here](../../vllm/distributed/device_communicators/all2all.py).
+All2All マネージャの役割は、All2All のカーネル実装をセットアップすることです。`FusedMoEPrepareAndFinalizeModular` の実装は通常、Dispatch / Combine 関数を呼び出すために、All2All マネージャからカーネル実装の「ハンドル」を取得します。All2All マネージャの実装は[こちら](../../vllm/distributed/device_communicators/all2all.py)を参照してください。
 
-#### Step 2: Add a FusedMoEPrepareAndFinalizeModular Type
+#### ステップ 2: FusedMoEPrepareAndFinalizeModular 型を追加する { #step-2-add-a-fusedmoeprepareandfinalizemodular-type }
 
-This section describes the significance of the various functions exposed by the `FusedMoEPrepareAndFinalizeModular` abstract class.
+この節では、`FusedMoEPrepareAndFinalizeModular` 抽象クラスが公開する各関数の意味を説明します。
 
-`FusedMoEPrepareAndFinalizeModular::prepare()`: The prepare method implements the Quantization and All2All Dispatch. Typically the Dispatch function from the relevant All2All Manager is invoked.
+`FusedMoEPrepareAndFinalizeModular::prepare()`: prepare メソッドは量子化と All2All Dispatch を実装します。通常、対応する All2All マネージャの Dispatch 関数が呼び出されます。
 
-`FusedMoEPrepareAndFinalizeModular::has_prepare_no_receive()`: Indicates whether or not this subclass implements `prepare_no_receive`. Defaults to False.
+`FusedMoEPrepareAndFinalizeModular::has_prepare_no_receive()`: このサブクラスが `prepare_no_receive` を実装しているかどうかを示します。既定値は False です。
 
-`FusedMoEPrepareAndFinalizeModular::prepare_no_receive()`: The prepare_no_receive method implements the Quantization and All2All Dispatch. It does not wait for the result of the dispatch operation but instead returns a thunk that can be invoked to wait for the final results. Typically the Dispatch function from the relevant All2All Manager is invoked.
+`FusedMoEPrepareAndFinalizeModular::prepare_no_receive()`: prepare_no_receive メソッドは量子化と All2All Dispatch を実装します。dispatch 処理の結果を待たず、代わりに最終結果を待つために呼び出せる thunk を返します。通常、対応する All2All マネージャの Dispatch 関数が呼び出されます。
 
-`FusedMoEPrepareAndFinalizeModular::finalize()`: Maybe perform TopK Weight Application and Reduction and All2All Combine. Typically the Combine function from the relevant All2AllManager is invoked.
+`FusedMoEPrepareAndFinalizeModular::finalize()`: 場合によって TopK 重みの適用と reduction を行い、All2All Combine を実行します。通常、対応する All2AllManager の Combine 関数が呼び出されます。
 
-`FusedMoEPrepareAndFinalizeModular::activation_format()`: Return `FusedMoEActivationFormat.BatchedExperts` if the output of the prepare method (i.e. the All2All dispatch) is Batched. Return `FusedMoEActivationFormat.Standard` otherwise.
+`FusedMoEPrepareAndFinalizeModular::activation_format()`: prepare メソッド（つまり All2All dispatch）の出力が Batched の場合は `FusedMoEActivationFormat.BatchedExperts` を、そうでない場合は `FusedMoEActivationFormat.Standard` を返します。
 
-`FusedMoEPrepareAndFinalizeModular::topk_indices_dtype()`: Data type of the TopK ids. Some All2All kernels have strict requirements pertaining to the data type of the TopK ids. This requirement is passed on to the `FusedMoe::select_experts` function so it could be respected. If there are no strict requirements return None.
+`FusedMoEPrepareAndFinalizeModular::topk_indices_dtype()`: TopK ID のデータ型です。一部の All2All カーネルは TopK ID のデータ型に厳密な要件を持ちます。この要件は `FusedMoe::select_experts` 関数へ伝えられ、そこで尊重されます。厳密な要件がない場合は None を返します。
 
-`FusedMoEPrepareAndFinalizeModular::max_num_tokens_per_rank()`: This is the maximum number of tokens that would be submitted to the All2All Dispatch at once.
+`FusedMoEPrepareAndFinalizeModular::max_num_tokens_per_rank()`: 一度に All2All Dispatch へ渡されるトークン数の上限です。
 
-`FusedMoEPrepareAndFinalizeModular::num_dispatchers()`: Total number of dispatching units. This value determines the size of the Dispatch output. The Dispatch output is of shape (num_local_experts, max_num_tokens, K). Here max_num_tokens = num_dispatchers() * max_num_tokens_per_rank().
+`FusedMoEPrepareAndFinalizeModular::num_dispatchers()`: dispatch 単位の総数です。この値によって Dispatch の出力サイズが決まります。Dispatch の出力は形状 (num_local_experts, max_num_tokens, K) を持ちます。ここで max_num_tokens = num_dispatchers() * max_num_tokens_per_rank() です。
 
-We suggest picking an already existing `FusedMoEPrepareAndFinalizeModular` implementation that matches your All2All implementation closely and using it as a reference.
+自分の All2All 実装に近い既存の `FusedMoEPrepareAndFinalizeModular` 実装を選び、参考にすることをおすすめします。
 
-### How To Add a FusedMoEExpertsModular Type
+### FusedMoEExpertsModular 型を追加する方法 { #how-to-add-a-fusedmoeexpertsmodular-type }
 
-FusedMoEExpertsModular performs the core of the FusedMoE operations. The various functions exposed by the abstract class and their significance is as follows,
+FusedMoEExpertsModular は FusedMoE 処理の中核を担います。抽象クラスが公開する各関数とその意味は次のとおりです。
 
-`FusedMoEExpertsModular::activation_formats()`: Return the supported Input and Output activation formats. i.e. Contiguous / Batched format.
+`FusedMoEExpertsModular::activation_formats()`: サポートする入力・出力のアクティベーション形式（Contiguous / Batched）を返します。
 
-`FusedMoEExpertsModular::supports_expert_map()`: Return True if the implementation supports expert map.
+`FusedMoEExpertsModular::supports_expert_map()`: 実装が expert map をサポートする場合に True を返します。
 
 `FusedMoEExpertsModular::workspace_shapes()` /
 `FusedMoEExpertsModular::finalize_weight_and_reduce_impl` /
-`FusedMoEExpertsModular::apply`: Refer to `FusedMoEExpertsModular` section above.
+`FusedMoEExpertsModular::apply`: 上記の `FusedMoEExpertsModular` の節を参照してください。
 
-### FusedMoEModularKernel Initialization
+### FusedMoEModularKernel の初期化 { #fusedmoemodularkernel-initialization }
 
-`FusedMoEMethodBase` class has 3 methods that are collectively responsible in creating the `FusedMoEModularKernel` object. They are,
+`FusedMoEMethodBase` クラスには、`FusedMoEModularKernel` オブジェクトの生成を分担する 3 つのメソッドがあります。
 
-* maybe_make_prepare_finalize,
-* select_gemm_impl, and
+* maybe_make_prepare_finalize
+* select_gemm_impl
 * init_prepare_finalize
 
 #### maybe_make_prepare_finalize
 
-The `maybe_make_prepare_finalize` method is responsible for constructing an instance of `FusedMoEPrepareAndFinalizeModular` when appropriate based on the current all2all backend, e.g. when EP + DP is enabled.  The base class method currently constructs all the `FusedMoEPrepareAndFinalizeModular` objects for the EP+DP case.  Derived classes can override this method to construct prepare/finalize objects for different scenarios, e.g. `ModelOptNvFp4FusedMoE` can construct a `FlashInferCutlassMoEPrepareAndFinalize` for the EP+TP case.
-Please refer to the implementations in,
+`maybe_make_prepare_finalize` メソッドは、現在の all2all バックエンドにもとづいて適切な場合（EP + DP が有効な場合など）に `FusedMoEPrepareAndFinalizeModular` のインスタンスを構築する役割を担います。基底クラスのメソッドは、現時点では EP+DP のケース向けにすべての `FusedMoEPrepareAndFinalizeModular` オブジェクトを構築します。派生クラスはこのメソッドをオーバーライドして、別のシナリオ向けの prepare / finalize オブジェクトを構築できます。たとえば `ModelOptNvFp4FusedMoE` は EP+TP のケース向けに `FlashInferCutlassMoEPrepareAndFinalize` を構築できます。
+実装は次を参照してください。
 
 * `ModelOptNvFp4FusedMoE`
 
 #### select_gemm_impl
 
-The `select_gemm_impl` method is undefined in the base class. It is the responsibility of the derived class to implement a method that constructs a valid/appropriate `FusedMoEExpertsModular` object.
-Please refer to the implementations in,
+`select_gemm_impl` メソッドは基底クラスでは未定義です。妥当かつ適切な `FusedMoEExpertsModular` オブジェクトを構築するメソッドを実装するのは、派生クラスの責任です。
+次の派生クラスの実装を参照してください。
 
 * `UnquantizedFusedMoEMethod`
 * `CompressedTensorsW8A8Fp8MoEMethod`
 * `CompressedTensorsW8A8Fp8MoECutlassMethod`
 * `Fp8MoEMethod`
 * `ModelOptNvFp4FusedMoE`
-derived classes.
+
 
 #### init_prepare_finalize
 
-Based on the input and env settings, the `init_prepare_finalize` method creates the appropriate `FusedMoEPrepareAndFinalizeModular` object. The method then queries `select_gemm_impl` for the appropriate `FusedMoEExpertsModular` object and builds the `FusedMoEModularKernel` object
+`init_prepare_finalize` メソッドは、入力と環境設定にもとづいて適切な `FusedMoEPrepareAndFinalizeModular` オブジェクトを作成します。続いて `select_gemm_impl` に問い合わせて適切な `FusedMoEExpertsModular` オブジェクトを取得し、`FusedMoEModularKernel` オブジェクトを構築します。
 
-Please take a look at [init_prepare_finalize](https://github.com/vllm-project/vllm/blob/1cbf951ba272c230823b947631065b826409fa62/vllm/model_executor/layers/fused_moe/layer.py#L188).
-**Important**: The `FusedMoEMethodBase` derived classes use the `FusedMoEMethodBase::fused_experts` object in their `apply` methods. When settings permit the construction of a valid `FusedMoEModularKernel` object, we override `FusedMoEMethodBase::fused_experts` with it. This essentially makes the derived classes agnostic to what FusedMoE implementation is used.
+[init_prepare_finalize](https://github.com/vllm-project/vllm/blob/1cbf951ba272c230823b947631065b826409fa62/vllm/model_executor/layers/fused_moe/layer.py#L188) を参照してください。
+**重要**: `FusedMoEMethodBase` の派生クラスは、`apply` メソッド内で `FusedMoEMethodBase::fused_experts` オブジェクトを使います。設定によって妥当な `FusedMoEModularKernel` オブジェクトを構築できる場合、その値で `FusedMoEMethodBase::fused_experts` を上書きします。これにより、派生クラスは実際にどの FusedMoE 実装が使われるかを意識せずに済みます。
 
-### How To Unit Test
+### ユニットテストの書き方 { #how-to-unit-test }
 
-We have `FusedMoEModularKernel` unit tests at [test_modular_kernel_combinations.py](../../tests/kernels/moe/test_modular_kernel_combinations.py).
+`FusedMoEModularKernel` のユニットテストは [test_modular_kernel_combinations.py](../../tests/kernels/moe/test_modular_kernel_combinations.py) にあります。
 
-The unit test iterates through all combinations of `FusedMoEPrepareAndFinalizeModular` and `FusedMoEPremuteExpertsUnpermute` types and if they are
-compatible, runs some correctness tests.
-If you are adding some `FusedMoEPrepareAndFinalizeModular` / `FusedMoEExpertsModular` implementations,
+このユニットテストは `FusedMoEPrepareAndFinalizeModular` と `FusedMoEPremuteExpertsUnpermute` の型のすべての組み合わせを走査し、互換性がある場合に正しさのテストを実行します。
+`FusedMoEPrepareAndFinalizeModular` / `FusedMoEExpertsModular` の実装を追加する場合は、次のようにします。
 
-1. Add the implementation type to `MK_ALL_PREPARE_FINALIZE_TYPES` and `MK_FUSED_EXPERT_TYPES` in [mk_objects.py](../../tests/kernels/moe/modular_kernel_tools/mk_objects.py) respectively.
-2. Update `Config::is_batched_prepare_finalize()`, `Config::is_batched_fused_experts()`, `Config::is_standard_fused_experts()`,
-`Config::is_fe_16bit_supported()`,  `Config::is_fe_fp8_supported()`, `Config::is_fe_block_fp8_supported()`
-methods in [/tests/kernels/moe/modular_kernel_tools/common.py](../../tests/kernels/moe/modular_kernel_tools/common.py)
+1. [mk_objects.py](../../tests/kernels/moe/modular_kernel_tools/mk_objects.py) の `MK_ALL_PREPARE_FINALIZE_TYPES` と `MK_FUSED_EXPERT_TYPES` に、それぞれ実装の型を追加します。
+2. [/tests/kernels/moe/modular_kernel_tools/common.py](../../tests/kernels/moe/modular_kernel_tools/common.py) の `Config::is_batched_prepare_finalize()`、`Config::is_batched_fused_experts()`、`Config::is_standard_fused_experts()`、
+`Config::is_fe_16bit_supported()`、`Config::is_fe_fp8_supported()`、`Config::is_fe_block_fp8_supported()`
+の各メソッドを更新します。
 
-Doing this will add the new implementation to the test suite.
+これにより、新しい実装がテストスイートに追加されます。
 
-### How To Check `FusedMoEPrepareAndFinalizeModular` & `FusedMoEExpertsModular` Compatibility
+### `FusedMoEPrepareAndFinalizeModular` と `FusedMoEExpertsModular` の互換性を確認する方法 { #how-to-check-fusedmoeprepareandfinalizemodular-fusedmoeexpertsmodular-compatibility }
 
-The unit test file [test_modular_kernel_combinations.py](../../tests/kernels/moe/test_modular_kernel_combinations.py) can also be executed as a standalone script.
-Example: `python3 -m tests.kernels.moe.test_modular_kernel_combinations --pf-type DeepEPLLPrepareAndFinalize --experts-type BatchedTritonExperts`
-As a side effect, this script can be used to test `FusedMoEPrepareAndFinalizeModular` & `FusedMoEExpertsModular` compatibility. When invoked
-with incompatible types, the script will error.
+ユニットテストのファイル [test_modular_kernel_combinations.py](../../tests/kernels/moe/test_modular_kernel_combinations.py) は、単体のスクリプトとしても実行できます。
+例: `python3 -m tests.kernels.moe.test_modular_kernel_combinations --pf-type DeepEPLLPrepareAndFinalize --experts-type BatchedTritonExperts`
+副次的な効果として、このスクリプトは `FusedMoEPrepareAndFinalizeModular` と `FusedMoEExpertsModular` の互換性の確認にも使えます。互換性のない型を指定して実行すると、スクリプトはエラーになります。
 
-### How To Profile
+### プロファイルの取り方 { #how-to-profile }
 
-Please take a look at [profile_modular_kernel.py](../../tests/kernels/moe/modular_kernel_tools/profile_modular_kernel.py)
-The script can be used to generate Torch traces for a single `FusedMoEModularKernel::forward()` call for any compatible
-`FusedMoEPrepareAndFinalizeModular` and `FusedMoEExpertsModular` types.
-Example: `python3 -m tests.kernels.moe.modular_kernel_tools.profile_modular_kernel --pf-type DeepEPLLPrepareAndFinalize --experts-type BatchedTritonExperts`
+[profile_modular_kernel.py](../../tests/kernels/moe/modular_kernel_tools/profile_modular_kernel.py) を参照してください。
+このスクリプトは、互換性のある `FusedMoEPrepareAndFinalizeModular` と `FusedMoEExpertsModular` の任意の組み合わせについて、`FusedMoEModularKernel::forward()` の 1 回の呼び出しに対する Torch トレースを生成できます。
+例: `python3 -m tests.kernels.moe.modular_kernel_tools.profile_modular_kernel --pf-type DeepEPLLPrepareAndFinalize --experts-type BatchedTritonExperts`
 
-## FusedMoEPrepareAndFinalizeModular Implementations
+## FusedMoEPrepareAndFinalizeModular の実装 { #fusedmoeprepareandfinalizemodular-implementations }
 
-See [Fused MoE Kernel features](./moe_kernel_features.md#fused-moe-modular-all2all-backends) for a list of all the available modular prepare and finalize subclasses.
+利用可能なモジュラー prepare / finalize サブクラスの一覧は、[Fused MoE カーネルの機能](./moe_kernel_features.md#fused-moe-modular-all2all-backends)を参照してください。
 
-## FusedMoEExpertsModular
+## FusedMoEExpertsModular { #fusedmoeexpertsmodular_1 }
 
-See [Fused MoE Kernel features](./moe_kernel_features.md#fused-moe-experts-kernels) for a list of all the available modular experts.
+利用可能なモジュラー experts の一覧は、[Fused MoE カーネルの機能](./moe_kernel_features.md#fused-moe-experts-kernels)を参照してください。

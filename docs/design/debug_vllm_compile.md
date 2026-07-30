@@ -1,38 +1,33 @@
-# How to debug the vLLM-torch.compile integration
+# vLLM と torch.compile の統合をデバッグする方法 { #how-to-debug-the-vllm-torchcompile-integration }
 
-TL;DR:
+要点:
 
-- use tlparse to acquire torch.compile logs. Include these logs in bug reports and/or support asks.
-- The vLLM-torch.compile integration is multiple pieces. vLLM exposes flags to turn off each piece:
+- torch.compile のログを取得するには tlparse を使ってください。バグ報告やサポートの問い合わせにはこれらのログを添えてください。
+- vLLM と torch.compile の統合は複数の要素からなります。vLLM は各要素を無効にするフラグを提供しています。
 
-| Online Flag                    | Offline Flag                                                                   | Result                                               |
+| オンラインのフラグ                    | オフラインのフラグ                                                                   | 効果                                               |
 |--------------------------------|--------------------------------------------------------------------------------|------------------------------------------------------|
-| --enforce-eager                | enforce_eager=True                                                             | Turn off torch.compile and CUDAGraphs                |
-| -cc.mode=0                     | compilation_config=CompilationConfig(mode=CompilationMode.NONE)                | Turn off torch.compile only                          |
-| -cc.mode=1                     | compilation_config=CompilationConfig(mode=CompilationMode.STOCK_TORCH_COMPILE) | Turn off vLLM-compile modifications to torch.compile |
-| -cc.cudagraph_mode=NONE        | compilation_config=CompilationConfig(cudagraph_mode=CUDAGraphMode.NONE)        | Turn off CUDAGraphs only                             |
-| -cc.backend=eager              | compilation_config=CompilationConfig(backend='eager')                          | Turn off TorchInductor                               |
-| -cc.ir_enable_torch_wrap=False | compilation_config=CompilationConfig(ir_enable_torch_wrap=False)               | Turn off vLLM IR wrapping                            |
+| --enforce-eager                | enforce_eager=True                                                             | torch.compile と CUDA graph を無効にする                |
+| -cc.mode=0                     | compilation_config=CompilationConfig(mode=CompilationMode.NONE)                | torch.compile のみを無効にする                          |
+| -cc.mode=1                     | compilation_config=CompilationConfig(mode=CompilationMode.STOCK_TORCH_COMPILE) | torch.compile に対する vLLM-compile の改変を無効にする |
+| -cc.cudagraph_mode=NONE        | compilation_config=CompilationConfig(cudagraph_mode=CUDAGraphMode.NONE)        | CUDA graph のみを無効にする                            |
+| -cc.backend=eager              | compilation_config=CompilationConfig(backend='eager')                          | TorchInductor を無効にする                               |
+| -cc.ir_enable_torch_wrap=False | compilation_config=CompilationConfig(ir_enable_torch_wrap=False)               | vLLM IR のラッピングを無効にする                              |
 
-## vLLM-torch.compile overview
+## vLLM と torch.compile の概要 { #vllm-torchcompile-overview }
 
-To improve performance, vLLM leverages torch.compile and CUDAGraphs to speed things up.
-torch.compile generates optimized kernels for PyTorch code while CUDAGraphs eliminates overhead.
-Most notably, vLLM-compile is NOT torch.compile, it is a custom compiler built using internal PyTorch Compile APIs.
+性能を高めるため、vLLM は torch.compile と CUDA graph を活用して処理を高速化します。torch.compile は PyTorch のコードに対して最適化されたカーネルを生成し、CUDA graph はオーバーヘッドを取り除きます。特に重要な点として、vLLM-compile は torch.compile そのものでは**ありません**。PyTorch Compile の内部 API を使って構築された独自のコンパイラです。
 
 ![vLLM-compile diagram](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/debug_vllm_compile/design_diagram.png)
 
-- Given a model, we do a full graph capture via TorchDynamo that is dynamic on the batch size (number of tokens)
-- vLLM then optionally splits and/or specializes this graph and then uses TorchInductor to compile each graph into a compiled artifact.
-This step may use vLLM custom Inductor passes to further optimize the graph. This includes vLLM IR lowering to remove dispatch overhead.
-- The compiled artifact is saved to vLLM's compile cache so that it can be loaded in the future.
-- vLLM applies CUDAGraphs to reduce CPU overheads.
+- モデルが与えられると、バッチサイズ（トークン数）について動的な形で、TorchDynamo による全体グラフのキャプチャを行います。
+- 続いて vLLM は、必要に応じてこのグラフを分割・特殊化し、TorchInductor を使って各グラフをコンパイル済みの成果物にコンパイルします。このステップでは、グラフをさらに最適化するために vLLM 独自の Inductor パスが使われることがあります。これにはディスパッチのオーバーヘッドを取り除く vLLM IR の lowering も含まれます。
+- コンパイル済みの成果物は vLLM のコンパイルキャッシュに保存され、次回以降に読み込めるようになります。
+- vLLM は CPU のオーバーヘッドを減らすために CUDA graph を適用します。
 
-Things can go wrong in each of the four steps. When something does go wrong, please try to isolate the subsystem
-that went wrong -- this will allow you to turn off the minimal number of things to keep reliability
-goals while minimizing impact to performance and also helps us (vLLM) when you open a bug report.
+この 4 つのステップのいずれでも問題が起こりえます。問題が起きたときは、どのサブシステムが原因かを切り分けてみてください。そうすれば、性能への影響を最小限に抑えつつ信頼性を確保するために無効にすべきものを最小限にできますし、バグ報告の際に私たち（vLLM）にとっても助けになります。
 
-For more details on the design, please see the following resources:
+設計の詳細については、次のリソースを参照してください。
 
 - [Introduction to vLLM-torch.compile blogpost](https://blog.vllm.ai/2025/08/20/torch-compile.html)
 - [vLLM-torch.compile integration design](./torch_compile.md)
@@ -40,31 +35,26 @@ For more details on the design, please see the following resources:
 - [vLLM Office Hours #26](https://www.youtube.com/live/xLyxc7hxCJc?si=Xulo9pe53C6ywf0V&t=561)
 - [Talk at PyTorch Conference 2025](https://youtu.be/1wV1ESbGrVQ?si=s1GqymUfwiwOrDTg&t=725)
 
-## Use tlparse
+## tlparse を使う { #use-tlparse }
 
-Use [tlparse](https://github.com/meta-pytorch/tlparse) to view torch.compile
-logs. These logs show all stages of the compilation process, including the fused
-kernels that torch.compile produces.
+torch.compile のログを見るには [tlparse](https://github.com/meta-pytorch/tlparse) を使ってください。これらのログには、torch.compile が生成する融合カーネルを含め、コンパイル過程のすべての段階が表示されます。
 
-Install tlparse:
+tlparse のインストール:
 
 ```sh
 pip install tlparse
 ```
 
-To enable the torch.compile logs, you can set the envvar `TORCH_TRACE=<dir>`.
-During tracing, a file per rank will be created inside of that directory, with
-each file containing the artifacts during compilation. If you can, we recommend
-sending these log files along with bug reports -- they are very helpful.
+torch.compile のログを有効にするには、環境変数 `TORCH_TRACE=<dir>` を設定します。トレース中、そのディレクトリ内にランクごとのファイルが作成され、各ファイルにコンパイル中の成果物が記録されます。可能であれば、これらのログファイルをバグ報告に添えて送っていただけると非常に助かります。
 
-Usage (offline inference)
+使い方（オフライン推論）
 
 ```sh
 TORCH_TRACE=~/trace_dir python my_script.py
 tlparse ~/trace_dir/<rank_0_log_file>
 ```
 
-Usage (serving)
+使い方（サービング）
 
 ```sh
 TORCH_TRACE=~/trace_dir vllm serve
@@ -72,16 +62,13 @@ TORCH_TRACE=~/trace_dir vllm serve
 tlparse ~/trace_dir/<rank_0_log_file>
 ```
 
-Given one of the log files, the `tlparse` command outputs some HTML files
-(perhaps into e.g. `./tl_out/index.html`).
-Open it to see the logs. It'll look something like the following:
+ログファイルの 1 つを渡すと、`tlparse` コマンドはいくつかの HTML ファイルを出力します（たとえば `./tl_out/index.html` など）。それを開くとログを確認できます。次のような見た目になります。
 
 ![tlparse example](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/debug_vllm_compile/tlparse_inductor.png)
 
-## Turn off vLLM-torch.compile integration
+## vLLM と torch.compile の統合を無効にする { #turn-off-vllm-torchcompile-integration }
 
-Pass `--enforce-eager` to turn off the vLLM-torch.compile integration and run entirely
-in eager mode. This includes turning off CUDAGraphs.
+`--enforce-eager` を渡すと、vLLM と torch.compile の統合を無効にし、完全に eager モードで実行できます。これには CUDA graph の無効化も含まれます。
 
 ```sh
 # Online
@@ -93,8 +80,7 @@ vllm serve --enforce-eager
 LLM(model, enforce_eager=True)
 ```
 
-To turn off just torch.compile, pass `mode = NONE` to the compilation config.
-(`-cc` is short for `--compilation_config`):
+torch.compile のみを無効にするには、コンパイル設定に `mode = NONE` を渡します（`-cc` は `--compilation_config` の短縮形です）。
 
 ```sh
 # Online
@@ -107,7 +93,7 @@ from vllm.config.compilation import CompilationConfig, CompilationMode
 LLM(model, compilation_config=CompilationConfig(mode=CompilationMode.NONE))
 ```
 
-To turn off just CUDAGraphs, pass `cudagraph_mode = NONE`:
+CUDA graph のみを無効にするには `cudagraph_mode = NONE` を渡します。
 
 ```sh
 # Online
@@ -120,9 +106,7 @@ from vllm.config.compilation import CompilationConfig, CUDAGraphMode
 LLM(model, compilation_config=CompilationConfig(cudagraph_mode=CUDAGraphMode.NONE))
 ```
 
-vLLM IR makes heavy use of the compilation pipeline, from functionalization, custom fusions, and lowering.
-To turn that off and capture eager-mode dispatching behavior of vLLM IR, run with `ir_enable_torch_wrap=False`.
-IR torch wrap is only enabled by default when using `mode=VLLM_COMPILE` and `backend="inductor"` (default).
+vLLM IR は、functionalization、カスタムの融合、lowering といったコンパイルのパイプラインを多用します。これを無効にして vLLM IR の eager モードのディスパッチ挙動を捉えるには、`ir_enable_torch_wrap=False` を指定して実行してください。IR の torch wrap が既定で有効になるのは、`mode=VLLM_COMPILE` かつ `backend="inductor"`（既定）の場合のみです。
 
 ```sh
 # Online
@@ -135,25 +119,17 @@ from vllm.config.compilation import CompilationConfig
 LLM(model, compilation_config=CompilationConfig(ir_enable_torch_wrap=False))
 ```
 
-## Debugging TorchDynamo
+## TorchDynamo のデバッグ { #debugging-torchdynamo }
 
-vLLM requires model code be capturable into a full graph via TorchDynamo (torch.compile's frontend).
-TorchDynamo does not support all of Python. It will error (in fullgraph mode) if it cannot support
-a feature (this is sometimes known as a graph break).
+vLLM は、モデルのコードが TorchDynamo（torch.compile のフロントエンド）によって全体グラフとしてキャプチャできることを要求します。TorchDynamo は Python のすべての機能をサポートしているわけではありません。ある機能をサポートできない場合、（fullgraph モードでは）エラーになります（これはグラフブレークと呼ばれることがあります）。
 
-If you encounter a graph break, please [open an issue to pytorch/pytorch](https://github.com/pytorch/pytorch) so the PyTorch devs can prioritize.
-Then, try your best to rewrite the code to avoid the graph break.
-For more information, see this [Dynamo guide](https://docs.pytorch.org/docs/stable/compile/programming_model.dynamo_core_concepts.html).
+グラフブレークに遭遇した場合は、PyTorch の開発者が優先順位を付けられるよう、[pytorch/pytorch に issue を作成](https://github.com/pytorch/pytorch)してください。そのうえで、グラフブレークを避けるようコードを書き換えてみてください。詳細は [Dynamo のガイド](https://docs.pytorch.org/docs/stable/compile/programming_model.dynamo_core_concepts.html)を参照してください。
 
-## Debugging Dynamic Shape full graph capture
+## 動的形状での全体グラフキャプチャのデバッグ { #debugging-dynamic-shape-full-graph-capture }
 
-vLLM requires that the model's forward pass be capturable into a full graph that is dynamic
-on the batch size (i.e. the number of tokens). It (by default) compiles this one graph into
-one artifact and uses this artifact for all batch sizes.
+vLLM は、モデルの forward パスが、バッチサイズ（つまりトークン数）について動的な全体グラフとしてキャプチャできることを要求します。既定では、この 1 つのグラフを 1 つの成果物にコンパイルし、その成果物をすべてのバッチサイズで使います。
 
-If your code cannot be captured with Dynamic Shapes, you may see silent incorrectness,
-loud errors, or CUDA illegal memory accesses. For example, the following is not
-capturable into a single graph:
+コードが動的形状でキャプチャできない場合、静かな不正な結果、明示的なエラー、あるいは CUDA の不正メモリアクセスが発生することがあります。たとえば次のコードは 1 つのグラフとしてキャプチャできません。
 
 ```py
 if data.size[0] % 128 == 0:
@@ -162,26 +138,20 @@ else:
     bar(...)
 ```
 
-This problem is easy to diagnose. Use tlparse and click on `compilation_metrics`:
-it will tell you symbolic constraints on the batch size. If there is any constraint
-that restricts the batch sizes, then we've got a problem.
+この問題は簡単に診断できます。tlparse を使い `compilation_metrics` をクリックしてください。バッチサイズに関するシンボリックな制約が表示されます。バッチサイズを制限する制約があれば、それが問題です。
 
 ![Bad tlparse example](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/debug_vllm_compile/dynamic_shapes.png)
 
-To avoid this, please either:
+これを避けるには、次のいずれかを行ってください。
 
-1. avoid branching on the number of tokens
-2. wrap the branching logic into a custom operator. TorchDynamo does not
-trace into custom operators.
+1. トークン数にもとづく分岐を避ける
+2. 分岐のロジックをカスタム演算子で包む。TorchDynamo はカスタム演算子の内部をトレースしません。
 
-## Debugging constraint violations and dynamic shapes guards issues
+## 制約違反と動的形状の guard の問題のデバッグ { #debugging-constraint-violations-and-dynamic-shapes-guards-issues }
 
-Dynamic-shape guards are a specific category of Dynamo guards. They are constraints that `torch.compile`
-attaches to dynamic dimensions (e.g., `seq_len`) to ensure the compiled artifact remains valid.
-These guards typically appear when framework code, custom passes, or user code branches based on
-dynamic shape values.
+動的形状の guard は Dynamo の guard の一種です。これは、コンパイル済み成果物が有効であり続けることを保証するために、`torch.compile` が動的な次元（`seq_len` など）に付ける制約です。これらの guard は通常、フレームワークのコード、カスタムパス、あるいはユーザーのコードが動的形状の値にもとづいて分岐する際に現れます。
 
-**Example:**
+**例:**
 
 ```python
 if x > 10:
@@ -190,19 +160,12 @@ else:
     # path B
 ```
 
-This creates a guard `x > 10` or `x <= 10` depending on which path was traced.
+これにより、どちらの経路がトレースされたかに応じて `x > 10` または `x <= 10` の guard が作られます。
 
-**vLLM's Assumption:**
-vLLM assumes that all guards added by torch.compile are safe to drop and will not
-constrain the compiled graph to specific input shapes. When this assumption is violated,
-it can cause issues that users need to debug.
-Some side effects that indicates this assumption is violated are runtime errors
-or `ConstraintViolationErrors`.
+**vLLM の前提:**
+vLLM は、torch.compile が追加するすべての guard は安全に破棄でき、コンパイル済みグラフを特定の入力形状に制約しないことを前提としています。この前提が破られると、ユーザーがデバッグしなければならない問題が生じることがあります。この前提が破られていることを示す兆候としては、実行時エラーや `ConstraintViolationError` があります。
 
-A `ConstraintViolationErrors` will be thrown if a dynamic shape gets constrained to
-a single value. If you encounter a constraint violation error or suspect that a dynamic
-shapes guard is being added incorrectly, you can use stricter dynamic shape modes to
-help debug the issue:
+動的な形状が単一の値に制約されると `ConstraintViolationError` が送出されます。制約違反のエラーに遭遇した場合や、動的形状の guard が誤って追加されている疑いがある場合は、より厳格な動的形状のモードを使って問題の切り分けに役立てられます。
 
 ```sh
 # Online - using unbacked mode
@@ -226,53 +189,44 @@ LLM(model, compilation_config=CompilationConfig(
 ))
 ```
 
-These modes are stricter and reduce or eliminate the need of dynamic shapes guarding, which can help isolate issues:
+これらのモードはより厳格で、動的形状の guard の必要性を減らす、あるいはなくすため、問題の切り分けに役立ちます。
 
-- `unbacked`: Uses unbacked symints which don't allow guards, making it easier to identify where guards are being incorrectly added
-- `backed_size_oblivious`: Uses a mode that is stricter about guarding.
+- `unbacked`: guard を許可しない unbacked symint を使うため、guard が誤って追加されている箇所を特定しやすくなります。
+- `backed_size_oblivious`: guard についてより厳格なモードを使います。
 
-For more details on dynamic shapes modes, see [Dynamic shapes and vLLM guard dropping](torch_compile.md#dynamic-shapes-and-vllm-guard-dropping).
+動的形状のモードの詳細は、[動的形状と vLLM による guard の破棄](torch_compile.md#dynamic-shapes-and-vllm-guard-dropping)を参照してください。
 
-### Printing guards
+### guard を表示する { #printing-guards }
 
-To see all guards that are being added during compilation, you can use `TORCH_LOGS=+dynamic`:
+コンパイル中に追加されるすべての guard を確認するには `TORCH_LOGS=+dynamic` を使います。
 
 ```sh
 TORCH_LOGS=+dynamic vllm serve meta-llama/Llama-3.2-1B
 ```
 
-Look for `[guard added]` in the logs to see where guards are being added. This can help you identify which operations are
-causing guards to be added incorrectly.
+ログの中で `[guard added]` を探すと、guard がどこで追加されているかが分かります。これにより、どの演算が guard の誤った追加を引き起こしているかを特定できます。
 
-## Debugging TorchInductor
+## TorchInductor のデバッグ { #debugging-torchinductor }
 
-TorchInductor takes a captured graph and then compiles it down to some Python code
-that may call 1+ triton kernels. On rare (but unfortunate) occasions, it may
-produce an incorrect triton kernel. This may manifest as silent incorrectness,
-CUDA illegal memory accesses, or loud errors.
+TorchInductor はキャプチャされたグラフを受け取り、1 つ以上の Triton カーネルを呼び出す Python のコードへコンパイルします。まれに（そして残念なことに）、誤った Triton カーネルを生成することがあります。これは、静かな不正な結果、CUDA の不正メモリアクセス、あるいは明示的なエラーとして現れることがあります。
 
-### Inductor runtime assertions
+### Inductor の実行時アサーション { #inductor-runtime-assertions }
 
-By default (on torch < 2.12), vLLM disables Inductor's runtime assertions
-(`assert_size_stride`, `assert_alignment`) to avoid ~2ms overhead per forward
-pass on large models. Setting `VLLM_LOGGING_LEVEL=DEBUG` automatically
-re-enables them so debugging sessions get full shape/stride validation:
+既定では（torch 2.12 未満の場合）、vLLM は Inductor の実行時アサーション（`assert_size_stride`、`assert_alignment`）を無効にしています。大きなモデルでは forward パスあたり約 2 ミリ秒のオーバーヘッドが生じるためです。`VLLM_LOGGING_LEVEL=DEBUG` を設定すると自動的に再度有効になり、デバッグ時には形状 / stride の完全な検証が行われます。
 
 ```sh
 VLLM_LOGGING_LEVEL=DEBUG vllm serve <model>
 ```
 
-You can also override them explicitly via `--compilation-config`:
+`--compilation-config` で明示的に上書きすることもできます。
 
 ```sh
 vllm serve <model> -cc.inductor_compile_config='{"size_asserts": true, "alignment_asserts": true, "scalar_asserts": true}'
 ```
 
-On torch >= 2.12, PyTorch uses an efficient assert-once strategy and these
-flags are no longer suppressed by vLLM.
+torch 2.12 以降では、PyTorch は効率的な「一度だけアサートする」戦略を採用しており、vLLM がこれらのフラグを抑制することはなくなりました。
 
-To debug if TorchInductor is at fault, you can disable it by passing `backend='eager'`
-to the compilation config:
+TorchInductor が原因かどうかを調べるには、コンパイル設定に `backend='eager'` を渡して無効にできます。
 
 ```sh
 # online
@@ -284,70 +238,54 @@ vllm serve -cc.backend=eager
 LLM(compilation_config=CompilationConfig(backend='eager'))
 ```
 
-If Inductor is at fault, [file a bug to PyTorch](https://github.com/pytorch/pytorch).
-If you're feeling adventurous, you can debug the triton kernels in the Inductor output code
-(that you can locate via using tlparse).
+Inductor が原因であれば、[PyTorch にバグを報告](https://github.com/pytorch/pytorch)してください。挑戦してみたい場合は、（tlparse で場所を特定できる）Inductor の出力コード内の Triton カーネルをデバッグすることもできます。
 
 ![tlparse example](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/debug_vllm_compile/tlparse_inductor.png)
 
-You can also use `TORCH_LOGS=output_code <command>` to print the Inductor output code.
+Inductor の出力コードを表示するには `TORCH_LOGS=output_code <command>` も使えます。
 
-### Editable TorchInductor code
+### TorchInductor のコードを編集可能にする { #editable-torchinductor-code }
 
-You can edit the TorchInductor code that gets run by setting `VLLM_COMPILE_CACHE_SAVE_FORMAT=unpacked`
-or passing `-cc.compile_cache_save_format=unpacked`. The default is `binary`, which means it is not editable.
+`VLLM_COMPILE_CACHE_SAVE_FORMAT=unpacked` を設定するか `-cc.compile_cache_save_format=unpacked` を渡すことで、実行される TorchInductor のコードを編集できます。既定は `binary` で、この場合は編集できません。
 
-This is a useful technique: you can put breakpoints (e.g. `torch.distributed.breakpoint()`)
-and print statements in the output code.
+これは有用なテクニックです。出力コードにブレークポイント（`torch.distributed.breakpoint()` など）や print 文を入れられます。
 
-## Debugging vLLM-compile cache
+## vLLM-compile のキャッシュのデバッグ { #debugging-vllm-compile-cache }
 
-vLLM built its own cache for torch.compile artifacts. The idea is that the artifacts
-can be compiled once and then reused after they have been compiled. This
-is a layer on top of [torch.compile's compiler cache](https://docs.pytorch.org/tutorials/recipes/torch_compile_caching_tutorial.html).
+vLLM は torch.compile の成果物のために独自のキャッシュを構築しています。成果物を一度コンパイルすれば、以降は再利用できるという考え方です。これは [torch.compile のコンパイラキャッシュ](https://docs.pytorch.org/tutorials/recipes/torch_compile_caching_tutorial.html)の上に載る層です。
 
-While torch.compile's compiler cache is rock-stable, vLLM's compiler cache is unfortunately
-not always correct. You can disable it via setting `VLLM_DISABLE_COMPILE_CACHE=1`.
+torch.compile のコンパイラキャッシュは非常に安定していますが、残念ながら vLLM のコンパイラキャッシュは常に正しいとは限りません。`VLLM_DISABLE_COMPILE_CACHE=1` を設定すると無効にできます。
 
-You can also manually remove this cache.
+このキャッシュは手動で削除することもできます。
 
-- Remove vLLM's compile cache with `rm -rf ~/.cache/vllm` (look at logs to see if the location changed)
-- Remove torch.compile's built-in caches with `rm -rf /tmp/torchinductor_$(whoami)`
+- vLLM のコンパイルキャッシュは `rm -rf ~/.cache/vllm` で削除します（場所が変わっていないかログを確認してください）
+- torch.compile の組み込みキャッシュは `rm -rf /tmp/torchinductor_$(whoami)` で削除します
 
-vLLM's cache is a mapping from cache key to a compiled artifact. vLLM computes
-the cache key via combining multiple factors (e.g. config flags and model name).
-If vLLM's compile cache is wrong, this usually means that a factor is missing.
-Please see [this example](https://github.com/vllm-project/vllm/blob/18b39828d90413d05d770dfd2e2f48304f4ca0eb/vllm/config/model.py#L310)
-of how vLLM computes part of the cache key.
+vLLM のキャッシュは、キャッシュキーからコンパイル済み成果物へのマッピングです。vLLM は複数の要素（設定フラグやモデル名など）を組み合わせてキャッシュキーを計算します。vLLM のコンパイルキャッシュが誤っている場合、通常はいずれかの要素が抜けていることを意味します。vLLM がキャッシュキーの一部をどう計算しているかは[この例](https://github.com/vllm-project/vllm/blob/18b39828d90413d05d770dfd2e2f48304f4ca0eb/vllm/config/model.py#L310)を参照してください。
 
-vLLM's compilation cache requires that the code being compiled ends up being serializable.
-If this is not the case, then it will error out on save. Usually the fixes are to either:
+vLLM のコンパイルキャッシュは、コンパイル対象のコードが最終的にシリアライズ可能であることを要求します。そうでない場合、保存時にエラーになります。通常の対処は次のいずれかです。
 
-- rewrite the non-serializable pieces (perhaps difficult because it's difficult to
-  tell right now what is serializable and what isn't)
-- file a bug report
-- ignore the error by setting `VLLM_DISABLE_COMPILE_CACHE=1` (note that this will
-  make warm server starts a lot slower).
+- シリアライズできない部分を書き換える（現時点では何がシリアライズ可能かを判断しにくいため、難しい場合があります）
+- バグを報告する
+- `VLLM_DISABLE_COMPILE_CACHE=1` を設定してエラーを無視する（ただし、ウォーム状態でのサーバー起動がかなり遅くなります）
 
-## Debugging CUDAGraphs
+## CUDA graph のデバッグ { #debugging-cudagraphs }
 
-CUDAGraphs is a feature that allows one to:
+CUDA graph は次のことを可能にする機能です。
 
-- Capture a callable that launches 1+ CUDA kernels into a CUDAGraph
-- Replay the CUDAGraph
+- 1 つ以上の CUDA カーネルを起動する呼び出し可能オブジェクトを CUDA graph としてキャプチャする
+- その CUDA graph をリプレイする
 
-The captured CUDAGraph contains all of the memory used during the capture process.
-The replay of the CUDAGraph reads and writes to exactly the same regions of memory.
+キャプチャされた CUDA graph には、キャプチャ処理中に使われたすべてのメモリが含まれます。CUDA graph のリプレイは、まったく同じメモリ領域を読み書きします。
 
-This leads to some restrictions:
+このことから、いくつかの制約が生じます。
 
-1. In order to use CUDAGraphs on new data, you'll need to copy the data into a buffer
-that the CUDAGraph is reading from
-2. CUDAGraphs only capture CUDA kernels, they don't capture work done on CPU.
+1. 新しいデータに対して CUDA graph を使うには、そのデータを CUDA graph が読み取るバッファへコピーする必要があります。
+2. CUDA graph がキャプチャするのは CUDA カーネルのみで、CPU 上の処理はキャプチャしません。
 
-vLLM uses the raw CUDAGraphs API, which is unsafe when used incorrectly.
+vLLM は生の CUDA graph API を使っており、誤った使い方をすると安全ではありません。
 
-To turn off just CUDAGraphs, pass `cudagraph_mode = NONE`:
+CUDA graph のみを無効にするには `cudagraph_mode = NONE` を渡します。
 
 ```sh
 # Online

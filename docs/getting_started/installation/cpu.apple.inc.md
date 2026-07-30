@@ -1,23 +1,23 @@
 <!-- markdownlint-disable MD041 -->
 --8<-- [start:installation]
 
-vLLM has experimental support for macOS with Apple Silicon. For now, users must build from source to natively run on macOS.
+vLLM は Apple Silicon 搭載の macOS を実験的にサポートしています。現時点では、macOS 上でネイティブに実行するにはソースからビルドする必要があります。
 
-Currently the CPU implementation for macOS supports FP32 and FP16 datatypes.
+現在、macOS 向けの CPU 実装は FP32 と FP16 のデータ型をサポートしています。
 
-!!! tip "GPU-Accelerated Inference with vLLM-Metal"
-    For GPU-accelerated inference on Apple Silicon using Metal, check out [vllm-metal](https://github.com/vllm-project/vllm-metal), a community-maintained hardware plugin that uses MLX as the compute backend.
+!!! tip "vLLM-Metal による GPU アクセラレーション推論"
+    Metal を使った Apple Silicon 上での GPU アクセラレーション推論には、MLX を計算バックエンドとして使うコミュニティ管理のハードウェアプラグイン [vllm-metal](https://github.com/vllm-project/vllm-metal) を参照してください。
 
 --8<-- [end:installation]
 --8<-- [start:requirements]
 
-- OS: `macOS Sonoma` or later
-- SDK: `XCode 15.4` or later with Command Line Tools
-- Compiler: `Apple Clang >= 15.0.0`
+- OS: `macOS Sonoma` 以降
+- SDK: Command Line Tools を含む `XCode 15.4` 以降
+- コンパイラ: `Apple Clang >= 15.0.0`
 
 !!! note
-    The macOS CPU build is smoke-tested in CI on the latest GA Apple Silicon
-    runner; other macOS or Apple Clang versions are best-effort.
+    macOS の CPU ビルドは、最新の GA 版 Apple Silicon ランナー上の CI でスモークテストされています。
+    それ以外の macOS や Apple Clang のバージョンはベストエフォートの対応です。
 
 --8<-- [end:requirements]
 --8<-- [start:set-up-using-python]
@@ -25,12 +25,12 @@ Currently the CPU implementation for macOS supports FP32 and FP16 datatypes.
 --8<-- [end:set-up-using-python]
 --8<-- [start:pre-built-wheels]
 
-Currently, there are no pre-built Apple silicon CPU wheels.
+現時点では、Apple Silicon 向けの CPU のビルド済み wheel はありません。
 
 --8<-- [end:pre-built-wheels]
 --8<-- [start:build-wheel-from-source]
 
-After installation of XCode and the Command Line Tools, which include Apple Clang, execute the following commands to build and install vLLM from source.
+Apple Clang を含む XCode と Command Line Tools をインストールしたあと、次のコマンドを実行してソースから vLLM をビルド・インストールします。
 
 ```bash
 git clone https://github.com/vllm-project/vllm.git
@@ -40,11 +40,11 @@ uv pip install -e .
 ```
 
 !!! note
-    On macOS the `VLLM_TARGET_DEVICE` is automatically set to `cpu`, which is currently the only supported device.
+    macOS では `VLLM_TARGET_DEVICE` は自動的に `cpu` に設定されます。現時点でサポートされるデバイスはこれのみです。
 
-!!! example "Troubleshooting"
-    If the build fails with errors like the following where standard C++ headers cannot be found, try to remove and reinstall your
-    [Command Line Tools for Xcode](https://developer.apple.com/download/all/).
+!!! example "トラブルシューティング"
+    標準の C++ ヘッダーが見つからないという次のようなエラーでビルドが失敗する場合は、
+    [Command Line Tools for Xcode](https://developer.apple.com/download/all/) を削除して再インストールしてみてください。
 
     ```text
     [...] fatal error: 'map' file not found
@@ -61,7 +61,7 @@ uv pip install -e .
 
     ---
 
-    If the build fails with C++11/C++17 compatibility errors like the following, the issue is that the build system is defaulting to an older C++ standard:
+    次のような C++11 / C++17 の互換性エラーでビルドが失敗する場合、原因はビルドシステムが古い C++ 標準を既定にしていることです。
 
     ```text
     [...] error: 'constexpr' is not a type
@@ -69,18 +69,18 @@ uv pip install -e .
     [...] error: 'constexpr' does not name a type
     ```
 
-    **Solution**: Your compiler might be using an older C++ standard. Edit `cmake/cpu_extension.cmake` and add `set(CMAKE_CXX_STANDARD 17)` before `set(CMAKE_CXX_STANDARD_REQUIRED ON)`.
+    **解決策**: コンパイラが古い C++ 標準を使っている可能性があります。`cmake/cpu_extension.cmake` を編集し、`set(CMAKE_CXX_STANDARD_REQUIRED ON)` の前に `set(CMAKE_CXX_STANDARD 17)` を追加してください。
 
-    To check your compiler's C++ standard support:
+    コンパイラがサポートする C++ 標準を確認するには次のようにします。
     ```bash
     clang++ -std=c++17 -pedantic -dM -E -x c++ /dev/null | grep __cplusplus
     ```
-    On Apple Clang 16 you should see: `#define __cplusplus 201703L`
+    Apple Clang 16 では `#define __cplusplus 201703L` と表示されるはずです。
 
 --8<-- [end:build-wheel-from-source]
 --8<-- [start:pre-built-images]
 
-Currently, there are no pre-built Arm silicon CPU images.
+現時点では、Arm シリコン向けの CPU のビルド済みイメージはありません。
 
 --8<-- [end:pre-built-images]
 --8<-- [start:build-image-from-source]

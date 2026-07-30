@@ -1,43 +1,36 @@
-# AMD Quark
+# AMD Quark { #amd-quark }
 
-Quantization can effectively reduce memory and bandwidth usage, accelerate computation and improve
-throughput while with minimal accuracy loss. vLLM can leverage [Quark](https://quark.docs.amd.com/latest/),
-the flexible and powerful quantization toolkit, to produce performant quantized models to run on AMD GPUs. Quark has specialized support for quantizing large language models with weight,
-activation and kv-cache quantization and cutting-edge quantization algorithms like
-AWQ, GPTQ, Rotation and SmoothQuant.
+量子化は、精度の低下を最小限に抑えつつ、メモリと帯域幅の使用量を効果的に削減し、計算を高速化してスループットを向上させます。vLLM は、柔軟で強力な量子化ツールキットである [Quark](https://quark.docs.amd.com/latest/) を活用して、AMD GPU 上で高い性能を発揮する量子化モデルを生成できます。Quark は、重み・活性値・KV キャッシュの量子化や、AWQ、GPTQ、Rotation、SmoothQuant といった最先端の量子化アルゴリズムによる大規模言語モデルの量子化を専門的にサポートしています。
 
-## Quark Installation
+## Quark のインストール { #quark-installation }
 
-Before quantizing models, you need to install Quark. The latest release of Quark can be installed with pip:
+モデルを量子化する前に Quark をインストールする必要があります。最新版の Quark は pip でインストールできます。
 
 ```bash
 pip install amd-quark
 ```
 
-You can refer to [Quark installation guide](https://quark.docs.amd.com/latest/install.html)
-for more installation details.
+インストールの詳細は [Quark のインストールガイド](https://quark.docs.amd.com/latest/install.html)を参照してください。
 
-Additionally, install `vllm` and `lm-evaluation-harness` for evaluation:
+さらに、評価のために `vllm` と `lm-evaluation-harness` をインストールします。
 
 ```bash
 pip install vllm "lm-eval[api]>=0.4.12"
 ```
 
-## Quantization Process
+## 量子化の手順 { #quantization-process }
 
-After installing Quark, we will use an example to illustrate how to use Quark.
-The Quark quantization process can be listed for 5 steps as below:
+Quark をインストールしたら、例を使って使い方を説明します。Quark の量子化プロセスは、次の 5 ステップに整理できます。
 
-1. Load the model
-2. Prepare the calibration dataloader
-3. Set the quantization configuration
-4. Quantize the model and export
-5. Evaluation in vLLM
+1. モデルの読み込み
+2. キャリブレーション用データローダーの準備
+3. 量子化設定の指定
+4. モデルの量子化とエクスポート
+5. vLLM での評価
 
-### 1. Load the Model
+### 1. モデルの読み込み { #1-load-the-model }
 
-Quark uses [Transformers](https://huggingface.co/docs/transformers/en/index)
-to fetch model and tokenizer.
+Quark はモデルとトークナイザーの取得に [Transformers](https://huggingface.co/docs/transformers/en/index) を使います。
 
 ??? code
 
@@ -58,11 +51,9 @@ to fetch model and tokenizer.
     tokenizer.pad_token = tokenizer.eos_token
     ```
 
-### 2. Prepare the Calibration Dataloader
+### 2. キャリブレーション用データローダーの準備 { #2-prepare-the-calibration-dataloader }
 
-Quark uses the [PyTorch Dataloader](https://pytorch.org/tutorials/beginner/basics/data_tutorial.html)
-to load calibration data. For more details about how to use calibration datasets efficiently, please refer
-to [Adding Calibration Datasets](https://quark.docs.amd.com/latest/pytorch/calibration_datasets.html).
+Quark はキャリブレーションデータの読み込みに [PyTorch の Dataloader](https://pytorch.org/tutorials/beginner/basics/data_tutorial.html) を使います。キャリブレーション用データセットを効率的に使う方法の詳細は、[キャリブレーションデータセットの追加](https://quark.docs.amd.com/latest/pytorch/calibration_datasets.html)を参照してください。
 
 ??? code
 
@@ -91,19 +82,16 @@ to [Adding Calibration Datasets](https://quark.docs.amd.com/latest/pytorch/calib
     )
     ```
 
-### 3. Set the Quantization Configuration
+### 3. 量子化設定の指定 { #3-set-the-quantization-configuration }
 
-We need to set the quantization configuration, you can check
-[quark config guide](https://quark.docs.amd.com/latest/pytorch/user_guide_config_description.html)
-for further details. Here we use FP8 per-tensor quantization on weight, activation,
-kv-cache and the quantization algorithm is AutoSmoothQuant.
+量子化の設定を指定する必要があります。詳細は [Quark の設定ガイド](https://quark.docs.amd.com/latest/pytorch/user_guide_config_description.html)を確認してください。ここでは、重み・活性値・KV キャッシュにテンソル単位の FP8 量子化を使い、量子化アルゴリズムには AutoSmoothQuant を使います。
 
 !!! note
-    Note the quantization algorithm needs a JSON config file and the config file is located in
-    [Quark Pytorch examples](https://quark.docs.amd.com/latest/pytorch/pytorch_examples.html),
-    under the directory `examples/torch/language_modeling/llm_ptq/models`. For example,
-    AutoSmoothQuant config file for Llama is
-    `examples/torch/language_modeling/llm_ptq/models/llama/autosmoothquant_config.json`.
+    量子化アルゴリズムには JSON の設定ファイルが必要で、その設定ファイルは
+    [Quark の PyTorch サンプル](https://quark.docs.amd.com/latest/pytorch/pytorch_examples.html)の
+    `examples/torch/language_modeling/llm_ptq/models` ディレクトリにあります。たとえば Llama 向けの
+    AutoSmoothQuant の設定ファイルは
+    `examples/torch/language_modeling/llm_ptq/models/llama/autosmoothquant_config.json` です。
 
 ??? code
 
@@ -151,13 +139,9 @@ kv-cache and the quantization algorithm is AutoSmoothQuant.
     )
     ```
 
-### 4. Quantize the Model and Export
+### 4. モデルの量子化とエクスポート { #4-quantize-the-model-and-export }
 
-Then we can apply the quantization. After quantizing, we need to freeze the
-quantized model first before exporting. Note that we need to export model with format of
-HuggingFace `safetensors`, you can refer to
-[HuggingFace format exporting](https://quark.docs.amd.com/latest/pytorch/export/quark_export_hf.html)
-for more exporting format details.
+続いて量子化を適用します。量子化のあと、エクスポートの前にまず量子化済みモデルを freeze する必要があります。モデルは HuggingFace の `safetensors` 形式でエクスポートする必要がある点に注意してください。エクスポート形式の詳細は [HuggingFace 形式でのエクスポート](https://quark.docs.amd.com/latest/pytorch/export/quark_export_hf.html)を参照してください。
 
 ??? code
 
@@ -189,9 +173,9 @@ for more exporting format details.
         )
     ```
 
-### 5. Evaluation in vLLM
+### 5. vLLM での評価 { #5-evaluation-in-vllm }
 
-Now, you can load and run the Quark quantized model directly through the LLM entrypoint:
+これで、Quark で量子化したモデルを LLM エントリポイントから直接読み込んで実行できます。
 
 ??? code
 
@@ -227,7 +211,7 @@ Now, you can load and run the Quark quantized model directly through the LLM ent
         print("-" * 60)
     ```
 
-Or, you can use `lm_eval` to evaluate accuracy:
+あるいは、`lm_eval` を使って精度を評価できます。
 
 ```bash
 lm_eval --model vllm \
@@ -235,13 +219,9 @@ lm_eval --model vllm \
   --tasks gsm8k
 ```
 
-## Quark Quantization Script
+## Quark の量子化スクリプト { #quark-quantization-script }
 
-In addition to the example of Python API above, Quark also offers a
-[quantization script](https://quark.docs.amd.com/latest/pytorch/example_quark_torch_llm_ptq.html)
-to quantize large language models more conveniently. It supports quantizing models with variety
-of different quantization schemes and optimization algorithms. It can export the quantized model
-and run evaluation tasks on the fly. With the script, the example above can be:
+上記の Python API の例に加えて、Quark は大規模言語モデルをより手軽に量子化するための[量子化スクリプト](https://quark.docs.amd.com/latest/pytorch/example_quark_torch_llm_ptq.html)も提供しています。このスクリプトはさまざまな量子化方式と最適化アルゴリズムでのモデル量子化に対応し、量子化済みモデルのエクスポートと評価タスクの実行をその場で行えます。このスクリプトを使うと、上記の例は次のように書けます。
 
 ```bash
 python3 quantize_quark.py --model_dir meta-llama/Llama-2-70b-chat-hf \
@@ -254,13 +234,13 @@ python3 quantize_quark.py --model_dir meta-llama/Llama-2-70b-chat-hf \
                           --tasks gsm8k
 ```
 
-## Using OCP MX (MXFP4, MXFP6) models
+## OCP MX（MXFP4、MXFP6）モデルの利用 { #using-ocp-mx-mxfp4-mxfp6-models }
 
-vLLM supports loading MXFP4 and MXFP6 models quantized offline through AMD Quark, compliant with [Open Compute Project (OCP) specification](https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf).
+vLLM は、[Open Compute Project（OCP）の仕様](https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf)に準拠し、AMD Quark でオフラインに量子化された MXFP4 および MXFP6 のモデルの読み込みをサポートしています。
 
-The scheme currently only supports dynamic quantization for activations.
+この方式は現時点で、活性値については動的量子化のみをサポートしています。
 
-Example usage, after installing the latest AMD Quark release:
+最新版の AMD Quark をインストールしたあとの使用例は次のとおりです。
 
 ```bash
 vllm serve fxmarty/qwen_1.5-moe-a2.7b-mxfp4 --tensor-parallel-size 1
@@ -268,9 +248,9 @@ vllm serve fxmarty/qwen_1.5-moe-a2.7b-mxfp4 --tensor-parallel-size 1
 vllm serve fxmarty/qwen1.5_moe_a2.7b_chat_w_fp4_a_fp6_e2m3 --tensor-parallel-size 1
 ```
 
-A simulation of the matrix multiplication execution in MXFP4/MXFP6 can be run on devices that do not support OCP MX operations natively (e.g. AMD Instinct MI325, MI300 and MI250), dequantizing weights from FP4/FP6 to half precision on the fly, using a fused kernel. This is useful e.g. to evaluate FP4/FP6 models using vLLM, or alternatively to benefit from the ~2.5-4x memory savings (compared to float16 and bfloat16).
+OCP MX の演算をネイティブにサポートしないデバイス（AMD Instinct MI325、MI300、MI250 など）でも、融合カーネルを使って重みを FP4/FP6 からその場で半精度に逆量子化することで、MXFP4/MXFP6 での行列積のシミュレーション実行が可能です。これは、vLLM で FP4/FP6 モデルを評価したい場合や、（float16 や bfloat16 と比べて）約 2.5〜4 倍のメモリ削減の恩恵を受けたい場合に有用です。
 
-To generate offline models quantized using MXFP4 data type, the easiest approach is to use AMD Quark's [quantization script](https://quark.docs.amd.com/latest/pytorch/example_quark_torch_llm_ptq.html), as an example:
+MXFP4 のデータ型で量子化したオフラインのモデルを生成するには、AMD Quark の[量子化スクリプト](https://quark.docs.amd.com/latest/pytorch/example_quark_torch_llm_ptq.html)を使うのが最も簡単です。例を示します。
 
 ```bash
 python quantize_quark.py --model_dir Qwen/Qwen1.5-MoE-A2.7B-Chat \
@@ -281,32 +261,32 @@ python quantize_quark.py --model_dir Qwen/Qwen1.5-MoE-A2.7B-Chat \
     --group_size 32
 ```
 
-The current integration supports [all combination of FP4, FP6_E3M2, FP6_E2M3](https://github.com/vllm-project/vllm/blob/main/vllm/model_executor/layers/quantization/utils/ocp_mx_utils.py) used for either weights or activations.
+現在の統合では、重みまたは活性値に使う [FP4、FP6_E3M2、FP6_E2M3 のすべての組み合わせ](https://github.com/vllm-project/vllm/blob/main/vllm/model_executor/layers/quantization/utils/ocp_mx_utils.py)がサポートされています。
 
-## Using Quark Quantized layerwise Auto Mixed Precision (AMP) Models
+## Quark で量子化した層ごとの自動混合精度（AMP）モデルの利用 { #using-quark-quantized-layerwise-auto-mixed-precision-amp-models }
 
-vLLM also supports loading layerwise mixed precision model quantized using AMD Quark. Currently, mixed scheme of {MXFP4, FP8} is supported, where FP8 here denotes for FP8 per-tensor scheme. More mixed precision schemes are planned to be supported in a near future, including
+vLLM は、AMD Quark で量子化された層ごとの混合精度モデルの読み込みもサポートしています。現時点でサポートされる混合方式は {MXFP4, FP8} で、ここでの FP8 はテンソル単位の FP8 方式を指します。近い将来、次のような混合精度方式のサポートも予定されています。
 
-- Unquantized Linear and/or MoE layer(s) as an option for each layer, i.e., mixed of {MXFP4, FP8, BF16/FP16}
-- MXFP6 quantization extension, i.e., {MXFP4, MXFP6, FP8, BF16/FP16}
+- 各層の選択肢として、量子化しない Linear 層や MoE 層を許容する、つまり {MXFP4, FP8, BF16/FP16} の混合
+- MXFP6 量子化への拡張、つまり {MXFP4, MXFP6, FP8, BF16/FP16}
 
-Although one can maximize serving throughput using the lowest precision supported on a given device (e.g. MXFP4 for AMD Instinct MI355, FP8 for AMD Instinct MI300), these aggressive schemes can be detrimental to accuracy recovering from quantization on target tasks. Mixed precision allows to strike a balance between maximizing accuracy and throughput.
+デバイスがサポートする最も低い精度（AMD Instinct MI355 なら MXFP4、AMD Instinct MI300 なら FP8 など）を使えばサービングのスループットを最大化できますが、こうした積極的な方式は、対象タスクにおける量子化からの精度回復を妨げることがあります。混合精度を使えば、精度とスループットの最大化のバランスを取れます。
 
-There are two steps to generate and deploy a mixed precision model quantized with AMD Quark, as shown below.
+AMD Quark で量子化した混合精度モデルを生成・デプロイする手順は、次の 2 ステップです。
 
-### 1. Quantize a model using mixed precision in AMD Quark
+### 1. AMD Quark で混合精度を使ってモデルを量子化する { #1-quantize-a-model-using-mixed-precision-in-amd-quark }
 
-Firstly, the layerwise mixed-precision configuration for a given LLM model is searched and then quantized using AMD Quark. We will provide a detailed tutorial with Quark APIs later.
+まず、対象の LLM モデルについて層ごとの混合精度の構成を探索し、AMD Quark で量子化します。Quark の API を使った詳細なチュートリアルは後日提供予定です。
 
-As examples, we provide some ready-to-use quantized mixed precision model to show the usage in vLLM and the accuracy benefits. They are:
+vLLM での使い方と精度面の利点を示すため、すぐに使える量子化済みの混合精度モデルをいくつか用意しています。
 
 - amd/Llama-2-70b-chat-hf-WMXFP4FP8-AMXFP4FP8-AMP-KVFP8
 - amd/Mixtral-8x7B-Instruct-v0.1-WMXFP4FP8-AMXFP4FP8-AMP-KVFP8
 - amd/Qwen3-8B-WMXFP4FP8-AMXFP4FP8-AMP-KVFP8
 
-### 2. inference the quantized mixed precision model in vLLM
+### 2. 量子化した混合精度モデルを vLLM で推論する { #2-inference-the-quantized-mixed-precision-model-in-vllm }
 
-Models quantized with AMD Quark using mixed precision can natively be reload in vLLM, and e.g. evaluated using lm-evaluation-harness as follows:
+AMD Quark で混合精度を使って量子化したモデルは、vLLM でそのまま読み込めます。たとえば lm-evaluation-harness で次のように評価できます。
 
 ```bash
 lm_eval --model vllm \

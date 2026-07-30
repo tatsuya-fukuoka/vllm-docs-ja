@@ -1,36 +1,35 @@
-# CI Failures
+# CI の失敗 { #ci-failures }
 
-What should I do when a CI job fails on my PR, but I don't think my PR caused
-the failure?
+自分の PR で CI ジョブが失敗したものの、その失敗が自分の PR に起因するとは思えない場合、どうすればよいでしょうか。
 
-- Check the dashboard of current CI test failures:  
+- 現在の CI テスト失敗のダッシュボードを確認してください。  
   👉 [CI Failures Dashboard](https://github.com/orgs/vllm-project/projects/20)
 
-- If your failure **is already listed**, it's likely unrelated to your PR.
-  Help fixing it is always welcome!
-    - Leave comments with links to additional instances of the failure.
-    - React with a 👍 to signal how many are affected.
+- その失敗が**すでに掲載されている**場合、あなたの PR とは無関係である可能性が高いです。
+  修正への協力はいつでも歓迎します。
+    - 同じ失敗の別の発生例へのリンクをコメントとして残してください。
+    - 👍 のリアクションを付けて、影響を受けている人数を示してください。
 
-- If your failure **is not listed**, you should **file an issue**.
+- その失敗が**掲載されていない**場合は、**issue を作成**してください。
 
-## Filing a CI Test Failure Issue
+## CI テスト失敗の issue を作成する { #filing-a-ci-test-failure-issue }
 
-- **File a bug report:**  
+- **バグ報告を作成する:**  
     👉 [New CI Failure Report](https://github.com/vllm-project/vllm/issues/new?template=450-ci-failure.yml)
 
-- **Use this title format:**
+- **タイトルは次の形式にしてください:**
 
     ```text
     [CI Failure]: failing-test-job - regex/matching/failing:test
     ```
 
-- **For the environment field:**
+- **environment のフィールドには次のように書きます:**
 
     ```text
     Still failing on main as of commit abcdef123
     ```
 
-- **In the description, include failing tests:**
+- **本文には失敗しているテストを含めます:**
 
     ```text
     FAILED failing/test.py:failing_test1 - Failure description
@@ -40,7 +39,7 @@ the failure?
     FAILED failing/test.py:failing_test3 - Failure description
     ```
 
-- **Attach logs** (collapsible section example):
+- **ログを添付します**（折りたたみセクションの例）:
     <details>
     <summary>Logs:</summary>
 
@@ -58,12 +57,11 @@ the failure?
 
     </details>
 
-## Logs Wrangling
+## ログの扱い { #logs-wrangling }
 
-Logs are public; no Buildkite login needed.
+ログは公開されており、Buildkite へのログインは不要です。
 [.buildkite/scripts/ci-fetch-log.sh](../../../.buildkite/scripts/ci-fetch-log.sh)
-saves each log as `ci-<build>-<job-name>.log`, stripped of timestamps and
-ANSI codes:
+は各ログを `ci-<build>-<job-name>.log` として保存し、タイムスタンプと ANSI コードを取り除きます。
 
 ```bash
 # All failed jobs in a PR's latest build (current branch's PR if omitted):
@@ -78,7 +76,7 @@ ANSI codes:
 .buildkite/scripts/ci-fetch-log.sh "https://buildkite.com/vllm/ci/builds/<N>#<job_uuid>"
 ```
 
-To clean an already-downloaded log:
+すでにダウンロード済みのログを整形するには次のようにします。
 
 [.buildkite/scripts/ci-clean-log.sh](../../../.buildkite/scripts/ci-clean-log.sh)
 
@@ -86,22 +84,22 @@ To clean an already-downloaded log:
 ./ci-clean-log.sh ci.log
 ```
 
-Use a tool [wl-clipboard](https://github.com/bugaevc/wl-clipboard) for quick copy-pasting:
+すばやくコピー＆ペーストするには [wl-clipboard](https://github.com/bugaevc/wl-clipboard) が便利です。
 
 ```bash
 tail -525 ci_build.log | wl-copy
 ```
 
-## Investigating a CI Test Failure
+## CI テスト失敗の調査 { #investigating-a-ci-test-failure }
 
-1. Go to 👉 [Buildkite main branch](https://buildkite.com/vllm/ci/builds?branch=main)
-2. Bisect to find the first build that shows the issue.  
-3. Add your findings to the GitHub issue.  
-4. If you find a strong candidate PR, mention it in the issue and ping contributors.
+1. 👉 [Buildkite main branch](https://buildkite.com/vllm/ci/builds?branch=main) を開きます
+2. 二分探索で、問題が最初に現れたビルドを特定します。  
+3. 調査結果を GitHub の issue に追記します。  
+4. 有力な候補の PR が見つかったら、issue でそれに言及し、コントリビューターにメンションしてください。
 
-## Reproducing a Failure
+## 失敗の再現 { #reproducing-a-failure }
 
-CI test failures may be flaky. Use a bash loop to run repeatedly:
+CI のテスト失敗は不安定（flaky）なことがあります。bash のループで繰り返し実行してください。
 
 [.buildkite/scripts/rerun-test.sh](../../../.buildkite/scripts/rerun-test.sh)
 
@@ -109,26 +107,26 @@ CI test failures may be flaky. Use a bash loop to run repeatedly:
 ./rerun-test.sh tests/v1/engine/test_engine_core_client.py::test_kv_cache_events[True-tcp]
 ```
 
-## Submitting a PR
+## PR の提出 { #submitting-a-pr }
 
-If you submit a PR to fix a CI failure:
+CI の失敗を修正する PR を提出する場合は次のようにしてください。
 
-- Link the PR to the issue:
-  Add `Closes #12345` to the PR description.
-- Add the `ci-failure` label:
-  This helps track it in the [CI Failures GitHub Project](https://github.com/orgs/vllm-project/projects/20).
+- PR を issue に紐づける:
+  PR の説明に `Closes #12345` を追加します。
+- `ci-failure` ラベルを付ける:
+  [CI Failures の GitHub Project](https://github.com/orgs/vllm-project/projects/20) で追跡しやすくなります。
 
-## Other Resources
+## その他のリソース { #other-resources }
 
-- 🔍 [Test Reliability on `main`](https://buildkite.com/organizations/vllm/analytics/suites/ci-1/tests?branch=main&order=ASC&sort_by=reliability)
-- 🧪 [Latest Buildkite CI Runs](https://buildkite.com/vllm/ci/builds?branch=main)
+- 🔍 [`main` におけるテストの信頼性](https://buildkite.com/organizations/vllm/analytics/suites/ci-1/tests?branch=main&order=ASC&sort_by=reliability)
+- 🧪 [最新の Buildkite CI 実行](https://buildkite.com/vllm/ci/builds?branch=main)
 
-## Daily Triage
+## 日次のトリアージ { #daily-triage }
 
-Use [Buildkite analytics (2-day view)](https://buildkite.com/organizations/vllm/analytics/suites/ci-1/tests?branch=main&period=2days) to:
+[Buildkite analytics（2 日間ビュー）](https://buildkite.com/organizations/vllm/analytics/suites/ci-1/tests?branch=main&period=2days) を使って次のことを行います。
 
-- Identify recent test failures **on `main`**.
-- Exclude legitimate test failures on PRs.
-- (Optional) Ignore tests with 0% reliability.
+- **`main` 上での**最近のテスト失敗を特定する。
+- PR 上の正当なテスト失敗を除外する。
+- （任意）信頼性 0% のテストを無視する。
 
-Compare to the [CI Failures Dashboard](https://github.com/orgs/vllm-project/projects/20).
+その結果を [CI Failures Dashboard](https://github.com/orgs/vllm-project/projects/20) と比較してください。

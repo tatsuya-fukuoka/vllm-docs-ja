@@ -1,8 +1,8 @@
-# Automatic Prefix Caching
+# 自動プレフィックスキャッシュ { #automatic-prefix-caching }
 
-Prefix caching kv-cache blocks is a popular optimization in LLM inference to avoid redundant prompt computations. The core idea is simple – we cache the kv-cache blocks of processed requests, and reuse these blocks when a new request comes in with the same prefix as previous requests. Since prefix caching is almost a free lunch and won’t change model outputs, it has been widely used by many public endpoints (e.g., OpenAI, Anthropic, etc.) and most open source LLM inference frameworks (e.g., SGLang).
+KV キャッシュのブロックをプレフィックス単位でキャッシュすることは、プロンプトの重複計算を避けるために LLM 推論で広く使われる最適化です。考え方はシンプルで、処理済みリクエストの KV キャッシュブロックをキャッシュしておき、以前のリクエストと同じプレフィックスを持つ新しいリクエストが来たときにそれらのブロックを再利用します。プレフィックスキャッシュはほぼコストなしで得られる恩恵であり、モデルの出力も変えないため、多くの公開エンドポイント（OpenAI、Anthropic など）やほとんどのオープンソース LLM 推論フレームワーク（SGLang など）で広く採用されています。
 
-While there are many ways to implement prefix caching, vLLM chooses a hash-based approach. Specifically, we hash each kv-cache block by the tokens in the block and the tokens in the prefix before the block:
+プレフィックスキャッシュの実装方法は複数ありますが、vLLM はハッシュベースのアプローチを採用しています。具体的には、各 KV キャッシュブロックを、そのブロック内のトークンと、そのブロックより前のプレフィックスのトークンからハッシュ化します。
 
 ```text
                     Block 1                  Block 2                  Block 3
@@ -12,26 +12,26 @@ Block 2: |<------- prefix ------>| |<--- block tokens --->|
 Block 3: |<------------------ prefix -------------------->| |<--- block tokens ---->|
 ```
 
-In the example above, the KV cache in the first block can be uniquely identified with the token “A gentle breeze stirred”. The third block can be uniquely identified with the tokens in the block “laughed in the distance”, along with the prefix tokens “A gentle breeze stirred the leaves as children”. Therefore, we can build the block hash of `hash(tuple[components])`, where components are:
+上の例では、最初のブロックの KV キャッシュはトークン列「A gentle breeze stirred」で一意に識別できます。3 番目のブロックは、ブロック内のトークン「laughed in the distance」と、プレフィックスのトークン「A gentle breeze stirred the leaves as children」を合わせることで一意に識別できます。したがって、`hash(tuple[components])` という形でブロックのハッシュを構成できます。components は次のとおりです。
 
-* Parent hash value: The hash value of the parent hash block.
-* Block tokens: A tuple of tokens in this block. The reason to include the exact tokens is to reduce potential hash value collision.
-* Extra hashes: Other values required to make this block unique, such as LoRA IDs, multi-modality input hashes (see the example below), and cache salts to isolate caches in multi-tenant environments.
+* 親のハッシュ値: 親のハッシュブロックのハッシュ値。
+* ブロックのトークン: このブロック内のトークンのタプル。正確なトークンを含めるのは、ハッシュ値の衝突の可能性を減らすためです。
+* 追加のハッシュ: このブロックを一意にするために必要なその他の値。LoRA の ID、マルチモーダル入力のハッシュ（後述の例を参照）、マルチテナント環境でキャッシュを分離するためのキャッシュソルトなど。
 
-!!! note "Note 1"
-    We only cache full blocks.
+!!! note "注 1"
+    キャッシュするのは満杯のブロックのみです。
 
-!!! note "Note 2"
-    In previous versions, the hash key was not guaranteed to be collision-free. As of v0.11, the default hashing algorithm is `sha256`, which addresses collision risks.
+!!! note "注 2"
+    以前のバージョンでは、ハッシュキーが衝突しないことは保証されていませんでした。v0.11 以降、既定のハッシュアルゴリズムは `sha256` になり、衝突のリスクに対処しています。
 
-    For `vllm serve`, you can control the hashing algorithm via `--prefix-caching-hash-algo`:
-    - `sha256` (default): Uses Python's `pickle` for serialization. Hashes may not be reproducible across different Python or vLLM versions.
-    - `sha256_cbor`: Uses `cbor2` for serialization, providing a reproducible, cross-language compatible hash. This is recommended for deterministic caching across environments.
-    - `xxhash`: Uses Pickle serialization with xxHash (128-bit) for faster, non-cryptographic hashing. Requires the optional `xxhash` package. IMPORTANT: Use of a hashing algorithm that is not considered cryptographically secure theoretically increases the risk of hash collisions, which can cause undefined behavior or even leak private information in multi-tenant environments. Even if collisions are still very unlikely, it is important to consider your security risk tolerance against the performance benefits before turning this on.
-    - `xxhash_cbor` combines canonical CBOR serialization with xxHash for reproducible hashing. Requires the optional `xxhash` package.    
+    `vllm serve` では、`--prefix-caching-hash-algo` でハッシュアルゴリズムを制御できます。
+    - `sha256`（既定）: シリアライズに Python の `pickle` を使います。ハッシュは Python や vLLM のバージョンが異なると再現しない場合があります。
+    - `sha256_cbor`: シリアライズに `cbor2` を使い、再現可能で言語間の互換性があるハッシュを提供します。環境をまたいで決定的なキャッシュを行いたい場合に推奨されます。
+    - `xxhash`: Pickle によるシリアライズと xxHash（128 ビット）を組み合わせ、より高速な非暗号学的ハッシュを行います。オプションの `xxhash` パッケージが必要です。重要: 暗号学的に安全とはみなされないハッシュアルゴリズムを使うと、理論上はハッシュ衝突のリスクが高まり、未定義動作や、マルチテナント環境でのプライベート情報の漏えいにつながる可能性があります。衝突の可能性は依然として非常に低いとはいえ、有効にする前に、性能上の利点とセキュリティリスクの許容度を比較検討することが重要です。
+    - `xxhash_cbor`: 正準な CBOR シリアライズと xxHash を組み合わせ、再現可能なハッシュを行います。オプションの `xxhash` パッケージが必要です。    
 
-**A hashing example with multi-modality inputs**  
-In this example, we illustrate how prefix caching works with multi-modality inputs (e.g., images). Assuming we have a request with the following messages:
+**マルチモーダル入力でのハッシュの例**  
+ここでは、マルチモーダル入力（画像など）でプレフィックスキャッシュがどう動作するかを説明します。次のメッセージを持つリクエストがあるとします。
 
 ```text
 messages = [
@@ -47,7 +47,7 @@ messages = [
 ]
 ```
 
-It will become the following prompt:
+これは次のプロンプトになります。
 
 ```text
 Prompt:
@@ -60,7 +60,7 @@ Prompt with placeholders (<P>):
     [1, 3, 7493, 1681, 1294, 1593, 3937, 9551, <P>, <P>, ..., <P>, 4]
 ```
 
-As we can see, after the tokenization, the `[IMG]` will be replaced by a sequence of placeholder tokens, and these placeholders will be replaced by image embeddings during prefill. The challenge for prefix caching to support this case is we need to differentiate images from the placeholders. To address this problem, we encode the image hash generated by the frontend image processor. For example, the hash of the blocks in the above prompt would be (assuming block size 16, and we have 41 placeholder tokens):
+見てのとおり、トークン化の後、`[IMG]` はプレースホルダートークンの並びに置き換えられ、これらのプレースホルダーはプレフィル中に画像の埋め込みに置き換えられます。プレフィックスキャッシュがこのケースをサポートするうえでの課題は、プレースホルダーから画像を区別する必要があることです。この問題に対処するため、フロントエンドの画像プロセッサが生成した画像のハッシュをエンコードします。たとえば、上のプロンプトのブロックのハッシュは次のようになります（ブロックサイズを 16、プレースホルダートークンを 41 個と仮定）。
 
 ```text
 Block 0
@@ -81,10 +81,10 @@ Block 3
     Extra hash: <image hash>
 ```
 
-In the rest of this document, we first introduce the data structure used for prefix caching in vLLM v1, followed by the prefix caching workflow of major KV cache operators (e.g., allocate, append, free, eviction). Finally, we use an example to illustrate the end to end prefix caching workflow.
+このドキュメントの残りでは、まず vLLM v1 のプレフィックスキャッシュで使われるデータ構造を紹介し、続いて主要な KV キャッシュ操作（allocate、append、free、eviction など）におけるプレフィックスキャッシュのワークフローを説明します。最後に、エンドツーエンドのプレフィックスキャッシュのワークフローを例で示します。
 
-**Cache Isolation for Security**
-To improve privacy in shared environments, vLLM supports isolating prefix cache reuse through optional per-request salting. By including a `cache_salt` in the request, this value is injected into the hash of the first block, ensuring that only requests with the same salt can reuse cached KV blocks. This prevents timing-based attacks where an adversary could infer cached content by observing latency differences. This offers protection without compromising performance.
+**セキュリティのためのキャッシュ分離**
+共有環境でのプライバシーを高めるため、vLLM はリクエストごとの任意のソルトによってプレフィックスキャッシュの再利用を分離できます。リクエストに `cache_salt` を含めると、その値が最初のブロックのハッシュに注入され、同じソルトを持つリクエストだけがキャッシュされた KV ブロックを再利用できるようになります。これにより、攻撃者がレイテンシの差を観測してキャッシュされた内容を推測するタイミング攻撃を防げます。性能を損なうことなく保護を提供します。
 
 ```json
 {
@@ -97,11 +97,11 @@ To improve privacy in shared environments, vLLM supports isolating prefix cache 
 }
 ```
 
-With this setup, cache sharing is limited to users or requests that explicitly agree on a common salt, enabling cache reuse within a trust group while isolating others.
+この設定により、キャッシュの共有は共通のソルトに明示的に合意したユーザーやリクエストに限定され、信頼グループ内ではキャッシュを再利用しつつ、それ以外からは分離できます。
 
-## Data Structure
+## データ構造 { #data-structure }
 
-The prefix caching in vLLM v1 is implemented in the KV cache manager. The basic building block is the “Block” data class (simplified):
+vLLM v1 のプレフィックスキャッシュは KV キャッシュマネージャーに実装されています。基本的な構成要素は「Block」のデータクラスです（簡略版）。
 
 ```python
 class KVCacheBlock:
@@ -118,44 +118,44 @@ class KVCacheBlock:
     next_free_block: "KVCacheBlock | None" = None
 ```
 
-There are two design points to highlight:
+特筆すべき設計上のポイントが 2 つあります。
 
-1. We allocate all KVCacheBlock when initializing the KV cache manager to be a block pool. This avoids Python object creation overheads and can easily track all blocks all the time.  
-2. We introduce doubly linked list pointers directly in the KVCacheBlock, so that we could construct a free queue directly. This gives us two benefits:  
-    1. We could have O(1) complexity moving elements in the middle to the tail.  
-    2. We could avoid introducing another Python queue (e.g., `deque`) which has a wrapper to the elements.
+1. KV キャッシュマネージャーの初期化時に、すべての KVCacheBlock をブロックプールとして確保します。これにより Python のオブジェクト生成のオーバーヘッドを避けられ、常にすべてのブロックを簡単に追跡できます。  
+2. KVCacheBlock に双方向連結リストのポインタを直接持たせ、free キューをそのまま構成できるようにしています。これには 2 つの利点があります。  
+    1. 途中の要素を末尾へ移動する操作を O(1) の計算量で行えます。  
+    2. 要素をラップする別の Python のキュー（`deque` など）を導入せずに済みます。
 
-As a result, we will have the following components when the KV cache manager is initialized:
+その結果、KV キャッシュマネージャーの初期化時には次のコンポーネントが揃います。
 
 ![Component Overview](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/prefix_caching/overview.png)
 
-* Block Pool: A list of KVCacheBlock.  
-* Free Block Queue: Only store the pointers of head and tail blocks for manipulations.  
-* Cache blocks: Mapping from hash key to block IDs.  
-* Request blocks: Mapping from request ID to allocated block IDs.
+* ブロックプール: KVCacheBlock のリスト。  
+* free ブロックキュー: 操作のために先頭と末尾のブロックのポインタのみを保持します。  
+* キャッシュブロック: ハッシュキーからブロック ID への対応。  
+* リクエストブロック: リクエスト ID から割り当て済みブロック ID への対応。
 
-## Operations
+## 操作 { #operations }
 
-### Block Allocation
+### ブロックの割り当て { #block-allocation }
 
-**New request:** Workflow for the scheduler to schedule a new request with KV cache block allocation:
+**新しいリクエスト:** スケジューラが新しいリクエストを KV キャッシュブロックの割り当てとともにスケジュールする流れは次のとおりです。
 
-1. The scheduler calls `kv_cache_manager.get_computed_blocks()` to get a sequence of blocks that have already been computed. This is done by hashing the prompt tokens in the request and looking up cache blocks.  
-2. The scheduler calls `kv_cache_manager.allocate_slots()`. It does the following steps:  
-    1. Compute the number of new required blocks, and return if there are no sufficient blocks to allocate.  
-    2. “Touch” the computed blocks. It increases the reference count of the computed block by one, and removes the block from the free queue if the block wasn’t used by other requests. This is to avoid these computed blocks being evicted. See the example in the next section for illustration.  
-    3. Allocate new blocks by popping the heads of the free queue. If the head block is a cached block, this also “evicts” the block so that no other requests can reuse it anymore from now on.  
-    4. If an allocated block is already full of tokens, we immediately add it to the cache block, so that the block can be reused by other requests in the same batch.
+1. スケジューラは `kv_cache_manager.get_computed_blocks()` を呼び出し、すでに計算済みのブロック列を取得します。これはリクエストのプロンプトトークンをハッシュ化し、キャッシュブロックを検索することで行われます。  
+2. スケジューラは `kv_cache_manager.allocate_slots()` を呼び出します。ここでは次の処理を行います。  
+    1. 新たに必要なブロック数を計算し、割り当てられるブロックが足りなければリターンします。  
+    2. 計算済みブロックを「touch」します。計算済みブロックの参照カウントを 1 増やし、他のリクエストがそのブロックを使っていなければ free キューから取り除きます。これはこれらの計算済みブロックが追い出されるのを防ぐためです。図解は次のセクションの例を参照してください。  
+    3. free キューの先頭を取り出して新しいブロックを割り当てます。先頭のブロックがキャッシュされたブロックだった場合、この操作はそのブロックを「追い出し」、以後どのリクエストからも再利用できなくします。  
+    4. 割り当てたブロックがすでにトークンで満杯であれば、ただちにキャッシュブロックに追加し、同じバッチ内の他のリクエストから再利用できるようにします。
 
-**Running request:** Workflow for the scheduler to schedule a running request with KV cache block allocation:
+**実行中のリクエスト:** スケジューラが実行中のリクエストを KV キャッシュブロックの割り当てとともにスケジュールする流れは次のとおりです。
 
-1. The scheduler calls `kv_cache_manager.allocate_slots()`. It does the following steps:  
-    1. Compute the number of new required blocks, and return if there are no sufficient blocks to allocate.  
-    2. Allocate new blocks by popping the heads of the free queue. If the head block is a cached block, this also “evicts” the block so that no other requests can reuse it anymore from now on.  
-    3. Append token IDs to the slots in existing blocks as well as the new blocks. If a block is full, we add it to the cache block to cache it.
+1. スケジューラは `kv_cache_manager.allocate_slots()` を呼び出します。ここでは次の処理を行います。  
+    1. 新たに必要なブロック数を計算し、割り当てられるブロックが足りなければリターンします。  
+    2. free キューの先頭を取り出して新しいブロックを割り当てます。先頭のブロックがキャッシュされたブロックだった場合、この操作はそのブロックを「追い出し」、以後どのリクエストからも再利用できなくします。  
+    3. 既存のブロックと新しいブロックのスロットにトークン ID を追加します。ブロックが満杯になったら、キャッシュブロックに追加してキャッシュします。
 
-**Duplicated blocks**  
-Assuming block size is 4 and you send a request (Request 1\) with prompt ABCDEF and decoding length 3:
+**重複したブロック**  
+ブロックサイズを 4 とし、プロンプト ABCDEF、デコード長 3 のリクエスト（リクエスト 1）を送るとします。
 
 ```text
 Prompt: [A, B, C, D, E, F]
@@ -175,7 +175,7 @@ Time 2:
   Cache Blocks: 0, 1
 ```
 
-Now block 0 and block 1 are cached, and we send the same request again (Request 2\) with greedy sampling, so that it will produce exactly the same outputs as the Request 1:
+この時点でブロック 0 とブロック 1 がキャッシュされています。ここで同じリクエストを greedy サンプリングでもう一度送ると（リクエスト 2）、リクエスト 1 とまったく同じ出力が得られます。
 
 ```text
 Prompt: [A, B, C, D, E, F]
@@ -191,46 +191,46 @@ Time 1:
   Cache Blocks: 0, 1, 3
 ```
 
-As can be seen, block 3 is a new full block and is cached. However, it is redundant as block 1, meaning that we cached the same block twice. In v0, when detecting block 3 is duplicated, we free block 3 and let Request 2 use block 1 instead, so its block table becomes `[0, 1]` in Time 1. However, the block table in vLLM v1 is append-only, meaning that changing the block table from `[0, 3]` to `[0, 1]` is not allowed. As a result, we will have duplicated blocks for the hash key E-H. This duplication will be eliminated when the request is freed.
+見てのとおり、ブロック 3 は新しく満杯になったブロックとしてキャッシュされます。しかしこれはブロック 1 と重複しており、同じブロックを 2 回キャッシュしたことになります。v0 では、ブロック 3 の重複を検出するとブロック 3 を解放し、リクエスト 2 に代わりにブロック 1 を使わせていました。そのため Time 1 のブロックテーブルは `[0, 1]` になりました。しかし vLLM v1 のブロックテーブルは追記専用であり、ブロックテーブルを `[0, 3]` から `[0, 1]` に変更することは許されません。その結果、ハッシュキー E-H に対して重複したブロックが存在することになります。この重複は、リクエストが解放されたときに解消されます。
 
-### Free
+### 解放 { #free }
 
-When a request is finished, we free all its blocks if no other requests are using them (reference count = 0). In this example, we free request 1 and block 2, 3, 4, 8 associated with it. We can see that the freed blocks are added to the tail of the free queue in the *reverse* order. This is because the last block of a request must hash more tokens and is less likely to be reused by other requests. As a result, it should be evicted first.
+リクエストが完了すると、他のリクエストが使っていない（参照カウント = 0 の）ブロックをすべて解放します。この例では、リクエスト 1 と、それに紐づくブロック 2、3、4、8 を解放します。解放されたブロックが *逆順* で free キューの末尾に追加されている点に注目してください。これは、リクエストの最後のブロックはより多くのトークンをハッシュに含むため、他のリクエストから再利用される可能性が低いからです。したがって、先に追い出されるべきなのです。
 
 ![Free queue after a request is freed](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/prefix_caching/free.png)
 
-### Eviction (LRU)
+### 追い出し（LRU） { #eviction-lru }
 
-When the head block (least recently used block) of the free queue is cached, we have to evict the block to prevent it from being used by other requests. Specifically, eviction involves the following steps:
+free キューの先頭ブロック（最も長く使われていないブロック）がキャッシュされている場合、他のリクエストから使われないようにそのブロックを追い出す必要があります。具体的には、追い出しは次の手順で行われます。
 
-1. Pop the block from the head of the free queue. This is the LRU block to be evicted.  
-2. Remove the block ID from the cache block.  
-3. Remove the block hash.
+1. free キューの先頭からブロックを取り出す。これが追い出し対象の LRU ブロックです。  
+2. キャッシュブロックからそのブロック ID を削除する。  
+3. ブロックのハッシュを削除する。
 
-## Example
+## 例 { #example }
 
-In this example, we assume the block size is 4 (each block can cache 4 tokens), and we have 10 blocks in the KV-cache manager in total.
+この例では、ブロックサイズを 4（各ブロックは 4 トークンをキャッシュできる）とし、KV キャッシュマネージャーには合計 10 個のブロックがあるとします。
 
-**Time 1: The cache is empty and a new request comes in.** We allocate 4 blocks. 3 of them are already full and cached. The fourth block is partially full with 3 of 4 tokens.
+**Time 1: キャッシュが空の状態で新しいリクエストが到着。** 4 個のブロックを割り当てます。そのうち 3 個はすでに満杯でキャッシュされます。4 番目のブロックは 4 トークン中 3 トークンで部分的に埋まっています。
 
 ![Example Time 1](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/prefix_caching/example-time-1.png)
 
-**Time 2: Request 0 makes the block 3 full and asks for a new block to keep decoding.** We cache block 3 and allocate block 4.
+**Time 2: リクエスト 0 がブロック 3 を満杯にし、デコードを続けるために新しいブロックを要求。** ブロック 3 をキャッシュし、ブロック 4 を割り当てます。
 
 ![Example Time 2](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/prefix_caching/example-time-3.png)
 
-**Time 3: Request 1 comes in with the 14 prompt tokens, where the first 10 tokens are the same as request 0.** We can see that only the first 2 blocks (8 tokens) hit the cache, because the 3rd block only matches 2 of 4 tokens.
+**Time 3: 14 個のプロンプトトークンを持つリクエスト 1 が到着。最初の 10 トークンはリクエスト 0 と同じ。** キャッシュにヒットするのは最初の 2 ブロック（8 トークン）だけです。3 番目のブロックは 4 トークン中 2 トークンしか一致しないためです。
 
 ![Example Time 3](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/prefix_caching/example-time-4.png)
 
-**Time 4: Request 0 is finished and free.** Blocks 2, 3 and 4 are added to the free queue in the reverse order (but block 2 and 3 are still cached). Block 0 and 1 are not added to the free queue because they are being used by Request 1.
+**Time 4: リクエスト 0 が完了して解放される。** ブロック 2、3、4 が逆順で free キューに追加されます（ただしブロック 2 と 3 はキャッシュされたままです）。ブロック 0 と 1 はリクエスト 1 が使用中のため、free キューには追加されません。
 
 ![Example Time 4](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/prefix_caching/example-time-5.png)
 
-**Time 5: Request 1 is finished and free.**
+**Time 5: リクエスト 1 が完了して解放される。**
 
 ![Example Time 5](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/prefix_caching/example-time-6.png)
 
-**Time 6: Request 2 comes in with the 29 prompt tokens, where the first 12 tokens are the same as request 0\.** Note that even the block order in the free queue was `7 - 8 - 9 - 4 - 3 - 2 - 6 - 5 - 1 - 0`, the cache hit blocks (i.e., 0, 1, 2) are touched and removed from the queue before allocation, so the free queue becomes `7 - 8 - 9 - 4 - 3 - 6 - 5`. As a result, the allocated blocks are 0 (cached), 1 (cached), 2 (cached), 7, 8, 9, 4, 3 (evicted).
+**Time 6: 29 個のプロンプトトークンを持つリクエスト 2 が到着。最初の 12 トークンはリクエスト 0 と同じ。** free キュー内のブロックの順序が `7 - 8 - 9 - 4 - 3 - 2 - 6 - 5 - 1 - 0` であっても、キャッシュヒットしたブロック（0、1、2）は割り当ての前に touch されてキューから取り除かれるため、free キューは `7 - 8 - 9 - 4 - 3 - 6 - 5` になります。その結果、割り当てられるブロックは 0（キャッシュ済み）、1（キャッシュ済み）、2（キャッシュ済み）、7、8、9、4、3（追い出し）となります。
 
 ![Example Time 6](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/prefix_caching/example-time-7.png)

@@ -1,40 +1,30 @@
-# vLLM IR: Functional Intermediate Representation
+# vLLM IR: 関数型の中間表現 { #vllm-ir-functional-intermediate-representation }
 
-## Motivation
+## 動機 { #motivation }
 
-vLLM IR is a **functional intermediate representation (IR)** that fills the gap between
-low-level `torch` ops and vLLM layers like `RMSNorm` and quantization operators,
-By separating operator **semantics** from the **implementation** and **dispatching**,
-vLLM IR simplifies both compilation and kernel registration & dispatching simultaneously.
-It operates as a **dialect** in the torch FX representation, allowing full interoperability
-with “regular” torch ops & custom torch ops/kernels, as well as a piecewise migration from
-the previous `CustomOp` approach.
+vLLM IR は、低レベルの `torch` op と、`RMSNorm` や量子化演算子のような vLLM の層とのあいだのギャップを埋める**関数型の中間表現（IR）**です。演算子の**意味論**を**実装**および**ディスパッチ**から分離することで、vLLM IR はコンパイルとカーネルの登録・ディスパッチの両方を同時に簡素化します。torch FX 表現における**方言（dialect）**として動作するため、「通常の」torch op やカスタムの torch op / カーネルと完全に相互運用でき、従来の `CustomOp` 方式からの段階的な移行も可能です。
 
-Key design principles:
+主要な設計原則:
 
-- **Eager-compile consistency**: identical behavior (barring minor numerics) in eager and compiled modes
-- **Simple, transparent, yet powerful kernel selection**: good visibility and control allowing easy debugging
-- **Convention over configuration**: near-zero boilerplate required to register ops and implementations
-- **Extensibility**: ops and implementations can be registered anywhere, in-tree or out-of-tree
-- **Interoperability**: fully compatible with “regular” torch ops & custom torch ops/kernels,
-reducing developer friction and allowing piecewise migration
+- **eager とコンパイルの一貫性**: eager モードとコンパイルモードで（わずかな数値差を除き）同一の挙動
+- **単純で透明、それでいて強力なカーネル選択**: 見通しと制御性が高く、デバッグが容易
+- **設定より規約**: op と実装の登録に必要な定型コードがほぼゼロ
+- **拡張性**: op も実装も、in-tree / out-of-tree を問わずどこからでも登録可能
+- **相互運用性**: 「通常の」torch op やカスタムの torch op / カーネルと完全に互換であり、開発者の負担を減らし段階的な移行を可能にする
 
-The clean semantics/implementation separation enables a unified and extensible dispatching mechanism,
-allowing multiple kernels per-platform and powerful kernel selection. The separation also facilitates
-cleaner testing and benchmarking, removing much of the boilerplate standard for legacy approaches.
+意味論と実装をきれいに分離することで、統一的で拡張可能なディスパッチ機構が実現し、プラットフォームごとに複数のカーネルを持てるようになり、強力なカーネル選択が可能になります。この分離により、テストとベンチマークも整理され、従来手法にありがちだった定型コードの多くが不要になります。
 
-By delaying kernel selection until late in the compilation process, the compiler can operate on
-a higher-level representation, which has the following main benefits:
+カーネル選択をコンパイル処理の後半まで遅らせることで、コンパイラはより高水準の表現の上で動作でき、次の主な利点が得られます。
 
-- Pattern matching in fusion/transformation passes only requires a single, simple pattern per op
-- OOT compiler backends can lower from the higher-level representation (in-progress)
-- The compiler can autotune over available implementations (future feature)
+- 融合 / 変換パスにおけるパターンマッチが、op ごとに単一の単純なパターンで済む
+- out-of-tree のコンパイラバックエンドが、より高水準の表現から lowering できる（作業中）
+- コンパイラが利用可能な実装の中から自動チューニングできる（将来の機能）
 
-## Quick Overview
+## 概要 { #quick-overview }
 
-### Declaring an IR Operation
+### IR 演算の宣言 { #declaring-an-ir-operation }
 
-IR operations are declared using the `@register_op` decorator with a native PyTorch implementation that defines the op's semantics:
+IR 演算は、その op の意味論を定義するネイティブな PyTorch 実装とともに `@register_op` デコレータで宣言します。
 
 ```python
 # vllm/ir/ops/layernorm.py
@@ -55,15 +45,15 @@ def rms_norm(x: Tensor, weight: Tensor | None, epsilon: float, variance_size: in
     return x
 ```
 
-The native implementation serves three purposes:
+ネイティブ実装は次の 3 つの役割を果たします。
 
-1. **Semantic definition**: Specifies the exact semantics of the operation, including shapes and strides
-2. **Default implementation**: Used when no other (better) implementation is available
-3. **Reference for testing**: Other implementations must match these semantics
+1. **意味論の定義**: 形状やストライドを含め、その演算の正確な意味論を規定します
+2. **既定の実装**: 他の（より優れた）実装が利用できない場合に使われます
+3. **テストの基準**: 他の実装はこの意味論に一致している必要があります
 
-### Registering Implementations
+### 実装の登録 { #registering-implementations }
 
-Kernel implementations are registered using the `register_impl` decorator on the IR op object:
+カーネルの実装は、IR op オブジェクトの `register_impl` デコレータで登録します。
 
 ```python
 # vllm/kernels/vllm_c.py
@@ -78,15 +68,15 @@ def rms_norm(x: Tensor, weight: Tensor | None, epsilon: float, variance_size: in
     return output
 ```
 
-Implementations can specify:
+実装では次を指定できます。
 
-- `supported`: Static boolean indicating if this implementation is available
-- `supports_args`: Function checking if the implementation supports specific arguments
-- `inplace`: Whether this implementation reuses input memory for outputs
+- `supported`: この実装が利用可能かどうかを示す静的な真偽値
+- `supports_args`: 特定の引数をこの実装がサポートするかを判定する関数
+- `inplace`: この実装が出力のために入力のメモリを再利用するかどうか
 
-### Using IR Operations in Models
+### モデル内での IR 演算の利用 { #using-ir-operations-in-models }
 
-IR operations are imported and called directly in model code:
+IR 演算はモデルのコードで直接 import して呼び出します。
 
 ```python
 # vllm/model_executor/layers/layernorm.py
@@ -109,17 +99,13 @@ class RMSNorm(nn.Module):
         )
 ```
 
-### Configuring Kernel Selection
+### カーネル選択の設定 { #configuring-kernel-selection }
 
-Kernel selection is controlled via priority lists in the configuration.
-Priority lists specify the order in which implementations are considered,
-with the first supported implementation being selected.
-This includes the static support check (`supported=...`) and
-the dynamic arg support check (`supports_args=...`).
+カーネルの選択は、設定内の優先順位リストで制御します。優先順位リストは実装を検討する順序を指定し、最初にサポートされている実装が選ばれます。ここでの判定には、静的なサポート確認（`supported=...`）と動的な引数サポート確認（`supports_args=...`）の両方が含まれます。
 
-#### Command Line Configuration
+#### コマンドラインでの設定 { #command-line-configuration }
 
-Use `--ir-op-priority.<op_name>=<provider1>,<provider2>,...`:
+`--ir-op-priority.<op_name>=<provider1>,<provider2>,...` を使います。
 
 ```bash
 # CUDA: Use vllm_c implementation for rms_norm
@@ -136,7 +122,7 @@ vllm serve meta-llama/Llama-3.2-1B \
   --ir-op-priority.fused_add_rms_norm=vllm_c
 ```
 
-#### Python Configuration
+#### Python での設定 { #python-configuration }
 
 ```python
 from vllm import LLM
@@ -155,9 +141,9 @@ llm = LLM(
 )
 ```
 
-#### Platform Defaults
+#### プラットフォームの既定値 { #platform-defaults }
 
-Each platform provides default priority lists that are automatically applied:
+各プラットフォームは、自動的に適用される既定の優先順位リストを提供します。
 
 ```python
 # CUDA/XPU/ROCm platform defaults (when compiling with Inductor)
@@ -185,21 +171,15 @@ Each platform provides default priority lists that are automatically applied:
 }
 ```
 
-User-specified priorities are prepended to platform defaults,
-so you only need to specify the out-of-order implementations,
-other implementations are appended automatically.
+ユーザーが指定した優先順位はプラットフォームの既定値の前に追加されるため、順序を変えたい実装だけを指定すれば済みます。それ以外の実装は自動的に後ろに追加されます。
 
-## Compilation Pipeline
+## コンパイルのパイプライン { #compilation-pipeline }
 
-vLLM IR heavily customizes the `torch.compile`-based compilation process to allow custom compile
-passes to operate on high-level IR while still producing efficient low-level code at the end.
-The compilation pipeline consists of several stages:
+vLLM IR は、`torch.compile` にもとづくコンパイル処理を大きくカスタマイズし、カスタムのコンパイルパスが高水準の IR 上で動作しつつ、最終的には効率的な低水準コードを生成できるようにしています。コンパイルのパイプラインは複数の段階から構成されます。
 
-### 1. Dynamo Tracing
+### 1. Dynamo によるトレース { #1-dynamo-tracing }
 
-When `torch.compile` traces the model's forward pass, vLLM IR operations appear as custom operations
-in the `vllm_ir` torch library. These operations are opaque to Dynamo, meaning they appear directly
-in the FX graph without decomposition:
+`torch.compile` がモデルの forward pass をトレースするとき、vLLM IR の演算は `vllm_ir` という torch ライブラリのカスタム演算として現れます。これらの演算は Dynamo からは不透明であり、分解されずに FX グラフへ直接現れます。
 
 ```python
 # Python code (epsilon=1e-5)
@@ -213,11 +193,9 @@ x2 = out[0]
 residual_out = out[1]
 ```
 
-### 2. AOTAutograd and Functionalization
+### 2. AOTAutograd と関数化 { #2-aotautograd-and-functionalization }
 
-AOTAutograd functionalizes the graph, converting any mutating operations to functional equivalents.
-For vLLM IR operations with `maybe_inplace` overloads, we perform this manually before AOTAutograd,
-converting them to the functional `default` overload using the pre-grad custom pass hook.
+AOTAutograd はグラフを関数化し、状態を変更する演算を関数的に等価なものへ変換します。`maybe_inplace` オーバーロードを持つ vLLM IR の演算については、pre-grad のカスタムパスのフックを使い、AOTAutograd の前に手動でこの変換を行い、関数的な `default` オーバーロードへ置き換えます。
 
 ```python
 # After functionalization
@@ -227,13 +205,11 @@ x2 = out[0]
 residual_out = out[1]
 ```
 
-The pass also tracks which inputs were "donated" (passed to `maybe_inplace`),
-storing this information in vLLM's `PassContext` for later use in clone elimination.
+このパスは、どの入力が「譲渡された（donated）」か（`maybe_inplace` に渡されたか）も追跡し、その情報を vLLM の `PassContext` に保存して、後の clone 除去で利用します。
 
-### 3. IR Fusion and Transformation Passes
+### 3. IR の融合と変換のパス { #3-ir-fusion-and-transformation-passes }
 
-After functionalization, custom vLLM passes operate on the functional FX graph containing high-level IR operations.
-These passes can perform fusion, distribute operations for sequence parallelism, and other transformations:
+関数化のあと、vLLM のカスタムパスが高水準の IR 演算を含む関数的な FX グラフの上で動作します。これらのパスは融合、シーケンス並列のための演算の分散、その他の変換を行えます。
 
 ```python
 # Example: Sequence Parallelism (see SequenceParallelismPass)
@@ -248,14 +224,11 @@ rms_norm = torch.ops.vllm_ir.rms_norm(all_reduce, weight, 1e-5)
 all_gather = torch.ops.vllm.all_gather(x, "tp:0")
 ```
 
-Fusion passes benefit from the high-level representation: they don't need to match against low-level PyTorch operations,
-handle different kernel implementations separately, or deal with functionalization of custom kernels.
+融合のパスは高水準の表現から恩恵を受けます。低水準の PyTorch 演算に対してマッチさせる必要も、異なるカーネル実装を個別に扱う必要も、カスタムカーネルの関数化に対処する必要もありません。
 
-### 4. IR Lowering
+### 4. IR の lowering { #4-ir-lowering }
 
-The lowering pass (`VllmIRLoweringPass`) replaces each vLLM IR operation with its selected implementation.
-The implementation is chosen based on the priority list and support predicates,
-using the **fake tensors** in the graph's metadata in place of op arguments:
+lowering のパス（`VllmIRLoweringPass`）は、各 vLLM IR 演算を選択された実装へ置き換えます。実装は、op の引数の代わりにグラフのメタデータにある **fake テンソル**を使い、優先順位リストとサポート判定にもとづいて選ばれます。
 
 ```python
 # Implementation selection, same in eager dispatch and compile lowering
@@ -274,7 +247,7 @@ impl_graph = make_fx(selected_impl.impl_fn)
 match.replace_by_example(selected_impl.impl_fn, node.args)
 ```
 
-For example, lowering `rms_norm` with the `vllm_c` implementation:
+たとえば、`vllm_c` の実装で `rms_norm` を lowering すると次のようになります。
 
 ```python
 # Before lowering (IR op)
@@ -286,8 +259,7 @@ empty =  torch.ops.aten.empty.memory_format(x.shape, ...)
 rms_norm = torch.ops._C.rms_norm(empty, x, weight, 1e-5)
 ```
 
-When lowering an implementation that mutates inputs (`inplace=True`),
-the lowering pass inserts clones to preserve functional semantics:
+入力を変更する実装（`inplace=True`）を lowering する場合、lowering のパスは関数的な意味論を保つために clone を挿入します。
 
 ```python
 # vllm_c implementation for fused_add_rms_norm mutates its first two arguments
@@ -297,60 +269,56 @@ clone_default_1 = torch.ops.aten.clone.default(residual)
 fused_add_rms_norm = torch.ops._C.fused_add_rms_norm.default(clone_default, clone_default_1, weight, 1e-5)
 ```
 
-### 5. Clone Cleanup
+### 5. clone のクリーンアップ { #5-clone-cleanup }
 
-After lowering, the clone elimination pass (`UnsafeCloneEliminationPass`) removes unnecessary clones introduced during lowering.
-This pass is essential for achieving zero-copy behavior when using in-place kernels with `maybe_inplace`.
-The pass removes a clone if:
+lowering のあと、clone 除去のパス（`UnsafeCloneEliminationPass`）が lowering 中に挿入された不要な clone を取り除きます。このパスは、`maybe_inplace` とともに in-place カーネルを使う際にゼロコピーの挙動を実現するうえで不可欠です。次の場合に clone が除去されます。
 
-- the cloned input is created in the graph and not used again in the graph
-- the cloned input is a graph parameter, marked as donated
+- clone された入力がグラフ内で生成され、その後グラフ内で再利用されていない
+- clone された入力がグラフのパラメータであり、譲渡されたものとして印が付いている
 
 ```python
 # After cleanup (donated inputs, no subsequent uses)
 fused_add_rms_norm = torch.ops._C.fused_add_rms_norm.default(x, residual, weight, 1e-5)
 ```
 
-The combination of inplace functionalization (tracking donated inputs) and clone cleanup enables the compiler to safely
-use in-place kernels without adding redundant copies or increasing the memory usage.
+inplace の関数化（譲渡された入力の追跡）と clone のクリーンアップを組み合わせることで、コンパイラは冗長なコピーを増やしたりメモリ使用量を増やしたりすることなく、in-place カーネルを安全に利用できます。
 
-### 6. Inductor Optimization and Codegen
+### 6. Inductor による最適化とコード生成 { #6-inductor-optimization-and-codegen }
 
-After IR lowering and cleanup, the graph contains only standard PyTorch operations and platform-specific custom ops.
-Inductor then performs its standard codegen:
+IR の lowering とクリーンアップのあと、グラフには標準的な PyTorch の演算とプラットフォーム固有のカスタム op のみが残ります。その後 Inductor が標準のコード生成を行います。
 
-- **Inductor lowering and pointwise fusion**: Fusing element-wise operations, reductions, etc.
-- **Memory planning**: Determining buffer allocation and reuse
-- **Kernel generation**: Generating Triton or C++ code for fused operations
-- **Autotuning**: Selecting the best kernel configurations
+- **Inductor の lowering と pointwise 融合**: 要素ごとの演算や reduction などを融合します
+- **メモリプランニング**: バッファの確保と再利用を決定します
+- **カーネル生成**: 融合された演算に対して Triton や C++ のコードを生成します
+- **オートチューニング**: 最適なカーネル設定を選択します
 
-### Pipeline Summary
+### パイプラインのまとめ { #pipeline-summary }
 
 ```text
-Model Forward Pass
+モデルの forward pass
     ↓
-[Dynamo Tracing] → FX Graph with vllm_ir.* ops
+[Dynamo によるトレース] → vllm_ir.* の op を含む FX グラフ
     ↓
-[Pre-grad: Inplace Functionalization] → maybe_inplace → default, track donated inputs
+[pre-grad: inplace の関数化] → maybe_inplace → default、譲渡された入力を追跡
     ↓
-[AOTAutograd] → Functionalization
+[AOTAutograd] → 関数化
     ↓
-[Post-grad: IR Fusion Passes] → Fuse high-level IR ops (e.g., rms_norm + quant)
+[post-grad: IR の融合パス] → 高水準の IR op を融合（rms_norm + quant など）
     ↓
-[Post-grad: IR Lowering] → vllm_ir.* ops → impl ops (with clones if needed)
+[post-grad: IR の lowering] → vllm_ir.* の op → 実装の op（必要なら clone 付き）
     ↓
-[Post-grad: Clone Cleanup] → Remove unnecessary clones using donated input info
+[post-grad: clone のクリーンアップ] → 譲渡された入力の情報を使って不要な clone を除去
     ↓
-[Inductor] → Pattern matching, fusion, memory planning, codegen
+[Inductor] → パターンマッチ、融合、メモリプランニング、コード生成
     ↓
-Compiled Code
+コンパイル済みコード
 ```
 
-## Core vLLM IR Concepts
+## vLLM IR の中核的な概念 { #core-vllm-ir-concepts }
 
-### Operation Declaration
+### 演算の宣言 { #operation-declaration }
 
-Operations are declared with the `@register_op` decorator, which creates an `IrOp` object:
+演算は `@register_op` デコレータで宣言し、`IrOp` オブジェクトが生成されます。
 
 ```python
 @register_op(
@@ -362,18 +330,16 @@ def op_name(...):
     ...
 ```
 
-**Parameters:**
+**パラメータ:**
 
-- `activations`: List of parameter names considered "activations" (typically consumed by `maybe_inplace`). Defaults to parameters starting with `x`.
-- `allow_inplace`: Creates a `maybe_inplace` overload for memory-efficient execution (see below).
+- `activations`: 「アクティベーション」とみなすパラメータ名のリスト（通常は `maybe_inplace` によって消費されます）。既定では `x` で始まるパラメータです。
+- `allow_inplace`: メモリ効率の良い実行のための `maybe_inplace` オーバーロードを作成します（下記参照）。
 
-### The `maybe_inplace` Overload
+### `maybe_inplace` オーバーロード { #the-maybe_inplace-overload }
 
-The `maybe_inplace` overload is a critical feature for memory efficiency in LLM inference.
-It signals that the caller doesn't need to preserve the activation inputs after the operation,
-allowing in-place implementations to reuse input memory for outputs.
+`maybe_inplace` オーバーロードは、LLM 推論のメモリ効率にとってきわめて重要な機能です。これは、演算のあとに呼び出し側がアクティベーションの入力を保持する必要がないことを示し、in-place な実装が出力のために入力のメモリを再利用できるようにします。
 
-#### Semantics and Usage
+#### 意味論と使い方 { #semantics-and-usage }
 
 ```python
 # Standard usage: inputs are preserved
@@ -386,7 +352,7 @@ out, res_out = ir.ops.fused_add_rms_norm.maybe_inplace(x, residual, weight, epsi
 # out and res_out may alias x and residual
 ```
 
-Using an activation input after passing it to `maybe_inplace` is **undefined behavior**:
+`maybe_inplace` に渡したあとでアクティベーションの入力を使うことは**未定義動作**です。
 
 ```python
 # WRONG: Using x after donating it
@@ -394,7 +360,7 @@ out, res_out = ir.ops.fused_add_rms_norm.maybe_inplace(x, residual, weight, epsi
 result = out + x  # ERROR: x was donated!
 ```
 
-If you need to preserve an input, either use the default overload or clone manually:
+入力を保持する必要がある場合は、既定のオーバーロードを使うか、手動で clone してください。
 
 ```python
 # Option 1: Use default overload
@@ -406,10 +372,9 @@ out, res_out = ir.ops.fused_add_rms_norm.maybe_inplace(x.clone(), residual, weig
 result = out + x  # OK: x is preserved, clone was donated
 ```
 
-#### Compilation Behavior
+#### コンパイル時の挙動 { #compilation-behavior }
 
-During compilation, the inplace functionalization pass validates that donated inputs are
-not used again and converts `maybe_inplace` to the functional `default` overload:
+コンパイル時、inplace 関数化のパスは譲渡された入力が再利用されていないことを検証し、`maybe_inplace` を関数的な `default` オーバーロードへ変換します。
 
 ```python
 # Inplace functionalization pass (pre-grad)
@@ -430,13 +395,11 @@ for node in graph.nodes:
                 pass_context.donated_input_ids.add(node_to_idx[arg])
 ```
 
-The donated input information is then used by the clone cleanup pass to eliminate
-unnecessary copies when in-place kernels are lowered.
+譲渡された入力の情報は、その後 clone クリーンアップのパスで使われ、in-place カーネルが lowering される際の不要なコピーを除去します。
 
-#### Eager Mode Behavior
+#### eager モードでの挙動 { #eager-mode-behavior }
 
-In eager mode (without `torch.compile`), `maybe_inplace` enables **maximally memory-efficient**
-execution by allowing the IR operation to dispatch directly to in-place implementations:
+eager モード（`torch.compile` なし）では、`maybe_inplace` により IR 演算が in-place な実装へ直接ディスパッチできるようになり、**最大限にメモリ効率の良い**実行が可能になります。
 
 ```python
 # Eager dispatch logic for maybe_inplace
@@ -453,12 +416,11 @@ if impl.inplace:
 return impl.impl_fn(*args)
 ```
 
-The combination of `maybe_inplace` in model code and in-place kernel implementations provides optimal memory efficiency
-in both eager and compiled modes, with identical semantics in both cases.
+モデルコードでの `maybe_inplace` と in-place なカーネル実装を組み合わせることで、eager モードとコンパイルモードのどちらでも最適なメモリ効率が得られ、しかも両者の意味論は同一です。
 
-#### Memory Savings Example
+#### メモリ削減の例 { #memory-savings-example }
 
-Consider a transformer layer with residual connections:
+残差接続を持つ transformer 層を考えます。
 
 ```python
 # Without maybe_inplace (2 allocations per layer)
@@ -472,9 +434,9 @@ normed, residual = ir.ops.fused_add_rms_norm.maybe_inplace(hidden_states, input,
 # Memory: normed (reuses hidden_states), residual (reuses input)
 ```
 
-### Implementation Registration
+### 実装の登録 { #implementation-registration }
 
-Implementations are registered using the `register_impl` method:
+実装は `register_impl` メソッドで登録します。
 
 ```python
 @ir.ops.op_name.register_impl(
@@ -486,24 +448,24 @@ def impl_fn(...):
     ...
 ```
 
-**Provider naming conventions:**
+**プロバイダ名の命名規約:**
 
-- `native`: Reserved for the native torch implementation (declared with `@register_op`)
-- `vllm_c`: C++/CUDA kernels via `torch.ops._C`
-- `aiter`: AMD AITER library
-- `xpu_kernels`: SYCL/SYCLTLA kernels implemented in `vllm-xpu-kernels`
-- `triton_*`: Triton kernels
-- Platform/library names for other implementations
+- `native`: ネイティブな torch 実装（`@register_op` で宣言）のために予約されています
+- `vllm_c`: `torch.ops._C` 経由の C++ / CUDA カーネル
+- `aiter`: AMD の AITER ライブラリ
+- `xpu_kernels`: `vllm-xpu-kernels` で実装された SYCL / SYCLTLA カーネル
+- `triton_*`: Triton カーネル
+- その他の実装ではプラットフォーム名 / ライブラリ名
 
-**Support checking:**
+**サポートの確認:**
 
-- `supported`: Static boolean, checked once at import time (e.g., `HAS_TRITON`, `is_cuda_alike()`)
-- `supports_args`: Function `(*args, **kwargs) -> bool` checking argument compatibility
-    - Called with **fake tensors** during compilation for zero-cost checking
-    - Called with **real tensors** during eager mode dispatch
-    - Should NOT check batch sizes or add guards based on values
+- `supported`: 静的な真偽値で、import 時に一度だけ評価されます（`HAS_TRITON`、`is_cuda_alike()` など）
+- `supports_args`: 引数の互換性を判定する関数 `(*args, **kwargs) -> bool`
+    - コンパイル時にはコストゼロで判定するため **fake テンソル**とともに呼ばれます
+    - eager モードのディスパッチ時には**実テンソル**とともに呼ばれます
+    - バッチサイズを確認したり、値にもとづく guard を追加したりしては**いけません**
 
-Example support predicate:
+サポート判定の例:
 
 ```python
 def aiter_rms_norm_supports(x, weight, epsilon, variance_size=None):
@@ -520,35 +482,35 @@ def rms_norm(...):
     ...
 ```
 
-Batch-invariant kernels are automatically selected when `VLLM_BATCH_INVARIANT=1` is set.
+`VLLM_BATCH_INVARIANT=1` が設定されている場合、バッチ不変（batch-invariant）なカーネルが自動的に選択されます。
 
-### Eager Mode vs Compile Mode
+### eager モードとコンパイルモード { #eager-mode-vs-compile-mode }
 
-vLLM IR operations behave identically in eager and compile modes:
+vLLM IR の演算は、eager モードとコンパイルモードで同一の挙動を示します。
 
-**Eager mode:**
+**eager モード:**
 
-- Direct dispatch to implementation based on priority list
-- Support checked with real tensor arguments
-- Minimal overhead (can be optimized further if needed)
+- 優先順位リストにもとづいて実装へ直接ディスパッチ
+- サポート判定は実テンソルの引数で実施
+- オーバーヘッドは最小限（必要ならさらに最適化可能）
 
-**Compile mode:**
+**コンパイルモード:**
 
-- IR ops appear in FX graph as `torch.ops.vllm_ir.*` custom ops
-- Lowering selects implementation using fake tensors
-- Full integration with Inductor optimizations
+- IR の op は `torch.ops.vllm_ir.*` のカスタム op として FX グラフに現れる
+- lowering が fake テンソルを使って実装を選択
+- Inductor の最適化と完全に統合
 
-This consistency enables:
+この一貫性により、次のことが可能になります。
 
-- Prototyping in eager mode with confidence
-- Debugging by disabling compilation
-- Gradual migration from eager to compiled execution
+- eager モードで安心してプロトタイピングできる
+- コンパイルを無効にしてデバッグできる
+- eager 実行からコンパイル実行へ段階的に移行できる
 
-## Other Topics
+## その他のトピック { #other-topics }
 
-### Out-of-Tree Implementations
+### out-of-tree の実装 { #out-of-tree-implementations }
 
-External platforms can register implementations without modifying vLLM:
+外部のプラットフォームは、vLLM を変更することなく実装を登録できます。
 
 ```python
 # In external package
@@ -559,7 +521,7 @@ def rms_norm(x, weight, epsilon, variance_size=None):
     return my_platform.rms_norm(x, weight, epsilon)
 ```
 
-Then configure priority to use your implementation:
+そのうえで、自分の実装を使うよう優先順位を設定します。
 
 ```python
 class MyPlatform(Platform):
@@ -570,25 +532,25 @@ class MyPlatform(Platform):
 llm = LLM(ir_op_priority=IrOpPriorityConfig(rms_norm=['custom_oot_kernel']))
 ```
 
-### Debugging and Observability
+### デバッグと可観測性 { #debugging-and-observability }
 
 !!! note
-    Please let us know how observability can be improved for your use-case!
+    あなたのユースケースで可観測性をどう改善できるか、ぜひ教えてください。
 
-Enable debug logging to see kernel selection:
+カーネルの選択を確認するには、デバッグログを有効にします。
 
 ```bash
 VLLM_LOGGING_LEVEL=DEBUG vllm serve ...
 ```
 
-This logs:
+これにより次がログ出力されます。
 
-- Which implementations are selected for each operation
-- Why implementations were rejected (unsupported, args not supported)
-- Compilation cache hits/misses
-- IR lowering statistics
+- 各演算についてどの実装が選択されたか
+- 実装が却下された理由（未サポート、引数が非対応）
+- コンパイルキャッシュのヒット / ミス
+- IR の lowering の統計
 
-Check selected implementations in compiled graphs:
+コンパイル済みグラフで選択された実装を確認するには次のようにします。
 
 ```python
 # After compilation, inspect the lowering pass
@@ -597,19 +559,19 @@ print(lowering_pass.selected_impls)
 # Output: {'rms_norm': {'node_123': 'vllm_c', 'node_456': 'vllm_c'}}
 ```
 
-## Migration from CustomOp
+## CustomOp からの移行 { #migration-from-customop }
 
-vLLM IR is designed to coexist with and gradually replace `CustomOp`:
+vLLM IR は `CustomOp` と共存し、段階的に置き換えるよう設計されています。
 
-1. **Op declaration**: Convert `CustomOp` class `PluggableLayer` and move `forward_native` to `@register_op` function
-2. **Implementation registration**: Use `@ir.ops.op_name.register_impl` instead of overriding methods
-3. **Layer usage**: Replace `self.op(...)` with `ir.ops.op_name(...)`
-4. **Configuration**: Migrate `--compilation-config.custom-ops` to `--ir-op-priority`
+1. **op の宣言**: `CustomOp` クラスを `PluggableLayer` に変換し、`forward_native` を `@register_op` の関数へ移します
+2. **実装の登録**: メソッドをオーバーライドする代わりに `@ir.ops.op_name.register_impl` を使います
+3. **層での利用**: `self.op(...)` を `ir.ops.op_name(...)` に置き換えます
+4. **設定**: `--compilation-config.custom-ops` を `--ir-op-priority` へ移行します
 
-The migration can be done incrementally, one operation at a time.
+移行は 1 演算ずつ、段階的に進められます。
 
-## See Also
+## 関連項目 { #see-also }
 
-- [torch.compile Integration](torch_compile.md) - General compilation infrastructure
-- [Fusions](fusions.md) - Custom fusion and transformation passes in vLLM
-- [Custom Operations](custom_op.md) - Legacy custom op system
+- [torch.compile の統合](torch_compile.md) - 一般的なコンパイル基盤
+- [Fusions](fusions.md) - vLLM のカスタム融合・変換パス
+- [カスタム演算](custom_op.md) - 従来のカスタム op システム

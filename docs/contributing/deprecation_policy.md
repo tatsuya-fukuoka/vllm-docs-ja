@@ -1,87 +1,69 @@
-# Deprecation Policy
+# 非推奨化ポリシー { #deprecation-policy }
 
-This document outlines the official policy and process for deprecating features
-in the vLLM project.
+このドキュメントは、vLLM プロジェクトで機能を非推奨（deprecate）にする際の公式なポリシーとプロセスを示します。
 
-## Overview
+## 概要 { #overview }
 
-vLLM uses a structured "deprecation pipeline" to guide the lifecycle of
-deprecated features. This policy ensures that users are given clear and
-sufficient notice when a feature is deprecated and that deprecations proceed in
-a consistent and predictable manner.
+vLLM では、非推奨機能のライフサイクルを導くために、構造化された「非推奨化パイプライン」を採用しています。このポリシーにより、機能が非推奨になったときにユーザーへ明確かつ十分な予告が行われ、非推奨化が一貫した予測可能な形で進むことを保証します。
 
-We aim to strike a balance between continued innovation and respecting users’
-reliance on existing functionality. Deprecations are tied to our **minor (Y)
-releases** following semantic versioning (X.Y.Z), where:
+私たちは、継続的なイノベーションと、既存機能に依存しているユーザーへの配慮とのバランスを取ることを目指しています。非推奨化はセマンティックバージョニング（X.Y.Z）に従い、**マイナー（Y）リリース**に紐づけられます。
 
-- **X** is a major version (rare)
-- **Y** is a minor version (used for significant changes, including deprecations/removals)
-- **Z** is a patch version (used for fixes and safer enhancements)
+- **X** はメジャーバージョン（まれ）
+- **Y** はマイナーバージョン（非推奨化・削除を含む重要な変更に使用）
+- **Z** はパッチバージョン（修正や安全な機能強化に使用）
 
-Features that fall under this policy include (at a minimum) the following:
+このポリシーの対象となる機能には、少なくとも次のものが含まれます。
 
-- CLI flags
-- Environment variables
-- Configuration files
-- APIs in the OpenAI-compatible API server
-- Public Python APIs for the `vllm` library
+- CLI のフラグ
+- 環境変数
+- 設定ファイル
+- OpenAI 互換 API サーバーの API
+- `vllm` ライブラリの公開 Python API
 
-## Deprecation Pipeline
+## 非推奨化パイプライン { #deprecation-pipeline }
 
-The deprecation process consists of several clearly defined stages that span
-multiple Y releases:
+非推奨化のプロセスは、複数の Y リリースにまたがる、明確に定義されたいくつかの段階から構成されます。
 
-### 1. Deprecated (Still On By Default)
+### 1. 非推奨（既定では有効のまま） { #1-deprecated-still-on-by-default }
 
-- **Action**: Feature is marked as deprecated.
-- **Timeline**: A removal version is explicitly stated in the deprecation
-warning (e.g., "This will be removed in v0.10.0").
-- **Communication**: Deprecation is noted in the following, as applicable:
-    - Help strings
-    - Log output
-    - API responses
-    - `/metrics` output (for metrics features)
-    - User-facing documentation
-    - Release notes
-    - GitHub Issue (RFC) for feedback
-    - Documentation and use of the `@typing_extensions.deprecated` decorator for Python APIs
+- **対応**: 機能が非推奨としてマークされます。
+- **時期**: 非推奨の警告の中で、削除されるバージョンが明示されます（例: 「これは v0.10.0 で削除されます」）。
+- **周知**: 非推奨であることが、該当する範囲で次の場所に記載されます。
+    - ヘルプ文字列
+    - ログ出力
+    - API のレスポンス
+    - `/metrics` の出力（メトリクス関連の機能の場合）
+    - ユーザー向けドキュメント
+    - リリースノート
+    - フィードバック用の GitHub Issue（RFC）
+    - Python API の場合は、ドキュメントおよび `@typing_extensions.deprecated` デコレータの使用
 
-### 2. Deprecated (Off By Default)
+### 2. 非推奨（既定では無効） { #2-deprecated-off-by-default }
 
-- **Action**: Feature is disabled by default, but can still be re-enabled via a
-CLI flag or environment variable. Feature throws an error when used without
-re-enabling.
-- **Purpose**: Allows users who missed earlier warnings a temporary escape hatch
-while signaling imminent removal. Ensures any remaining usage is clearly
-surfaced and blocks silent breakage before full removal.
+- **対応**: 機能は既定で無効になりますが、CLI のフラグや環境変数で再度有効にできます。再有効化せずに使用するとエラーになります。
+- **目的**: 以前の警告を見逃したユーザーに一時的な回避手段を提供しつつ、削除が近いことを知らせます。残っている利用箇所を確実に表面化させ、完全な削除の前に静かな破損が起きるのを防ぎます。
 
-### 3. Removed
+### 3. 削除 { #3-removed }
 
-- **Action**: Feature is completely removed from the codebase.
-- **Note**: Only features that have passed through the previous deprecation
-stages will be removed.
+- **対応**: 機能がコードベースから完全に削除されます。
+- **注意**: 削除されるのは、上記の非推奨段階を経た機能のみです。
 
-## Example Timeline
+## タイムラインの例 { #example-timeline }
 
-Assume a feature is deprecated in `v0.9.0`.
+ある機能が `v0.9.0` で非推奨になったとします。
 
-| Release       | Status                                                                                          |
+| リリース       | 状態                                                                                          |
 | ------------- | ----------------------------------------------------------------------------------------------- |
-| `v0.9.0`      | Feature is deprecated with clear removal version listed.                                        |
-| `v0.10.0`     | Feature is now off by default, throws an error when used, and can be re-enabled for legacy use. |
-| `v0.11.0`     | Feature is removed.                                                                             |
+| `v0.9.0`      | 削除バージョンを明示したうえで機能が非推奨になる。                                        |
+| `v0.10.0`     | 機能が既定で無効になり、使用するとエラーになる。従来どおり使うには再有効化が必要。 |
+| `v0.11.0`     | 機能が削除される。                                                                             |
 
-## Important Guidelines
+## 重要な指針 { #important-guidelines }
 
-- **No Removals in Patch Releases**: Removing deprecated features in patch
-(`.Z`) releases is disallowed to avoid surprising users.
-- **Grace Period for Existing Deprecations**: Any feature deprecated **before
-this policy** will have its grace period start **now**, not retroactively.
-- **Documentation is Critical**: Ensure every stage of the pipeline is
-documented clearly for users.
+- **パッチリリースでは削除しない**: ユーザーを驚かせないよう、パッチ（`.Z`）リリースでの非推奨機能の削除は禁止されています。
+- **既存の非推奨に対する猶予期間**: **このポリシー以前**に非推奨になった機能については、猶予期間は遡及ではなく**今から**開始します。
+- **ドキュメントが重要**: パイプラインの各段階を、ユーザーにとって明確な形でドキュメント化してください。
 
-## Final Notes
+## 最後に { #final-notes }
 
-This policy is a living document and may evolve as the needs of the project and
-its users change. Community feedback is welcome and encouraged as we refine the
-process.
+このポリシーは生きたドキュメントであり、プロジェクトとユーザーのニーズの変化に応じて進化していきます。プロセスを改善していくうえで、コミュニティからのフィードバックを歓迎します。

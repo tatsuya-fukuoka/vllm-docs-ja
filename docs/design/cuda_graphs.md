@@ -1,86 +1,86 @@
-# CUDA Graphs
+# CUDA Graphs { #cuda-graphs }
 
-This write-up introduces the new CUDA Graphs modes in vLLM v1 beyond previous [torch.compile integration](torch_compile.md). To summarize, we:
+この文書では、これまでの [torch.compile 統合](torch_compile.md)に加えて導入された vLLM v1 の新しい CUDA Graphs モードを紹介します。要点は次のとおりです。
 
-1. Added flexible `cudagraph_mode` configuration
-2. Made full CUDA Graphs support orthogonal to compilation
-3. Introduced a CUDA Graphs dispatcher as a central controller that picks the desired runtime mode and CUDA Graphs per batch automatically
+1. 柔軟な `cudagraph_mode` 設定を追加した
+2. フル CUDA Graphs のサポートをコンパイルと直交させた
+3. バッチごとに適切な実行時モードと CUDA Graphs を自動選択する中央コントローラとして、CUDA Graphs のディスパッチャを導入した
 
-In this document we will discuss the:
+このドキュメントでは、次の内容を扱います。
 
-* [Motivation](#motivation)
-* [CUDA Graphs modes](#cudagraphmodes)
-* [Detailed design](#detailed-design)
-* [Example usage of the different CUDA Graphs modes](#usage-guide)
-* [Vision Encoder (ViT) CUDA Graphs](cuda_graphs_multimodal.md)
-
-!!! note
-    In this document, we refer to pure decode (`max_query_len=1`) or speculative decode (`max_query_len =1+num_spec_tokens`) as **uniform decode** batches, and the opposite would be **non-uniform** batches (i.e., prefill or mixed prefill-decode batches).
+* [動機](#motivation)
+* [CUDA Graphs のモード](#cudagraphmodes)
+* [詳細設計](#detailed-design)
+* [各 CUDA Graphs モードの使用例](#usage-guide)
+* [Vision Encoder（ViT）の CUDA Graphs](cuda_graphs_multimodal.md)
 
 !!! note
-    The following contents are mostly based on the last commit of <https://github.com/vllm-project/vllm/pull/20059>.
-
-## Motivation
-
-Initial piecewise compilation was built to allow piecewise cudagraph capture, excluding cudagraph-unsupported operations (mainly attention). This allowed some speedup from cudagraphs while maintaining compatibility with all attention backends. We later added support for "full cudagraphs" by not compiling piecewise, so that we could further reduce the latency in cases where attention supported cudagraphs. However, this tight coupling between compilation and cudagraph capture led to an all-or-nothing experience with little flexibility. Many attention backends also weren’t ready for unified "full" CUDA Graphs capture (e.g., only FlashAttention 3 supports it currently) or only support CUDA Graphs for pure decode batches (e.g., Flashinfer, FlashMLA, and Mamba, etc.). That led to confusing performance/compatibility tradeoffs, inconsistent CUDA Graphs support, and increasingly complex code structure.
-
-This led us to seek a more fine-grained CUDA Graphs solution with the following features:
-
-* Explicitly aware of CUDA Graphs for prefill/mixed or (uniform-)decode batch and capture them separately.
-* Separate CUDAGraph capture logic from compilation (as much as feasible) for feature orthogonality, which suggest:
-    * Capturing piecewise and full cudagraphs using the same compiled graph, and
-    * Full cudagraph capture without compilation.
-* Dispatch between full and piecewise cudagraph at runtime depending on batch composition.
-* Centralized control of CUDAGraph behavior for reduced code complexity and allowed more extendibility.
-
-These features allow the most flexibility for cudagraph capture and compilation for all kinds of startup/performance tradeoffs and feature support.
-
-## `CudagraphModes`
-
-[`CUDAGraphMode`](https://docs.vllm.ai/en/v0.26.0/api/vllm/config/compilation/#vllm.config.compilation.CUDAGraphMode) is the single knob you tune in `CompilationConfig.cudagraph_mode`:
-
-* `NONE` — turn CUDA Graphs off. Good for debugging.
-* `PIECEWISE` —  a single-mode strategy (and past default). It is the most flexible: attention or other CUDA Graphs-incompatible operations stay eager, everything else goes into CUDA Graphs. Requires piecewise compilation.
-* `FULL` — a single-mode strategy, which only captures full CUDA Graphs for non-uniform batches, then uniform-decode batches reuse the CUDA Graph of non-uniform batch of the same batch_size, since they are compatible; can be good for small models or workloads with small prompts.
-* `FULL_DECODE_ONLY` — full CUDA Graph for uniform decode, no cudagraph for prefill/mixed etc.; suitable for decode instances in a P/D setup where prefill is not as important, this way we can save the memory needed for `PIECEWISE` CUDA Graphs.
-* `FULL_AND_PIECEWISE` — (default mode) full CUDA Graph for uniform decode, piecewise CUDA Graphs for others; generally the most performant setting, especially for low latency with small models or MoEs, but also requires the most memory and takes the longest to capture.
-
-Defaults: If you’re on v1 with piecewise compilation, we default to `FULL_AND_PIECEWISE` for better performance, (for pooling models, it's still `PIECEWISE`). Otherwise, e.g. if piecewise compilation unavailable, we default to `NONE`.
-
-While `NONE` , `PIECEWISE`, and `FULL` are single-mode configurations and simply equivalent to past implementations of eager execution, piecewise CUDA Graphs, and full CUDA Graphs respectively, `FULL_DECODE_ONLY` and `FULL_AND_PIECEWISE` are newly appended dual-mode configurations, which require dispatching to switch between concrete runtime modes according to runtime batches dynamically.
+    このドキュメントでは、純粋なデコード（`max_query_len=1`）や投機的デコード（`max_query_len =1+num_spec_tokens`）のバッチを **uniform decode** バッチと呼び、その反対を **non-uniform** バッチ（すなわちプレフィル、あるいはプレフィルとデコードが混在したバッチ）と呼びます。
 
 !!! note
-    Here, the single-modes `NONE`, `PIECEWISE`, and `FULL` are treated as the runtime modes for CUDA Graphs dispatching. If using a dual-mode, the dispatcher will always dispatch to one of its member modes (plus a potential `NONE` if no suitable CUDA Graph available), depending on the batch composition.
+    以下の内容は、主に <https://github.com/vllm-project/vllm/pull/20059> の最後のコミットにもとづいています。
 
-While cascade attention is not cudagraph compatible, it is now compatible with all possible cudagraph mode configurations. If a batch uses cascade attention, it always gets dispatched to `PIECEWISE` mode if available (otherwise `NONE`).
+## 動機 { #motivation }
+
+当初の区分的（piecewise）コンパイルは、CUDA graph 非対応の処理（主に attention）を除外したうえで区分的な CUDA graph のキャプチャを可能にするために作られました。これにより、すべての attention バックエンドとの互換性を保ちながら CUDA graph による高速化をある程度得られました。その後、区分的にコンパイルしないことで「フル CUDA graph」のサポートを追加し、attention が CUDA graph に対応している場合にさらにレイテンシを削減できるようにしました。しかし、コンパイルと CUDA graph キャプチャがこのように密結合していたため、柔軟性に乏しい「全か無か」の体験になっていました。また多くの attention バックエンドは、統一的な「フル」CUDA Graphs キャプチャに対応していない（現時点で対応しているのは FlashAttention 3 のみ）か、純粋なデコードバッチについてのみ CUDA Graphs をサポートしています（Flashinfer、FlashMLA、Mamba など）。その結果、性能と互換性のトレードオフが分かりにくくなり、CUDA Graphs のサポート状況も一貫せず、コード構造も次第に複雑になっていました。
+
+そこで、次の特徴を備えた、よりきめ細かい CUDA Graphs の仕組みを目指すことにしました。
+
+* プレフィル / 混在バッチと（uniform な）デコードバッチを CUDA Graphs 上で明示的に区別し、別々にキャプチャする。
+* 機能の直交性のため、CUDA graph のキャプチャロジックをコンパイルから（可能な限り）分離する。具体的には次を意味します。
+    * 同じコンパイル済みグラフを使って区分的 CUDA graph とフル CUDA graph の両方をキャプチャする
+    * コンパイルなしでフル CUDA graph をキャプチャする
+* バッチの構成に応じて、実行時にフル CUDA graph と区分的 CUDA graph を切り替える。
+* コードの複雑さを減らし拡張しやすくするため、CUDA graph の挙動を中央で制御する。
+
+これらの特徴により、起動時間と性能のさまざまなトレードオフや機能サポートに対して、CUDA graph のキャプチャとコンパイルを最大限柔軟に構成できます。
+
+## `CudagraphModes` { #cudagraphmodes }
+
+[`CUDAGraphMode`](https://docs.vllm.ai/en/v0.26.0/api/vllm/config/compilation/#vllm.config.compilation.CUDAGraphMode) は、`CompilationConfig.cudagraph_mode` で調整する唯一のつまみです。
+
+* `NONE` — CUDA Graphs を無効にします。デバッグに適しています。
+* `PIECEWISE` — 単一モードの戦略です（かつての既定値）。最も柔軟で、attention など CUDA Graphs 非対応の処理は eager のまま、それ以外を CUDA Graphs に載せます。区分的コンパイルが必要です。
+* `FULL` — 単一モードの戦略で、non-uniform バッチについてのみフル CUDA Graphs をキャプチャします。uniform decode のバッチは互換性があるため、同じ batch_size の non-uniform バッチの CUDA Graph を再利用します。小さなモデルや短いプロンプトのワークロードに適しています。
+* `FULL_DECODE_ONLY` — uniform decode についてフル CUDA Graph を使い、プレフィル / 混在などには CUDA graph を使いません。プレフィルの重要度が低い P/D 構成のデコードインスタンスに適しており、`PIECEWISE` CUDA Graphs に必要なメモリを節約できます。
+* `FULL_AND_PIECEWISE` —（既定のモード）uniform decode にはフル CUDA Graph を、それ以外には区分的 CUDA Graphs を使います。一般に最も高性能な設定で、とくに小さなモデルや MoE の低レイテンシ用途に向きますが、メモリを最も多く必要とし、キャプチャにも最も時間がかかります。
+
+既定値: 区分的コンパイルを伴う v1 では、より高い性能のため `FULL_AND_PIECEWISE` が既定になります（プーリングモデルでは引き続き `PIECEWISE`）。それ以外の場合、たとえば区分的コンパイルが利用できない場合は `NONE` が既定になります。
+
+`NONE`、`PIECEWISE`、`FULL` は単一モードの設定であり、それぞれ従来の eager 実行、区分的 CUDA Graphs、フル CUDA Graphs の実装に相当します。一方 `FULL_DECODE_ONLY` と `FULL_AND_PIECEWISE` は新たに追加された二重モードの設定で、実行時のバッチに応じて具体的な実行時モードを動的に切り替えるディスパッチが必要になります。
 
 !!! note
-    Not all CUDA Graph modes are compatible with every attention backend. We automatically "downgrade" modes to the closest supported mode. For example, if a backend only supports CUDA Graphs for pure decode/uniform batches, we convert `FULL` to `FULL_AND_PIECEWISE` if piecewise compilation is enabled, and `FULL_DECODE_ONLY` otherwise.
+    ここでは、単一モードの `NONE`、`PIECEWISE`、`FULL` を CUDA Graphs ディスパッチにおける実行時モードとして扱います。二重モードを使う場合、ディスパッチャはバッチの構成に応じて、常にその構成モードのいずれか（適切な CUDA Graph がない場合は `NONE`）へディスパッチします。
 
-## Detailed Design
+カスケード attention は CUDA graph 非対応ですが、現在はすべての CUDA graph モード設定と共存できます。バッチがカスケード attention を使う場合、利用可能であれば常に `PIECEWISE` モードへ（そうでなければ `NONE` へ）ディスパッチされます。
 
-### Overview
+!!! note
+    すべての CUDA Graph モードがすべての attention バックエンドと互換なわけではありません。vLLM は、最も近いサポート済みモードへ自動的に「ダウングレード」します。たとえば、あるバックエンドが純粋なデコード / uniform バッチについてのみ CUDA Graphs をサポートする場合、区分的コンパイルが有効なら `FULL` を `FULL_AND_PIECEWISE` に、そうでなければ `FULL_DECODE_ONLY` に変換します。
 
-The new CUDA Graphs logic is built on top of piecewise compilation and supports dual CUDA Graphs runtime mode switching. The system contains the following core components:
+## 詳細設計 { #detailed-design }
 
-* [`CUDAGraphWrapper`](https://docs.vllm.ai/en/v0.26.0/api/vllm/compilation/cuda_graph/#vllm.compilation.cuda_graph.CUDAGraphWrapper): wrapper that handles CUDAGraph capture & replay on the wrapped callable
-* [`CudagraphDispatcher`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/cudagraph_dispatcher/#vllm.v1.cudagraph_dispatcher.CudagraphDispatcher): the central controller that contains the single source of truth about CUDA Graphs and handles dispatching between them.
-* [`CUDAGraphMode`](https://docs.vllm.ai/en/v0.26.0/api/vllm/config/compilation/#vllm.config.compilation.CUDAGraphMode): enum describing the supported and runtime modes (introduced above).
-* [`BatchDescriptor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/forward_context/#vllm.forward_context.BatchDescriptor), serving as a unique representation of the runtime batch used for dispatching.
+### 概要 { #overview }
 
-See the following figures for a quick comparison between the previous and current design patterns of CUDA Graphs with inductor compilation. We can see that previously the CUDA Graphs logic and compilation logic were tightly coupled into the vllm `PiecewiseBackend`, and CUDA Graphs was implicitly dispatched by `batch_size` idly. Now the CUDA Graphs logic is separated into the `CUDAGraphWrapper` class, responsible for both full and piecewise CUDA Graphs abilities, and dispatching is **explicitly** done via **runtime mode** plus the `BatchDescriptor` as the **dispatch key** via `CudagraphDispatcher`.
+新しい CUDA Graphs のロジックは区分的コンパイルの上に構築され、CUDA Graphs の実行時モードの二重切り替えをサポートします。システムは次の中核コンポーネントから成ります。
 
-**Before:**
+* [`CUDAGraphWrapper`](https://docs.vllm.ai/en/v0.26.0/api/vllm/compilation/cuda_graph/#vllm.compilation.cuda_graph.CUDAGraphWrapper): ラップした callable に対する CUDA graph のキャプチャと再生を扱うラッパー
+* [`CudagraphDispatcher`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/cudagraph_dispatcher/#vllm.v1.cudagraph_dispatcher.CudagraphDispatcher): CUDA Graphs に関する唯一の信頼できる情報源を保持し、それらの間のディスパッチを扱う中央コントローラ
+* [`CUDAGraphMode`](https://docs.vllm.ai/en/v0.26.0/api/vllm/config/compilation/#vllm.config.compilation.CUDAGraphMode): サポートされるモードと実行時モードを表す列挙型（上記で紹介）
+* [`BatchDescriptor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/forward_context/#vllm.forward_context.BatchDescriptor): ディスパッチに使う、実行時バッチの一意な表現
+
+inductor コンパイルを伴う CUDA Graphs について、従来と現在の設計パターンの比較を次の図に示します。従来は CUDA Graphs のロジックとコンパイルのロジックが vLLM の `PiecewiseBackend` に密結合しており、CUDA Graphs は `batch_size` によって暗黙にディスパッチされていました。現在は CUDA Graphs のロジックが `CUDAGraphWrapper` クラスに分離され、フルと区分的の双方の CUDA Graphs の能力を担い、ディスパッチは `CudagraphDispatcher` を通じて**実行時モード**と**ディスパッチキー**としての `BatchDescriptor` により**明示的に**行われます。
+
+**変更前:**
 
 ![previous_design](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/cuda_graphs/previous_design.png)
 
-**After:**
+**変更後:**
 
 ![new_design](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/cuda_graphs/current_design.png)
 
-### `BatchDescriptor`
+### `BatchDescriptor` { #batchdescriptor }
 
-[`BatchDescriptor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/forward_context/#vllm.forward_context.BatchDescriptor) is a component within `ForwardContext`, alongside the CUDA Graphs runtime modes, serving as the core structure for dispatching keys at runtime. The prototype is:
+[`BatchDescriptor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/forward_context/#vllm.forward_context.BatchDescriptor) は、CUDA Graphs の実行時モードと並んで `ForwardContext` に含まれるコンポーネントで、実行時のディスパッチキーの中核となる構造です。定義は次のとおりです。
 
 ```python
 class BatchDescriptor(NamedTuple):
@@ -90,20 +90,20 @@ class BatchDescriptor(NamedTuple):
     has_lora: bool = False
 ```
 
-where `num_tokens` can be the padded token length, and `uniform` indicates if all the requests have the same query lengths. Many attention backends only support full cudagraphs when the batches are uniform; pure decode batches are uniform but may not be query length 1 (i.e. `num_tokens == num_reqs`), this occurs in the validation pass of spec-decode where "decode" batches will have a query length of  `1+num_spec_tokens`.
+ここで `num_tokens` はパディング後のトークン長になり得ます。`uniform` は、すべてのリクエストが同じ query 長を持つかどうかを示します。多くの attention バックエンドは、バッチが uniform の場合にのみフル CUDA graph をサポートします。純粋なデコードバッチは uniform ですが、query 長が 1（すなわち `num_tokens == num_reqs`）とは限りません。これは投機的デコードの検証パスで起こり、そこでは「デコード」バッチの query 長が `1+num_spec_tokens` になります。
 
-The goal of this structure is to uniquely identify a (padded) batch with minimal possible items corresponding to a CUDA Graphs item.
+この構造の目的は、CUDA Graphs の 1 項目に対応する（パディング後の）バッチを、可能な限り少ない要素で一意に識別することです。
 
 !!! note
-    The prototype of `BatchDescriptor` may be extended for more general situations in the future, e.g., include more items, like `uniform_query_len` to support multiple different uniform decode lengths settings (<https://github.com/vllm-project/vllm/pull/23679>), or other modifications needed to support CUDA Graphs for models whose inputs are not necessarily token length aware (for example, some multi-modal inputs).
+    `BatchDescriptor` の定義は、今後より一般的な状況に対応するため拡張される可能性があります。たとえば、複数の異なる uniform decode 長の設定をサポートするために `uniform_query_len` のような項目を追加する（<https://github.com/vllm-project/vllm/pull/23679>）ことや、入力が必ずしもトークン長に依存しないモデル（一部のマルチモーダル入力など）で CUDA Graphs をサポートするための変更などが考えられます。
 
-### `CudagraphDispatcher`
+### `CudagraphDispatcher` { #cudagraphdispatcher }
 
-The [`CudagraphDispatcher`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/cudagraph_dispatcher/#vllm.v1.cudagraph_dispatcher.CudagraphDispatcher) takes responsibility for maintaining two sets of valid dispatching keys, one set for `FULL` runtime mode and one set for `PIECEWISE` runtime mode, and dispatches the correct runtime mode and the dispatching keys before executing the model's forwards. It will take in the initial key (a rough batch_descriptor for the padded input) and return the selected runtime mode and the final batch_descriptor, then tell the CUDAGraphWrapper instances that decision through forward contexts. Notice that `CudagraphDispatcher` is the only source of truth for available CUDA Graph keys and `CUDAGraphWrapper` instances can blindly trust the forward context on what CUDA Graphs to dispatch to. This lets us simplify the wrapper code and centralize the logic in the dispatcher.
+[`CudagraphDispatcher`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/cudagraph_dispatcher/#vllm.v1.cudagraph_dispatcher.CudagraphDispatcher) は、有効なディスパッチキーの集合を 2 つ（`FULL` 実行時モード用と `PIECEWISE` 実行時モード用）維持し、モデルの forward を実行する前に正しい実行時モードとディスパッチキーへディスパッチする役割を担います。初期キー（パディング後の入力に対する大まかな batch_descriptor）を受け取り、選択した実行時モードと最終的な batch_descriptor を返し、その決定を forward context を通じて CUDAGraphWrapper のインスタンスに伝えます。利用可能な CUDA Graph のキーについては `CudagraphDispatcher` が唯一の信頼できる情報源であり、`CUDAGraphWrapper` のインスタンスは、どの CUDA Graphs へディスパッチするかについて forward context を無条件に信頼できます。これによりラッパー側のコードを簡素化し、ロジックをディスパッチャに集約できます。
 
-The dispatching keys are initialized through the dispatcher's `initialize_cudagraph_keys` method, which is called by the gpu_model_runner after all possible attention backends are initialized. This is where we can get much fancier in the future and “prepare” all kinds of CUDA Graphs combinations. For now, we just append available keys based on the valid combos of `decode_mode`/`mixed_mode` of `cudagraph_mode` and `cudagraph_capture_sizes` in the compilation config.
+ディスパッチキーは、ディスパッチャの `initialize_cudagraph_keys` メソッドで初期化されます。このメソッドは、想定されるすべての attention バックエンドの初期化後に gpu_model_runner から呼ばれます。将来的には、ここでさまざまな CUDA Graphs の組み合わせを「用意」する、より高度な処理も可能になります。現時点では、コンパイル設定の `cudagraph_mode` の `decode_mode` / `mixed_mode` の有効な組み合わせと `cudagraph_capture_sizes` にもとづいて、利用可能なキーを追加するだけです。
 
-The dispatch code looks like:
+ディスパッチのコードは次のようになります。
 
 ```python
 batch_descriptor=BatchDescriptor(num_tokens=num_input_tokens, uniform_decode=...)
@@ -117,40 +117,39 @@ with set_forward_context(
      output = self.model(...)
 ```
 
-Inside the `dispatch()` method, the dispatcher will search the proper CUDA Graphs runtime mode and existing dispatching keys for a return. We basically search the existing keys following the priority: `FULL`>`PIECEWISE`>`None`. If the dispatching key does not exist, default to return `NONE` mode for eager execution. The implementations can be found [here](https://github.com/vllm-project/vllm/blob/main/vllm/v1/cudagraph_dispatcher.py#L91).
+`dispatch()` メソッドの内部では、ディスパッチャが適切な CUDA Graphs の実行時モードと既存のディスパッチキーを探して返します。基本的には `FULL` > `PIECEWISE` > `None` の優先順位で既存のキーを探索します。該当するディスパッチキーがなければ、既定で eager 実行のための `NONE` モードを返します。実装は[こちら](https://github.com/vllm-project/vllm/blob/main/vllm/v1/cudagraph_dispatcher.py#L91)にあります。
 
-Here is a simplified illustration of the workflow at runtime in the model executor:
+モデル実行時のワークフローを簡略化して示すと次のようになります。
 ![executor_runtime](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/cuda_graphs/executor_runtime.png)
 
-### `CUDAGraphWrapper`
+### `CUDAGraphWrapper` { #cudagraphwrapper }
 
-A [`CUDAGraphWrapper`](https://docs.vllm.ai/en/v0.26.0/api/vllm/compilation/cuda_graph/#vllm.compilation.cuda_graph.CUDAGraphWrapper) instance wraps a runnable and simply mimics the runnable with appended CUDA Graphs abilities. Each wrapper instance is bound to a specific `runtime_mode`, which is restricted to `PIECEWISE` and `FULL` mode, and takes responsibility for capturing/replaying and passing through (directly calling) the runnable.  At runtime, each wrapper would:
+[`CUDAGraphWrapper`](https://docs.vllm.ai/en/v0.26.0/api/vllm/compilation/cuda_graph/#vllm.compilation.cuda_graph.CUDAGraphWrapper) のインスタンスは runnable をラップし、CUDA Graphs の機能を付加したうえでその runnable と同じように振る舞います。各ラッパーのインスタンスは特定の `runtime_mode`（`PIECEWISE` または `FULL` に限られます）に紐づき、キャプチャ / 再生と、runnable のパススルー（直接呼び出し）を担当します。実行時、各ラッパーは次のように動作します。
 
-1. inspect the runtime_mode and batch_descriptor(dispatching key) from the global forward context.
-2. If runtime_mode is `NONE` or runtime_mode does not match the mode of the wrapper, just call the runnable directly.
-3. Otherwise, i.e., the runtime_mode matches the mode of the wrapper, the wrapper will perform CUDA Graphs capture (if key does not exist, create
-a new entry and cache it) or replay (if key exists in the cache).
+1. グローバルな forward context から runtime_mode と batch_descriptor（ディスパッチキー）を確認する。
+2. runtime_mode が `NONE` であるか、ラッパー自身のモードと一致しない場合は、runnable を直接呼び出す。
+3. それ以外、すなわち runtime_mode がラッパーのモードと一致する場合、ラッパーは CUDA Graphs のキャプチャ（キーが存在しなければ新しいエントリを作成してキャッシュする）または再生（キーがキャッシュに存在する場合）を行う。
 
-The above steps are based on the assumption that the CUDA Graphs wrapper would directly trust what’s in the forward context (controlled by the dispatcher). This lets us simplify and centralize the logic, reducing the complexity as well as the risk of mismatched state between the wrappers and the dispatcher. It also allows reusing the wrapper class for both `FULL` and `PIECEWISE` runtime modes. See the implementation [here](https://github.com/vllm-project/vllm/blob/f751e50b7a2aae3110d83ed0d88202fc91b3e78a/vllm/compilation/cuda_graph.py#L106).
+上記の手順は、CUDA Graphs のラッパーが forward context の内容（ディスパッチャが制御）をそのまま信頼するという前提にもとづいています。これによりロジックを簡素化・集約でき、複雑さだけでなく、ラッパーとディスパッチャの状態が食い違うリスクも減らせます。また、`FULL` と `PIECEWISE` の両方の実行時モードで同じラッパークラスを再利用できます。実装は[こちら](https://github.com/vllm-project/vllm/blob/f751e50b7a2aae3110d83ed0d88202fc91b3e78a/vllm/compilation/cuda_graph.py#L106)を参照してください。
 
-#### Nested Wrapper design
+#### ネストされたラッパーの設計 { #nested-wrapper-design }
 
-The core mechanism of making a full CUDA Graphs and piecewise CUDA Graphs coexist and compatible is the nested CUDA Graphs wrapper design, building on top of piecewise compilation with only a single piecewise FX graph.  We wrap a FULL mode wrapper outside the entire model for the full CUDA Graphs functionality; meanwhile, each piecewise backend is wrapped via a `PIECEWISE` mode wrapper inside the compilation.
+フル CUDA Graphs と区分的 CUDA Graphs を共存・両立させる中核的な仕組みが、ネストされた CUDA Graphs ラッパーの設計です。これは、単一の区分的 FX グラフのみを用いる区分的コンパイルの上に構築されています。フル CUDA Graphs の機能のためにモデル全体を FULL モードのラッパーで包み、同時に各区分的バックエンドをコンパイル内部で `PIECEWISE` モードのラッパーで包みます。
 
-The flow chart below should clearly describe how it works.
+以下のフローチャートが、その動作を分かりやすく示しています。
 ![wrapper_flow](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/cuda_graphs/wrapper_flow.png)
 
-Therefore, for a `FULL` runtime mode, it is safe to capture/replay a full CUDA Graph since the piecewise wrapper is not activated. The situation is similar for `PIECEWISE` mode, as there are no conflicts between the `FULL` mode wrapper and `PIECEWISE` mode wrappers.  For the `NONE` runtime mode, both `FULL` and `PIECEWISE` wrappers would not be activated, so we simply fall through to eager execution.
+したがって `FULL` 実行時モードでは、区分的ラッパーが有効にならないため、フル CUDA Graph のキャプチャ / 再生を安全に行えます。`PIECEWISE` モードでも同様で、`FULL` モードのラッパーと `PIECEWISE` モードのラッパーのあいだに衝突はありません。`NONE` 実行時モードでは `FULL` と `PIECEWISE` のどちらのラッパーも有効にならないため、そのまま eager 実行になります。
 
-### Full CUDA Graph capturing & warm-up
+### フル CUDA Graph のキャプチャとウォームアップ { #full-cuda-graph-capturing-warm-up }
 
-The CUDA Graphs capturing happens when the runner first calls the model forward (using `_dummy_run`) with a non-`NONE` runtime mode. For full CUDA Graph capture, we explicitly capture different cases (i.e., prefill/mixed batch or uniform_decode batch) by properly setting attention metadata to make sure the underlying attention backends launch the desired kernel routines. To distinguish prefill/mixed batch or uniform_decode batch, the most important property is the `max_query_len` in attn_metadata (true for most attention backends). We set it to the desired `uniform_query_len` for uniform_decode otherwise we make it just the `num_tokens` for a non-uniform_decode batch.
+CUDA Graphs のキャプチャは、runner が `NONE` 以外の実行時モードでモデルの forward を最初に呼び出したとき（`_dummy_run` を使用）に行われます。フル CUDA Graph のキャプチャでは、attention のメタデータを適切に設定して、下位の attention バックエンドが意図したカーネルのルーチンを起動するようにし、それぞれのケース（プレフィル / 混在バッチ、uniform_decode バッチ）を明示的にキャプチャします。プレフィル / 混在バッチと uniform_decode バッチを区別するうえで最も重要なのは、attn_metadata の `max_query_len` です（ほとんどの attention バックエンドで当てはまります）。uniform_decode では意図した `uniform_query_len` を設定し、そうでないバッチでは単に `num_tokens` を設定します。
 
-The CUDA Graphs wrapper no longer manages the warm-up logic. The warm-up process is now controlled directly by the GPU model runner, where the `NONE` runtime mode is assigned to play an eager execution for warm-up. When warming up for a full CUDA Graph, it is also important to explicitly run attention during the warmup `dummy_run` call.
+CUDA Graphs のラッパーはウォームアップのロジックを管理しなくなりました。ウォームアップの処理は現在、GPU の model runner が直接制御し、ウォームアップの eager 実行には `NONE` 実行時モードが割り当てられます。フル CUDA Graph 向けのウォームアップでは、ウォームアップの `dummy_run` 呼び出し中に attention を明示的に実行することも重要です。
 
-## CUDA Graphs Compatibility of Attention Backends
+## attention バックエンドの CUDA Graphs 互換性 { #cuda-graphs-compatibility-of-attention-backends }
 
-To signal the CUDA Graphs compatibility of the attention backends, we introduce a new enum type [`AttentionCGSupport`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/attention/backend/#vllm.v1.attention.backend.AttentionCGSupport), which is an enum type that tracks the capability of the attention backend to support CUDA Graphs. The value is sorted in the order of the capability, i.e., `ALWAYS`> `UNIFORM_BATCH`> `UNIFORM_SINGLE_TOKEN_DECODE`> `NEVER`.
+attention バックエンドの CUDA Graphs 互換性を示すために、新しい列挙型 [`AttentionCGSupport`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/attention/backend/#vllm.v1.attention.backend.AttentionCGSupport) を導入しました。これは attention バックエンドの CUDA Graphs サポート能力を表す列挙型です。値は能力の順、すなわち `ALWAYS` > `UNIFORM_BATCH` > `UNIFORM_SINGLE_TOKEN_DECODE` > `NEVER` の順に並んでいます。
 
 ```python
 class AttentionCGSupport(enum.Enum):
@@ -170,17 +169,17 @@ class AttentionCGSupport(enum.Enum):
     """NO CUDA Graphs support"""
 ```
 
-Suppose we have hybrid attention backends (e.g., in mamba mixer models). In that case, we seek the minimum capability of all backends to determine the final capability of the model, and we might resolve the incompatible CUDA Graphs mode by downgrading the mode to the best fit one. For example, downgrading `FULL` mode to `FULL_AND_PIECEWISE` mode if the minimum capability is `UNIFORM_BATCH`, or `PIECEWISE` mode if the minimum capability is `NEVER` for -O3 compilation mode. For the complete fallback policy, please see the code for [`this`](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/worker/gpu_model_runner/#vllm.v1.worker.gpu_model_runner.GPUModelRunner._check_and_update_cudagraph_mode).
+ハイブリッドな attention バックエンド（mamba mixer 系のモデルなど）を持つ場合を考えます。この場合、モデルの最終的な能力はすべてのバックエンドの能力の最小値で決まり、互換性のない CUDA Graphs モードは最も適したモードへダウングレードして解決されることがあります。たとえば、最小能力が `UNIFORM_BATCH` であれば `FULL` モードを `FULL_AND_PIECEWISE` モードへ、-O3 のコンパイルモードで最小能力が `NEVER` であれば `PIECEWISE` モードへダウングレードします。フォールバックの完全な方針については、[こちら](https://docs.vllm.ai/en/v0.26.0/api/vllm/v1/worker/gpu_model_runner/#vllm.v1.worker.gpu_model_runner.GPUModelRunner._check_and_update_cudagraph_mode)のコードを参照してください。
 
-The following table lists backends that support full CUDA Graphs at the time of writing.
+執筆時点でフル CUDA Graphs をサポートするバックエンドを次の表に示します。
 
-| Attention Backend | cudagraph_support | Comments |
+| attention バックエンド | cudagraph_support | 備考 |
 | :---------------- | :---------------- | :------- |
-| FlashAttention v2 | `UNIFORM_BATCH` | Actually `ALWAYS` but workaround to fallback to `FULL_AND_PIECEWISE` for performance reason |
-| FlashAttention v3 | `ALWAYS` | has unified routine for both batches, so `FULL` mode is good |
-| Triton Attention | `ALWAYS` | prefer `FULL_AND_PIECEWISE` since it has different kernels for prefill/mixed and pure decode batches |
+| FlashAttention v2 | `UNIFORM_BATCH` | 実際には `ALWAYS` ですが、性能上の理由から `FULL_AND_PIECEWISE` にフォールバックする回避策をとっています |
+| FlashAttention v3 | `ALWAYS` | どちらのバッチにも統一されたルーチンを持つため、`FULL` モードが適しています |
+| Triton Attention | `ALWAYS` | プレフィル / 混在バッチと純粋なデコードバッチで異なるカーネルを持つため、`FULL_AND_PIECEWISE` が望ましいです |
 | AITER FlashAttention | `UNIFORM_BATCH` | |
-| FlashInfer | `UNIFORM_SINGLE_TOKEN_DECODE` | Will be set to `UNIFORM_BATCH` when using TRTLLM attention on Blackwell |
+| FlashInfer | `UNIFORM_SINGLE_TOKEN_DECODE` | Blackwell 上で TRTLLM attention を使う場合は `UNIFORM_BATCH` になります |
 | FlashMLA | `UNIFORM_BATCH` | |
 | FlashInferMLA | `UNIFORM_BATCH` | |
 | FlashInferMLASparse | `UNIFORM_BATCH` | |
@@ -188,17 +187,17 @@ The following table lists backends that support full CUDA Graphs at the time of 
 | CUTLASS MLA | `UNIFORM_SINGLE_TOKEN_DECODE` | |
 | Mamba attention | `UNIFORM_SINGLE_TOKEN_DECODE` | |
 
-Unlisted backends are all declared as `NEVER`.
+一覧にないバックエンドはすべて `NEVER` と宣言されています。
 
-## Usage guide
+## 使い方ガイド { #usage-guide }
 
-Now the CLI is directly using the uppercase string of cudagraph_mode for compilation_config: `--compilation-config '{"cudagraph_mode": "..."}'`, where `...` should be one of `NONE`, `PIECEWISE`, `FULL`, `FULL_DECODE_ONLY`, and `FULL_AND_PIECEWISE`. Note that all `PIECEWISE` related modes require piecewise compilation, and all `FULL` related modes need CUDA Graphs support of attention backends. For example:
+現在、CLI では compilation_config の cudagraph_mode を大文字の文字列でそのまま指定します: `--compilation-config '{"cudagraph_mode": "..."}'`。`...` には `NONE`、`PIECEWISE`、`FULL`、`FULL_DECODE_ONLY`、`FULL_AND_PIECEWISE` のいずれかを指定します。`PIECEWISE` 関連のモードはすべて区分的コンパイルを必要とし、`FULL` 関連のモードはすべて attention バックエンドの CUDA Graphs サポートを必要とする点に注意してください。例:
 
 ```bash
 vllm serve --model meta-llama/Llama-3.1-8B-Instruct --compilation-config '{"cudagraph_mode": "FULL_AND_PIECEWISE"}'
 ```
 
-### Python examples
+### Python の例 { #python-examples }
 
 ```python
 import os
@@ -223,15 +222,15 @@ outputs = model.generate(
 )
 ```
 
-### Piecewise compilation and full graph custom passes (attention fusion, sequence parallelism)
+### 区分的コンパイルとグラフ全体を対象とするカスタムパス（attention 融合、シーケンス並列） { #piecewise-compilation-and-full-graph-custom-passes-attention-fusion-sequence-parallelism }
 
-Unfortunately, some custom compile passes have to see the whole graph to be effective and hence aren't compatible with piecewise compilation. This includes `AttnQuantFusionPass` and `SequenceParallelismPass`. As a short-term solution, we automatically disable piecewise compilation (by setting `splitting_ops=[]`) when attention fusion is enabled. We use CUDA Graph modes `FULL` or `FULL_DECODE_ONLY` (depending on backend support). However, this leads to another optimization incompatibility and confusing performance tradeoffs.
+残念ながら、一部のカスタムコンパイルパスは効果を発揮するためにグラフ全体を参照する必要があり、区分的コンパイルとは両立しません。これには `AttnQuantFusionPass` と `SequenceParallelismPass` が含まれます。短期的な解決策として、attention 融合が有効な場合は（`splitting_ops=[]` を設定することで）区分的コンパイルを自動的に無効化しています。この場合、CUDA Graph のモードには（バックエンドのサポート状況に応じて）`FULL` または `FULL_DECODE_ONLY` を使います。ただし、これは別の最適化との非互換や、分かりにくい性能上のトレードオフを生みます。
 
-Long term, we've added the ability to partition the graph in Inductor instead of right after Dynamo. It can be enabled with `CompilationConfig.use_inductor_graph_partition=True` but is currently experimental and only available with `torch>=2.9`. This also increases compilation time as it has to compile the whole graph and cannot reuse piecewise compilation artifacts. Once vLLM supports 2.9, we plan to make this the default approach as it will also speed up piecewise cudagraph capture.
+長期的には、Dynamo の直後ではなく Inductor 内でグラフを分割する機能を追加しました。`CompilationConfig.use_inductor_graph_partition=True` で有効にできますが、現時点では実験的で `torch>=2.9` でのみ利用できます。この方式はグラフ全体をコンパイルする必要があり、区分的コンパイルの成果物を再利用できないため、コンパイル時間も増加します。vLLM が 2.9 をサポートしたら、区分的 CUDA graph のキャプチャも高速化されるため、これを既定の方式にする予定です。
 
-## About the Performance
+## 性能について { #about-the-performance }
 
-See the following links for examples:
+例については次のリンクを参照してください。
 
 * [20059#issuecomment-3160858458](https://github.com/vllm-project/vllm/pull/20059#issuecomment-3160858458)
 * [20059#issuecomment-3188735226](https://github.com/vllm-project/vllm/pull/20059#issuecomment-3188735226)

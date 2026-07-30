@@ -1,74 +1,71 @@
-# LoRA Resolver Plugins
+# LoRA リゾルバプラグイン { #lora-resolver-plugins }
 
-This directory contains vLLM's LoRA resolver plugins built on the `LoRAResolver` framework.
-They automatically discover and load LoRA adapters from a specified local storage path, eliminating the need for manual configuration or server restarts.
+このディレクトリには、`LoRAResolver` フレームワークをもとに構築された vLLM の LoRA リゾルバプラグインが含まれています。これらのプラグインは、指定されたローカルストレージのパスから LoRA アダプターを自動的に検出して読み込むため、手動での設定やサーバーの再起動が不要になります。
 
-## Overview
+## 概要 { #overview }
 
-LoRA Resolver Plugins provide a flexible way to dynamically load LoRA adapters at runtime. When vLLM
-receives a request for a LoRA adapter that hasn't been loaded yet, the resolver plugins will attempt
-to locate and load the adapter from their configured storage locations. This enables:
+LoRA リゾルバプラグインは、実行時に LoRA アダプターを動的に読み込むための柔軟な手段を提供します。まだ読み込まれていない LoRA アダプターへのリクエストを vLLM が受け取ると、リゾルバプラグインが設定済みのストレージからそのアダプターを探し出して読み込もうとします。これにより次のことが可能になります。
 
-- **Dynamic LoRA Loading**: Load adapters on-demand without server restarts
-- **Multiple Storage Backends**: Support for filesystem, S3, and custom backends. The built-in `lora_filesystem_resolver` requires a local storage path, while the built-in `hf_hub_resolver` will pull LoRA adapters from Huggingface Hub and proceed in an identical manner. In general, custom resolvers can be implemented to fetch from any source.
-- **Automatic Discovery**: Seamless integration with existing LoRA workflows
-- **Scalable Deployment**: Centralized adapter management across multiple vLLM instances
+- **LoRA の動的読み込み**: サーバーを再起動せずにオンデマンドでアダプターを読み込む
+- **複数のストレージバックエンド**: ファイルシステム、S3、独自バックエンドに対応。組み込みの `lora_filesystem_resolver` はローカルストレージのパスを必要とし、組み込みの `hf_hub_resolver` は Huggingface Hub から LoRA アダプターを取得して同様に処理します。一般に、任意のソースから取得するカスタムリゾルバを実装できます。
+- **自動検出**: 既存の LoRA ワークフローとのシームレスな統合
+- **スケーラブルなデプロイ**: 複数の vLLM インスタンスにまたがるアダプターの集中管理
 
-## Prerequisites
+## 前提条件 { #prerequisites }
 
-Before using LoRA Resolver Plugins, ensure the following environment variables are configured:
+LoRA リゾルバプラグインを使う前に、次の環境変数が設定されていることを確認してください。
 
-### Required Environment Variables
+### 必須の環境変数 { #required-environment-variables }
 
-1. **`VLLM_ALLOW_RUNTIME_LORA_UPDATING`**: Must be set to `true` or `1` to enable dynamic LoRA loading
+1. **`VLLM_ALLOW_RUNTIME_LORA_UPDATING`**: LoRA の動的読み込みを有効にするため、`true` または `1` に設定する必要があります
    ```bash
    export VLLM_ALLOW_RUNTIME_LORA_UPDATING=true
    ```
 
-2. **`VLLM_PLUGINS`**: Must include the desired resolver plugins (comma-separated list)
+2. **`VLLM_PLUGINS`**: 使用したいリゾルバプラグインを含める必要があります（カンマ区切りのリスト）
    ```bash
    export VLLM_PLUGINS=lora_filesystem_resolver
    ```
 
-3. **`VLLM_LORA_RESOLVER_CACHE_DIR`**: Must be set to a valid directory path for filesystem resolver
+3. **`VLLM_LORA_RESOLVER_CACHE_DIR`**: ファイルシステムリゾルバ用に、有効なディレクトリパスを設定する必要があります
    ```bash
    export VLLM_LORA_RESOLVER_CACHE_DIR=/path/to/lora/adapters
    ```
 
-### Optional Environment Variables
+### 任意の環境変数 { #optional-environment-variables }
 
-- **`VLLM_PLUGINS`**: If not set, all available plugins will be loaded. If set to empty string, no plugins will be loaded.
+- **`VLLM_PLUGINS`**: 設定されていない場合、利用可能なすべてのプラグインが読み込まれます。空文字列を設定すると、プラグインは一切読み込まれません。
 
-## Available Resolvers
+## 利用可能なリゾルバ { #available-resolvers }
 
-### lora_filesystem_resolver
+### lora_filesystem_resolver { #lora_filesystem_resolver }
 
-The filesystem resolver is installed with vLLM by default and enables loading LoRA adapters from a local directory structure.
+ファイルシステムリゾルバは既定で vLLM と一緒にインストールされ、ローカルのディレクトリ構造から LoRA アダプターを読み込めるようにします。
 
-#### Setup Steps
+#### セットアップ手順 { #setup-steps }
 
-1. **Create the LoRA adapter storage directory**:
+1. **LoRA アダプターの保存ディレクトリを作成する**:
    ```bash
    mkdir -p /path/to/lora/adapters
    ```
 
-2. **Set environment variables**:
+2. **環境変数を設定する**:
    ```bash
    export VLLM_ALLOW_RUNTIME_LORA_UPDATING=true
    export VLLM_PLUGINS=lora_filesystem_resolver
    export VLLM_LORA_RESOLVER_CACHE_DIR=/path/to/lora/adapters
    ```
 
-3. **Start vLLM server**:
-   Your base model can be `meta-llama/Llama-2-7b-hf`. Please make sure you set up the Hugging Face token in your env var `export HF_TOKEN=xxx235`.
+3. **vLLM サーバーを起動する**:
+   ベースモデルには `meta-llama/Llama-2-7b-hf` などを使えます。環境変数に Hugging Face のトークンを設定しておいてください（`export HF_TOKEN=xxx235`）。
    ```bash
    vllm serve your-base-model \
        --enable-lora
    ```
 
-#### Directory Structure Requirements
+#### ディレクトリ構造の要件 { #directory-structure-requirements }
 
-The filesystem resolver expects LoRA adapters to be organized in the following structure:
+ファイルシステムリゾルバは、LoRA アダプターが次の構造で配置されていることを前提とします。
 
 ```text
 /path/to/lora/adapters/
@@ -83,9 +80,9 @@ The filesystem resolver expects LoRA adapters to be organized in the following s
 └── ...
 ```
 
-Each adapter directory must contain:
+各アダプターのディレクトリには、次のものが必要です。
 
-- **`adapter_config.json`**: Required configuration file with the following structure:
+- **`adapter_config.json`**: 次の構造を持つ必須の設定ファイル:
   ```json
   {
     "peft_type": "LORA",
@@ -100,23 +97,23 @@ Each adapter directory must contain:
   }
   ```
 
-- **`adapter_model.bin`**: The LoRA adapter weights file
+- **`adapter_model.bin`**: LoRA アダプターの重みファイル
 
-#### Usage Example
+#### 使用例 { #usage-example }
 
-1. **Prepare your LoRA adapter**:
+1. **LoRA アダプターを用意する**:
    ```bash
    # Assuming you have a LoRA adapter in /tmp/my_lora_adapter
    cp -r /tmp/my_lora_adapter /path/to/lora/adapters/my_sql_adapter
    ```
 
-2. **Verify the directory structure**:
+2. **ディレクトリ構造を確認する**:
    ```bash
    ls -la /path/to/lora/adapters/my_sql_adapter/
    # Should show: adapter_config.json, adapter_model.bin, etc.
    ```
 
-3. **Make a request using the adapter**:
+3. **アダプターを使ってリクエストを送る**:
    ```bash
    curl http://localhost:8000/v1/completions \
        -H "Content-Type: application/json" \
@@ -128,34 +125,34 @@ Each adapter directory must contain:
        }'
    ```
 
-#### How It Works
+#### 動作の仕組み { #how-it-works }
 
-1. When vLLM receives a request for a LoRA adapter named `my_sql_adapter`
-2. The filesystem resolver checks if `/path/to/lora/adapters/my_sql_adapter/` exists
-3. If found, it validates the `adapter_config.json` file
-4. If the configuration matches the base model and is valid, the adapter is loaded
-5. The request is processed normally with the newly loaded adapter
-6. The adapter remains available for future requests
+1. vLLM が `my_sql_adapter` という名前の LoRA アダプターへのリクエストを受け取る
+2. ファイルシステムリゾルバが `/path/to/lora/adapters/my_sql_adapter/` の存在を確認する
+3. 見つかった場合、`adapter_config.json` を検証する
+4. 設定がベースモデルと一致し、内容が妥当であれば、アダプターが読み込まれる
+5. 新しく読み込まれたアダプターを使って、リクエストが通常どおり処理される
+6. 以降のリクエストでも、そのアダプターは引き続き利用できる
 
-## Advanced Configuration
+## 高度な設定 { #advanced-configuration }
 
-### Multiple Resolvers
+### 複数のリゾルバ { #multiple-resolvers }
 
-You can configure multiple resolver plugins to load adapters from different sources:
+異なるソースからアダプターを読み込むために、複数のリゾルバプラグインを設定できます。
 
-'lora_s3_resolver' is an example of a custom resolver you would need to implement
+`lora_s3_resolver` は、自分で実装する必要があるカスタムリゾルバの例です。
 
 ```bash
 export VLLM_PLUGINS=lora_filesystem_resolver,lora_s3_resolver
 ```
 
-All listed resolvers are enabled; at request time, vLLM tries them in order until one succeeds.
+列挙したリゾルバはすべて有効になります。リクエスト時、vLLM は成功するまで順番に試します。
 
-### Custom Resolver Implementation
+### カスタムリゾルバの実装 { #custom-resolver-implementation }
 
-To implement your own resolver plugin:
+独自のリゾルバプラグインを実装するには次のようにします。
 
-1. **Create a new resolver class**:
+1. **新しいリゾルバクラスを作成する**:
    ```python
    from vllm.lora.resolver import LoRAResolver, LoRAResolverRegistry
    from vllm.lora.request import LoRARequest
@@ -166,49 +163,49 @@ To implement your own resolver plugin:
            pass
    ```
 
-2. **Register the resolver**:
+2. **リゾルバを登録する**:
    ```python
    def register_custom_resolver():
        resolver = CustomResolver()
        LoRAResolverRegistry.register_resolver("Custom Resolver", resolver)
    ```
 
-## Troubleshooting
+## トラブルシューティング { #troubleshooting }
 
-### Common Issues
+### よくある問題 { #common-issues }
 
 1. **"VLLM_LORA_RESOLVER_CACHE_DIR must be set to a valid directory"**
-   - Ensure the directory exists and is accessible
-   - Check file permissions on the directory
+   - ディレクトリが存在し、アクセス可能であることを確認してください
+   - ディレクトリのファイル権限を確認してください
 
 2. **"LoRA adapter not found"**
-   - Verify the adapter directory name matches the requested model name
-   - Check that `adapter_config.json` exists and is valid JSON
-   - Ensure `adapter_model.bin` exists in the directory
+   - アダプターのディレクトリ名が、リクエストしたモデル名と一致しているか確認してください
+   - `adapter_config.json` が存在し、妥当な JSON であることを確認してください
+   - ディレクトリに `adapter_model.bin` が存在することを確認してください
 
 3. **"Invalid adapter configuration"**
-   - Verify `peft_type` is set to "LORA"
-   - Check that `base_model_name_or_path` matches your base model
-   - Ensure `target_modules` is properly configured
+   - `peft_type` が "LORA" になっているか確認してください
+   - `base_model_name_or_path` がベースモデルと一致しているか確認してください
+   - `target_modules` が正しく設定されているか確認してください
 
 4. **"LoRA rank exceeds maximum"**
-   - Check that `r` value in `adapter_config.json` doesn't exceed `max_lora_rank` setting
+   - `adapter_config.json` の `r` の値が `max_lora_rank` の設定を超えていないか確認してください
 
-### Debugging Tips
+### デバッグのヒント { #debugging-tips }
 
-1. **Enable debug logging**:
+1. **デバッグログを有効にする**:
    ```bash
    export VLLM_LOGGING_LEVEL=DEBUG
    ```
 
-2. **Verify environment variables**:
+2. **環境変数を確認する**:
    ```bash
    echo $VLLM_ALLOW_RUNTIME_LORA_UPDATING
    echo $VLLM_PLUGINS
    echo $VLLM_LORA_RESOLVER_CACHE_DIR
    ```
 
-3. **Test adapter configuration**:
+3. **アダプターの設定をテストする**:
    ```bash
    python -c "
    import json

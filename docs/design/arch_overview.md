@@ -1,23 +1,20 @@
-# Architecture Overview
+# アーキテクチャ概要 { #architecture-overview }
 
-This document provides an overview of the vLLM architecture.
+このドキュメントでは、vLLM のアーキテクチャの概要を説明します。
 
 [TOC]
 
-## Entrypoints
+## エントリポイント { #entrypoints }
 
-vLLM provides a number of entrypoints for interacting with the system. The
-following diagram shows the relationship between them.
+vLLM は、システムとやり取りするためのエントリポイントをいくつか提供しています。次の図はそれらの関係を示しています。
 
 ![Entrypoints Diagram](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/arch_overview/entrypoints.excalidraw.png)
 
-### LLM Class
+### LLM クラス { #llm-class }
 
-The LLM class provides the primary Python interface for doing offline inference,
-which is interacting with a model without using a separate model inference
-server.
+LLM クラスは、オフライン推論、つまり独立したモデル推論サーバーを使わずにモデルとやり取りするための主要な Python インターフェースを提供します。
 
-Here is a sample of `LLM` class usage:
+`LLM` クラスの使用例は次のとおりです。
 
 ??? code
 
@@ -47,23 +44,21 @@ Here is a sample of `LLM` class usage:
         print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
     ```
 
-More API details can be found in the [Offline Inference](https://docs.vllm.ai/en/v0.26.0/api/#offline-inference) section of the API docs.
+API の詳細は、API ドキュメントの [Offline Inference](https://docs.vllm.ai/en/v0.26.0/api/#offline-inference) のセクションを参照してください。
 
-The code for the `LLM` class can be found in [vllm/entrypoints/llm.py](../../vllm/entrypoints/llm.py).
+`LLM` クラスのコードは [vllm/entrypoints/llm.py](../../vllm/entrypoints/llm.py) にあります。
 
-### Online Serving
+### オンラインサービング { #online-serving }
 
-The second primary interface to vLLM is via its online server.
-This server can be started using the `vllm serve` command.
+vLLM のもう 1 つの主要なインターフェースは、オンラインサーバーです。このサーバーは `vllm serve` コマンドで起動できます。
 
 ```bash
 vllm serve <model>
 ```
 
-The code for the `vllm` CLI can be found in [vllm/entrypoints/cli/main.py](../../vllm/entrypoints/cli/main.py).
+`vllm` の CLI のコードは [vllm/entrypoints/cli/main.py](../../vllm/entrypoints/cli/main.py) にあります。
 
-Sometimes you may see the API server entrypoint used directly instead of via the
-`vllm` CLI command. For example:
+`vllm` の CLI コマンドを介さず、API サーバーのエントリポイントが直接使われているのを見かけることもあります。例:
 
 ```bash
 python -m vllm.entrypoints.openai.api_server --model <model>
@@ -71,181 +66,135 @@ python -m vllm.entrypoints.openai.api_server --model <model>
 
 !!! warning
 
-    `python -m vllm.entrypoints.openai.api_server` is deprecated
-    and may become unsupported in a future release.
+    `python -m vllm.entrypoints.openai.api_server` は非推奨であり、将来のリリースでサポートされなくなる可能性があります。
 
-That code can be found in [vllm/entrypoints/openai/api_server.py](../../vllm/entrypoints/openai/api_server.py).
+このコードは [vllm/entrypoints/openai/api_server.py](../../vllm/entrypoints/openai/api_server.py) にあります。
 
-More details on the API server can be found in the [Online Serving](../serving/online_serving/README.md) document.
+API サーバーの詳細は[オンラインサービング](../serving/online_serving/README.md)のドキュメントを参照してください。
 
-## V1 Process Architecture
+## V1 のプロセス構成 { #v1-process-architecture }
 
-vLLM V1 uses a multi-process architecture to separate concerns and maximize throughput. Understanding this architecture is important for properly sizing CPU resources in your deployment. The key processes are:
+vLLM V1 は、関心事を分離しスループットを最大化するためにマルチプロセス構成を採用しています。この構成を理解しておくことは、デプロイで CPU リソースを適切にサイジングするうえで重要です。主なプロセスは次のとおりです。
 
-### API Server Process
+### API サーバープロセス { #api-server-process }
 
-The API server process handles HTTP requests (e.g., the OpenAI-compatible API), performs input processing (tokenization, multi-modal data loading), and streams results back to clients. It communicates with the engine core process(es) via ZMQ sockets.
+API サーバープロセスは HTTP リクエスト（OpenAI 互換 API など）を処理し、入力の前処理（トークン化、マルチモーダルデータの読み込み）を行い、結果をクライアントへストリーミングします。エンジンコアのプロセスとは ZMQ ソケットを通じて通信します。
 
-By default, there is **1 API server process**, but when data parallelism is used, the API server count automatically scales to match the data parallel size. This can also be manually configured with the `--api-server-count` flag. Each API server connects to **all** engine cores via ZMQ in a many-to-many topology, enabling any API server to route requests to any engine core. Each API server process uses multiple CPU threads for media loading (controlled by `VLLM_MEDIA_LOADING_THREAD_COUNT`, default 8).
+既定では **API サーバープロセスは 1 つ**ですが、データ並列を使う場合は API サーバー数がデータ並列サイズに合わせて自動的にスケールします。`--api-server-count` フラグで手動設定することもできます。各 API サーバーは多対多のトポロジで ZMQ を介して**すべての**エンジンコアに接続するため、どの API サーバーからでもどのエンジンコアへリクエストをルーティングできます。各 API サーバープロセスは、メディアの読み込みに複数の CPU スレッドを使います（`VLLM_MEDIA_LOADING_THREAD_COUNT` で制御、既定 8）。
 
-The code can be found in [vllm/entrypoints/openai/api_server.py](../../vllm/entrypoints/openai/api_server.py) and [vllm/v1/utils.py](../../vllm/v1/utils.py).
+コードは [vllm/entrypoints/openai/api_server.py](../../vllm/entrypoints/openai/api_server.py) と [vllm/v1/utils.py](../../vllm/v1/utils.py) にあります。
 
-### Engine Core Process
+### エンジンコアプロセス { #engine-core-process }
 
-The engine core process runs the scheduler, manages KV cache, and coordinates model execution across GPU workers. It runs a busy loop that continuously schedules requests and dispatches work to the GPU workers.
+エンジンコアプロセスはスケジューラを実行し、KV キャッシュを管理し、GPU ワーカー間のモデル実行を調整します。リクエストを継続的にスケジュールし、GPU ワーカーへ処理を割り当てるビジーループを回します。
 
-There is **1 engine core process per data parallel rank**. For example, with `--data-parallel-size 4`, there are 4 engine core processes.
+**データ並列のランクごとにエンジンコアプロセスが 1 つ**あります。たとえば `--data-parallel-size 4` の場合、エンジンコアプロセスは 4 つになります。
 
-The code can be found in [vllm/v1/engine/core.py](../../vllm/v1/engine/core.py) and [vllm/v1/engine/utils.py](../../vllm/v1/engine/utils.py).
+コードは [vllm/v1/engine/core.py](../../vllm/v1/engine/core.py) と [vllm/v1/engine/utils.py](../../vllm/v1/engine/utils.py) にあります。
 
-### GPU Worker Processes
+### GPU ワーカープロセス { #gpu-worker-processes }
 
-Each GPU is managed by a dedicated worker process. The worker process loads model weights, executes forward passes, and manages GPU memory. Workers communicate with the engine core process that owns them.
+各 GPU は専用のワーカープロセスによって管理されます。ワーカープロセスはモデルの重みを読み込み、forward パスを実行し、GPU メモリを管理します。ワーカーは、自分を所有するエンジンコアのプロセスと通信します。
 
-There is **1 worker process per GPU**. The total number of GPU worker processes equals `tensor_parallel_size x pipeline_parallel_size` per engine core.
+**GPU ごとにワーカープロセスが 1 つ**あります。GPU ワーカープロセスの総数は、エンジンコアごとに `tensor_parallel_size × pipeline_parallel_size` となります。
 
-The code can be found in [vllm/v1/executor/multiproc_executor.py](../../vllm/v1/executor/multiproc_executor.py) and [vllm/v1/worker/gpu_worker.py](../../vllm/v1/worker/gpu_worker.py).
+コードは [vllm/v1/executor/multiproc_executor.py](../../vllm/v1/executor/multiproc_executor.py) と [vllm/v1/worker/gpu_worker.py](../../vllm/v1/worker/gpu_worker.py) にあります。
 
-### DP Coordinator Process (conditional)
+### DP コーディネータープロセス（条件付き） { #dp-coordinator-process-conditional }
 
-When using data parallelism (`--data-parallel-size > 1`), an additional coordinator process manages load balancing across DP ranks and coordinates synchronized forward passes for MoE models.
+データ並列（`--data-parallel-size > 1`）を使う場合、DP ランク間の負荷分散を管理し、MoE モデルの forward パスの同期を調整する追加のコーディネータープロセスが起動します。
 
-There is **1 DP coordinator process** (only when data parallelism is enabled).
+**DP コーディネータープロセスは 1 つ**です（データ並列が有効な場合のみ）。
 
-The code can be found in [vllm/v1/engine/coordinator.py](../../vllm/v1/engine/coordinator.py).
+コードは [vllm/v1/engine/coordinator.py](../../vllm/v1/engine/coordinator.py) にあります。
 
-### Process Count Summary
+### プロセス数のまとめ { #process-count-summary }
 
-For a deployment with `N` GPUs, `TP` tensor parallel size, `DP` data parallel size, and `A` API server count:
+GPU 数が `N`、テンソル並列サイズが `TP`、データ並列サイズが `DP`、API サーバー数が `A` のデプロイの場合は次のようになります。
 
-| Process Type | Count | Notes |
+| プロセスの種類 | 個数 | 備考 |
 | - | - | - |
-| API Server | `A` (default `DP`) | Handles HTTP requests and input processing |
-| Engine Core | `DP` (default 1) | Scheduler and KV cache management |
-| GPU Worker | `N` (= `DP x PP x TP`) | One per GPU, executes model forward passes |
-| DP Coordinator | 1 if `DP > 1`, else 0 | Load balancing across DP ranks |
-| **Total** | **`A + DP + N` (+ 1 if DP > 1)** | |
+| API サーバー | `A`（既定は `DP`） | HTTP リクエストと入力の前処理を担当 |
+| エンジンコア | `DP`（既定は 1） | スケジューラと KV キャッシュの管理 |
+| GPU ワーカー | `N`（= `DP × PP × TP`） | GPU ごとに 1 つ。モデルの forward パスを実行 |
+| DP コーディネーター | `DP > 1` なら 1、そうでなければ 0 | DP ランク間の負荷分散 |
+| **合計** | **`A + DP + N`（DP > 1 の場合は +1）** | |
 
-For example, a typical single-node deployment with 4 GPUs (`vllm serve -tp=4`) has:
+たとえば、GPU 4 台の一般的な単一ノードのデプロイ（`vllm serve -tp=4`）では次のようになります。
 
-- 1 API server + 1 engine core + 4 GPU workers = **6 processes**
+- API サーバー 1 + エンジンコア 1 + GPU ワーカー 4 = **6 プロセス**
 
 <figure markdown="1">
 ![V1 Process Architecture - TP=4](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/arch_overview/v1_process_architecture_tp4.png)
 </figure>
 
-A data parallel deployment with 8 GPUs (`vllm serve -tp=2 -dp=4`) has:
+GPU 8 台のデータ並列デプロイ（`vllm serve -tp=2 -dp=4`）では次のようになります。
 
-- 4 API servers + 4 engine cores + 8 GPU workers + 1 DP coordinator = **17 processes**
+- API サーバー 4 + エンジンコア 4 + GPU ワーカー 8 + DP コーディネーター 1 = **17 プロセス**
 
 <figure markdown="1">
 ![V1 Process Architecture - TP=2, DP=4](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/arch_overview/v1_process_architecture_tp2_dp4.png)
 </figure>
 
-For CPU resource sizing recommendations, see
-[CPU Resources for GPU Deployments](../configuration/optimization.md#cpu-resources-for-gpu-deployments).
+CPU リソースのサイジングの推奨事項は、[GPU デプロイにおける CPU リソース](../configuration/optimization.md#cpu-resources-for-gpu-deployments)を参照してください。
 
-## LLM Engine
+## LLM エンジン { #llm-engine }
 
-The `LLMEngine` and `AsyncLLMEngine` classes are central to the functioning of
-the vLLM system, handling model inference and asynchronous request processing.
+`LLMEngine` と `AsyncLLMEngine` のクラスは vLLM システムの動作の中心にあり、モデルの推論と非同期のリクエスト処理を担当します。
 
 ![LLMEngine Diagram](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/arch_overview/llm_engine.excalidraw.png)
 
-### LLMEngine
+### LLMEngine { #llmengine }
 
-The `LLMEngine` class is the core component of the vLLM engine. It is
-responsible for receiving requests from clients and generating outputs from the
-model. The `LLMEngine` includes input processing, model execution (possibly
-distributed across multiple hosts and/or GPUs), scheduling, and output
-processing.
+`LLMEngine` クラスは vLLM エンジンの中核となるコンポーネントです。クライアントからリクエストを受け取り、モデルから出力を生成する役割を担います。`LLMEngine` には、入力の前処理、モデルの実行（複数ホストや複数 GPU にまたがる分散実行を含む）、スケジューリング、出力の後処理が含まれます。
 
-- **Input Processing**: Handles tokenization of input text using the specified
-  tokenizer.
-- **Scheduling**: Chooses which requests are processed in each step.
-- **Model Execution**: Manages the execution of the language model, including
-  distributed execution across multiple GPUs.
-- **Output Processing**: Processes the outputs generated by the model, decoding the
-  token IDs from a language model into human-readable text.
+- **入力の前処理**: 指定されたトークナイザーを使って入力テキストをトークン化します。
+- **スケジューリング**: 各ステップでどのリクエストを処理するかを選びます。
+- **モデルの実行**: 複数 GPU にまたがる分散実行を含め、言語モデルの実行を管理します。
+- **出力の後処理**: モデルが生成した出力を処理し、言語モデルからのトークン ID を人が読めるテキストにデコードします。
 
-The code for `LLMEngine` can be found in [vllm/engine/llm_engine.py](../../vllm/engine/llm_engine.py).
+`LLMEngine` のコードは [vllm/engine/llm_engine.py](../../vllm/engine/llm_engine.py) にあります。
 
-### AsyncLLMEngine
+### AsyncLLMEngine { #asyncllmengine }
 
-The `AsyncLLMEngine` class is an asynchronous wrapper for the `LLMEngine` class.
-It uses `asyncio` to create a background loop that continuously processes
-incoming requests. The `AsyncLLMEngine` is designed for online serving, where it
-can handle multiple concurrent requests and stream outputs to clients.
+`AsyncLLMEngine` クラスは `LLMEngine` クラスの非同期ラッパーです。`asyncio` を使ってバックグラウンドループを作り、届いたリクエストを継続的に処理します。`AsyncLLMEngine` はオンラインサービング向けに設計されており、複数の同時リクエストを処理してクライアントへ出力をストリーミングできます。
 
-The OpenAI-compatible API server uses the `AsyncLLMEngine`. There is also a demo
-API server that serves as a simpler example in [examples/applications/api_server/server.py](../../examples/applications/api_server/server.py).
+OpenAI 互換 API サーバーは `AsyncLLMEngine` を使います。より簡単な例としてのデモ用 API サーバーも [examples/applications/api_server/server.py](../../examples/applications/api_server/server.py) にあります。
 
-The code for `AsyncLLMEngine` can be found in [vllm/engine/async_llm_engine.py](../../vllm/engine/async_llm_engine.py).
+`AsyncLLMEngine` のコードは [vllm/engine/async_llm_engine.py](../../vllm/engine/async_llm_engine.py) にあります。
 
-## Worker
+## ワーカー { #worker }
 
-A worker is a process that runs the model inference. vLLM follows the common
-practice of using one process to control one accelerator device, such as GPUs.
-For example, if we use tensor parallelism of size 2 and pipeline parallelism of
-size 2, we will have 4 workers in total. Workers are identified by their
-`rank` and `local_rank`. `rank` is used for global orchestration, while
-`local_rank` is mainly used for assigning the accelerator device and accessing
-local resources such as the file system and shared memory.
+ワーカーはモデル推論を実行するプロセスです。vLLM は、GPU などのアクセラレータデバイス 1 台を 1 プロセスで制御するという一般的な慣習に従っています。たとえば、テンソル並列サイズ 2 とパイプライン並列サイズ 2 を使う場合、ワーカーは合計 4 つになります。ワーカーは `rank` と `local_rank` で識別されます。`rank` は全体のオーケストレーションに使われ、`local_rank` は主にアクセラレータデバイスの割り当てや、ファイルシステムや共有メモリといったローカルリソースへのアクセスに使われます。
 
-## Model Runner
+## モデルランナー { #model-runner }
 
-Every worker has one model runner object, responsible for loading and running
-the model. Much of the model execution logic resides here, such as preparing
-input tensors and capturing cudagraphs.
+各ワーカーはモデルランナーのオブジェクトを 1 つ持ち、モデルの読み込みと実行を担当します。入力テンソルの準備や cudagraph のキャプチャなど、モデル実行のロジックの多くはここにあります。
 
-## Model
+## モデル { #model }
 
-Every model runner object has one model object, which is the actual
-`torch.nn.Module` instance. See [huggingface_integration](huggingface_integration.md) for how various
-configurations affect the class we ultimately get.
+各モデルランナーのオブジェクトはモデルオブジェクトを 1 つ持ちます。これが実際の `torch.nn.Module` のインスタンスです。さまざまな設定が最終的に得られるクラスにどう影響するかは、[Hugging Face との統合](huggingface_integration.md)を参照してください。
 
-## Class Hierarchy
+## クラス階層 { #class-hierarchy }
 
-The following figure shows the class hierarchy of vLLM:
+次の図は vLLM のクラス階層を示しています。
 
 ![Class Hierarchy](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/design/hierarchy.png)
 
-There are several important design choices behind this class hierarchy:
+このクラス階層の背後には、いくつかの重要な設計判断があります。
 
-1\. **Extensibility**: All classes in the hierarchy accept a configuration object
-containing all the necessary information. The [VllmConfig](https://github.com/vllm-project/vllm/blob/d1c6799b8870e513bf4f2305cbf6cda9fc3d773b/vllm/config.py#L2036)
-class is the main configuration object that is passed around. The class
-hierarchy is quite deep, and every class needs to read the configuration it is
-interested in. By encapsulating all configurations in one object, we can easily
-pass the configuration object around and access the configuration we need.
-Suppose we want to add a new feature (this is often the case given how fast the
-field of LLM inference is evolving) that only touches the model runner. We will
-have to add a new configuration option in the `VllmConfig` class. Since we pass
-the whole config object around, we only need to add the configuration option to
-the `VllmConfig` class, and the model runner can access it directly. We don't
-need to change the constructor of the engine, worker, or model class to pass the
-new configuration option.
+1\. **拡張性**: 階層内のすべてのクラスは、必要な情報をすべて含む設定オブジェクトを受け取ります。受け渡される主要な設定オブジェクトは [VllmConfig](https://github.com/vllm-project/vllm/blob/d1c6799b8870e513bf4f2305cbf6cda9fc3d773b/vllm/config.py#L2036) クラスです。クラス階層はかなり深く、各クラスは自分が必要とする設定を読み取る必要があります。すべての設定を 1 つのオブジェクトにまとめることで、設定オブジェクトを簡単に受け渡し、必要な設定にアクセスできます。たとえば、モデルランナーだけに関わる新機能を追加したいとします（LLM 推論の分野の進化の速さを考えると、これはよくあることです）。その場合、`VllmConfig` クラスに新しい設定オプションを追加する必要があります。設定オブジェクト全体を受け渡しているため、`VllmConfig` クラスに設定オプションを追加するだけで、モデルランナーから直接アクセスできます。新しい設定オプションを渡すために、エンジン・ワーカー・モデルの各クラスのコンストラクタを変更する必要はありません。
 
-2\. **Uniformity**: The model runner needs a unified interface to create and
-initialize the model. vLLM supports more than 50 types of popular open-source
-models. Each model has its own initialization logic. If the constructor
-signature varies with models, the model runner does not know how to call the
-constructor accordingly, without complicated and error-prone inspection logic.
-By making the constructor of the model class uniform, the model runner can
-easily create and initialize the model without knowing the specific model type.
-This is also useful for composing models. Vision-language models often consist
-of a vision model and a language model. By making the constructor uniform, we
-can easily create a vision model and a language model and compose them into a
-vision-language model.
+2\. **統一性**: モデルランナーには、モデルを生成・初期化するための統一されたインターフェースが必要です。vLLM は 50 種類以上の人気のあるオープンソースモデルをサポートしており、各モデルは独自の初期化ロジックを持ちます。コンストラクタのシグネチャがモデルごとに異なると、複雑で誤りやすい検査ロジックなしには、モデルランナーはコンストラクタを適切に呼び出せません。モデルクラスのコンストラクタを統一することで、モデルランナーは具体的なモデルの種類を知らなくても、簡単にモデルを生成・初期化できます。これはモデルを組み合わせる際にも有用です。vision-language モデルは、多くの場合ビジョンモデルと言語モデルから構成されます。コンストラクタを統一しておけば、ビジョンモデルと言語モデルを簡単に生成し、それらを組み合わせて vision-language モデルにできます。
 
 !!! note
-    To support this change, all vLLM models' signatures have been updated to:
+    この変更に対応するため、vLLM のすべてのモデルのシグネチャは次のように更新されました。
 
     ```python
     def __init__(self, *, vllm_config: VllmConfig, prefix: str = ""):
     ```
 
-    To avoid accidentally passing incorrect arguments, the constructor is now keyword-only. This ensures that the constructor will raise an error if old configurations are passed. vLLM developers have already made this change for all models within vLLM. For out-of-tree registered models, developers need to update their models, for example by adding shim code to adapt the old constructor signature to the new one:
+    誤った引数を渡してしまうのを防ぐため、コンストラクタはキーワード専用になりました。これにより、古い設定が渡された場合はコンストラクタがエラーを送出します。vLLM の開発者は vLLM 内のすべてのモデルについてこの変更をすでに適用済みです。ツリー外で登録されたモデルについては、開発者が自分のモデルを更新する必要があります。たとえば、古いコンストラクタのシグネチャを新しいものに適合させるシムのコードを追加します。
 
     ??? code
 
@@ -277,38 +226,10 @@ vision-language model.
             MyModel = MyOldModel
         ```
 
-    This way, the model can work with both old and new versions of vLLM.
+    このようにすることで、モデルは vLLM の新旧両方のバージョンで動作します。
 
-3\. **Sharding and Quantization at Initialization**: Certain features require
-changing the model weights. For example, tensor parallelism needs to shard the
-model weights, and quantization needs to quantize the model weights. There are
-two possible ways to implement this feature. One way is to change the model
-weights after the model is initialized. The other way is to change the model
-weights during the model initialization. vLLM chooses the latter. The first
-approach is not scalable to large models. Suppose we want to run a 405B model
-(with roughly 810GB weights) with 16 H100 80GB GPUs. Ideally, every GPU should
-only load 50GB weights. If we change the model weights after the model is
-initialized, we need to load the full 810GB weights to every GPU and then shard
-the weights, leading to a huge memory overhead. Instead, if we shard the weights
-during the model initialization, every layer will only create a shard of the
-weights it needs, leading to a much smaller memory overhead. The same idea
-applies to quantization. Note that we also add an additional argument `prefix`
-to the model's constructor so that the model can initialize itself differently
-based on the prefix. This is useful for non-uniform quantization, where
-different parts of the model are quantized differently. The `prefix` is
-usually an empty string for the top-level model and a string like `"vision"`
-or `"language"` for the sub-models. In general, it matches the name of the
-module's state dict in the checkpoint file.
+3\. **初期化時のシャーディングと量子化**: 一部の機能はモデルの重みを変更する必要があります。たとえば、テンソル並列はモデルの重みをシャーディングする必要があり、量子化はモデルの重みを量子化する必要があります。この機能の実装方法は 2 つ考えられます。1 つはモデルの初期化後に重みを変更する方法、もう 1 つはモデルの初期化中に重みを変更する方法です。vLLM は後者を選びました。前者のアプローチは大きなモデルにスケールしません。たとえば 405B のモデル（重みは約 810GB）を 16 台の H100 80GB GPU で動かしたいとします。理想的には、各 GPU は 50GB 分の重みだけを読み込むべきです。モデルの初期化後に重みを変更する場合、810GB の重み全体を各 GPU に読み込んでからシャーディングすることになり、膨大なメモリのオーバーヘッドが生じます。一方、モデルの初期化中にシャーディングすれば、各層は必要な分のシャードだけを作るため、メモリのオーバーヘッドははるかに小さくなります。量子化にも同じ考え方が当てはまります。なお、モデルが prefix に応じて異なる初期化を行えるよう、モデルのコンストラクタには追加の引数 `prefix` も設けています。これは、モデルの部分ごとに異なる量子化を行う不均一な量子化で有用です。`prefix` は通常、最上位のモデルでは空文字列で、サブモデルでは `"vision"` や `"language"` のような文字列になります。一般に、これはチェックポイントファイル内のモジュールの state dict の名前と一致します。
 
-One disadvantage of this design is that it is hard to write unit tests for
-individual components in vLLM because every component needs to be initialized by
-a complete config object. We solve this problem by providing a default
-initialization function that creates a default config object with all fields set
-to `None`. If the component we want to test only cares about a few fields in
-the config object, we can create a default config object and set the fields we
-care about. This way, we can test the component in isolation. Note that many
-tests in vLLM are end-to-end tests that test the whole system, so this is not a
-big problem.
+この設計の欠点の 1 つは、各コンポーネントが完全な設定オブジェクトで初期化される必要があるため、vLLM の個々のコンポーネントに対するユニットテストを書きにくいことです。この問題には、すべてのフィールドを `None` に設定した既定の設定オブジェクトを作る初期化関数を提供することで対処しています。テストしたいコンポーネントが設定オブジェクトのごく一部のフィールドしか参照しない場合、既定の設定オブジェクトを作り、関心のあるフィールドだけを設定すればよいのです。これにより、コンポーネントを単独でテストできます。なお、vLLM のテストの多くはシステム全体を対象とするエンドツーエンドのテストであるため、これは大きな問題にはなっていません。
 
-In summary, the complete config object `VllmConfig` can be treated as an
-engine-level global state that is shared among all vLLM classes.
+まとめると、完全な設定オブジェクトである `VllmConfig` は、すべての vLLM のクラスで共有されるエンジンレベルのグローバルな状態と見なせます。

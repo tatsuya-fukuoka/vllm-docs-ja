@@ -1,23 +1,23 @@
-# Parameter Sweeps
+# パラメータスイープ { #parameter-sweeps }
 
-`vllm bench sweep` is a suite of commands designed to run benchmarks across multiple configurations and compare them by visualizing the results.
+`vllm bench sweep` は、複数の構成でベンチマークを実行し、結果を可視化して比較するためのコマンド群です。
 
-## Online Benchmark
+## オンラインベンチマーク { #online-benchmark }
 
-### Basic
+### 基本 { #basic }
 
-`vllm bench sweep serve` starts `vllm serve` and iteratively runs `vllm bench serve` for each server configuration.
+`vllm bench sweep serve` は `vllm serve` を起動し、各サーバー構成について `vllm bench serve` を繰り返し実行します。
 
 !!! tip
-    If you only need to run benchmarks for a single server configuration, consider using [GuideLLM](https://github.com/vllm-project/guidellm), an established performance benchmarking framework with live progress updates and automatic report generation. It is also more flexible than `vllm bench serve` in terms of dataset loading, request formatting, and workload patterns.
+    単一のサーバー構成でベンチマークを実行するだけなら、[GuideLLM](https://github.com/vllm-project/guidellm) の利用を検討してください。進捗のライブ更新とレポートの自動生成を備えた実績のある性能ベンチマークフレームワークです。データセットの読み込み、リクエストの整形、ワークロードのパターンの面でも `vllm bench serve` より柔軟です。
 
-Follow these steps to run the script:
+スクリプトを実行するには次の手順に従います。
 
-1. Construct the base command to `vllm serve`, and pass it to the `--serve-cmd` option.
-2. Construct the base command to `vllm bench serve`, and pass it to the `--bench-cmd` option.
-3. (Optional) If you would like to vary the settings of `vllm serve`, create a new JSON file and populate it with the parameter combinations you want to test. Pass the file path to `--serve-params`.
+1. `vllm serve` の基本コマンドを組み立て、`--serve-cmd` オプションに渡します。
+2. `vllm bench serve` の基本コマンドを組み立て、`--bench-cmd` オプションに渡します。
+3. （任意）`vllm serve` の設定を変化させたい場合は、新しい JSON ファイルを作成し、試したいパラメータの組み合わせを記述します。そのファイルパスを `--serve-params` に渡します。
 
-    - Example: Tuning `--max-num-seqs` and `--max-num-batched-tokens`:
+    - 例: `--max-num-seqs` と `--max-num-batched-tokens` を調整する場合:
 
     ```json
     [
@@ -48,9 +48,9 @@ Follow these steps to run the script:
     ]
     ```
 
-4. (Optional) If you would like to vary the settings of `vllm bench serve`, create a new JSON file and populate it with the parameter combinations you want to test. Pass the file path to `--bench-params`.
+4. （任意）`vllm bench serve` の設定を変化させたい場合は、新しい JSON ファイルを作成し、試したいパラメータの組み合わせを記述します。そのファイルパスを `--bench-params` に渡します。
 
-    - Example: Using different input/output lengths for random dataset:
+    - 例: random データセットで異なる入出力長を使う場合:
 
     ```json
     [
@@ -72,9 +72,9 @@ Follow these steps to run the script:
     ]
     ```
 
-5. Set `--output-dir` and optionally `--experiment-name` to control where to save the results.
+5. 結果の保存先を指定するため、`--output-dir` と（必要に応じて）`--experiment-name` を設定します。
 
-Example command:
+コマンドの例:
 
 ```bash
 vllm bench sweep serve \
@@ -86,30 +86,32 @@ vllm bench sweep serve \
     --experiment-name demo
 ```
 
-By default, each parameter combination is benchmarked 3 times to make the results more reliable. You can adjust the number of runs by setting `--num-runs`.
+既定では、結果の信頼性を高めるため、各パラメータの組み合わせを 3 回ベンチマークします。実行回数は `--num-runs` で調整できます。
 
 !!! important
-    If both `--serve-params` and `--bench-params` are passed, the script will iterate over the Cartesian product between them.
-    You can use `--dry-run` to preview the commands to be run.
+    `--serve-params` と `--bench-params` の両方を渡した場合、スクリプトは両者のデカルト積を順に処理します。
+    実行されるコマンドは `--dry-run` でプレビューできます。
 
-    We only start the server once for each `--serve-params`, and keep it running for multiple `--bench-params`.
-    Between each benchmark run, we call all `/reset_*_cache` endpoints to get a clean slate for the next run.
-    In case you are using a custom `--serve-cmd`, you can override the commands used for resetting the state by setting `--after-bench-cmd`.
+    サーバーは `--serve-params` ごとに 1 回だけ起動し、複数の `--bench-params` の間は起動したままにします。
+    各ベンチマーク実行の間には、次の実行をクリーンな状態から始めるためにすべての `/reset_*_cache`
+    エンドポイントを呼び出します。独自の `--serve-cmd` を使っている場合は、`--after-bench-cmd` を設定して
+    状態のリセットに使うコマンドを上書きできます。
 
 !!! note
-    You should set `_benchmark_name` to provide a human-readable name for parameter combinations involving many variables.
-    This becomes mandatory if the file name would otherwise exceed the maximum path length allowed by the filesystem.
+    変数が多いパラメータの組み合わせには、人間が読みやすい名前を付けるために `_benchmark_name` を
+    設定してください。ファイル名がファイルシステムの最大パス長を超えてしまう場合、これは必須になります。
 
 !!! tip
-    You can use the `--resume` option to continue the parameter sweep if an unexpected error occurs, e.g., timeout when connecting to HF Hub.
+    HF Hub への接続タイムアウトなど、予期しないエラーが起きた場合は `--resume` オプションで
+    パラメータスイープを再開できます。
 
-### Workload Explorer
+### ワークロードエクスプローラー { #workload-explorer }
 
-`vllm bench sweep serve_workload` is a variant of `vllm bench sweep serve` that explores different workload levels in order to find the tradeoff between latency and throughput. The results can also be [visualized](#visualization) to determine the feasible SLAs.
+`vllm bench sweep serve_workload` は `vllm bench sweep serve` の派生で、レイテンシとスループットのトレードオフを見つけるために、さまざまなワークロードの水準を探索します。結果は[可視化](#visualization)して、実現可能な SLA を判断することもできます。
 
-The workload can be expressed in terms of request rate or concurrency (choose using `--workload-var`).
+ワークロードはリクエストレートまたは並行度で表現できます（`--workload-var` で選択します）。
 
-Example command:
+コマンドの例:
 
 ```bash
 vllm bench sweep serve_workload \
@@ -123,33 +125,34 @@ vllm bench sweep serve_workload \
     --experiment-name demo
 ```
 
-The algorithm for exploring different workload levels can be summarized as follows:
+さまざまなワークロード水準を探索するアルゴリズムは次のとおりです。
 
-1. Run the benchmark by sending requests one at a time (serial inference, lowest workload). This results in the lowest possible latency and throughput.
-2. Run the benchmark by sending all requests at once (batch inference, highest workload). This results in the highest possible latency and throughput.
-3. Estimate the value of `workload_var` corresponding to Step 2.
-4. Run the benchmark over intermediate values of `workload_var` uniformly using the remaining iterations.
+1. リクエストを 1 件ずつ送ってベンチマークを実行する（逐次推論、最も低いワークロード）。これにより、達成しうる最小のレイテンシとスループットが得られます。
+2. すべてのリクエストを一度に送ってベンチマークを実行する（バッチ推論、最も高いワークロード）。これにより、達成しうる最大のレイテンシとスループットが得られます。
+3. ステップ 2 に対応する `workload_var` の値を推定します。
+4. 残りの反復回数を使って、`workload_var` の中間の値を均等に取りながらベンチマークを実行します。
 
-You can override the number of iterations in the algorithm by setting `--workload-iters`.
+このアルゴリズムの反復回数は `--workload-iters` で上書きできます。
 
 !!! tip
-    This is our equivalent of [GuideLLM's `--profile sweep`](https://github.com/vllm-project/guidellm/blob/v0.5.3/src/guidellm/benchmark/profiles.py#L575).
+    これは [GuideLLM の `--profile sweep`](https://github.com/vllm-project/guidellm/blob/v0.5.3/src/guidellm/benchmark/profiles.py#L575) に相当する機能です。
 
-    In general, `--workload-var max_concurrency` produces more reliable results because it directly controls the workload imposed on the vLLM engine.
-    Nevertheless, we default to `--workload-var request_rate` to maintain similar behavior as GuideLLM.
+    一般に、`--workload-var max_concurrency` は vLLM エンジンにかかるワークロードを直接制御するため、
+    より信頼できる結果が得られます。それでも、GuideLLM と似た挙動を保つために既定は
+    `--workload-var request_rate` にしています。
 
-## Startup Benchmark
+## 起動ベンチマーク { #startup-benchmark }
 
-`vllm bench sweep startup` runs `vllm bench startup` across parameter combinations to compare cold/warm startup time for different engine settings.
+`vllm bench sweep startup` は、パラメータの組み合わせにわたって `vllm bench startup` を実行し、エンジン設定ごとのコールド / ウォーム起動時間を比較します。
 
-Follow these steps to run the script:
+スクリプトを実行するには次の手順に従います。
 
-1. (Optional) Construct the base command to `vllm bench startup`, and pass it to `--startup-cmd` (default: `vllm bench startup`).
-2. (Optional) Reuse a `--serve-params` JSON from `vllm bench sweep serve` to vary engine settings. Only parameters supported by `vllm bench startup` are applied.
-3. (Optional) Create a `--startup-params` JSON to vary startup-specific options like iteration counts.
-4. Determine where you want to save the results, and pass that to `--output-dir`.
+1. （任意）`vllm bench startup` の基本コマンドを組み立て、`--startup-cmd` に渡します（既定: `vllm bench startup`）。
+2. （任意）エンジン設定を変化させるために、`vllm bench sweep serve` の `--serve-params` の JSON を再利用します。`vllm bench startup` がサポートするパラメータのみが適用されます。
+3. （任意）反復回数など、起動固有のオプションを変化させるための `--startup-params` の JSON を作成します。
+4. 結果の保存先を決め、`--output-dir` に渡します。
 
-Example `--serve-params`:
+`--serve-params` の例:
 
 ```json
 [
@@ -168,7 +171,7 @@ Example `--serve-params`:
 ]
 ```
 
-Example `--startup-params`:
+`--startup-params` の例:
 
 ```json
 [
@@ -181,7 +184,7 @@ Example `--startup-params`:
 ]
 ```
 
-Example command:
+コマンドの例:
 
 ```bash
 vllm bench sweep startup \
@@ -193,18 +196,18 @@ vllm bench sweep startup \
 ```
 
 !!! important
-    By default, unsupported parameters in `--serve-params` or `--startup-params` are ignored with a warning.
-    Use `--strict-params` to fail fast on unknown keys.
+    既定では、`--serve-params` や `--startup-params` に含まれる未対応のパラメータは警告とともに無視されます。
+    未知のキーで即座に失敗させたい場合は `--strict-params` を使ってください。
 
-## Visualization
+## 可視化 { #visualization }
 
-### Basic
+### 基本 { #basic_1 }
 
-`vllm bench sweep plot` can be used to plot performance curves from parameter sweep results.
+`vllm bench sweep plot` を使うと、パラメータスイープの結果から性能曲線をプロットできます。
 
-Control the variables to plot via `--var-x` and `--var-y`, optionally applying `--filter-by` and `--bin-by` to the values. The plot is organized according to `--fig-by`, `--row-by`, `--col-by`, and `--curve-by`.
+プロットする変数は `--var-x` と `--var-y` で指定し、必要に応じて値に `--filter-by` や `--bin-by` を適用します。プロットの構成は `--fig-by`、`--row-by`、`--col-by`、`--curve-by` で決まります。
 
-Example commands for visualizing [Workload Explorer](#workload-explorer) results:
+[ワークロードエクスプローラー](#workload-explorer)の結果を可視化するコマンドの例:
 
 ```bash
 EXPERIMENT_DIR=${1:-"benchmarks/results/demo"}
@@ -235,20 +238,20 @@ vllm bench sweep plot $EXPERIMENT_DIR \
 ```
 
 !!! tip
-    You can use `--dry-run` to preview the figures to be plotted.
+    プロットされる図は `--dry-run` でプレビューできます。
 
-### Pareto chart
+### パレート図 { #pareto-chart }
 
-`vllm bench sweep plot_pareto` helps pick configurations that balance per-user and per-GPU throughput.
+`vllm bench sweep plot_pareto` は、ユーザーあたりと GPU あたりのスループットのバランスが取れた構成を選ぶのに役立ちます。
 
-Higher concurrency or batch size can raise GPU efficiency (per-GPU), but can add per user latency; lower concurrency improves per-user rate but underutilizes GPUs; The Pareto frontier shows the best achievable pairs across your runs.
+並行度やバッチサイズを上げると GPU の効率（GPU あたり）は高まりますが、ユーザーあたりのレイテンシは増える可能性があります。逆に並行度を下げるとユーザーあたりのレートは改善しますが、GPU を十分に使い切れません。パレートフロンティアは、実行結果の中で達成可能な最良の組み合わせを示します。
 
-- x-axis: tokens/s/user = `output_throughput` ÷ concurrency (`--user-count-var`, default `max_concurrency`, fallback `max_concurrent_requests`).
-- y-axis: tokens/s/GPU = `output_throughput` ÷ GPU count (`--gpu-count-var` if set; else gpu_count is TP×PP*DP).
-- Output: a single figure at `OUTPUT_DIR/pareto/PARETO.png`.
-- Show the configuration used in each data point `--label-by` (default: `max_concurrency,gpu_count`).
+- x 軸: tokens/s/user = `output_throughput` ÷ 並行度（`--user-count-var`、既定は `max_concurrency`、フォールバックは `max_concurrent_requests`）。
+- y 軸: tokens/s/GPU = `output_throughput` ÷ GPU 数（`--gpu-count-var` を設定した場合はその値。設定しない場合、gpu_count は TP×PP×DP）。
+- 出力: `OUTPUT_DIR/pareto/PARETO.png` に 1 枚の図が出力されます。
+- 各データ点で使われた構成を表示するには `--label-by` を使います（既定: `max_concurrency,gpu_count`）。
 
-Example:
+例:
 
 ```bash
 EXPERIMENT_DIR=${1:-"benchmarks/results/demo"}
@@ -258,4 +261,4 @@ vllm bench sweep plot_pareto $EXPERIMENT_DIR \
 ```
 
 !!! tip
-    You can use `--dry-run` to preview the figures to be plotted.
+    プロットされる図は `--dry-run` でプレビューできます。

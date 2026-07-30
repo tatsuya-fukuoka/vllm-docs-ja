@@ -1,57 +1,57 @@
-# Quantized KV Cache
+# 量子化 KV キャッシュ { #quantized-kv-cache }
 
-## FP8 KV Cache Overview
+## FP8 KV キャッシュの概要 { #fp8-kv-cache-overview }
 
-Efficient memory usage is crucial for working with large language models. Quantizing the KV (Key-Value) cache to FP8 format can significantly reduce its memory footprint. This optimization enables you to store more tokens in memory, leading to improved throughput and support for longer context windows.
+大規模言語モデルを扱ううえで、メモリの効率的な利用は非常に重要です。KV（Key-Value）キャッシュを FP8 形式に量子化すると、そのメモリ使用量を大幅に削減できます。この最適化により、より多くのトークンをメモリに保持できるようになり、スループットの向上とより長いコンテキストウィンドウのサポートにつながります。
 
-> **Note:** When using the Flash Attention 3 backend with FP8 KV cache, attention operations are also performed in the quantized (FP8) domain. In this configuration, queries are quantized to FP8 in addition to keys and values.
+> **注:** FP8 KV キャッシュと Flash Attention 3 バックエンドを併用する場合、Attention の演算も量子化された（FP8）領域で行われます。この構成では、key と value に加えて query も FP8 に量子化されます。
 
-### Supported FP8 KV-Cache Quantization Schemes
+### サポートされる FP8 KV キャッシュの量子化方式 { #supported-fp8-kv-cache-quantization-schemes }
 
-vLLM supports two main quantization strategies for the FP8 KV-cache:
+vLLM は FP8 KV キャッシュについて、主に 2 つの量子化戦略をサポートしています。
 
-- **Per-tensor quantization:**  
-  A single scale is applied for each Q, K, and V tensor individually. (`q/k/v_scale = [1]`)
-- **Per-attention-head quantization:**  
-  Each scale corresponds to an attention head: `q_scale = [num_heads]`, `k/v_scale = [num_kv_heads]`.
+- **テンソル単位の量子化:**  
+  Q、K、V の各テンソルにそれぞれ 1 つのスケールを適用します（`q/k/v_scale = [1]`）。
+- **Attention ヘッド単位の量子化:**  
+  各スケールが 1 つの Attention ヘッドに対応します（`q_scale = [num_heads]`、`k/v_scale = [num_kv_heads]`）。
 
-> **Note:**  
-> Per-attention-head quantization is currently available **only with the Flash Attention backend** and requires the calibration pathway provided by **llm-compressor**.
+> **注:**  
+> Attention ヘッド単位の量子化は現時点で **Flash Attention バックエンドでのみ**利用でき、**llm-compressor** が提供するキャリブレーション経路が必要です。
 
-### Scale Calibration Approaches
+### スケールのキャリブレーション方法 { #scale-calibration-approaches }
 
-You can configure how the quantization scales are computed in vLLM using three different approaches:
+vLLM では、量子化スケールの計算方法を次の 3 通りから選べます。
 
-1. **No calibration (default scales):**  
-   All quantization scales are set to `1.0`.  
-   _Configure with:_  
+1. **キャリブレーションなし（既定のスケール）:**  
+   すべての量子化スケールが `1.0` に設定されます。  
+   _設定方法:_  
    ```python
    kv_cache_dtype="fp8"
    calculate_kv_scales=False
    ```
 
-2. **Random token calibration (on-the-fly):**  
-   Scales are automatically estimated from a single batch of random tokens during warmup and then fixed.  
-   _Configure with:_  
+2. **ランダムトークンによるキャリブレーション（その場で実施）:**  
+   ウォームアップ中にランダムなトークンのバッチ 1 つからスケールが自動的に推定され、その後固定されます。  
+   _設定方法:_  
    ```python
    kv_cache_dtype="fp8"
    calculate_kv_scales=True
    ```
 
-3. **[Recommended] Calibration with a dataset (via llm-compressor):**  
-   Scales are estimated using a curated calibration dataset for maximum accuracy.  
-   This requires the [llm-compressor](https://github.com/vllm-project/llm-compressor) library.  
-   _See example below!_
+3. **［推奨］データセットによるキャリブレーション（llm-compressor 経由）:**  
+   精度を最大化するため、厳選したキャリブレーション用データセットを使ってスケールを推定します。  
+   これには [llm-compressor](https://github.com/vllm-project/llm-compressor) ライブラリが必要です。  
+   _後述の例を参照してください。_
 
-#### Additional `kv_cache_dtype` Options
+#### `kv_cache_dtype` のその他の選択肢 { #additional-kv_cache_dtype-options }
 
-- `kv_cache_dtype="auto"`: Use the model's default data type
-- `kv_cache_dtype="fp8_e4m3"`: Supported on CUDA 11.8+ and ROCm (AMD GPUs)
-- `kv_cache_dtype="fp8_e5m2"`: Supported on CUDA 11.8+
+- `kv_cache_dtype="auto"`: モデルの既定のデータ型を使用します
+- `kv_cache_dtype="fp8_e4m3"`: CUDA 11.8 以降と ROCm（AMD GPU）でサポート
+- `kv_cache_dtype="fp8_e5m2"`: CUDA 11.8 以降でサポート
 
-### Skipping Specific Layers from KV-Cache Quantization
+### 特定の層を KV キャッシュ量子化から除外する { #skipping-specific-layers-from-kv-cache-quantization }
 
-Some attention layer types (e.g. sliding-window) are more sensitive to KV-cache quantization. The `--kv-cache-dtype-skip-layers` flag leaves the specified layers at the model's native dtype while keeping the rest of the layers under the chosen quantized dtype. The flag accepts either layer indices or layer-type names:
+一部の Attention 層の種類（sliding-window など）は、KV キャッシュの量子化に対してより敏感です。`--kv-cache-dtype-skip-layers` フラグを使うと、指定した層はモデル本来の dtype のまま残し、それ以外の層は選択した量子化 dtype で扱えます。このフラグは層のインデックス、または層の種類名を受け付けます。
 
 ```bash
 # Skip every sliding-window attention layer.
@@ -65,7 +65,7 @@ vllm serve <model> \
   --kv-cache-dtype-skip-layers 0 1 23
 ```
 
-Programmatic usage:
+プログラムから使う場合は次のとおりです。
 
 ```python
 llm = LLM(
@@ -77,11 +77,11 @@ llm = LLM(
 
 ---
 
-## Examples
+## 例 { #examples }
 
-### 1. No Calibration (`kv_cache_dtype="fp8"`, `calculate_kv_scales=False`)
+### 1. キャリブレーションなし（`kv_cache_dtype="fp8"`、`calculate_kv_scales=False`） { #1-no-calibration-kv_cache_dtypefp8-calculate_kv_scalesfalse }
 
-All quantization scales are set to 1.0.
+すべての量子化スケールが 1.0 に設定されます。
 
 ```python
 from vllm import LLM, SamplingParams
@@ -99,9 +99,9 @@ print(out)
 
 ---
 
-### 2. Random Token Calibration (`kv_cache_dtype="fp8"`, `calculate_kv_scales=True`)
+### 2. ランダムトークンによるキャリブレーション（`kv_cache_dtype="fp8"`、`calculate_kv_scales=True`） { #2-random-token-calibration-kv_cache_dtypefp8-calculate_kv_scalestrue }
 
-Scales are automatically estimated from a single batch of tokens during warmup.
+ウォームアップ中にトークンのバッチ 1 つからスケールが自動的に推定されます。
 
 ```python
 from vllm import LLM, SamplingParams
@@ -119,17 +119,17 @@ print(out)
 
 ---
 
-### 3. **[Recommended] Calibration Using a Dataset (with `llm-compressor`)**
+### 3. **［推奨］データセットを使ったキャリブレーション（`llm-compressor` を利用）** { #3-recommended-calibration-using-a-dataset-with-llm-compressor }
 
-For the highest-quality quantization, we recommend calibrating against a dataset using `llm-compressor`. This enables advanced strategies such as per-attention-head quantization.
+最高品質の量子化を得るには、`llm-compressor` を使ってデータセットに対しキャリブレーションすることを推奨します。これにより、Attention ヘッド単位の量子化のような高度な方式も利用できます。
 
-#### Install the required package
+#### 必要なパッケージのインストール { #install-the-required-package }
 
 ```bash
 pip install llmcompressor
 ```
 
-#### Example: Quantize Llama Attention & KV Cache to FP8
+#### 例: Llama の Attention と KV キャッシュを FP8 に量子化する { #example-quantize-llama-attention-kv-cache-to-fp8 }
 
 ```python
 """
@@ -210,4 +210,4 @@ if __name__ == "__main__":
     main()
 ```
 
-For more detailed and up-to-date examples, see the [`llm-compressor` official examples](https://github.com/vllm-project/llm-compressor/tree/main/examples/quantization_kv_cache).
+より詳しく最新の例については、[`llm-compressor` の公式サンプル](https://github.com/vllm-project/llm-compressor/tree/main/examples/quantization_kv_cache)を参照してください。

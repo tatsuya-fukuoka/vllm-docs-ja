@@ -1,28 +1,22 @@
-# Loading models with CoreWeave's Tensorizer
+# CoreWeave の Tensorizer によるモデルの読み込み { #loading-models-with-coreweaves-tensorizer }
 
-vLLM supports loading models with [CoreWeave's Tensorizer](https://docs.coreweave.com/coreweave-machine-learning-and-ai/inference/tensorizer).
-vLLM model tensors that have been serialized to disk, an HTTP/HTTPS endpoint, or S3 endpoint can be deserialized
-at runtime extremely quickly directly to the GPU, resulting in significantly
-shorter Pod startup times and CPU memory usage. Tensor encryption is also supported.
+vLLM は [CoreWeave の Tensorizer](https://docs.coreweave.com/coreweave-machine-learning-and-ai/inference/tensorizer) を使ったモデルの読み込みをサポートしています。ディスク、HTTP/HTTPS エンドポイント、あるいは S3 エンドポイントにシリアライズされた vLLM のモデルテンソルを、実行時に GPU へ直接、きわめて高速にデシリアライズできます。その結果、Pod の起動時間と CPU メモリの使用量を大幅に削減できます。テンソルの暗号化にも対応しています。
 
-vLLM fully integrates Tensorizer in to its model loading machinery. The following will give a brief overview on how to get started with using Tensorizer on vLLM.
+vLLM は Tensorizer をモデル読み込みの仕組みに完全に統合しています。以下では、vLLM で Tensorizer を使い始める方法を簡単に説明します。
 
-## Installing Tensorizer
+## Tensorizer のインストール { #installing-tensorizer }
 
-To install `tensorizer`, run `pip install vllm[tensorizer]`.
+`tensorizer` をインストールするには `pip install vllm[tensorizer]` を実行します。
 
-## The basics
+## 基本 { #the-basics }
 
-To load a model using Tensorizer, the model first needs to be serialized by
-Tensorizer. [The example script](../../../examples/features/tensorize_vllm_model.py) takes care of this process.
+Tensorizer を使ってモデルを読み込むには、まずそのモデルを Tensorizer でシリアライズする必要があります。この処理は[サンプルスクリプト](../../../examples/features/tensorize_vllm_model.py)が担当します。
 
-Let's walk through a basic example by serializing `facebook/opt-125m` using the script, and then loading it for inference.
+ここでは、このスクリプトで `facebook/opt-125m` をシリアライズし、それを推論用に読み込むという基本的な流れを見ていきます。
 
-## Serializing a vLLM model with Tensorizer
+## Tensorizer で vLLM モデルをシリアライズする { #serializing-a-vllm-model-with-tensorizer }
 
-To serialize a model with Tensorizer, call the example script with the necessary
-CLI arguments. The docstring for the script itself explains the CLI args
-and how to use it properly in great detail, and we'll use one of the examples from the docstring directly, assuming we want to serialize and save our model at our S3 bucket example `s3://my-bucket`:
+Tensorizer でモデルをシリアライズするには、必要な CLI 引数を付けてサンプルスクリプトを呼び出します。スクリプト自身の docstring に CLI 引数と正しい使い方が詳しく説明されています。ここでは、モデルを S3 バケット `s3://my-bucket` にシリアライズして保存したいものとして、docstring の例をそのまま使います。
 
 ```bash
 python examples/features/tensorize_vllm_model.py \
@@ -32,7 +26,7 @@ python examples/features/tensorize_vllm_model.py \
    --suffix v1
 ```
 
-This saves the model tensors at `s3://my-bucket/vllm/facebook/opt-125m/v1`. If you intend on applying a LoRA adapter to your tensorized model, you can pass the HF id of the LoRA adapter in the above command, and the artifacts will be saved there too:
+これでモデルのテンソルが `s3://my-bucket/vllm/facebook/opt-125m/v1` に保存されます。tensorize したモデルに LoRA アダプターを適用する予定がある場合は、上のコマンドで LoRA アダプターの HF ID を渡すと、その成果物も同じ場所に保存されます。
 
 ```bash
 python examples/features/tensorize_vllm_model.py \
@@ -43,9 +37,9 @@ python examples/features/tensorize_vllm_model.py \
    --suffix v1
 ```
 
-## Serving the model using Tensorizer
+## Tensorizer を使ったモデルのサービング { #serving-the-model-using-tensorizer }
 
-Once the model is serialized where you want it, you can load the model using `vllm serve` or the `LLM` entrypoint. You can pass the directory where you saved the model to the `model` argument for `LLM()` and `vllm serve`. For example, to serve the tensorized model saved previously with the LoRA adapter, you'd do:
+モデルを目的の場所にシリアライズしたら、`vllm serve` または `LLM` エントリポイントで読み込めます。保存先のディレクトリを `LLM()` および `vllm serve` の `model` 引数に渡してください。たとえば、LoRA アダプター付きで先ほど保存した tensorize 済みモデルをサービングするには次のようにします。
 
 ```bash
 vllm serve s3://my-bucket/vllm/facebook/opt-125m/v1 \
@@ -53,7 +47,7 @@ vllm serve s3://my-bucket/vllm/facebook/opt-125m/v1 \
     --enable-lora 
 ```
 
-Or, with `LLM()`:
+`LLM()` を使う場合は次のとおりです。
 
 ```python
 from vllm import LLM
@@ -64,11 +58,11 @@ llm = LLM(
 )
 ```
 
-## Options for configuring Tensorizer
+## Tensorizer の設定オプション { #options-for-configuring-tensorizer }
 
-`tensorizer`'s core objects that serialize and deserialize models are `TensorSerializer` and `TensorDeserializer` respectively. In order to pass arbitrary kwargs to these, which will configure the serialization and deserialization processes, you can provide them as keys to `model_loader_extra_config` with `serialization_kwargs` and `deserialization_kwargs` respectively. Full docstrings detailing all parameters for the aforementioned objects can be found in `tensorizer`'s [serialization.py](https://github.com/coreweave/tensorizer/blob/main/tensorizer/serialization.py) file.
+`tensorizer` でモデルのシリアライズとデシリアライズを担う中心的なオブジェクトは、それぞれ `TensorSerializer` と `TensorDeserializer` です。これらに任意のキーワード引数を渡してシリアライズ / デシリアライズの挙動を設定するには、`model_loader_extra_config` のキーとして、それぞれ `serialization_kwargs` と `deserialization_kwargs` を指定します。上記オブジェクトの全パラメータを説明した完全な docstring は、`tensorizer` の [serialization.py](https://github.com/coreweave/tensorizer/blob/main/tensorizer/serialization.py) にあります。
 
-As an example, CPU concurrency can be limited when serializing with `tensorizer` via the `limit_cpu_concurrency` parameter in the initializer for `TensorSerializer`. To set `limit_cpu_concurrency` to some arbitrary value, you would do so like this when serializing:
+たとえば、`tensorizer` でシリアライズする際の CPU の並行度は、`TensorSerializer` のイニシャライザの `limit_cpu_concurrency` パラメータで制限できます。`limit_cpu_concurrency` を任意の値に設定するには、シリアライズ時に次のようにします。
 
 ```bash
 python examples/features/tensorize_vllm_model.py \
@@ -80,7 +74,7 @@ python examples/features/tensorize_vllm_model.py \
    --suffix v1
 ```
 
-As an example when customizing the loading process via `TensorDeserializer`, you could limit the number of concurrency readers during deserialization with the `num_readers` parameter in the initializer via `model_loader_extra_config` like so:
+`TensorDeserializer` を通じて読み込み処理をカスタマイズする例として、`model_loader_extra_config` 経由でイニシャライザの `num_readers` パラメータを指定し、デシリアライズ時の同時リーダー数を制限できます。
 
 ```bash
 vllm serve s3://my-bucket/vllm/facebook/opt-125m/v1 \
@@ -89,7 +83,7 @@ vllm serve s3://my-bucket/vllm/facebook/opt-125m/v1 \
     --model-loader-extra-config '{"deserialization_kwargs": {"num_readers": 2}}'
 ```
 
-Or with `LLM()`:
+`LLM()` を使う場合は次のとおりです。
 
 ```python
 from vllm import LLM

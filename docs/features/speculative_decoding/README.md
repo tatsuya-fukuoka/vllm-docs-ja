@@ -1,59 +1,54 @@
-# Speculative Decoding
+# 投機的デコーディング { #speculative-decoding }
 
-This document shows how to use [Speculative Decoding](https://arxiv.org/pdf/2302.01318) with vLLM to reduce inter-token latency under medium-to-low QPS (query per second), memory-bound workloads.
+このドキュメントでは、中〜低 QPS（1 秒あたりのクエリ数）でメモリ律速なワークロードにおいて、トークン間のレイテンシを削減するために vLLM で[投機的デコーディング](https://arxiv.org/pdf/2302.01318)を使う方法を説明します。
 
-To train your own draft models for optimized speculative decoding, see [vllm-project/speculators](speculators.md) for seamless training and integration with vLLM.
+最適化された投機的デコーディングのために自前のドラフトモデルを学習させたい場合は、vLLM とシームレスに学習・統合できる [vllm-project/speculators](speculators.md) を参照してください。
 
-## vLLM Speculation Methods
+## vLLM の投機手法 { #vllm-speculation-methods }
 
-vLLM supports a variety of methods of speculative decoding. Model-based methods such as EAGLE, MTP, draft models, PARD and MLP provide the best latency reduction, while simpler methods such as n-gram and suffix decoding provide modest speedups without increasing workload during peak traffic.
+vLLM はさまざまな投機的デコーディングの手法をサポートしています。EAGLE、MTP、ドラフトモデル、PARD、MLP といったモデルベースの手法は最も高いレイテンシ削減効果をもたらし、n-gram や suffix decoding のような単純な手法は、トラフィックのピーク時に負荷を増やすことなく穏やかな高速化をもたらします。
 
 - [EAGLE](eagle.md)
-- [Multi-Token Prediction (MTP)](mtp.md)
-- [Draft Model](draft_model.md)
-- [Parallel Draft Model (PARD)](parallel_draft_model.md)
-- [Multi-Layer Perceptron](mlp.md)
+- [Multi-Token Prediction（MTP）](mtp.md)
+- [ドラフトモデル](draft_model.md)
+- [並列ドラフトモデル（PARD）](parallel_draft_model.md)
+- [多層パーセプトロン](mlp.md)
 - [N-Gram](n_gram.md)
 - [Suffix Decoding](suffix.md)
-- [Hidden State Extraction](extract_hidden_states.md)
-- [Custom Proposer Backend (Experimental)](#custom-proposer-backend-experimental)
-- [Dynamic Speculative Decoding](dynamic_speculative_decoding.md)
+- [隠れ状態の抽出](extract_hidden_states.md)
+- [カスタムの提案バックエンド（実験的）](#custom-proposer-backend-experimental)
+- [動的な投機的デコーディング](dynamic_speculative_decoding.md)
 
-## Method Selection at a Glance
+## 手法選択の早見表 { #method-selection-at-a-glance }
 
-Use this qualitative table as a starting point for method selection. Real gains
-depend on your model family, traffic pattern, hardware, and sampling settings.
+手法を選ぶ出発点として、この定性的な表を利用してください。実際の効果は、モデルの系統、トラフィックのパターン、ハードウェア、サンプリングの設定によって変わります。
 
-| Method | Low QPS (latency focused) | High QPS (throughput focused) | Notes |
+| 手法 | 低 QPS（レイテンシ重視） | 高 QPS（スループット重視） | 備考 |
 | --- | --- | --- | --- |
-| EAGLE | High gain | Medium to high gain | Strong general-purpose model-based method. |
-| MTP | High gain | Medium to high gain | Best when the target model has native MTP support. |
-| Draft model | High gain | Medium gain | Needs a separate draft model. |
-| Parallel Draft Model | High gain | Medium to high gain | Low draft model latency. |
-| MLP speculator | Medium to high gain | Medium gain | Good when compatible MLP speculators are available. |
-| N-gram | Low to medium gain | Medium gain | Lightweight and easy to enable. |
-| Suffix decoding | Low to medium gain | Medium gain | No extra draft model; dynamic speculation depth. |
-| Custom Proposer | Varies | Varies | Bring your own proposer class (experimental). |
-| Dynamic Speculative Decoding | High gain | Higher than base SD method | Useful for RL or workload with fluctuating QPS |
+| EAGLE | 大きい | 中〜大 | 汎用的で強力なモデルベースの手法。 |
+| MTP | 大きい | 中〜大 | ターゲットモデルが MTP をネイティブにサポートしている場合に最適。 |
+| ドラフトモデル | 大きい | 中程度 | 別途ドラフトモデルが必要。 |
+| 並列ドラフトモデル | 大きい | 中〜大 | ドラフトモデルのレイテンシが低い。 |
+| MLP speculator | 中〜大 | 中程度 | 互換性のある MLP speculator が利用できる場合に有効。 |
+| N-gram | 小〜中 | 中程度 | 軽量で有効化が簡単。 |
+| Suffix decoding | 小〜中 | 中程度 | 追加のドラフトモデルが不要。投機の深さが動的。 |
+| カスタム提案器 | 場合による | 場合による | 独自の提案器クラスを持ち込む（実験的）。 |
+| 動的な投機的デコーディング | 大きい | ベースとなる投機的デコーディング手法より高い | RL や QPS が変動するワークロードで有用。 |
 
-For reproducible measurements in your environment, use
-[`examples/features/speculative_decoding/spec_decode_offline.py`](../../../examples/features/speculative_decoding/spec_decode_offline.py)
-or the [benchmark CLI guide](../../benchmarking/cli.md).
+自分の環境で再現可能な測定を行うには、[`examples/features/speculative_decoding/spec_decode_offline.py`](../../../examples/features/speculative_decoding/spec_decode_offline.py) または[ベンチマーク CLI のガイド](../../benchmarking/cli.md)を使ってください。
 
-## Custom Proposer Backend (Experimental)
+## カスタムの提案バックエンド（実験的） { #custom-proposer-backend-experimental }
 
-You can plug in your own custom proposer class for speculative decoding by setting the method to `custom_class` and providing the full module path to your class.
-Your custom class must accept a `VllmConfig` upon instantiation and implement a `propose` method.
+method を `custom_class` に設定し、自作クラスの完全なモジュールパスを指定することで、投機的デコーディングに独自の提案器クラスを組み込めます。カスタムクラスはインスタンス化時に `VllmConfig` を受け取り、`propose` メソッドを実装する必要があります。
 
-**Example configuration:**
+**設定例:**
 
 - `speculative_config.method = "custom_class"`
 - `speculative_config.model = "your_module.YourCustomProposerClass"`
 
-## `--speculative-config` schema
+## `--speculative-config` のスキーマ { #--speculative-config-schema }
 
-Use `--speculative-config` to pass speculative decoding settings as a JSON
-object on the CLI:
+CLI では、`--speculative-config` を使って投機的デコーディングの設定を JSON オブジェクトとして渡します。
 
 ```bash
 vllm serve <target-model> \
@@ -64,51 +59,44 @@ vllm serve <target-model> \
   }'
 ```
 
-The same keys are accepted from Python via `LLM(..., speculative_config={...})`.
-The tables below highlight common user-facing keys accepted in this JSON
-object; they are not an exhaustive schema reference.
-For more details, see the generated [engine arguments reference](../../configuration/engine_args.md)
-and the API docs for [vllm.config.SpeculativeConfig][].
+同じキーは Python からも `LLM(..., speculative_config={...})` で指定できます。以下の表は、この JSON オブジェクトで受け付けられる主要なユーザー向けのキーをまとめたもので、網羅的なスキーマのリファレンスではありません。詳細は、自動生成された[エンジン引数のリファレンス](../../configuration/engine_args.md)と [vllm.config.SpeculativeConfig][] の API ドキュメントを参照してください。
 
-### Common keys
+### 共通のキー { #common-keys }
 
-These keys are commonly used across speculative decoding setups, though some
-only apply to model-based methods such as `draft_model`, `mtp`, `eagle3`, and
-`dflash`.
+これらのキーは投機的デコーディングの構成全般でよく使われますが、一部は `draft_model`、`mtp`、`eagle3`、`dflash` などのモデルベースの手法にのみ適用されます。
 
-| Key | Type | Default | Allowed values / meaning |
+| キー | 型 | 既定値 | 指定できる値 / 意味 |
 | --- | --- | --- | --- |
-| `method` | `string` | `None` | Speculation method. Common values include `draft_model`, `ngram`, `suffix`, `mtp`, `eagle3`, and `dflash`. If omitted, vLLM infers the method from the provided configuration when possible. |
-| `model` | `string` | `None` | Draft model, EAGLE head, or auxiliary model identifier. For `ngram`, `ngram_gpu`, `suffix`, and `mtp`, this can often be omitted. |
-| `num_speculative_tokens` | `integer > 0` | `None` | Number of speculative tokens to propose per step. Required for methods that do not infer it from model metadata. |
-| `draft_tensor_parallel_size` | `integer >= 1` | `None` | Tensor parallel size for the draft model. |
-| `max_model_len` | `integer >= 1` | `None` | Maximum context length for the draft model. |
-| `parallel_drafting` | `boolean` | `false` | Enable parallel draft token generation. Only compatible with EAGLE and draft-model methods. |
-| `rejection_sample_method` | `string` | `strict` | `strict`, `probabilistic`, or `synthetic`. |
-| `synthetic_acceptance_rate` | `float` | `None` | Average acceptance rate to target when `rejection_sample_method` is `synthetic`. Valid range is `[0, 1]`. |
- | `use_heterogeneous_vocab` | `boolean` | `false` | Allow draft and target models with different vocabularies. Builds a token-level intersection at initialisation and constrains draft logits to shared tokens only. Only compatible with `method=draft_model`. Probabilistic draft sampling (`draft_sample_method='probabilistic'`) is not yet supported when this option is enabled. |
+| `method` | `string` | `None` | 投機の手法。よく使われる値は `draft_model`、`ngram`、`suffix`、`mtp`、`eagle3`、`dflash` などです。省略した場合、vLLM は可能な範囲で与えられた設定から手法を推測します。 |
+| `model` | `string` | `None` | ドラフトモデル、EAGLE ヘッド、または補助モデルの識別子。`ngram`、`ngram_gpu`、`suffix`、`mtp` では省略できることが多いです。 |
+| `num_speculative_tokens` | `integer > 0` | `None` | 1 ステップあたりに提案する投機トークンの数。モデルのメタデータから推測できない手法では必須です。 |
+| `draft_tensor_parallel_size` | `integer >= 1` | `None` | ドラフトモデルのテンソル並列サイズ。 |
+| `max_model_len` | `integer >= 1` | `None` | ドラフトモデルの最大コンテキスト長。 |
+| `parallel_drafting` | `boolean` | `false` | 並列でのドラフトトークン生成を有効にします。EAGLE とドラフトモデルの手法とのみ互換です。 |
+| `rejection_sample_method` | `string` | `strict` | `strict`、`probabilistic`、`synthetic` のいずれか。 |
+| `synthetic_acceptance_rate` | `float` | `None` | `rejection_sample_method` が `synthetic` のときに目標とする平均受理率。有効な範囲は `[0, 1]`。 |
+ | `use_heterogeneous_vocab` | `boolean` | `false` | 語彙が異なるドラフトモデルとターゲットモデルの組み合わせを許可します。初期化時にトークンレベルの共通部分を構築し、ドラフトの logits を共有トークンのみに制約します。`method=draft_model` とのみ互換です。このオプションを有効にした場合、確率的なドラフトサンプリング（`draft_sample_method='probabilistic'`）はまだサポートされていません。 |
 
 !!! note
-    Gemma 4 assistant checkpoints are handled as Gemma 4 MTP speculators, not
-    as generic draft models. Use `"method": "mtp"` with the assistant
-    checkpoint in `model`, as shown in the [MTP guide](mtp.md#gemma-4-assistant-models).
+    Gemma 4 のアシスタントチェックポイントは、汎用のドラフトモデルではなく Gemma 4 の MTP speculator として扱われます。
+    [MTP のガイド](mtp.md#gemma-4-assistant-models)に示すとおり、`model` にアシスタントのチェックポイントを指定し
+    `"method": "mtp"` を使ってください。
 
-    If startup logs show `SpeculativeConfig(method='draft_model', ...)` for a
-    Gemma 4 assistant checkpoint, the installed vLLM version does not include
-    Gemma 4 MTP support for that path. Upgrade to a version that includes
-    Gemma 4 MTP support instead of forcing the assistant checkpoint through
-    generic draft-model speculative decoding.
+    Gemma 4 のアシスタントチェックポイントに対して起動ログに `SpeculativeConfig(method='draft_model', ...)` と
+    表示される場合、インストールされている vLLM のバージョンはその経路の Gemma 4 MTP サポートを含んでいません。
+    アシスタントのチェックポイントを汎用のドラフトモデルによる投機的デコーディングに無理やり通すのではなく、
+    Gemma 4 MTP のサポートを含むバージョンにアップグレードしてください。
 
-### Method-specific keys
+### 手法固有のキー { #method-specific-keys }
 
-#### N-gram
+#### N-gram { #n-gram }
 
-| Key | Type | Default | Meaning |
+| キー | 型 | 既定値 | 意味 |
 | --- | --- | --- | --- |
-| `prompt_lookup_max` | `integer >= 1` | `5` if both lookup bounds are omitted; otherwise mirrors `prompt_lookup_min` when omitted | Maximum n-gram window size. |
-| `prompt_lookup_min` | `integer >= 1` | `5` if both lookup bounds are omitted; otherwise mirrors `prompt_lookup_max` when omitted | Minimum n-gram window size. |
+| `prompt_lookup_max` | `integer >= 1` | 両方の lookup の上下限を省略した場合は `5`。それ以外で省略した場合は `prompt_lookup_min` と同じ値 | n-gram のウィンドウサイズの最大値。 |
+| `prompt_lookup_min` | `integer >= 1` | 両方の lookup の上下限を省略した場合は `5`。それ以外で省略した場合は `prompt_lookup_max` と同じ値 | n-gram のウィンドウサイズの最小値。 |
 
-Example:
+例:
 
 ```bash
 vllm serve <target-model> \
@@ -120,16 +108,16 @@ vllm serve <target-model> \
   }'
 ```
 
-#### Suffix decoding
+#### Suffix decoding { #suffix-decoding }
 
-| Key | Type | Default | Meaning |
+| キー | 型 | 既定値 | 意味 |
 | --- | --- | --- | --- |
-| `suffix_decoding_max_tree_depth` | `integer` | `24` | Maximum combined prefix-match and speculation tree depth. |
-| `suffix_decoding_max_cached_requests` | `integer` | `10000` | Maximum number of requests cached in the global suffix tree. Set `0` to disable the global cache. |
-| `suffix_decoding_max_spec_factor` | `float` | `1.0` | Caps speculative length as a multiple of prefix-match length. |
-| `suffix_decoding_min_token_prob` | `float` | `0.1` | Minimum estimated token probability required to speculate a token. |
+| `suffix_decoding_max_tree_depth` | `integer` | `24` | プレフィックス一致と投機を合わせた木の深さの最大値。 |
+| `suffix_decoding_max_cached_requests` | `integer` | `10000` | グローバルな suffix tree にキャッシュするリクエストの最大数。`0` にするとグローバルキャッシュが無効になります。 |
+| `suffix_decoding_max_spec_factor` | `float` | `1.0` | 投機の長さを、プレフィックス一致の長さの何倍までに抑えるかを指定します。 |
+| `suffix_decoding_min_token_prob` | `float` | `0.1` | トークンを投機するために必要な、推定トークン確率の最小値。 |
 
-Example:
+例:
 
 ```bash
 vllm serve <target-model> \
@@ -143,17 +131,11 @@ vllm serve <target-model> \
   }'
 ```
 
-#### Cross-Vocabulary Draft Models (TLI)
+#### 語彙をまたぐドラフトモデル（TLI） { #cross-vocabulary-draft-models-tli }
 
-  By default, vLLM requires the draft and target models to share the same
-  vocabulary. Setting `use_heterogeneous_vocab: true` enables the
-  **Token-Level Intersection (TLI)** algorithm, which allows draft models
-  from a different model family with a different tokenizer.
+  vLLM は既定で、ドラフトモデルとターゲットモデルが同じ語彙を共有していることを要求します。`use_heterogeneous_vocab: true` を設定すると **Token-Level Intersection (TLI)** アルゴリズムが有効になり、異なるトークナイザーを持つ別系統のモデルをドラフトモデルとして使えるようになります。
 
-  At initialisation, vLLM builds a mapping between the two vocabularies by
-  normalising token strings and computing their intersection. Draft logits are
-  constrained to the shared tokens before sampling, and the sampled token IDs
-  are translated to the target vocabulary before rejection sampling.
+  初期化時、vLLM はトークン文字列を正規化して共通部分を計算することで、2 つの語彙の間のマッピングを構築します。サンプリングの前にドラフトの logits は共有トークンのみに制約され、サンプリングされたトークン ID は棄却サンプリングの前にターゲット側の語彙へ変換されます。
 
   ```python
   from vllm import LLM, SamplingParams
@@ -170,59 +152,43 @@ vllm serve <target-model> \
   )
 ```
 
-### Notes
+### 注意事項 { #notes }
 
-- `--speculative-config` expects a JSON object on the CLI. In YAML config
-  files, use a nested mapping instead of an escaped JSON string.
-- `tensor_parallel_size` is not a valid key in `speculative_config`. Use
-  `draft_tensor_parallel_size` instead.
-- Keys such as `temperature` and `top_p` are sampling parameters, not
-  `--speculative-config` fields.
-- Internal fields such as `target_model_config`, `draft_model_config`,
-  `target_parallel_config`, `draft_parallel_config`, and `draft_load_config`
-  are populated by vLLM and are not intended to be set by users.
-- `use_heterogeneous_vocab` currently supports greedy draft sampling only. Probabilistic acceptance (temperature > 0 draft sampling) is not yet supported and will be added in a future release.
+- CLI では `--speculative-config` は JSON オブジェクトを想定しています。YAML の設定ファイルでは、エスケープした JSON 文字列ではなくネストしたマッピングを使ってください。
+- `tensor_parallel_size` は `speculative_config` の有効なキーではありません。代わりに `draft_tensor_parallel_size` を使ってください。
+- `temperature` や `top_p` などのキーはサンプリングのパラメータであり、`--speculative-config` のフィールドではありません。
+- `target_model_config`、`draft_model_config`、`target_parallel_config`、`draft_parallel_config`、`draft_load_config` といった内部フィールドは vLLM が設定するもので、ユーザーが設定することは想定されていません。
+- `use_heterogeneous_vocab` は現時点で greedy なドラフトサンプリングのみをサポートします。確率的な受理（temperature > 0 のドラフトサンプリング）はまだサポートされておらず、将来のリリースで追加される予定です。
 
-## Lossless guarantees of Speculative Decoding
+## 投機的デコーディングのロスレス性の保証 { #lossless-guarantees-of-speculative-decoding }
 
-In vLLM, speculative decoding aims to enhance inference efficiency while maintaining accuracy. This section addresses the lossless guarantees of
-speculative decoding, breaking down the guarantees into three key areas:
+vLLM において、投機的デコーディングは精度を保ちながら推論効率を高めることを目指しています。このセクションでは、投機的デコーディングのロスレス性の保証を 3 つの観点に分けて説明します。
 
-1. **Theoretical Losslessness**
-   \- Speculative decoding sampling is theoretically lossless up to the precision limits of hardware numerics. Floating-point errors might
-   cause slight variations in output distributions, as discussed
-   in [Accelerating Large Language Model Decoding with Speculative Sampling](https://arxiv.org/pdf/2302.01318)
+1. **理論上のロスレス性**
+   \- 投機的デコーディングのサンプリングは、ハードウェアの数値精度の限界の範囲で理論上ロスレスです。[Accelerating Large Language Model Decoding with Speculative Sampling](https://arxiv.org/pdf/2302.01318) で論じられているとおり、浮動小数点の誤差によって出力分布にわずかな差が生じる可能性はあります。
 
-2. **Algorithmic Losslessness**
-   \- vLLM’s implementation of speculative decoding is algorithmically validated to be lossless. Key validation tests include:
+2. **アルゴリズム上のロスレス性**
+   \- vLLM の投機的デコーディングの実装は、アルゴリズム的にロスレスであることが検証されています。主な検証テストは次のとおりです。
 
-    > - **Rejection Sampler Convergence**: Ensures that samples from vLLM’s rejection sampler align with the target
-    >   distribution. [View Test Code](https://github.com/vllm-project/vllm/blob/47b65a550866c7ffbd076ecb74106714838ce7da/tests/samplers/test_rejection_sampler.py#L252)
-    > - **Greedy Sampling Equality**: Confirms that greedy sampling with speculative decoding matches greedy sampling
-    >   without it. This verifies that vLLM's speculative decoding framework, when integrated with the vLLM forward pass and the vLLM rejection sampler,
-    >   provides a lossless guarantee. Almost all of the tests in [tests/spec_decode/e2e](../../../tests/v1/spec_decode).
-    >   verify this property using [this assertion implementation](https://github.com/vllm-project/vllm/blob/b67ae00cdbbe1a58ffc8ff170f0c8d79044a684a/tests/spec_decode/e2e/conftest.py#L291)
+    > - **棄却サンプラーの収束**: vLLM の棄却サンプラーからのサンプルがターゲットの分布と一致することを確認します。[テストコードを見る](https://github.com/vllm-project/vllm/blob/47b65a550866c7ffbd076ecb74106714838ce7da/tests/samplers/test_rejection_sampler.py#L252)
+    > - **greedy サンプリングの一致**: 投機的デコーディングありの greedy サンプリングが、なしの場合と一致することを確認します。これにより、vLLM の投機的デコーディングのフレームワークが、vLLM の forward パスおよび棄却サンプラーと統合された状態でロスレス性を保証していることを検証できます。[tests/spec_decode/e2e](../../../tests/v1/spec_decode) のほぼすべてのテストが、[このアサーションの実装](https://github.com/vllm-project/vllm/blob/b67ae00cdbbe1a58ffc8ff170f0c8d79044a684a/tests/spec_decode/e2e/conftest.py#L291)を使ってこの性質を検証しています。
 
-3. **vLLM Logprob Stability**
-   \- vLLM does not currently guarantee stable token log probabilities (logprobs). This can result in different outputs for the
-   same request across runs. For more details, see the FAQ section
-   titled *Can the output of a prompt vary across runs in vLLM?* in the [FAQs](../../usage/faq.md).
+3. **vLLM の logprob の安定性**
+   \- vLLM は現時点で、トークンの対数確率（logprobs）が安定していることを保証していません。そのため、同じリクエストでも実行ごとに異なる出力になることがあります。詳細は [FAQ](../../usage/faq.md) の *vLLM では同じプロンプトでも実行ごとに出力が変わることがありますか?* の項目を参照してください。
 
-While vLLM strives to ensure losslessness in speculative decoding, variations in generated outputs with and without speculative decoding
-can occur due to following factors:
+vLLM は投機的デコーディングのロスレス性の確保に努めていますが、投機的デコーディングの有無によって生成される出力に差が生じることがあります。その要因は次のとおりです。
 
-- **Floating-Point Precision**: Differences in hardware numerical precision may lead to slight discrepancies in the output distribution.
-- **Batch Size and Numerical Stability**: Changes in batch size may cause variations in logprobs and output probabilities, potentially
-  due to non-deterministic behavior in batched operations or numerical instability.
+- **浮動小数点の精度**: ハードウェアの数値精度の違いにより、出力分布にわずかな差が生じる可能性があります。
+- **バッチサイズと数値の安定性**: バッチサイズの変化により logprobs や出力確率が変動することがあります。これは、バッチ処理の非決定的な挙動や数値的な不安定性に起因する可能性があります。
 
-For mitigation strategies, please refer to the FAQ entry *Can the output of a prompt vary across runs in vLLM?* in the [FAQs](../../usage/faq.md).
+緩和策については、[FAQ](../../usage/faq.md) の *vLLM では同じプロンプトでも実行ごとに出力が変わることがありますか?* の項目を参照してください。
 
-## Known Feature Incompatibility
+## 既知の機能の非互換性 { #known-feature-incompatibility }
 
-1. Pipeline parallelism is not composable with speculative decoding as of `vllm<=0.15.0`
-2. Speculative decoding with a draft models is not supported in `vllm<=0.10.0`
+1. `vllm<=0.15.0` の時点では、パイプライン並列と投機的デコーディングは組み合わせられません。
+2. `vllm<=0.10.0` では、ドラフトモデルを用いた投機的デコーディングはサポートされていません。
 
-## Resources for vLLM contributors
+## vLLM のコントリビューター向けリソース { #resources-for-vllm-contributors }
 
 - [[vLLM Office Hours #40] Intro to Speculators](https://www.youtube.com/watch?v=2ISAr_JVGLs)
 - [A Hacker's Guide to Speculative Decoding in vLLM](https://www.youtube.com/watch?v=9wNAgpX6z_4)

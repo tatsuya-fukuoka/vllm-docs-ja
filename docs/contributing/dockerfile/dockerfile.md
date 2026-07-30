@@ -1,29 +1,29 @@
-# Dockerfile
+# Dockerfile { #dockerfile }
 
-We provide a [docker/Dockerfile](../../../docker/Dockerfile) to construct the image for running an OpenAI compatible server with vLLM.
-More information about deploying with Docker can be found [here](../../deployment/docker.md).
+vLLM で OpenAI 互換サーバーを動かすためのイメージを構築する [docker/Dockerfile](../../../docker/Dockerfile) を提供しています。
+Docker でのデプロイの詳細は[こちら](../../deployment/docker.md)を参照してください。
 
-Below is a visual representation of the multi-stage Dockerfile. The build graph contains the following nodes:
+以下は、マルチステージの Dockerfile を図示したものです。ビルドグラフには次のノードが含まれます。
 
-- All build stages
-- The default build target (highlighted in grey)
-- External images (with dashed borders)
+- すべてのビルドステージ
+- 既定のビルドターゲット（グレーで強調）
+- 外部イメージ（破線の枠）
 
-The edges of the build graph represent:
+ビルドグラフの辺は次を表します。
 
-- `FROM ...` dependencies (with a solid line and a full arrow head)
+- `FROM ...` の依存関係（実線と塗りつぶしの矢印）
 
-- `COPY --from=...` dependencies (with a dashed line and an empty arrow head)
+- `COPY --from=...` の依存関係（破線と白抜きの矢印）
 
-- `RUN --mount=(.\*)from=...` dependencies (with a dotted line and an empty diamond arrow head)
+- `RUN --mount=(.\*)from=...` の依存関係（点線と白抜きのひし形の矢印）
 
   > <figure markdown="span">
   >   ![](https://raw.githubusercontent.com/vllm-project/vllm/v0.26.0/docs/assets/contributing/dockerfile-stages-dependency.png){ align="center" alt="query" width="100%" }
   > </figure>
   >
-  > Made using: <https://github.com/patrickhoefler/dockerfilegraph>
+  > 作成に使用したツール: <https://github.com/patrickhoefler/dockerfilegraph>
   >
-  > Commands to regenerate the build graph (make sure to run it **from the \`root\` directory of the vLLM repository** where the dockerfile is present):
+  > ビルドグラフを再生成するコマンド（Dockerfile がある **vLLM リポジトリの \`root\` ディレクトリ**で実行してください）:
   >
   > ```bash
   > dockerfilegraph \
@@ -34,7 +34,7 @@ The edges of the build graph represent:
   >   --filename docker/Dockerfile
   > ```
   >
-  > or in case you want to run it directly with the docker image:
+  > Docker イメージで直接実行する場合は次のようにします。
   >
   > ```bash
   > docker run \
@@ -50,4 +50,4 @@ The edges of the build graph represent:
   >    --legend
   > ```
   >
-  > (To run it for a different file, you can pass in a different argument to the flag `--filename`.)
+  >（別のファイルを対象にする場合は、`--filename` フラグに別の引数を渡してください。）

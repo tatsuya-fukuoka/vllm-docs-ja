@@ -1,28 +1,28 @@
-# Registering a Model
+# モデルの登録 { #registering-a-model }
 
-vLLM relies on a model registry to determine how to run each model.
-A list of pre-registered architectures can be found [here](../../models/supported_models.md).
+vLLM は、各モデルの実行方法を判断するためにモデルレジストリを利用します。
+登録済みのアーキテクチャの一覧は[こちら](../../models/supported_models.md)にあります。
 
-If your model is not on this list, you must register it to vLLM.
-This page provides detailed instructions on how to do so.
+対象のモデルがこの一覧にない場合は、vLLM に登録する必要があります。
+このページでは、その具体的な手順を説明します。
 
-## Built-in models
+## 組み込みモデル { #built-in-models }
 
-To add a model directly to the vLLM library, start by forking our [GitHub repository](https://github.com/vllm-project/vllm) and then [build it from source](../../getting_started/installation/gpu.md#build-wheel-from-source).
-This gives you the ability to modify the codebase and test your model.
+モデルを vLLM のライブラリに直接追加するには、まず [GitHub リポジトリ](https://github.com/vllm-project/vllm)をフォークし、[ソースからビルド](../../getting_started/installation/gpu.md#build-wheel-from-source)します。
+これでコードベースを変更し、モデルをテストできるようになります。
 
-After you have implemented your model (see [tutorial](basic.md)), put it into the [vllm/model_executor/models](../../../vllm/model_executor/models) directory.
-Then, add your model class to `_VLLM_MODELS` in [vllm/model_executor/models/registry.py](../../../vllm/model_executor/models/registry.py) so that it is automatically registered upon importing vLLM.
-Finally, update our [list of supported models](../../models/supported_models.md) to promote your model!
+モデルを実装したら（[チュートリアル](basic.md)を参照）、[vllm/model_executor/models](../../../vllm/model_executor/models) ディレクトリに配置します。
+次に、[vllm/model_executor/models/registry.py](../../../vllm/model_executor/models/registry.py) の `_VLLM_MODELS` にモデルクラスを追加すると、vLLM の import 時に自動的に登録されます。
+最後に、[対応モデルの一覧](../../models/supported_models.md)を更新して、あなたのモデルを紹介しましょう。
 
 !!! important
-    The list of models in each section should be maintained in alphabetical order.
+    各セクションのモデルの一覧はアルファベット順に保ってください。
 
-## Out-of-tree models
+## ツリー外のモデル { #out-of-tree-models }
 
-You can load an external model [using a plugin](../../design/plugin_system.md) without modifying the vLLM codebase.
+vLLM のコードベースを変更せずに、[プラグイン](../../design/plugin_system.md)を使って外部のモデルを読み込めます。
 
-To register the model, use the following code:
+モデルを登録するには、次のコードを使います。
 
 ```python
 # The entrypoint of your plugin
@@ -33,7 +33,7 @@ def register():
     ModelRegistry.register_model("YourModelForCausalLM", YourModelForCausalLM)
 ```
 
-If your model imports modules that initialize CUDA, consider lazy-importing it to avoid errors like `RuntimeError: Cannot re-initialize CUDA in forked subprocess`:
+モデルが CUDA を初期化するモジュールを import している場合は、`RuntimeError: Cannot re-initialize CUDA in forked subprocess` のようなエラーを避けるため、遅延 import を検討してください。
 
 ```python
 # The entrypoint of your plugin
@@ -47,5 +47,5 @@ def register():
 ```
 
 !!! important
-    If your model is a multimodal model, ensure the model class implements the [`SupportsMultiModal`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal) interface.
-    Read more about that [here](multimodal.md).
+    マルチモーダルのモデルの場合は、モデルクラスが [`SupportsMultiModal`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsMultiModal) インターフェイスを実装していることを確認してください。
+    詳細は[こちら](multimodal.md)を参照してください。

@@ -1,119 +1,97 @@
-# Python Multiprocessing
+# Python のマルチプロセシング { #python-multiprocessing }
 
-## Debugging
+## デバッグ { #debugging }
 
-Please see the [Troubleshooting](../usage/troubleshooting.md#python-multiprocessing)
-page for information on known issues and how to solve them.
+既知の問題とその解決方法については、[トラブルシューティング](../usage/troubleshooting.md#python-multiprocessing)のページを参照してください。
 
-## Introduction
+## はじめに { #introduction }
 
 !!! important
-    The source code references are to the state of the code at the time of writing in December 2024.
+    ソースコードへの参照は、この文章を書いた 2024 年 12 月時点のコードの状態に対するものです。
 
-The use of Python multiprocessing in vLLM is complicated by:
+vLLM における Python のマルチプロセシングの利用は、次の理由で複雑になっています。
 
-- using vLLM as a library, which limits control over its internal code;
-- incompatibilities between certain multiprocessing methods and vLLM dependencies.
+- vLLM がライブラリとして使われるため、その内部コードを制御しきれないこと
+- 一部のマルチプロセシングの方式と vLLM の依存パッケージとの非互換性
 
-This document describes how vLLM deals with these challenges.
+このドキュメントでは、vLLM がこれらの課題にどう対処しているかを説明します。
 
-## Multiprocessing Methods
+## マルチプロセシングの方式 { #multiprocessing-methods }
 
-[Python multiprocessing methods](https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods) include:
+[Python のマルチプロセシングの方式](https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods)には次のものがあります。
 
-- `spawn` - Spawn a new Python process. The default on Windows and macOS.
-- `fork` - Use `os.fork()` to fork the Python interpreter. The default on
-  Linux for Python versions prior to 3.14.
-- `forkserver` - Spawn a server process that will fork a new process on request.
-  The default on Linux for Python version 3.14 and newer.
+- `spawn` - 新しい Python プロセスを起動します。Windows と macOS での既定です。
+- `fork` - `os.fork()` を使って Python インタプリタを fork します。Python 3.14 より前のバージョンでは Linux での既定です。
+- `forkserver` - 要求に応じて新しいプロセスを fork するサーバープロセスを起動します。Python 3.14 以降では Linux での既定です。
 
-### Tradeoffs
+### トレードオフ { #tradeoffs }
 
-`fork` is the fastest method, but is incompatible with dependencies that use
-threads. If you are under macOS, using `fork` may cause the process to crash.
+`fork` は最も高速な方式ですが、スレッドを使う依存パッケージとは互換性がありません。macOS では `fork` を使うとプロセスがクラッシュすることがあります。
 
-`spawn` is more compatible with dependencies, but can be problematic when vLLM
-is used as a library. If the consuming code does not use a `__main__` guard
-(`if __name__ == "__main__":`), the code will be inadvertently re-executed when vLLM
-spawns a new process. This can lead to infinite recursion, among other problems.
+`spawn` は依存パッケージとの互換性が高いものの、vLLM をライブラリとして使う場合には問題になりえます。利用側のコードが `__main__` ガード（`if __name__ == "__main__":`）を使っていない場合、vLLM が新しいプロセスを起動した際にそのコードが意図せず再実行されてしまいます。これは無限再帰などの問題につながります。
 
-`forkserver` will spawn a new server process that will fork new processes on
-demand. This unfortunately has the same problem as `spawn` when vLLM is used as
-a library. The server process is created as a spawned new process, which will
-re-execute code not protected by a `__main__` guard.
+`forkserver` は、必要に応じて新しいプロセスを fork するサーバープロセスを起動します。残念ながら、vLLM をライブラリとして使う場合には `spawn` と同じ問題があります。サーバープロセスは spawn された新しいプロセスとして作られるため、`__main__` ガードで保護されていないコードが再実行されます。
 
-For both `spawn` and `forkserver`, the process must not depend on inheriting any
-global state as would be the case with `fork`.
+`spawn` と `forkserver` のどちらでも、プロセスは `fork` のようにグローバルな状態を継承することに依存してはいけません。
 
-## Compatibility with Dependencies
+## 依存パッケージとの互換性 { #compatibility-with-dependencies }
 
-Multiple vLLM dependencies indicate either a preference or requirement for using
-`spawn`:
+vLLM の複数の依存パッケージが、`spawn` の使用を推奨または要求しています。
 
 - <https://pytorch.org/docs/stable/notes/multiprocessing.html#cuda-in-multiprocessing>
 - <https://pytorch.org/docs/stable/multiprocessing.html#sharing-cuda-tensors>
 - <https://docs.habana.ai/en/latest/PyTorch/Getting_Started_with_PyTorch_and_Gaudi/Getting_Started_with_PyTorch.html?highlight=multiprocessing#torch-multiprocessing-for-dataloaders>
 
-Known issues exist when using `fork` after initializing these dependencies.
+これらの依存パッケージを初期化したあとに `fork` を使うと、既知の問題が発生します。
 
-## Current State (v0)
+## 現在の状況（v0） { #current-state-v0 }
 
-The environment variable `VLLM_WORKER_MULTIPROC_METHOD` can be used to control which method is used by vLLM. The current default is `fork`.
+環境変数 `VLLM_WORKER_MULTIPROC_METHOD` で、vLLM が使う方式を制御できます。現在の既定値は `fork` です。
 
 - <https://github.com/vllm-project/vllm/blob/d05f88679bedd73939251a17c3d785a354b2946c/vllm/envs.py#L339-L342>
 
-If the main process is controlled via the `vllm` command,
-`spawn` is used because it's the most widely compatible.
+メインプロセスが `vllm` コマンド経由で制御されている場合は、最も広く互換性のある `spawn` が使われます。
 
 - <https://github.com/vllm-project/vllm/blob/d05f88679bedd73939251a17c3d785a354b2946c/vllm/scripts.py#L123-L140>
 
-The `multiproc_xpu_executor` forces the use of `spawn`.
+`multiproc_xpu_executor` は `spawn` の使用を強制します。
 
 - <https://github.com/vllm-project/vllm/blob/d05f88679bedd73939251a17c3d785a354b2946c/vllm/executor/multiproc_xpu_executor.py#L14-L18>
 
-There are other miscellaneous places hard-coding the use of `spawn`:
+その他にも、`spawn` の使用がハードコードされている箇所があります。
 
 - <https://github.com/vllm-project/vllm/blob/d05f88679bedd73939251a17c3d785a354b2946c/vllm/distributed/device_communicators/all_reduce_utils.py#L135>
 - <https://github.com/vllm-project/vllm/blob/d05f88679bedd73939251a17c3d785a354b2946c/vllm/entrypoints/openai/api_server.py#L184>
 
-Related PRs:
+関連する PR:
 
 - <https://github.com/vllm-project/vllm/pull/8823>
 
-## Prior State in v1
+## v1 におけるかつての状況 { #prior-state-in-v1 }
 
-There was an environment variable to control whether multiprocessing is used in
-the v1 engine core, `VLLM_ENABLE_V1_MULTIPROCESSING`. This defaulted to off.
+v1 のエンジンコアでマルチプロセシングを使うかどうかを制御する環境変数 `VLLM_ENABLE_V1_MULTIPROCESSING` がありました。既定では無効でした。
 
 - <https://github.com/vllm-project/vllm/blob/d05f88679bedd73939251a17c3d785a354b2946c/vllm/envs.py#L452-L454>
 
-When it was enabled, the v1 `LLMEngine` would create a new process to run the
-engine core.
+有効にすると、v1 の `LLMEngine` はエンジンコアを実行するための新しいプロセスを作成しました。
 
 - <https://github.com/vllm-project/vllm/blob/d05f88679bedd73939251a17c3d785a354b2946c/vllm/v1/engine/llm_engine.py#L93-L95>
 - <https://github.com/vllm-project/vllm/blob/d05f88679bedd73939251a17c3d785a354b2946c/vllm/v1/engine/llm_engine.py#L70-L77>
 - <https://github.com/vllm-project/vllm/blob/d05f88679bedd73939251a17c3d785a354b2946c/vllm/v1/engine/core_client.py#L44-L45>
 
-It was off by default for all the reasons mentioned above - compatibility with
-dependencies and code using vLLM as a library.
+既定で無効だったのは、上で述べたすべての理由、すなわち依存パッケージとの互換性と、vLLM をライブラリとして使うコードへの配慮のためです。
 
-### Changes Made in v1
+### v1 で行った変更 { #changes-made-in-v1 }
 
-There is not an easy solution with Python's `multiprocessing` that will work
-everywhere. As a first step, we can get v1 into a state where it does
-"best effort" choice of multiprocessing method to maximize compatibility.
+Python の `multiprocessing` について、どこでもうまく動く簡単な解決策はありません。第一歩として、互換性を最大化するために「ベストエフォート」でマルチプロセシングの方式を選ぶ状態に v1 を持っていくことができます。
 
-- Default to `fork`.
-- Use `spawn` when we know we control the main process (`vllm` was executed).
-- If we detect `cuda` was previously initialized, force `spawn` and emit a
-  warning. We know `fork` will break, so this is the best we can do.
+- 既定は `fork` にする。
+- メインプロセスを自分たちが制御していると分かっている場合（`vllm` が実行された場合）は `spawn` を使う。
+- `cuda` がすでに初期化されていることを検出したら `spawn` を強制し、警告を出す。`fork` が壊れることは分かっているので、これが最善です。
 
-The case that is known to still break in this scenario is code using vLLM as a
-library that initializes `cuda` before calling vLLM. The warning we emit should
-instruct users to either add a `__main__` guard or to disable multiprocessing.
+このシナリオでもなお壊れることが分かっているのは、vLLM を呼び出す前に `cuda` を初期化する、vLLM をライブラリとして使うコードです。出力する警告では、`__main__` ガードを追加するか、マルチプロセシングを無効にするようユーザーに案内すべきです。
 
-If that known-failure case occurs, the user will see two messages that explain
-what is happening. First, a log message from vLLM:
+この既知の失敗ケースが起きると、ユーザーには状況を説明する 2 つのメッセージが表示されます。まず、vLLM からのログメッセージです。
 
 ```console
 WARNING 12-11 14:50:37 multiproc_worker_utils.py:281] CUDA was previously
@@ -123,7 +101,7 @@ WARNING 12-11 14:50:37 multiproc_worker_utils.py:281] CUDA was previously
     for more information.
 ```
 
-Second, Python itself will raise an exception with a nice explanation:
+次に、Python 自体が分かりやすい説明とともに例外を送出します。
 
 ```console
 RuntimeError:
@@ -145,47 +123,32 @@ RuntimeError:
         section in https://docs.python.org/3/library/multiprocessing.html
 ```
 
-## Alternatives Considered
+## 検討した代替案 { #alternatives-considered }
 
-### Detect if a `__main__` guard is present
+### `__main__` ガードの有無を検出する { #detect-if-a-__main__-guard-is-present }
 
-It has been suggested that we could behave better if we could detect whether
-code using vLLM as a library has a `__main__` guard in place. This
-[post on Stack Overflow](https://stackoverflow.com/questions/77220442/multiprocessing-pool-in-a-python-class-without-name-main-guard)
-was from a library author facing the same question.
+vLLM をライブラリとして使うコードに `__main__` ガードがあるかどうかを検出できれば、より良い挙動にできるのではないかという提案がありました。同じ問題に直面したライブラリ作者による [Stack Overflow の投稿](https://stackoverflow.com/questions/77220442/multiprocessing-pool-in-a-python-class-without-name-main-guard)もあります。
 
-It is possible to detect whether we are in the original, `__main__` process, or
-a subsequent spawned process. However, it does not appear to be straight forward
-to detect whether a `__main__` guard is present in the code.
+自分が元の `__main__` プロセスにいるのか、その後に spawn されたプロセスにいるのかを検出することは可能です。しかし、コードに `__main__` ガードがあるかどうかを検出するのは簡単ではないようです。
 
-This option has been discarded as impractical.
+この選択肢は現実的でないとして見送られました。
 
-### Use `forkserver`
+### `forkserver` を使う { #use-forkserver }
 
-At first it appears that `forkserver` is a nice solution to the problem.
-However, the way it works presents the same challenges that `spawn` does when
-vLLM is used as a library.
+一見すると `forkserver` はこの問題に対する良い解決策に思えます。しかしその仕組み上、vLLM をライブラリとして使う場合には `spawn` と同じ課題が生じます。
 
-### Force `spawn` all the time
+### 常に `spawn` を強制する { #force-spawn-all-the-time }
 
-One way to clean this up is to just force the use of `spawn` all the time and
-document that the use of a `__main__` guard is required when using vLLM as a
-library. This would unfortunately break existing code and make vLLM harder to
-use, violating the desire to make the `LLM` class as easy as possible to use.
+これを整理する 1 つの方法は、常に `spawn` の使用を強制し、vLLM をライブラリとして使う場合には `__main__` ガードが必須であるとドキュメントに記載することです。しかしこれは既存のコードを壊し、vLLM を使いにくくしてしまいます。これは `LLM` クラスをできるだけ簡単に使えるようにしたいという方針に反します。
 
-Instead of pushing this on our users, we will retain the complexity to do our
-best to make things work.
+この負担をユーザーに押しつけるのではなく、私たちは複雑さを引き受け、できる限りうまく動くようにします。
 
-## Future Work
+## 今後の課題 { #future-work }
 
-We may want to consider a different worker management approach in the future
-that works around these challenges.
+将来的には、これらの課題を回避する別のワーカー管理のアプローチを検討したいと考えています。
 
-1. We could implement something `forkserver`-like, but have the process manager
-   be something we initially launch by running our own subprocess and a custom
-   entrypoint for worker management (launch a `vllm-manager` process).
+1. `forkserver` に似たものを実装しつつ、プロセスマネージャーを、自分たちのサブプロセスとワーカー管理用の独自エントリポイント（`vllm-manager` プロセス）として最初に起動する形にする。
 
-2. We can explore other libraries that may better suit our needs. Examples to
-   consider:
+2. ニーズにより適した他のライブラリを検討する。検討候補の例:
 
     - <https://github.com/joblib/loky>

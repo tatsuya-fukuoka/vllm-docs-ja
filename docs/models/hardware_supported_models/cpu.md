@@ -1,20 +1,20 @@
-# CPU - Intel® Xeon®
+# CPU - Intel® Xeon® { #cpu-intel-xeon }
 
-!!! note "AMD Zen CPUs"
-    On AMD Zen 4 / Zen 5 CPUs, AMD Zen optimizations are auto-enabled when the [`zentorch`](https://github.com/amd/ZenDNN-pytorch-plugin) package is installed. All models supported by vLLM on CPU are supported on AMD Zen as well; model compatibility does not change. This page reflects the current CPU reference validation matrix on Intel systems. See [AMD Zen optimizations](../../getting_started/installation/cpu.md#amd-zen-optimizations) for details.
+!!! note "AMD Zen CPU"
+    AMD Zen 4 / Zen 5 の CPU では、[`zentorch`](https://github.com/amd/ZenDNN-pytorch-plugin) パッケージがインストールされていると AMD Zen 向けの最適化が自動的に有効になります。vLLM が CPU でサポートするモデルはすべて AMD Zen でもサポートされ、モデルの互換性は変わりません。このページは、Intel システムにおける現時点の CPU リファレンス検証マトリクスを示しています。詳細は [AMD Zen 向けの最適化](../../getting_started/installation/cpu.md#amd-zen-optimizations)を参照してください。
 
-## Validated Hardware
+## 検証済みハードウェア { #validated-hardware }
 
-| Hardware |
+| ハードウェア |
 | -------- |
 | [Intel® Xeon® 6 Processors](https://www.intel.com/content/www/us/en/products/details/processors/xeon.html) |
 | [Intel® Xeon® 5 Processors](https://www.intel.com/content/www/us/en/products/docs/processors/xeon/5th-gen-xeon-scalable-processors.html) |
 
-## Recommended Models
+## 推奨モデル { #recommended-models }
 
-### Text-only Language Models
+### テキストのみの言語モデル { #text-only-language-models }
 
-| Model | Architecture | Supported |
+| モデル | アーキテクチャ | 対応状況 |
 | ------------------------------------ | ---------------------------------------- | --------- |
 | unsloth/gpt-oss-20b | GptOssForCausalLM | ✅ |
 | meta-llama/Llama-3.1-8B-Instruct | LlamaForCausalLM | ✅ |
@@ -46,9 +46,9 @@
 | microsoft/Phi-4-reasoning | Phi3ForCausalLM | ✅ |
 | TheBloke/Mistral-7B-Instruct-v0.2-AWQ | MistralForCausalLM | ✅ |
 
-### Multimodal Language Models
+### マルチモーダル言語モデル { #multimodal-language-models }
 
-| Model | Architecture | Supported |
+| モデル | アーキテクチャ | 対応状況 |
 | ------------------------------------ | ---------------------------------------- | --------- |
 | meta-llama/Llama-4-Scout-17B-16E-Instruct | Llama4ForConditionalGeneration | ✅ |
 | google/gemma-3-4b-it | Gemma3ForConditionalGeneration | ✅ |
@@ -60,4 +60,4 @@
 | Qwen/Qwen2.5-VL-7B-Instruct | Qwen2VLForConditionalGeneration | ✅ |
 | openai/whisper-large-v3 | WhisperForConditionalGeneration | ✅ |
 
-✅ Runs and optimized.
+✅ 動作し、最適化済み。

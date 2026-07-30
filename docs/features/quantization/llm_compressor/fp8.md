@@ -1,48 +1,48 @@
-# FP8 W8A8
+# FP8 W8A8 { #fp8-w8a8 }
 
-vLLM supports FP8 (8-bit floating point) weight and activation quantization using hardware acceleration on GPUs such as Nvidia H100 and AMD MI300x.
-Currently, only Hopper and Ada Lovelace GPUs are officially supported for W8A8.
-Turing/Ampere GPUs are supported for W8A16 (weight-only FP8) utilizing Marlin kernels.
-Quantization of models with FP8 allows for a 2x reduction in model memory requirements and up to a 1.6x improvement in throughput with minimal impact on accuracy.
+vLLM は、Nvidia H100 や AMD MI300x などの GPU におけるハードウェアアクセラレーションを利用した FP8（8 ビット浮動小数点）の重み・活性値量子化をサポートしています。
+現時点で W8A8 が公式にサポートされるのは Hopper と Ada Lovelace の GPU のみです。
+Turing / Ampere の GPU では、Marlin カーネルを利用した W8A16（重みのみ FP8）がサポートされます。
+FP8 でモデルを量子化すると、精度への影響を最小限に抑えつつ、モデルのメモリ要求量を 1/2 に、スループットを最大 1.6 倍に改善できます。
 
-Please visit the HF collection of [quantized FP8 checkpoints of popular LLMs ready to use with vLLM](https://huggingface.co/collections/neuralmagic/fp8-llms-for-vllm-666742ed2b78b7ac8df13127).
+vLLM ですぐに使える[人気 LLM の FP8 量子化済みチェックポイント](https://huggingface.co/collections/neuralmagic/fp8-llms-for-vllm-666742ed2b78b7ac8df13127)の HF コレクションもご覧ください。
 
-The FP8 types typically supported in hardware have two distinct representations, each useful in different scenarios:
+ハードウェアで一般にサポートされる FP8 の型には 2 つの表現があり、それぞれ異なる場面で有用です。
 
-- **E4M3**: Consists of 1 sign bit, 4 exponent bits, and 3 bits of mantissa. It can store values up to +/-448 and `nan`.
-- **E5M2**: Consists of 1 sign bit, 5 exponent bits, and 2 bits of mantissa. It can store values up to +/-57344, +/- `inf`, and `nan`. The tradeoff for the increased dynamic range is lower precision of the stored values.
+- **E4M3**: 符号ビット 1、指数部 4 ビット、仮数部 3 ビットで構成されます。±448 までの値と `nan` を格納できます。
+- **E5M2**: 符号ビット 1、指数部 5 ビット、仮数部 2 ビットで構成されます。±57344 までの値と ± `inf`、`nan` を格納できます。ダイナミックレンジが広がる代わりに、格納される値の精度は下がります。
 
 !!! note
-    FP8 computation is supported on NVIDIA GPUs with compute capability >= 8.9 (Ada Lovelace, Hopper).
-    FP8 models will run on compute capability >= 7.5 (Turing) as weight-only W8A16, utilizing FP8 Marlin.
+    FP8 の演算は compute capability 8.9 以上（Ada Lovelace、Hopper）の NVIDIA GPU でサポートされます。
+    FP8 モデルは compute capability 7.5 以上（Turing）でも、FP8 Marlin を利用した重みのみの W8A16 として動作します。
 
-## Installation
+## インストール { #installation }
 
-To produce performant FP8 quantized models with vLLM, you'll need to install the [llm-compressor](https://github.com/vllm-project/llm-compressor/) library:
+vLLM で性能の出る FP8 量子化モデルを作るには、[llm-compressor](https://github.com/vllm-project/llm-compressor/) ライブラリをインストールする必要があります。
 
 ```bash
 (venv-llm-compressor) pip install llmcompressor
 ```
 
-Additionally, install `vllm` and `lm-evaluation-harness` for evaluation:
+さらに、評価のために `vllm` と `lm-evaluation-harness` をインストールします。
 
 ```bash
 (venv-vllm) pip install vllm "lm-eval[api]>=0.4.12"
 ```
 
-Please use separate environments for vLLM and llm-compressor as they might not work together.
+vLLM と llm-compressor は同時に動作しない場合があるため、それぞれ別の環境を使ってください。
 
-## Quantization Process
+## 量子化の手順 { #quantization-process }
 
-The quantization process involves three main steps:
+量子化の手順は主に 3 ステップです。
 
-1. Loading the model
-2. Applying quantization
-3. Evaluating accuracy in vLLM
+1. モデルの読み込み
+2. 量子化の適用
+3. vLLM での精度評価
 
-### 1. Loading the Model
+### 1. モデルの読み込み { #1-loading-the-model }
 
-Load your model and tokenizer using the standard `transformers` AutoModel classes:
+標準の `transformers` の AutoModel クラスを使って、モデルとトークナイザーを読み込みます。
 
 ```python
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -56,14 +56,14 @@ model = AutoModelForCausalLM.from_pretrained(
 tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
 ```
 
-### 2. Applying Quantization
+### 2. 量子化の適用 { #2-applying-quantization }
 
-For FP8 quantization, we can recover accuracy with simple RTN quantization. We recommend targeting all `Linear` layers using the `FP8_DYNAMIC` scheme, which uses:
+FP8 の量子化では、単純な RTN（round-to-nearest）量子化でも精度を回復できます。`FP8_DYNAMIC` スキームですべての `Linear` 層を対象にすることを推奨します。このスキームでは次のようにします。
 
-- Static, per-channel quantization on the weights
-- Dynamic, per-token quantization on the activations
+- 重みには静的なチャネル単位の量子化
+- 活性値には動的なトークン単位の量子化
 
-Since simple RTN does not require data for weight quantization and the activations are quantized dynamically, we do not need any calibration data for this quantization flow.
+単純な RTN は重みの量子化にデータを必要とせず、活性値は動的に量子化されるため、この量子化フローではキャリブレーションデータが不要です。
 
 ```python
 from llmcompressor import oneshot
@@ -85,9 +85,9 @@ model.save_pretrained(SAVE_DIR)
 tokenizer.save_pretrained(SAVE_DIR)
 ```
 
-### 3. Evaluating Accuracy
+### 3. 精度の評価 { #3-evaluating-accuracy }
 
-Load and run the model in `vllm`:
+`vllm` でモデルを読み込んで実行します。
 
 ```python
 from vllm import LLM
@@ -97,10 +97,11 @@ result = llm.generate("Hello my name is")
 print(result[0].outputs[0].text)
 ```
 
-Evaluate accuracy with `lm_eval` (for example on 250 samples of `gsm8k`):
+`lm_eval` で精度を評価します（例として `gsm8k` の 250 サンプル）。
 
 !!! note
-    Quantized models can be sensitive to the presence of the `bos` token. `lm_eval` does not add a `bos` token by default, so make sure to include the `add_bos_token=True` argument when running your evaluations.
+    量子化されたモデルは `bos` トークンの有無に敏感な場合があります。`lm_eval` は既定では `bos`
+    トークンを付加しないため、評価を実行するときは必ず `add_bos_token=True` 引数を含めてください。
 
 ```bash
 MODEL=$PWD/Meta-Llama-3-8B-Instruct-FP8-Dynamic
@@ -110,7 +111,7 @@ lm_eval \
   --tasks gsm8k  --num_fewshot 5 --batch_size auto --limit 250
 ```
 
-Here's an example of the resulting scores:
+得られるスコアの例は次のとおりです。
 
 ```text
 |Tasks|Version|     Filter     |n-shot|  Metric   |   |Value|   |Stderr|
@@ -119,15 +120,15 @@ Here's an example of the resulting scores:
 |     |       |strict-match    |     5|exact_match|↑  |0.768|±  |0.0268|
 ```
 
-## Troubleshooting and Support
+## トラブルシューティングとサポート { #troubleshooting-and-support }
 
-If you encounter any issues or have feature requests, please open an issue on the [vllm-project/llm-compressor](https://github.com/vllm-project/llm-compressor/issues) GitHub repository.
+問題が発生した場合や機能のリクエストがある場合は、[vllm-project/llm-compressor](https://github.com/vllm-project/llm-compressor/issues) の GitHub リポジトリで issue を作成してください。
 
-## Online Dynamic Quantization
+## オンライン動的量子化 { #online-dynamic-quantization }
 
-Dynamic quantization of an original precision BF16/FP16 model to FP8 can be achieved with vLLM without any calibration data required. You can enable the feature by specifying `--quantization="fp8"` in the command line or setting `quantization="fp8"` in the LLM constructor.
+元の精度が BF16 / FP16 のモデルを FP8 へ動的に量子化する処理は、キャリブレーションデータなしで vLLM 上で実行できます。コマンドラインで `--quantization="fp8"` を指定するか、LLM のコンストラクタで `quantization="fp8"` を設定すると有効になります。
 
-In this mode, all Linear modules (except for the final `lm_head`) have their weights quantized down to FP8_E4M3 precision with a per-tensor scale. Activations have their minimum and maximum values calculated during each forward pass to provide a dynamic per-tensor scale for high accuracy. As a result, latency improvements are limited in this mode.
+このモードでは、最後の `lm_head` を除くすべての Linear モジュールの重みが、テンソル単位のスケールで FP8_E4M3 の精度に量子化されます。活性値については、高精度を保つために各 forward パスで最小値と最大値を計算し、動的なテンソル単位のスケールを求めます。そのため、このモードではレイテンシの改善は限定的です。
 
 ```python
 from vllm import LLM

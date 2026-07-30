@@ -1,47 +1,47 @@
-# Token Classification Usages
+# トークン分類の利用 { #token-classification-usages }
 
-## Summary
+## 概要 { #summary }
 
-- Model Usage: token classification
-- Pooling Tasks: `token_classify`
-- Offline APIs:
+- モデルの用途: トークン分類
+- プーリングタスク: `token_classify`
+- オフライン API:
     - `LLM.encode(..., pooling_task="token_classify")`
-- Online APIs:
-    - Pooling API (`/pooling`)
+- オンライン API:
+    - プーリング API（`/pooling`）
 
-The key distinction between (sequence) classification and token classification lies in their output granularity: (sequence) classification produces a single result for an entire input sequence, whereas token classification yields a result for each individual token within the sequence.
+（シーケンス）分類とトークン分類の主な違いは、出力の粒度にあります。（シーケンス）分類は入力シーケンス全体に対して 1 つの結果を出力するのに対し、トークン分類はシーケンス内の各トークンごとに結果を出力します。
 
-Many classification models support both (sequence) classification and token classification. For further details on (sequence) classification, please refer to [this page](classify.md).
+多くの分類モデルは、（シーケンス）分類とトークン分類の両方をサポートしています。（シーケンス）分類の詳細については、[このページ](classify.md)を参照してください。
 
 !!! note
 
-    Pooling multitask support has been removed since v0.21. When the default pooling task (classify) is not
-    what you want, you need to manually specify it via `PoolerConfig(task="token_classify")` offline or
-    `--pooler-config.task token_classify` online.
+    プーリングのマルチタスク対応は v0.21 で削除されました。既定のプーリングタスク（classify）が
+    目的に合わない場合は、オフラインでは `PoolerConfig(task="token_classify")`、オンラインでは
+    `--pooler-config.task token_classify` で手動で指定する必要があります。
 
-## Typical Use Cases
+## 代表的なユースケース { #typical-use-cases }
 
-### Named Entity Recognition (NER)
+### 固有表現抽出（NER） { #named-entity-recognition-ner }
 
-For implementation examples, see:
+実装例は次を参照してください。
 
-Offline: [examples/pooling/token_classify/ner_offline.py](../../../examples/pooling/token_classify/ner_offline.py)
+オフライン: [examples/pooling/token_classify/ner_offline.py](../../../examples/pooling/token_classify/ner_offline.py)
 
-Online: [examples/pooling/token_classify/ner_online.py](../../../examples/pooling/token_classify/ner_online.py)
+オンライン: [examples/pooling/token_classify/ner_online.py](../../../examples/pooling/token_classify/ner_online.py)
 
-### Forced Alignment
+### 強制アライメント { #forced-alignment }
 
-Forced alignment takes audio and reference text as input and produces word-level timestamps.
+強制アライメント（forced alignment）は、音声と参照テキストを入力として、単語レベルのタイムスタンプを出力します。
 
-Offline: [examples/pooling/token_classify/forced_alignment_offline.py](../../../examples/pooling/token_classify/forced_alignment_offline.py)
+オフライン: [examples/pooling/token_classify/forced_alignment_offline.py](../../../examples/pooling/token_classify/forced_alignment_offline.py)
 
-### Sparse retrieval (lexical matching)
+### スパース検索（語彙マッチング） { #sparse-retrieval-lexical-matching }
 
-The BAAI/bge-m3 model leverages token classification for sparse retrieval. For more information, see [this page](specific_models.md#baaibge-m3).
+BAAI/bge-m3 モデルは、スパース検索のためにトークン分類を活用しています。詳細は[このページ](specific_models.md#baaibge-m3)を参照してください。
 
-## Supported Models
+## 対応モデル { #supported-models }
 
-| Architecture | Models | Example HF Models | [LoRA](../../features/lora.md) | [PP](../../serving/parallelism_scaling.md) |
+| アーキテクチャ | モデル | HF モデルの例 | [LoRA](../../features/lora.md) | [PP](../../serving/parallelism_scaling.md) |
 | ------------ | ------ | ----------------- | --------------------------- | --------------------------------------- |
 | `BertForTokenClassification` | bert-based | `boltuix/NeuroBERT-NER` (see note), etc. | | |
 | `ModernBertForTokenClassification` | ModernBERT-based | `disham993/electrical-ner-ModernBERT-base` | | |
@@ -51,47 +51,46 @@ The BAAI/bge-m3 model leverages token classification for sparse retrieval. For m
 | `XLMRobertaForTokenClassification` | XLM-RoBERTa-based | `Davlan/xlm-roberta-base-ner-hrl` | | |
 | `*Model`<sup>C</sup>, `*ForCausalLM`<sup>C</sup>, etc. | Generative models | N/A | \* | \* |
 
-<sup>C</sup> Automatically converted into a classification model via `--convert classify`. ([details](./README.md#model-conversion))
-\* Feature support is the same as that of the original model.
+<sup>C</sup> `--convert classify` によって自動的に分類モデルへ変換されます。（[詳細](./README.md#model-conversion)）
+\* 機能のサポート状況は元のモデルと同じです。
 
-If your model is not in the above list, we will try to automatically convert the model using
-[`as_seq_cls_model`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/adapters/#vllm.model_executor.models.adapters.as_seq_cls_model). By default, the class probabilities are extracted from the softmaxed hidden state corresponding to the last token.
+上記の一覧にモデルがない場合は、[`as_seq_cls_model`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/adapters/#vllm.model_executor.models.adapters.as_seq_cls_model) を使ってモデルの自動変換を試みます。既定では、最後のトークンに対応する隠れ状態を softmax したものからクラス確率が抽出されます。
 
-### Multimodal Models
+### マルチモーダルモデル { #multimodal-models }
 
 !!! note
-    For more information about multimodal models inputs, see [this page](../supported_models.md#list-of-multimodal-language-models).
+    マルチモーダルモデルの入力については、[このページ](../supported_models.md#list-of-multimodal-language-models)を参照してください。
 
-| Architecture                                  | Models              | Inputs            | Example HF Models                          | [LoRA](../../features/lora.md) | [PP](../../serving/parallelism_scaling.md) |
+| アーキテクチャ                                  | モデル              | 入力            | HF モデルの例                          | [LoRA](../../features/lora.md) | [PP](../../serving/parallelism_scaling.md) |
 | --------------------------------------------- | ------------------- | ----------------- | ------------------------------------------ | ------------------------------ | ------------------------------------------ |
 | `Qwen3ASRForcedAlignerForTokenClassification` | Qwen3-ForcedAligner | T + A<sup>+</sup> | `Qwen/Qwen3-ForcedAligner-0.6B` (see note) |                                | ✅︎                                         |
 
 !!! note
-    Forced alignment usage requires `--hf-overrides '{"architectures": ["Qwen3ASRForcedAlignerForTokenClassification"]}'`.
-    Please refer to [examples/pooling/token_classify/forced_alignment_offline.py](../../../examples/pooling/token_classify/forced_alignment_offline.py).
+    強制アライメントを利用するには `--hf-overrides '{"architectures": ["Qwen3ASRForcedAlignerForTokenClassification"]}'` が必要です。
+    [examples/pooling/token_classify/forced_alignment_offline.py](../../../examples/pooling/token_classify/forced_alignment_offline.py) を参照してください。
 
-### Reward Models
+### 報酬モデル { #reward-models }
 
-Using token classification models as reward models. For details on reward models, see [Reward Models](reward.md).
+トークン分類モデルを報酬モデルとして使う場合です。報酬モデルの詳細は[報酬モデル](reward.md)を参照してください。
 
 --8<-- "docs/models/pooling_models/reward.md:supported-token-reward-models"
 
-## Offline Inference
+## オフライン推論 { #offline-inference }
 
-### Pooling Parameters
+### プーリングパラメータ { #pooling-parameters }
 
-The following [`pooling parameters`](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.PoolingParams) are supported.
+次の[プーリングパラメータ](https://docs.vllm.ai/en/v0.26.0/api/vllm/#vllm.PoolingParams)がサポートされています。
 
 ```python
 --8<-- "vllm/pooling_params.py:common-pooling-params"
 # このコードは上流のソースを参照してください: https://github.com/vllm-project/vllm/blob/v0.26.0/vllm/pooling_params.py
 ```
 
-### `LLM.encode`
+### `LLM.encode` { #llmencode }
 
-The [`encode`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.encode) method is available to all pooling models in vLLM.
+[`encode`](https://docs.vllm.ai/en/v0.26.0/api/vllm/entrypoints/pooling/offline/#vllm.entrypoints.pooling.offline.PoolingOfflineMixin.encode) メソッドは、vLLM のすべてのプーリングモデルで利用できます。
 
-Set `pooling_task="token_classify"` when using `LLM.encode` for token classification Models:
+トークン分類モデルで `LLM.encode` を使う場合は `pooling_task="token_classify"` を指定します。
 
 ```python
 from vllm import LLM
@@ -103,14 +102,14 @@ data = output.outputs.data
 print(f"Data: {data!r}")
 ```
 
-## Online Serving
+## オンラインサービング { #online-serving }
 
-Please refer to the [Pooling API](README.md#pooling-api) and use `"task":"token_classify"`.
+[プーリング API](README.md#pooling-api) を参照し、`"task":"token_classify"` を指定してください。
 
-## More examples
+## その他の例 { #more-examples }
 
-More examples can be found here: [examples/pooling/token_classify](../../../examples/pooling/token_classify)
+その他の例はこちらにあります: [examples/pooling/token_classify](../../../examples/pooling/token_classify)
 
-## Supported Features
+## サポートされる機能 { #supported-features }
 
-Token classification features should be consistent with (sequence) classification. For more information, see [this page](classify.md#supported-features).
+トークン分類の機能は（シーケンス）分類と一致しているはずです。詳細は[このページ](classify.md#supported-features)を参照してください。

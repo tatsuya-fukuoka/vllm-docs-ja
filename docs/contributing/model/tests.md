@@ -1,57 +1,53 @@
-# Unit Testing
+# ユニットテスト { #unit-testing }
 
-This page explains how to write unit tests to verify the implementation of your model.
+このページでは、実装したモデルを検証するためのユニットテストの書き方を説明します。
 
-## Required Tests
+## 必須のテスト { #required-tests }
 
-These tests are necessary to get your PR merged into vLLM library.
-Without them, the CI for your PR will fail.
+これらのテストは、PR を vLLM ライブラリにマージしてもらうために必要です。これらがないと、PR の CI が失敗します。
 
-### Model loading
+### モデルの読み込み { #model-loading }
 
-Include an example HuggingFace repository for your model in [tests/models/registry.py](../../../tests/models/registry.py).
-This enables a unit test that loads dummy weights to ensure that the model can be initialized in vLLM.
+[tests/models/registry.py](../../../tests/models/registry.py) に、そのモデルの HuggingFace リポジトリの例を追加してください。これにより、ダミーの重みを読み込んで vLLM でモデルを初期化できることを確認するユニットテストが有効になります。
 
 !!! important
-    The list of models in each section should be maintained in alphabetical order.
+    各セクションのモデル一覧はアルファベット順に保ってください。
 
 !!! tip
-    If your model requires a development version of HF Transformers, you can set
-    `min_transformers_version` to skip the test in CI until the model is released.
+    モデルが HF Transformers の開発版を必要とする場合は、`min_transformers_version` を設定すると、そのバージョンがリリースされるまで CI 上でテストをスキップできます。
 
-## Optional Tests
+## 任意のテスト { #optional-tests }
 
-These tests are optional to get your PR merged into vLLM library.
-Passing these tests provides more confidence that your implementation is correct, and helps avoid future regressions.
+これらのテストは、PR を vLLM ライブラリにマージしてもらうために必須ではありません。ただし、これらのテストが通ると実装が正しいという確信が高まり、将来のリグレッションを防ぐのに役立ちます。
 
-### Model correctness
+### モデルの正しさ { #model-correctness }
 
-These tests compare the model outputs of vLLM against [HF Transformers](https://github.com/huggingface/transformers). You can add new tests under the subdirectories of [tests/models](../../../tests/models).
+これらのテストでは、vLLM のモデル出力を [HF Transformers](https://github.com/huggingface/transformers) と比較します。新しいテストは [tests/models](../../../tests/models) のサブディレクトリに追加できます。
 
-#### Generative models
+#### 生成モデル { #generative-models }
 
-For [generative models](../../models/generative_models.md), there are two levels of correctness tests, as defined in [tests/models/utils.py](../../../tests/models/utils.py):
+[生成モデル](../../models/generative_models.md)については、[tests/models/utils.py](../../../tests/models/utils.py) で定義されているとおり、正しさのテストに 2 つのレベルがあります。
 
-- Exact correctness (`check_outputs_equal`): The text outputted by vLLM should exactly match the text outputted by HF.
-- Logprobs similarity (`check_logprobs_close`): The logprobs outputted by vLLM should be in the top-k logprobs outputted by HF, and vice versa.
+- 完全一致（`check_outputs_equal`）: vLLM が出力するテキストが HF の出力と完全に一致すること。
+- logprobs の類似度（`check_logprobs_close`）: vLLM が出力する logprobs が HF の出力する top-k の logprobs に含まれ、その逆も成り立つこと。
 
-#### Pooling models
+#### プーリングモデル { #pooling-models }
 
-For [pooling models](../../models/pooling_models/README.md), we simply check the cosine similarity, as defined in [tests/models/utils.py](../../../tests/models/utils.py).
+[プーリングモデル](../../models/pooling_models/README.md)については、[tests/models/utils.py](../../../tests/models/utils.py) で定義されているとおり、単純にコサイン類似度を確認します。
 
-### Multi-modal processing
+### マルチモーダル処理 { #multi-modal-processing }
 
-#### Common tests
+#### 共通テスト { #common-tests }
 
-Adding your model to [tests/models/multimodal/processing/test_common.py](../../../tests/models/multimodal/processing/test_common.py) verifies that the following input combinations result in the same outputs:
+[tests/models/multimodal/processing/test_common.py](../../../tests/models/multimodal/processing/test_common.py) にモデルを追加すると、次の入力の組み合わせがすべて同じ出力になることを検証できます。
 
-- Text + multi-modal data
-- Tokens + multi-modal data
-- Text + cached multi-modal data
-- Tokens + cached multi-modal data
+- テキスト + マルチモーダルデータ
+- トークン + マルチモーダルデータ
+- テキスト + キャッシュ済みマルチモーダルデータ
+- トークン + キャッシュ済みマルチモーダルデータ
 
-#### Model-specific tests
+#### モデル固有のテスト { #model-specific-tests }
 
-You can add a new file under [tests/models/multimodal/processing](../../../tests/models/multimodal/processing) to run tests that only apply to your model.
+そのモデルにのみ当てはまるテストを実行するには、[tests/models/multimodal/processing](../../../tests/models/multimodal/processing) の下に新しいファイルを追加できます。
 
-For example, if the HF processor for your model accepts user-specified keyword arguments, you can verify that the keyword arguments are being applied correctly, such as in [tests/models/multimodal/processing/test_phi3v.py](../../../tests/models/multimodal/processing/test_phi3v.py).
+たとえば、モデルの HF プロセッサがユーザー指定のキーワード引数を受け取る場合、[tests/models/multimodal/processing/test_phi3v.py](../../../tests/models/multimodal/processing/test_phi3v.py) のように、そのキーワード引数が正しく適用されているかを検証できます。

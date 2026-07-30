@@ -1,45 +1,44 @@
-# INT8 W8A8
+# INT8 W8A8 { #int8-w8a8 }
 
-vLLM supports quantizing weights and activations to INT8 for memory savings and inference acceleration.
-This quantization method is particularly useful for reducing model size while maintaining good performance.
+vLLM は、メモリ削減と推論の高速化のために、重みと活性値を INT8 に量子化することをサポートしています。この量子化手法は、良好な性能を保ちながらモデルサイズを削減したい場合に特に有用です。
 
-Please visit the HF collection of [quantized INT8 checkpoints of popular LLMs ready to use with vLLM](https://huggingface.co/collections/neuralmagic/int8-llms-for-vllm-668ec32c049dca0369816415).
+vLLM ですぐに使える[人気 LLM の INT8 量子化済みチェックポイント](https://huggingface.co/collections/neuralmagic/int8-llms-for-vllm-668ec32c049dca0369816415)の HF コレクションもご覧ください。
 
 !!! note
-    INT8 computation is supported on NVIDIA GPUs with compute capability > 7.5 (Turing, Ampere, Ada Lovelace, Hopper).
+    INT8 の演算は compute capability 7.5 より上の NVIDIA GPU（Turing、Ampere、Ada Lovelace、Hopper）でサポートされます。
 
 !!! warning
-    **Blackwell GPU Limitation**: INT8 is not supported on compute capability >= 10.0 (e.g., RTX 6000 Blackwell).
-    Use [FP8 quantization](fp8.md) instead, or run on Hopper/Ada/Ampere architectures.
+    **Blackwell GPU の制限**: INT8 は compute capability 10.0 以上（RTX 6000 Blackwell など）ではサポートされません。
+    代わりに [FP8 量子化](fp8.md)を使うか、Hopper / Ada / Ampere のアーキテクチャで実行してください。
 
-## Prerequisites
+## 前提条件 { #prerequisites }
 
-To use INT8 quantization with vLLM, you'll need to install the [llm-compressor](https://github.com/vllm-project/llm-compressor/) library:
+vLLM で INT8 量子化を使うには、[llm-compressor](https://github.com/vllm-project/llm-compressor/) ライブラリをインストールする必要があります。
 
 ```bash
 (venv-llm-compressor) pip install llmcompressor
 ```
 
-Additionally, install `vllm` and `lm-evaluation-harness` for evaluation:
+さらに、評価のために `vllm` と `lm-evaluation-harness` をインストールします。
 
 ```bash
 (venv-vllm) pip install vllm "lm-eval[api]>=0.4.12"
 ```
 
-Please use separate environments for vLLM and llm-compressor as they might not work together.
+vLLM と llm-compressor は同時に動作しない場合があるため、それぞれ別の環境を使ってください。
 
-## Quantization Process
+## 量子化の手順 { #quantization-process }
 
-The quantization process involves four main steps:
+量子化の手順は主に 4 ステップです。
 
-1. Loading the model
-2. Preparing calibration data
-3. Applying quantization
-4. Evaluating accuracy in vLLM
+1. モデルの読み込み
+2. キャリブレーションデータの準備
+3. 量子化の適用
+4. vLLM での精度評価
 
-### 1. Loading the Model
+### 1. モデルの読み込み { #1-loading-the-model }
 
-Load your model and tokenizer using the standard `transformers` AutoModel classes:
+標準の `transformers` の AutoModel クラスを使って、モデルとトークナイザーを読み込みます。
 
 ```python
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -53,11 +52,9 @@ model = AutoModelForCausalLM.from_pretrained(
 tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
 ```
 
-### 2. Preparing Calibration Data
+### 2. キャリブレーションデータの準備 { #2-preparing-calibration-data }
 
-When quantizing activations to INT8, you need sample data to estimate the activation scales.
-It's best to use calibration data that closely matches your deployment data.
-For a general-purpose instruction-tuned model, you can use a dataset like `ultrachat`:
+活性値を INT8 に量子化する場合、活性値のスケールを推定するためのサンプルデータが必要です。実際のデプロイで扱うデータに近いキャリブレーションデータを使うのが理想的です。汎用の instruction チューニング済みモデルであれば、`ultrachat` のようなデータセットを使えます。
 
 ```python
 from datasets import load_dataset
@@ -78,9 +75,9 @@ def tokenize(sample):
 ds = ds.map(tokenize, remove_columns=ds.column_names)
 ```
 
-### 3. Applying Quantization
+### 3. 量子化の適用 { #3-applying-quantization }
 
-Now, apply the quantization algorithms:
+次に、量子化アルゴリズムを適用します。
 
 ```python
 from llmcompressor import oneshot
@@ -108,11 +105,11 @@ model.save_pretrained(SAVE_DIR, save_compressed=True)
 tokenizer.save_pretrained(SAVE_DIR)
 ```
 
-This process creates a W8A8 model with weights and activations quantized to 8-bit integers.
+この処理により、重みと活性値が 8 ビット整数に量子化された W8A8 モデルが作成されます。
 
-### 4. Evaluating Accuracy
+### 4. 精度の評価 { #4-evaluating-accuracy }
 
-After quantization, you can load and run the model in vLLM:
+量子化後は、vLLM でモデルを読み込んで実行できます。
 
 ```python
 from vllm import LLM
@@ -120,7 +117,7 @@ from vllm import LLM
 llm = LLM("./Meta-Llama-3-8B-Instruct-W8A8-Dynamic-Per-Token")
 ```
 
-To evaluate accuracy, you can use `lm_eval`:
+精度を評価するには `lm_eval` を使います。
 
 ```bash
 lm_eval --model vllm \
@@ -132,15 +129,16 @@ lm_eval --model vllm \
 ```
 
 !!! note
-    Quantized models can be sensitive to the presence of the `bos` token. Make sure to include the `add_bos_token=True` argument when running evaluations.
+    量子化されたモデルは `bos` トークンの有無に敏感な場合があります。評価を実行するときは必ず
+    `add_bos_token=True` 引数を含めてください。
 
-## Best Practices
+## ベストプラクティス { #best-practices }
 
-- Start with 512 samples for calibration data (increase if accuracy drops)
-- Use a sequence length of 2048 as a starting point
-- Employ the chat template or instruction template that the model was trained with
-- If you've fine-tuned a model, consider using a sample of your training data for calibration
+- キャリブレーションデータはまず 512 サンプルから始める（精度が落ちる場合は増やす）
+- シーケンス長は 2048 を出発点にする
+- モデルの学習に使われたチャットテンプレートまたは instruction テンプレートを使う
+- モデルをファインチューニングしている場合は、学習データの一部をキャリブレーションに使うことを検討する
 
-## Troubleshooting and Support
+## トラブルシューティングとサポート { #troubleshooting-and-support }
 
-If you encounter any issues or have feature requests, please open an issue on the [vllm-project/llm-compressor](https://github.com/vllm-project/llm-compressor/issues) GitHub repository.
+問題が発生した場合や機能のリクエストがある場合は、[vllm-project/llm-compressor](https://github.com/vllm-project/llm-compressor/issues) の GitHub リポジトリで issue を作成してください。

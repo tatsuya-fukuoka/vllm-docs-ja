@@ -1,12 +1,12 @@
-# IO Processor Plugins
+# IO プロセッサプラグイン { #io-processor-plugins }
 
-IO Processor plugins are a feature that allows pre- and post-processing of the model input and output for pooling models. The idea is that users are allowed to pass a custom input to vLLM that is converted into one or more model prompts and fed to the model `encode` method. One potential use-case of such plugins is that of using vLLM for generating multi-modal data. Say users feed an image to vLLM and get an image in output.
+IO プロセッサプラグインは、プーリングモデルにおいてモデルの入出力に対する前処理・後処理を行える機能です。ユーザーが独自の入力を vLLM に渡すと、それが 1 つ以上のモデルプロンプトに変換され、モデルの `encode` メソッドに渡される、という考え方です。こうしたプラグインの活用例としては、vLLM をマルチモーダルデータの生成に使うケースが挙げられます。たとえば、ユーザーが画像を vLLM に入力し、出力として画像を得る、といったものです。
 
-When performing an inference with IO Processor plugins, the prompt type is defined by the plugin and the same is valid for the final request output. vLLM does not perform any validation of input/output data, and it is up to the plugin to ensure the correct data is being fed to the model and returned to the user. As of now these plugins support only pooling models and can be triggered via the `encode` method in `LLM` and `AsyncLLM`, or in online serving mode via the `/pooling` endpoint.
+IO プロセッサプラグインを使って推論を行う場合、プロンプトの型はプラグインが定義し、最終的なリクエスト出力も同様です。vLLM は入出力データの検証を一切行わないため、モデルに正しいデータが渡され、ユーザーに正しいデータが返されることを保証するのはプラグインの責任です。現時点でこれらのプラグインはプーリングモデルのみをサポートしており、`LLM` および `AsyncLLM` の `encode` メソッド、あるいはオンラインサービングモードでは `/pooling` エンドポイントから呼び出せます。
 
-## Writing an IO Processor Plugin
+## IO プロセッサプラグインの作成 { #writing-an-io-processor-plugin }
 
-IO Processor plugins implement the [`IOProcessor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/plugins/io_processors/interface/#vllm.plugins.io_processors.interface.IOProcessor) interface:
+IO プロセッサプラグインは [`IOProcessor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/plugins/io_processors/interface/#vllm.plugins.io_processors.interface.IOProcessor) インターフェースを実装します。
 
 ```python
 IOProcessorInput = TypeVar("IOProcessorInput")
@@ -77,18 +77,18 @@ class IOProcessor(ABC, Generic[IOProcessorInput, IOProcessorOutput]):
         return self.post_process(collected_output, request_id=request_id, **kwargs)
 ```
 
-The `parse_data` method is used for validating the user data and converting it into the input expected by the `pre_process*` methods.
-The `merge_sampling_params` and `merge_pooling_params` methods merge input `SamplingParams` or `PoolingParams` (if any) with the default one.
-The `pre_process*` methods take the validated plugin input to generate vLLM's model prompts for regular inference.
-The `post_process*` methods take `PoolingRequestOutput` objects as input and generate a custom plugin output.
+`parse_data` メソッドは、ユーザーのデータを検証し、`pre_process*` メソッドが期待する入力に変換するために使います。
+`merge_sampling_params` と `merge_pooling_params` の各メソッドは、入力された `SamplingParams` または `PoolingParams`（あれば）を既定値とマージします。
+`pre_process*` メソッドは、検証済みのプラグイン入力を受け取り、通常の推論用に vLLM のモデルプロンプトを生成します。
+`post_process*` メソッドは、`PoolingRequestOutput` オブジェクトを入力として受け取り、プラグイン独自の出力を生成します。
 
-An example implementation of a plugin that enables generating geotiff images with the PrithviGeospatialMAE model is available [here](https://github.com/IBM/terratorch/tree/main/terratorch/vllm/plugins/segmentation). Please, also refer to our online ([examples/pooling/plugin/prithvi_geospatial_mae_online.py](../../examples/pooling/plugin/prithvi_geospatial_mae_online.py)) and offline ([examples/pooling/plugin/prithvi_geospatial_mae_io_processor.py](../../examples/pooling/plugin/prithvi_geospatial_mae_io_processor.py)) inference examples.
+PrithviGeospatialMAE モデルで geotiff 画像を生成できるようにするプラグインの実装例は[こちら](https://github.com/IBM/terratorch/tree/main/terratorch/vllm/plugins/segmentation)にあります。オンライン推論の例（[examples/pooling/plugin/prithvi_geospatial_mae_online.py](../../examples/pooling/plugin/prithvi_geospatial_mae_online.py)）とオフライン推論の例（[examples/pooling/plugin/prithvi_geospatial_mae_io_processor.py](../../examples/pooling/plugin/prithvi_geospatial_mae_io_processor.py)）も参照してください。
 
-## Using an IO Processor plugin
+## IO プロセッサプラグインの利用 { #using-an-io-processor-plugin }
 
-IO Processor plugins are loaded at engine startup and there are two methods for specifying the name of the plugin to be loaded:
+IO プロセッサプラグインはエンジンの起動時に読み込まれます。読み込むプラグイン名を指定する方法は 2 つあります。
 
-1. Via vLLM's `EngineArgs`: setting the `io_processor_plugin` argument in the `EngineArgs` used to initialize the `AsyncLLM`. The same can be achieved by passing the `io_processor_plugin` argument to `LLM` in offline mode, or by passing the `--io-processor-plugin` argument in serving mode.
-2. Via the model HF configuration: adding an `io_processor_plugin` field to the model config (config.json).
+1. vLLM の `EngineArgs` を使う: `AsyncLLM` の初期化に使う `EngineArgs` の `io_processor_plugin` 引数を設定します。オフラインモードでは `LLM` に `io_processor_plugin` 引数を渡すこと、サービングモードでは `--io-processor-plugin` 引数を渡すことでも同じことができます。
+2. モデルの HF 設定を使う: モデルの設定ファイル（config.json）に `io_processor_plugin` フィールドを追加します。
 
-The order also determines method priority. i.e., setting the plugin name via `EngineArgs` will override any plugin name specified in the model HF config (config.json).
+この順序は優先度も表します。つまり、`EngineArgs` で指定したプラグイン名は、モデルの HF 設定（config.json）で指定されたプラグイン名より優先されます。

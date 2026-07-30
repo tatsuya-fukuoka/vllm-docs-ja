@@ -1,63 +1,62 @@
-# Multi-Modal Data Processing
+# マルチモーダルデータの処理 { #multi-modal-data-processing }
 
-To enable various optimizations in vLLM such as [chunked prefill](../configuration/optimization.md#chunked-prefill) and [prefix caching](../features/automatic_prefix_caching.md), we use [`BaseMultiModalProcessor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor) to provide the correspondence between placeholder feature tokens (e.g. `<image>`) and multi-modal inputs (e.g. the raw input image) based on the outputs of HF processor.
+[チャンク化プレフィル](../configuration/optimization.md#chunked-prefill)や[プレフィックスキャッシュ](../features/automatic_prefix_caching.md)といった vLLM のさまざまな最適化を可能にするため、[`BaseMultiModalProcessor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor) を使い、HF プロセッサの出力にもとづいて、プレースホルダーの特徴トークン（`<image>` など）とマルチモーダル入力（生の入力画像など）との対応関係を提供します。
 
-Here are the main features of [`BaseMultiModalProcessor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor):
+[`BaseMultiModalProcessor`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor) の主な機能は次のとおりです。
 
-## Prompt Update Detection
+## プロンプト更新の検出 { #prompt-update-detection }
 
-One of the main responsibilities of HF processor is to update the prompt with placeholder tokens. For example:
+HF プロセッサの主な役割の 1 つは、プレースホルダートークンでプロンプトを更新することです。たとえば次のような処理です。
 
-- Insert feature placeholder tokens (e.g. `<image><image>...<image>`, the number of which equals to the feature size) at the start of the string.
-- Replace existing input placeholder tokens (e.g. `<image>` for a single image) with feature placeholder tokens (e.g. `<image><image>...<image>`, the number of which equals to the feature size).
+- 文字列の先頭に特徴プレースホルダートークン（`<image><image>...<image>` など。個数は特徴サイズと等しい）を挿入する。
+- 既存の入力プレースホルダートークン（画像 1 枚に対する `<image>` など）を、特徴プレースホルダートークン（`<image><image>...<image>` など。個数は特徴サイズと等しい）に置き換える。
 
-The information about which tokens have been updated is key to finding the correspondence between placeholder feature tokens and multi-modal inputs.
+どのトークンが更新されたかという情報は、プレースホルダーの特徴トークンとマルチモーダル入力の対応関係を見つけるうえで鍵になります。
 
-In vLLM, this information is specified using [`PromptUpdate`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.PromptUpdate) in [`_get_prompt_updates`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates). We can automatically detect whether HF has updated the prompt by checking the existence of the updated tokens.
+vLLM では、この情報を [`_get_prompt_updates`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates) 内の [`PromptUpdate`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.PromptUpdate) で指定します。更新後のトークンが存在するかどうかを確認することで、HF がプロンプトを更新したかどうかを自動的に検出できます。
 
-## Tokenized Prompt Inputs
+## トークン化済みプロンプトの入力 { #tokenized-prompt-inputs }
 
-To enable tokenization in a separate process, we support passing input token IDs alongside multi-modal data.
+トークン化を別プロセスで行えるようにするため、マルチモーダルデータと併せて入力トークン ID を渡すこともサポートしています。
 
-### The problem
+### 課題 { #the-problem }
 
-Consider that HF processors follow these main steps:
+HF プロセッサは主に次の手順をたどります。
 
-1. Tokenize the text
-2. Process multi-modal inputs
-3. Perform prompt updates
+1. テキストをトークン化する
+2. マルチモーダル入力を処理する
+3. プロンプトの更新を行う
 
-And we require that:
+そして、次のことが求められます。
 
-- For text + multi-modal inputs, apply all steps 1--3.
-- For tokenized + multi-modal inputs, apply only steps 2--3.
+- テキスト + マルチモーダル入力の場合は、手順 1〜3 をすべて適用する。
+- トークン化済み + マルチモーダル入力の場合は、手順 2〜3 のみを適用する。
 
-How can we achieve this without rewriting HF processors? We can try to call the HF processor several times on different inputs:
+HF プロセッサを書き換えずに、これをどう実現すればよいでしょうか。異なる入力に対して HF プロセッサを複数回呼び出す方法が考えられます。
 
-- For text + multi-modal inputs, simply call the HF processor directly.
-- For tokenized + multi-modal inputs, call the processor only on the multi-modal inputs.
+- テキスト + マルチモーダル入力の場合は、HF プロセッサをそのまま呼び出す。
+- トークン化済み + マルチモーダル入力の場合は、マルチモーダル入力に対してのみプロセッサを呼び出す。
 
-While HF processors support text + multi-modal inputs natively, this is not so for tokenized + multi-modal inputs: an error is thrown if the number of input placeholder tokens do not correspond to the number of multi-modal inputs.
+HF プロセッサはテキスト + マルチモーダル入力をネイティブにサポートしていますが、トークン化済み + マルチモーダル入力についてはそうではありません。入力プレースホルダートークンの数がマルチモーダル入力の数と一致しないとエラーになります。
 
-Moreover, since the tokenized text has not passed through the HF processor, we have to apply Step 3 by ourselves to keep the output tokens and multi-modal data consistent with each other.
+さらに、トークン化済みのテキストは HF プロセッサを通っていないため、出力トークンとマルチモーダルデータの整合性を保つには、手順 3 を自分たちで適用する必要があります。
 
-### Dummy text
+### ダミーテキスト { #dummy-text }
 
-We work around the first issue by requiring each model to define how to generate dummy text based on the number of multi-modal inputs, via [`get_dummy_text`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseDummyInputsBuilder.get_dummy_text). This lets us generate dummy text corresponding to the multi-modal inputs and input them together to obtain the processed multi-modal data.
+1 つ目の課題については、各モデルに対して、マルチモーダル入力の数にもとづくダミーテキストの生成方法を [`get_dummy_text`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseDummyInputsBuilder.get_dummy_text) で定義することを求めることで回避しています。これにより、マルチモーダル入力に対応するダミーテキストを生成し、両者をまとめて入力して処理済みのマルチモーダルデータを得られます。
 
-### Automatic prompt updating
+### プロンプトの自動更新 { #automatic-prompt-updating }
 
-We address the second issue by implementing model-agnostic code in
-[`_apply_prompt_updates`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._apply_prompt_updates) to automatically update the prompt with feature placeholder tokens based on the specification outputted by [`_get_prompt_updates`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates).
+2 つ目の課題には、[`_apply_prompt_updates`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._apply_prompt_updates) にモデル非依存のコードを実装することで対処しています。ここでは、[`_get_prompt_updates`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._get_prompt_updates) が出力する仕様にもとづいて、特徴プレースホルダートークンでプロンプトを自動的に更新します。
 
-### Summary
+### まとめ { #summary }
 
-With the help of dummy text and automatic prompt updating, our multi-modal processor can finally accept both text and token prompts with multi-modal data. The detailed logic is shown in [`_apply_hf_processor_main`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._apply_hf_processor_main).
+ダミーテキストとプロンプトの自動更新のおかげで、vLLM のマルチモーダルプロセッサは、マルチモーダルデータを伴うテキストプロンプトとトークンプロンプトの両方を受け付けられるようになりました。詳細なロジックは [`_apply_hf_processor_main`](https://docs.vllm.ai/en/v0.26.0/api/vllm/multimodal/processing/#vllm.multimodal.processing.BaseMultiModalProcessor._apply_hf_processor_main) に示されています。
 
-## Processor Output Caching
+## プロセッサ出力のキャッシュ { #processor-output-caching }
 
-Some HF processors, such as the one for Qwen2-VL, are [very slow](https://github.com/vllm-project/vllm/issues/9238). To alleviate this problem, we cache the multi-modal outputs of HF processor to avoid processing the same multi-modal input (e.g. image) again.
+Qwen2-VL 向けのものなど、一部の HF プロセッサは[非常に低速](https://github.com/vllm-project/vllm/issues/9238)です。この問題を緩和するため、HF プロセッサのマルチモーダル出力をキャッシュし、同じマルチモーダル入力（画像など）を再度処理しないようにしています。
 
-When new data is passed in, we first check which items are in the cache, and which ones are missing. The missing items are passed into the HF processor in a single batch and cached, before being merged with the existing items in the cache.
+新しいデータが渡されると、まずどの項目がキャッシュにあり、どの項目が欠けているかを確認します。欠けている項目は 1 つのバッチとして HF プロセッサに渡されてキャッシュされ、その後キャッシュ内の既存項目とマージされます。
 
-Since we only process the missing multi-modal data items, the number of input placeholder tokens no longer corresponds to the number of the multi-modal inputs, so they can't be passed alongside the text prompt to HF processor. Therefore, we process the text and multi-modal inputs separately, using [dummy text](#dummy-text) to avoid HF errors. Since this skips HF's prompt updating code, we apply [automatic prompt updating](#automatic-prompt-updating) afterwards to keep the output tokens and multi-modal data consistent with each other.
+欠けているマルチモーダルデータ項目だけを処理するため、入力プレースホルダートークンの数はマルチモーダル入力の数と一致しなくなり、テキストプロンプトと一緒に HF プロセッサへ渡すことができません。そこで、テキストとマルチモーダル入力を別々に処理し、HF のエラーを避けるために[ダミーテキスト](#dummy-text)を使います。この方法では HF のプロンプト更新処理が飛ばされるため、あとから[プロンプトの自動更新](#automatic-prompt-updating)を適用し、出力トークンとマルチモーダルデータの整合性を保ちます。

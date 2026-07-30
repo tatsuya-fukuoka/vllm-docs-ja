@@ -1,30 +1,30 @@
-# MoRIIOConnector Usage Guide
+# MoRIIOConnector 利用ガイド { #moriioconnector-usage-guide }
 
-`MoRIIOConnector` is a high-performance KV connector used for KV cache transfer in PD disaggregated deployments, built on ROCm's [MoRI-IO](https://github.com/rocm/mori) communication library for point-to-point communication with ultra-low overhead.
+`MoRIIOConnector` は、PD 分離のデプロイにおける KV キャッシュ転送に使う高性能な KV コネクタです。きわめて低いオーバーヘッドで P2P 通信を行う ROCm の [MoRI-IO](https://github.com/rocm/mori) 通信ライブラリをもとに構築されています。
 
-## Prerequisites
+## 前提条件 { #prerequisites }
 
-### Installation
+### インストール { #installation }
 
-**Docker:** MoRI is shipped with the official ROCm vLLM image: `vllm/vllm-openai-rocm:nightly`.
+**Docker:** MoRI は ROCm 版の公式 vLLM イメージ `vllm/vllm-openai-rocm:nightly` に同梱されています。
 
-**Manual installation:** MoRI wheel can be installed with
+**手動インストール:** MoRI の wheel は次のコマンドでインストールできます。
 
 ```bash
 pip install amd_mori
 ```
 
-Refer to the [Dockerfile.rocm_base](../../docker/Dockerfile.rocm_base) for more information, or [official MoRI repository](https://github.com/rocm/mori) for instructions on how to build MoRI from source.
+詳細は [Dockerfile.rocm_base](../../docker/Dockerfile.rocm_base) を、ソースから MoRI をビルドする手順は [MoRI 公式リポジトリ](https://github.com/rocm/mori)を参照してください。
 
-For instructions on installing appropriate NIC userspace libraries, see [Installing NIC userspace libraries](#appendix-installing-nic-userspace-libraries).
+適切な NIC のユーザー空間ライブラリのインストール手順については、[NIC のユーザー空間ライブラリのインストール](#appendix-installing-nic-userspace-libraries)を参照してください。
 
-## Basic usage (single host)
+## 基本的な使い方（単一ホスト） { #basic-usage-single-host }
 
-Start the proxy first; the producer and consumer instances will retry registration until the proxy is reachable.
+まずプロキシを起動してください。プロデューサーとコンシューマーのインスタンスは、プロキシに到達できるまで登録をリトライします。
 
-### Producer (prefiller) configuration
+### プロデューサー（プレフィル側）の設定 { #producer-prefiller-configuration }
 
-Start a prefiller instance that produces KV caches
+KV キャッシュを生成するプレフィルインスタンスを起動します。
 
 ```bash
 # Prefill instance (GPU 0-3) 
@@ -49,9 +49,9 @@ vllm serve Qwen/Qwen3-235B-A22B-FP8 \
   }'
 ```
 
-### Consumer (decoder) configuration
+### コンシューマー（デコード側）の設定 { #consumer-decoder-configuration }
 
-Start a decoder instance that consumes KV caches:
+KV キャッシュを消費するデコードインスタンスを起動します。
 
 ```bash
 # Decode instance (GPU 4-7)
@@ -76,9 +76,9 @@ vllm serve Qwen/Qwen3-235B-A22B-FP8 \
   }'
 ```
 
-### Proxy server
+### プロキシサーバー { #proxy-server }
 
-The proxy fronts the producer and consumer instances and routes incoming requests to them. `vllm-router` is the recommended proxy; it can be installed manually or run as a Docker container. Note that the port `36367` below is the `proxy_ping_port` configured on each vLLM instance.
+プロキシはプロデューサーとコンシューマーのインスタンスの前段に立ち、受け取ったリクエストをそれらへルーティングします。推奨されるプロキシは `vllm-router` で、手動インストールするか Docker コンテナとして実行できます。以下のポート `36367` は、各 vLLM インスタンスで設定した `proxy_ping_port` である点に注意してください。
 
 **Docker:**
 
@@ -92,7 +92,7 @@ docker run \
   --vllm-discovery-address "0.0.0.0:36367"
 ```
 
-**Manual install:**
+**手動インストール:**
 
 ```bash
 pip install vllm-router
@@ -102,7 +102,7 @@ vllm-router \
   --vllm-discovery-address "0.0.0.0:36367"
 ```
 
-Alternatively, you can use the reference implementation proxy shipped with vLLM:
+あるいは、vLLM に同梱されているリファレンス実装のプロキシを使うこともできます。
 
 ```bash
 cd <path_to>/vllm
@@ -110,55 +110,57 @@ pip install quart aiohttp msgpack
 python examples/disaggregated/disaggregated_serving/moriio_toy_proxy_server.py
 ```
 
-## Configuration
+## 設定 { #configuration }
 
-The connector is configured at two levels: the application level and the transport level.
+このコネクタは、アプリケーションレベルとトランスポートレベルの 2 段階で設定します。
 
-### Application-level configuration
+### アプリケーションレベルの設定 { #application-level-configuration }
 
-**Modes:** MoRI has two modes of operation: WRITE and READ mode.
+**モード:** MoRI には WRITE モードと READ モードの 2 つの動作モードがあります。
 
-- In WRITE mode, the producer actively pushes computed KV blocks after every layer into the consumer's memory.
-- In READ mode, the consumer pulls the KV blocks from the producer all at once, as soon as it has been notified those blocks are ready.
+- WRITE モードでは、プロデューサーが層ごとに、計算した KV ブロックをコンシューマーのメモリへ能動的にプッシュします。
+- READ モードでは、ブロックの準備完了が通知され次第、コンシューマーがプロデューサーからまとめて KV ブロックをプルします。
 
-WRITE mode is used by default. READ mode can be configured by setting `--kv-transfer-config.kv_connector_extra_config.read_mode true`.
+既定では WRITE モードが使われます。READ モードにするには `--kv-transfer-config.kv_connector_extra_config.read_mode true` を設定します。
 
-**Control-plane configuration:** MoRI moves KV bytes over RDMA/xGMI, but producers and consumers also need out-of-band TCP channels for handshake, block id exchange, liveness, and completion signaling. These keys live under `kv_connector_extra_config`:
+**コントロールプレーンの設定:** MoRI は KV のバイト列を RDMA / xGMI で転送しますが、プロデューサーとコンシューマーはハンドシェイク、ブロック ID の交換、死活監視、完了通知のために帯域外の TCP チャンネルも必要とします。これらのキーは `kv_connector_extra_config` の下に置きます。
 
-- `proxy_ip`: IP address of the disaggregation proxy/router that fronts the prefiller and decoder. Each vLLM instance uses it to register itself and to send heartbeats so the proxy knows where to route incoming requests.
-- `proxy_ping_port`: TCP port on `proxy_ip` where the proxy listens for instance heartbeats and registration messages. Used to detect dead vLLM instances and keep routing tables fresh.
-- `http_port`: HTTP port that this vLLM instance exposes its OpenAI-compatible API on. The proxy registers this port, and forwards user requests to this port once it has picked an instance.
-- `handshake_port`: TCP port used for the one-time MoRI engine handshake between a prefiller and a decoder. The two sides exchange RDMA engine descriptors here before any KV transfer can happen.
-- `notify_port`: TCP port used for control and synchronization messages between prefiller and decoder. Used differently in the two modes:
-    - WRITE mode: **Block allocation:** the decoder notifies the prefiller about its block ids, so the prefiller can push its computed KV blocks into the correct place on the decoder instance. **Completion:** once all blocks have been transferred, the prefiller notifies the decoder that it's safe to use its blocks.
-    - READ mode: **Completion:** once the decoder has read all blocks from the prefiller, it notifies the prefiller so it can free its KV cache blocks.
+- `proxy_ip`: プレフィル側とデコード側の前段に立つ分離用プロキシ / ルーターの IP アドレス。各 vLLM インスタンスは、自身を登録しハートビートを送るためにこれを使い、プロキシは受け取ったリクエストのルーティング先を把握します。
+- `proxy_ping_port`: `proxy_ip` 上でプロキシがインスタンスのハートビートと登録メッセージを待ち受ける TCP ポート。停止した vLLM インスタンスの検出と、ルーティングテーブルの鮮度維持に使われます。
+- `http_port`: この vLLM インスタンスが OpenAI 互換 API を公開する HTTP ポート。プロキシはこのポートを登録し、インスタンスを選んだあとユーザーのリクエストをこのポートへ転送します。
+- `handshake_port`: プレフィル側とデコード側の間で 1 回だけ行う MoRI エンジンのハンドシェイクに使う TCP ポート。KV 転送を行う前に、両者はここで RDMA のエンジンディスクリプタを交換します。
+- `notify_port`: プレフィル側とデコード側の間の制御・同期メッセージに使う TCP ポート。2 つのモードで用途が異なります。
+    - WRITE モード: **ブロックの割り当て:** デコード側が自分のブロック ID をプレフィル側に通知し、プレフィル側が計算済みの KV ブロックをデコードインスタンスの正しい場所へプッシュできるようにします。**完了通知:** すべてのブロックの転送が終わると、プレフィル側はデコード側に、そのブロックを安全に使えることを通知します。
+    - READ モード: **完了通知:** デコード側がプレフィル側からすべてのブロックを読み終えると、プレフィル側に通知し、KV キャッシュのブロックを解放できるようにします。
 
 !!! note
-    `notify_port` is used as a *base* port: each (DP rank, TP rank) pair within an instance uses `notify_port + offset` where the offset is based on the rank. Make sure the range starting at `notify_port` is free on the host.
+    `notify_port` は *ベース* ポートとして使われます。インスタンス内の各 (DP ランク, TP ランク) の組は、
+    ランクにもとづくオフセットを足した `notify_port + offset` を使います。`notify_port` から始まる
+    範囲がホスト上で空いていることを確認してください。
 
-### Transport configuration
+### トランスポートの設定 { #transport-configuration }
 
-MoRI has two transport backends: RDMA and xGMI. You can select backend using `--kv-transfer-config.kv_connector_extra_config.backend $BACKEND`, with `$BACKEND` being `rdma` or `xgmi`. RDMA is the default backend and should be used in multi-node deployments.
+MoRI には RDMA と xGMI の 2 つのトランスポートバックエンドがあります。バックエンドは `--kv-transfer-config.kv_connector_extra_config.backend $BACKEND` で選択でき、`$BACKEND` には `rdma` または `xgmi` を指定します。既定のバックエンドは RDMA で、複数ノードのデプロイではこちらを使うべきです。
 
-The configuration options for each backend are as follows.
+各バックエンドの設定オプションは次のとおりです。
 
-#### RDMA backend
+#### RDMA バックエンド { #rdma-backend }
 
-- `qp_per_transfer`: number of RDMA Queue Pairs (QPs) used per transfer. More QPs let a single transfer be striped over multiple QPs to increase NIC concurrency, at the cost of more RDMA resources.
-- `post_batch_size`: how many RDMA Work Requests (WR) are batched into one `ibv_post_send` doorbell. Defaults to -1, meaning the backend default. Larger batches reduce the posting overhead per WR.
-- `num_workers`: number of worker threads MoRI uses to post and poll transfer completions.
+- `qp_per_transfer`: 1 回の転送に使う RDMA の Queue Pair（QP）の数。QP を増やすと 1 回の転送を複数の QP にストライピングして NIC の並行度を高められますが、RDMA のリソース消費は増えます。
+- `post_batch_size`: 1 回の `ibv_post_send` のドアベルにまとめる RDMA の Work Request（WR）の数。既定は -1 で、バックエンドの既定値を意味します。バッチを大きくすると WR あたりの発行オーバーヘッドが減ります。
+- `num_workers`: 転送の発行と完了ポーリングのために MoRI が使うワーカースレッドの数。
 
-Advanced users can also configure MoRI itself using environment variables such as `MORI_IO_QP_MAX_SEND_WR`, `MORI_IO_QP_MAX_CQE`, etc. These are MoRI library variables and are separate from vLLM's own `VLLM_MORIIO_*` settings. Refer to the [MoRI repository](https://github.com/rocm/mori) for more information.
+上級者は、`MORI_IO_QP_MAX_SEND_WR`、`MORI_IO_QP_MAX_CQE` などの環境変数で MoRI 自体を設定することもできます。これらは MoRI ライブラリの変数であり、vLLM 自身の `VLLM_MORIIO_*` の設定とは別物です。詳細は [MoRI のリポジトリ](https://github.com/rocm/mori)を参照してください。
 
-#### xGMI backend
+#### xGMI バックエンド { #xgmi-backend }
 
-Use xGMI when the prefiller and decoder run on the same physical host so transfers go over the AMD GPU fabric and skip the NIC entirely. Currently only configured using MoRI-specific environment variables; see the [MoRI repository](https://github.com/rocm/mori).
+プレフィル側とデコード側が同じ物理ホストで動作する場合は xGMI を使ってください。転送が AMD の GPU ファブリックを通り、NIC を完全にバイパスします。現時点では MoRI 固有の環境変数でのみ設定できます。[MoRI のリポジトリ](https://github.com/rocm/mori)を参照してください。
 
-## Multi-node deployment
+## 複数ノードでのデプロイ { #multi-node-deployment }
 
-The example below shows how to run a 1P1D deployment on two nodes. We run the proxy on the same node as the prefill instance.
+次の例は、2 ノードで 1P1D のデプロイを行う方法を示します。プロキシはプレフィルインスタンスと同じノードで動かします。
 
-### On both nodes
+### 両方のノードで { #on-both-nodes }
 
 ```bash
 # Set on both nodes before running any command
@@ -166,9 +168,9 @@ export PREFILL_IP=<node1-ip>
 export DECODE_IP=<node2-ip>
 ```
 
-### On node 1
+### ノード 1 で { #on-node-1 }
 
-Start the proxy first as described in [Proxy server](#proxy-server), then start the prefill instance:
+まず[プロキシサーバー](#proxy-server)の説明に従ってプロキシを起動し、続いてプレフィルインスタンスを起動します。
 
 ```bash
 docker run \
@@ -199,9 +201,9 @@ docker run \
     }'
 ```
 
-### On node 2
+### ノード 2 で { #on-node-2 }
 
-Decode instance:
+デコードインスタンス:
 
 ```bash
 docker run \
@@ -232,11 +234,11 @@ docker run \
     }'
 ```
 
-## Troubleshooting
+## トラブルシューティング { #troubleshooting }
 
-### `availDevices.size() > 0` assertion failure
+### `availDevices.size() > 0` のアサーション失敗 { #availdevicessize-0-assertion-failure }
 
-**Problem:** vLLM fails to launch with the following log:
+**症状:** 次のログを出して vLLM の起動が失敗します。
 
 ```bash
 libibverbs: Warning: Driver bnxt_re does not support the kernel ABI of 6 (supports 1 to 1) for device /sys/class/infiniband/rdma4
@@ -244,21 +246,19 @@ libibverbs: Warning: Driver bnxt_re does not support the kernel ABI of 6 (suppor
 ker: /app/mori/src/io/rdma/backend_impl.cpp: mori::io::RdmaManager::RdmaManager(const RdmaBackendConfig, application::RdmaContext *): Assertion `availDevices.size() > 0' failed.
 ```
 
-**Fix:** The installed RDMA userspace libraries do not match the driver and firmware version installed on the host. You must install NIC userspace libraries corresponding to your RDMA kernel module and firmware version. See [Installing NIC userspace
-libraries](#appendix-installing-nic-userspace-libraries) for more information.
+**対処:** インストールされている RDMA のユーザー空間ライブラリが、ホストにインストールされているドライバとファームウェアのバージョンと一致していません。RDMA のカーネルモジュールとファームウェアのバージョンに対応する NIC のユーザー空間ライブラリをインストールする必要があります。詳細は [NIC のユーザー空間ライブラリのインストール](#appendix-installing-nic-userspace-libraries)を参照してください。
 
-## Appendix: installing NIC userspace libraries
+## 付録: NIC のユーザー空間ライブラリのインストール { #appendix-installing-nic-userspace-libraries }
 
-To run MoRI with RDMA, your environment must have the necessary RDMA userspace libraries installed that match the associated kernel module and firmware version.
+RDMA で MoRI を動かすには、対応するカーネルモジュールとファームウェアのバージョンに一致する RDMA のユーザー空間ライブラリが環境にインストールされている必要があります。
 
-The official image `vllm/vllm-openai-rocm:nightly` comes pre-installed with userspace libraries for the following NICs and kernel module versions:
+公式イメージ `vllm/vllm-openai-rocm:nightly` には、次の NIC とカーネルモジュールのバージョン向けのユーザー空間ライブラリがあらかじめインストールされています。
 
-- AINIC (AMD Pensando Pollara): version `1.117.3-hydra`, tested with `ioinic-dkms=25.11.1.001`
-- Thor2 (Broadcom): version `235.2.86.0`, tested with `bnxt-en-dkms=1.10.3.235.2.86.0`, `bnxt-re-dkms=235.2.86.0`
+- AINIC（AMD Pensando Pollara）: バージョン `1.117.3-hydra`、`ioinic-dkms=25.11.1.001` で検証済み
+- Thor2（Broadcom）: バージョン `235.2.86.0`、`bnxt-en-dkms=1.10.3.235.2.86.0`、`bnxt-re-dkms=235.2.86.0` で検証済み
 
-Refer to [Dockerfile.rocm](../../docker/Dockerfile.rocm) for more details. For users with NICs, kernel modules, and/or FW other than those stated above we refer to
-the vendors' own installation instructions.
+詳細は [Dockerfile.rocm](../../docker/Dockerfile.rocm) を参照してください。上記以外の NIC、カーネルモジュール、ファームウェアを使っている場合は、各ベンダーのインストール手順を参照してください。
 
-## Further reading
+## さらに読む { #further-reading }
 
-- [Next-Level Inference: Why Your Single-Node vLLM Setup Needs Prefill-Decode Disaggregation](https://vllm.ai/blog/2026-04-07-moriio-kv-connector).
+- [Next-Level Inference: Why Your Single-Node vLLM Setup Needs Prefill-Decode Disaggregation](https://vllm.ai/blog/2026-04-07-moriio-kv-connector)

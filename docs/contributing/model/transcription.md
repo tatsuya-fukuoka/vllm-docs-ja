@@ -1,20 +1,19 @@
-# Speech-to-Text (Transcription/Translation) Support
+# 音声認識（文字起こし / 翻訳）のサポート { #speech-to-text-transcriptiontranslation-support }
 
-This document walks you through the steps to add support for speech-to-text (ASR) models to vLLM’s transcription and translation APIs by implementing [`SupportsTranscription`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsTranscription).
-Please refer to the [supported models](../../models/supported_models.md#transcription) for further guidance.
+このドキュメントでは、[`SupportsTranscription`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsTranscription) を実装することで、音声認識（ASR）モデルを vLLM の文字起こし / 翻訳 API に対応させる手順を説明します。詳しい指針は[対応モデル](../../models/supported_models.md#transcription)を参照してください。
 
-## Update the base vLLM model
+## vLLM のベースモデルを更新する { #update-the-base-vllm-model }
 
-It is assumed you have already implemented your model in vLLM according to the basic model guide. Extend your model with the [`SupportsTranscription`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsTranscription) interface and implement the following class attributes and methods.
+基本的なモデルのガイドに従って、すでに vLLM でモデルを実装済みであることを前提とします。[`SupportsTranscription`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsTranscription) インターフェースでモデルを拡張し、次のクラス属性とメソッドを実装してください。
 
-### `supported_languages` and `supports_transcription_only`
+### `supported_languages` と `supports_transcription_only` { #supported_languages-and-supports_transcription_only }
 
-Declare supported languages and capabilities:
+対応言語と機能を宣言します。
 
-- The `supported_languages` mapping is validated at init time.
-- Set `supports_transcription_only=True` if the model should not serve text generation (eg Whisper).
+- `supported_languages` のマッピングは初期化時に検証されます。
+- モデルがテキスト生成を提供すべきでない場合（Whisper など）は `supports_transcription_only=True` を設定します。
 
-??? code "supported_languages and supports_transcription_only"
+??? code "supported_languages と supports_transcription_only"
 
     ```python
     from typing import ClassVar, Mapping, Literal
@@ -39,9 +38,9 @@ Declare supported languages and capabilities:
         supports_transcription_only: ClassVar[bool] = True
     ```
 
-Provide an ASR configuration via [`get_speech_to_text_config`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsTranscription.get_speech_to_text_config).
+[`get_speech_to_text_config`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsTranscription.get_speech_to_text_config) で ASR の設定を提供します。
 
-This is for controlling general behavior of the API when serving your model:
+これは、モデルをサービングする際の API の全体的な挙動を制御するためのものです。
 
 ??? code "get_speech_to_text_config()"
 
@@ -64,13 +63,13 @@ This is for controlling general behavior of the API when serving your model:
             )
     ```
 
-See [Audio preprocessing and chunking](#audio-preprocessing-and-chunking) for what each field controls.
+各フィールドが何を制御するかは、[音声の前処理とチャンク化](#audio-preprocessing-and-chunking)を参照してください。
 
-Implement the prompt construction via [`get_generation_prompt`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsTranscription.get_generation_prompt). The server builds a [`SpeechToTextParams`](https://docs.vllm.ai/en/v0.26.0/api/vllm/config/speech_to_text/#vllm.config.speech_to_text.SpeechToTextParams) object that bundles the resampled waveform, task parameters, and request-specific options. Your model receives this single object and returns a valid [`PromptType`](https://docs.vllm.ai/en/v0.26.0/api/vllm/inputs/llm/#vllm.inputs.llm.PromptType). There are two common patterns:
+プロンプトの構築は [`get_generation_prompt`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsTranscription.get_generation_prompt) で実装します。サーバーは、リサンプリング済みの波形、タスクのパラメータ、リクエスト固有のオプションをまとめた [`SpeechToTextParams`](https://docs.vllm.ai/en/v0.26.0/api/vllm/config/speech_to_text/#vllm.config.speech_to_text.SpeechToTextParams) オブジェクトを構築します。モデルはこの 1 つのオブジェクトを受け取り、妥当な [`PromptType`](https://docs.vllm.ai/en/v0.26.0/api/vllm/inputs/llm/#vllm.inputs.llm.PromptType) を返します。よくあるパターンは 2 つあります。
 
-#### Multimodal LLM with audio embeddings (e.g., Voxtral, Gemma3n)
+#### 音声埋め込みを持つマルチモーダル LLM（Voxtral、Gemma3n など） { #multimodal-llm-with-audio-embeddings-eg-voxtral-gemma3n }
 
-Return a dict containing `multi_modal_data` with the audio, and either a `prompt` string or `prompt_token_ids`:
+音声を含む `multi_modal_data` と、`prompt` の文字列または `prompt_token_ids` のいずれかを含む辞書を返します。
 
 ??? code "get_generation_prompt()"
 
@@ -102,11 +101,11 @@ Return a dict containing `multi_modal_data` with the audio, and either a `prompt
             }
     ```
 
-    For further clarification on multi modal inputs, please refer to [Multi-Modal Inputs](../../features/multimodal_inputs.md).
+    マルチモーダル入力の詳細については、[マルチモーダル入力](../../features/multimodal_inputs.md)を参照してください。
 
-#### Encoder–decoder audio-only (e.g., Whisper)
+#### 音声のみのエンコーダ・デコーダ（Whisper など） { #encoderdecoder-audio-only-eg-whisper }
 
-Return a dict with separate `encoder_prompt` and `decoder_prompt` entries:
+`encoder_prompt` と `decoder_prompt` を別々に持つ辞書を返します。
 
 ??? code "get_generation_prompt()"
 
@@ -146,11 +145,11 @@ Return a dict with separate `encoder_prompt` and `decoder_prompt` entries:
             return cast(PromptType, prompt)
     ```
 
-### `validate_language` (optional)
+### `validate_language`（任意） { #validate_language-optional }
 
-Language validation via [`validate_language`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsTranscription.validate_language)
+[`validate_language`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsTranscription.validate_language) による言語の検証です。
 
-If your model requires a language and you want a default, override this method (see Whisper):
+モデルが言語の指定を必要とし、既定値を設けたい場合は、このメソッドをオーバーライドしてください（Whisper を参照）。
 
 ??? code "validate_language()"
 
@@ -167,11 +166,11 @@ If your model requires a language and you want a default, override this method (
         return super().validate_language(language)
     ```
 
-### `get_num_audio_tokens` (optional)
+### `get_num_audio_tokens`（任意） { #get_num_audio_tokens-optional }
 
-Token accounting for streaming via [`get_num_audio_tokens`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsTranscription.get_num_audio_tokens)
+[`get_num_audio_tokens`](https://docs.vllm.ai/en/v0.26.0/api/vllm/model_executor/models/interfaces/#vllm.model_executor.models.interfaces.SupportsTranscription.get_num_audio_tokens) による、ストリーミング時のトークン数の計上です。
 
-Provide a fast duration→token estimate to improve streaming usage statistics:
+ストリーミングの使用量統計の精度を上げるため、再生時間からトークン数を高速に見積もる処理を提供します。
 
 ??? code "get_num_audio_tokens()"
 
@@ -190,15 +189,15 @@ Provide a fast duration→token estimate to improve streaming usage statistics:
             return int(audio_duration_s * stt_config.sample_rate // 320)  # example
     ```
 
-## Audio preprocessing and chunking
+## 音声の前処理とチャンク化 { #audio-preprocessing-and-chunking }
 
-The API server takes care of basic audio I/O and optional chunking before building prompts:
+API サーバーは、プロンプトを構築する前に基本的な音声の入出力と、必要に応じたチャンク化を行います。
 
-- Resampling: Input audio is resampled to `SpeechToTextConfig.sample_rate` using `AudioResampler`.
-- Chunking: If `SpeechToTextConfig.allow_audio_chunking` is True and the duration exceeds `max_audio_clip_s`, the server splits the audio into overlapping chunks and generates a prompt per chunk. Overlap is controlled by `overlap_chunk_second`.
-- Energy-aware splitting: When `min_energy_split_window_size` is set, the server finds low-energy regions to minimize cutting within words.
+- リサンプリング: 入力音声は `AudioResampler` によって `SpeechToTextConfig.sample_rate` にリサンプリングされます。
+- チャンク化: `SpeechToTextConfig.allow_audio_chunking` が True で、再生時間が `max_audio_clip_s` を超える場合、サーバーは音声を重なりのあるチャンクに分割し、チャンクごとにプロンプトを生成します。重なりの量は `overlap_chunk_second` で制御されます。
+- エネルギーを考慮した分割: `min_energy_split_window_size` が設定されている場合、サーバーはエネルギーの低い区間を探し、単語の途中で切れるのを最小限に抑えます。
 
-Relevant server logic:
+関連するサーバー側のロジック:
 
 ??? code "_preprocess_speech_to_text()"
 
@@ -225,9 +224,9 @@ Relevant server logic:
         return prompts, duration
     ```
 
-## Exposing tasks automatically
+## タスクの自動公開 { #exposing-tasks-automatically }
 
-vLLM automatically advertises transcription support if your model implements the interface:
+モデルがこのインターフェースを実装していれば、vLLM は自動的に文字起こしのサポートを公開します。
 
 ```python
 if supports_transcription(model):
@@ -236,27 +235,27 @@ if supports_transcription(model):
     supported_tasks.append("transcription")
 ```
 
-When enabled, the server initializes the transcription and translation handlers:
+有効な場合、サーバーは文字起こしと翻訳のハンドラを初期化します。
 
 ```python
 state.openai_serving_transcription = OpenAIServingTranscription(...) if "transcription" in supported_tasks else None
 state.openai_serving_translation = OpenAIServingTranslation(...) if "transcription" in supported_tasks else None
 ```
 
-No extra registration is required beyond having your model class available via the model registry and implementing `SupportsTranscription`.
+モデルクラスがモデルレジストリ経由で利用でき、`SupportsTranscription` を実装していれば、それ以外の登録作業は不要です。
 
-## Examples in-tree
+## ツリー内の例 { #examples-in-tree }
 
-- Whisper encoder–decoder (audio-only): [vllm/model_executor/models/whisper.py](../../../vllm/model_executor/models/whisper.py)
-- Voxtral decoder-only (audio embeddings + LLM): [vllm/model_executor/models/voxtral.py](../../../vllm/model_executor/models/voxtral.py). Make sure to have installed `mistral-common[audio]`.
-- Gemma3n decoder-only with fixed instruction prompt: [vllm/model_executor/models/gemma3n_mm.py](../../../vllm/model_executor/models/gemma3n_mm.py)
-- Qwen3-Omni multimodal with audio embeddings: [vllm/model_executor/models/qwen3_omni_moe_thinker.py](../../../vllm/model_executor/models/qwen3_omni_moe_thinker.py)
+- Whisper のエンコーダ・デコーダ（音声のみ）: [vllm/model_executor/models/whisper.py](../../../vllm/model_executor/models/whisper.py)
+- Voxtral のデコーダのみ（音声埋め込み + LLM）: [vllm/model_executor/models/voxtral.py](../../../vllm/model_executor/models/voxtral.py)。`mistral-common[audio]` をインストールしておいてください。
+- 固定の instruction プロンプトを使う Gemma3n のデコーダのみ: [vllm/model_executor/models/gemma3n_mm.py](../../../vllm/model_executor/models/gemma3n_mm.py)
+- 音声埋め込みを持つ Qwen3-Omni のマルチモーダル: [vllm/model_executor/models/qwen3_omni_moe_thinker.py](../../../vllm/model_executor/models/qwen3_omni_moe_thinker.py)
 
-## Test with the API
+## API でのテスト { #test-with-the-api }
 
-Once your model implements `SupportsTranscription`, you can test the endpoints (API mimics OpenAI):
+モデルが `SupportsTranscription` を実装したら、エンドポイントをテストできます（API は OpenAI に準拠しています）。
 
-- Transcription (ASR):
+- 文字起こし（ASR）:
 
     ```bash
     curl -s -X POST \
@@ -267,7 +266,7 @@ Once your model implements `SupportsTranscription`, you can test the endpoints (
       http://localhost:8000/v1/audio/transcriptions
     ```
 
-- Translation (source → English unless otherwise supported):
+- 翻訳（別途サポートされていない限り、ソース言語 → 英語）:
 
     ```bash
     curl -s -X POST \
@@ -278,9 +277,11 @@ Once your model implements `SupportsTranscription`, you can test the endpoints (
       http://localhost:8000/v1/audio/translations
     ```
 
-Or check out more examples in [examples/speech_to_text](../../../examples/speech_to_text).
+その他の例は [examples/speech_to_text](../../../examples/speech_to_text) を参照してください。
 
 !!! note
-    - If your model handles chunking internally (e.g., via its processor or encoder), set `min_energy_split_window_size=None` in the returned `SpeechToTextConfig` to disable server-side chunking.
-    - Implementing `get_num_audio_tokens` improves accuracy of streaming usage metrics (`prompt_tokens`) without an extra forward pass.
-    - For multilingual behavior, keep `supported_languages` aligned with actual model capabilities.
+    - モデルが内部で（プロセッサやエンコーダなどで）チャンク化を行う場合は、返す `SpeechToTextConfig` で
+      `min_energy_split_window_size=None` を設定し、サーバー側のチャンク化を無効にしてください。
+    - `get_num_audio_tokens` を実装すると、追加の forward パスなしにストリーミングの使用量メトリクス
+      （`prompt_tokens`）の精度が向上します。
+    - 多言語での挙動については、`supported_languages` を実際のモデルの能力と一致させてください。
